@@ -1,0 +1,24 @@
+name: "💡 Propose an Idea / Feature"
+description: "Submit a high-level feature idea. The PM Agent will analyze and decompose it."
+title: "[Idea]: "
+labels: ["type:idea", "status:todo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 💡 AI Autonomous Idea Intake
+        Share your vision or requirement in 1-2 paragraphs. 
+        The **Belooga PM Agent** will automatically read the database schema and architecture, formulate technical specifications, and generate actionable tasks.
+  - type: textarea
+    id: idea_description
+    attributes:
+      label: "What is your idea or requirement?"
+      description: "Describe the business goal, user experience, or desired capability."
+      placeholder: "e.g., I want recruiters to be able to bookmark candidates and view them in a Saved Talent dashboard."
+    validations:
+      required: true
+  - type: textarea
+    id: target_users
+    attributes:
+      label: "Target Users & Context (Optional)"
+      placeholder: "e.g., Recruiters, Candidates, or Platform Admin"

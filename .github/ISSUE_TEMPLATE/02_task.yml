@@ -1,0 +1,33 @@
+name: "🛠️ Engineering Task"
+description: "Direct technical engineering task for Backend, Frontend, or QC."
+title: "[Task]: "
+labels: ["type:task", "status:todo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🛠️ Engineering Task Specification
+  - type: dropdown
+    id: role
+    attributes:
+      label: "Engineering Domain"
+      options:
+        - "Backend (FastAPI / PostgreSQL)"
+        - "Frontend (Next.js / Tailwind)"
+        - "Quality Control (Playwright E2E)"
+    validations:
+      required: true
+  - type: textarea
+    id: technical_scope
+    attributes:
+      label: "Technical Scope & Files to Touch"
+      description: "Specify API endpoints, tables, or UI components involved."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: "Acceptance Criteria (DoD)"
+      description: "List verified conditions required before PR can merge."
+    validations:
+      required: true
