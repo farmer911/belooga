@@ -1,29 +1,29 @@
 # Graph Report - Beloga  (2026-10-04)
 
 ## Corpus Check
-- 132 files · ~923,587 words
+- 137 files · ~907,482 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 7, .lock 2, .css 2)
 
 ## Summary
-- 1102 nodes · 1589 edges · 100 communities (82 shown, 18 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 107 edges (avg confidence: 0.94)
+- 1027 nodes · 1503 edges · 97 communities (75 shown, 22 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 96 edges (avg confidence: 0.93)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3a0250b1`
+- Built from commit: `83910db2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - build_all_pages.py
-- app.js
-- 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint
-- 🐋 BELOOGA — Master Migration & Conversion Blueprint
+- BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)
+- 2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)
+- 🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE
 - Ponytail
 - Belooga Design System & Tokens Guide
 - Ponytail Help
-- 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)
+- 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint
 - 🧠 Markmap Architect Skill
 - Legacy Ground-Truth Enforcement & Anti-Hallucination Protocol
 - ponytail-audit/SKILL.md
@@ -39,121 +39,121 @@
 - Button
 - frontend/package.json
 - @playwright/test
-- 3. Common UI Components Specification (`src/components/ui/`)
+- Belooga Frontend Engineering Guide
 - compilerOptions
-- 2. Complete Database Schema (24 Core Tables in `initdb.sql`)
-- 3. Phase-by-Phase Implementation Checklist
+- Belooga Backend Engineering Guide
+- 🐋 BELOOGA — Master Migration & Conversion Blueprint
 - dependencies
 - 3. Phase-by-Phase Implementation Checklist
-- 🤖 Parallel 3-Sub-Agent Orchestration Blueprint
 - 3. Phase-by-Phase Implementation Checklist
+- 🤖 Parallel 3-Sub-Agent Orchestration Blueprint
 - compilerOptions
 - 3. Strict Quality Gates & Anti-Regression Assertions
 - README.md
 - AGENTS.md
 - postcss.config.mjs
-- BaseModel
-- 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
+- 3. Phase-by-Phase Implementation Checklist
+- AuthenticatedUser
 - 2. 8 Service Domains & Verified API Catalog (36 Active Endpoints)
 - security.py
-- 2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)
-- ProfileUpdate
-- 🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE
-- ⚖️ Audit Round 3: Bộ Skill sau commit `3a0250b`
-- media.py
-- AsyncClient
-- ⚙️ SENIOR BACKEND ENGINEER — PRODUCTION PATTERNS & STANDARDS
-- 🎨 SENIOR FRONTEND ENGINEER — PRODUCTION PATTERNS & STANDARDS
-- get_current_user
-- RTK Commands by Workflow
-- generate-current-state.py
-- 🏛️ PRINCIPAL SYSTEMS ARCHITECT — PRODUCTION PATTERNS & STANDARDS
-- 🏁 ENTERPRISE DEFINITION OF DONE (DoD) QUALITY CONTRACT
 - 🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS
+- profile.py
+- 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist
+- 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
+- media.py
+- test_idor_guards.py
+- Workflow: Definition of Done (DoD)
+- Workflow: Database Schema Change
+- 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)
+- Belooga Engineering System (GEMINI.md)
+- generate-current-state.py
+- Workflow: Visual Verification
+- 🏁 ENTERPRISE DEFINITION OF DONE (DoD) QUALITY CONTRACT
 - 3. Quickstart Setup (Step-by-Step)
 - 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
-- ⚡ Belooga Backend Architecture & 8 Service Domains Skill
-- 🏠 Department Skill: Homepage & Candidate Showcase (`/`)
-- 🌐 Master Page Orchestrator Skill: Candidate Workspace (`/user/[username]`)
+- app.js
+- Homepage & Candidate Showcase (`/`)
+- fe-page-workspace/SKILL.md
 - devDependencies
 - 🏛️ BELOOGA ARCHITECTURE DECISION RECORDS (ADR LOG)
-- 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist
-- 🔐 Department Skill: Identity & Authentication (`/(auth)/...`)
-- 👤 Department Skill: Public Candidate Profile (`/public/[username]`)
-- 🔍 Department Skill: Talent Discovery & Candidate Search (`/search`)
-- 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
-- 2. API Contracts & Network Mutations
-- 2. API Contracts & Autocomplete Flow
-- 🎙️ Section Skill: WebRTC Video Studio & Recording Engine
+- frontend.md
+- Identity & Authentication (`/(auth)/...`)
+- Public Candidate Profile (`/public/[username]`)
+- Talent Discovery & Search (`/search`)
+- legacy.md
+- qc.md
+- adr/README.md
+- archive/README.md
 - 1. The Non-Negotiable 3-Phase Cycle
 - conftest.py
 - Belooga Codebase Ground Truth (CURRENT_STATE.md)
 - 🛡️ Mandatory Core Engineering Integrity & Evidence Protocol
 - test_reorder_education_experiences_success
-- 🛡️ Backend Department Skill: Identity & Authentication Vault (Domain 1)
-- ⚙️ Department Skill: Candidate User Management & Settings
-- 📚 Backend Department Skill: Master Catalogs & Taxonomies (Domain 7)
-- 📢 Backend Department Skill: Public CMS & Moderation (Domain 8)
-- 📹 Backend Department Skill: Media Processing & Storage (Domain 4)
-- 👤 Backend Department Skill: Candidate Profiles (Domain 2)
-- 🔎 Backend Department Skill: Talent Discovery & Search Engine (Domain 6)
-- ⏳ Backend Department Skill: Career Timeline & Reordering (Domain 3)
-- 📰 Department Skill: Public Content, CMS & Compliance
-- 🎬 Section Skill: 30-Second Pitch Video Player
-- ⏳ Section Skill: Career Timeline & Credentials Management
+- Identity & Authentication Vault (Domain 1)
+- Candidate User Management & Settings (`/user/[username]/update`, `/settings`)
+- Master Catalogs & Taxonomies (Domain 7)
+- Public CMS & Moderation (Domain 8)
+- Media Processing & Document Generation (Domain 4)
+- Candidate Profile (Domain 2)
+- Talent Discovery & Search (Domain 6)
+- Career Timeline & Reordering (Domain 3)
+- Public Content, CMS & Compliance (`/(public)/...`)
+- legacy/README.md
 - scripts
 - eslint.config.mjs
 - audit-truth.sh
 - create_access_token
 - cms.py
-- test_auth_family_rotation.py
-- os
-- suggest_companies
-- 1. HALLUCINATION ngay trong tài liệu "Ground Truth"
+- seed-data.py
+- 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 - test_media_chunk_upload_path_traversal_rejection
-- search_candidates
-- api_root
+- database.py
+- main.py
 
 ## God Nodes (most connected - your core abstractions)
-1. `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` - 40 edges
+1. `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` - 41 edges
 2. `Button` - 31 edges
 3. `AuthenticatedUser` - 27 edges
-4. `verify_profile_owner()` - 23 edges
+4. `verify_profile_owner()` - 21 edges
 5. `next` - 20 edges
-6. `get_current_user()` - 19 edges
-7. `lucide-react` - 17 edges
-8. `compilerOptions` - 16 edges
-9. `create_access_token()` - 15 edges
-10. `react` - 15 edges
+6. `lucide-react` - 17 edges
+7. `compilerOptions` - 16 edges
+8. `create_access_token()` - 15 edges
+9. `react` - 15 edges
+10. `🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `5.2 Zustand Client Stores (`src/store/`)` --references--> `logout()`  [INFERRED]
-  .agents/skills/belooga-frontend-engineering/SKILL.md → backend/app/api/v1/endpoints/auth.py
-- `3.5 Các điểm khác` --references--> `logout()`  [INFERRED]
-  SKILLS_AUDIT_ROUND3.md → backend/app/api/v1/endpoints/auth.py
-- `5. Đề xuất sửa (theo ưu tiên)` --references--> `get_current_user()`  [INFERRED]
-  SKILLS_AUDIT.md → backend/app/core/security.py
 - `5. Security & Concurrency Verification Summary` --references--> `verify_profile_owner()`  [INFERRED]
   CURRENT_STATE.md → backend/app/core/security.py
-- `5. Thiếu sót vẫn còn từ Round 1` --references--> `verify_profile_owner()`  [INFERRED]
-  SKILLS_AUDIT_ROUND2.md → backend/app/core/security.py
+- `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `check_email_exists()`  [INFERRED]
+  CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
+- `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `check_username_exists()`  [INFERRED]
+  CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
+- `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `register_user()`  [INFERRED]
+  CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
+- `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `login()`  [INFERRED]
+  CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (100 total, 18 thin omitted)
+## Communities (97 total, 22 thin omitted)
 
 ### Community 0 - "build_all_pages.py"
 Cohesion: 0.44
 Nodes (15): build_account_setting_scene(), build_blog_scene(), build_careers_scene(), build_contact_us_scene(), build_help_scene(), build_legal_scenes(), build_not_found_scene(), build_public_profile_scene() (+7 more)
 
-### Community 2 - "🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint"
-Cohesion: 0.09
-Nodes (21): 1.1 Project Identity & Core Value Proposition, 1.2 The Conversion Mandate, 3.1 CSS Design Tokens, 3.2 Exact Video Play Button Specification, 4.1 Recommended Modern Stack, 4.2 Modern Directory Structure, 🛡️ Anti-Hallucination Engineering Harness (Lessons Learned & Violations Register), 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint (+13 more)
+### Community 1 - "BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)"
+Cohesion: 0.07
+Nodes (29): 0. Phạm vi review, 1. Protocol phản biện (BẮT BUỘC), 2. Kết luận tổng, 3. Findings, 4. Skill context knowledge còn thiếu, 5. Kiến trúc tri thức mục tiêu, 6. Tiêu chí S-tier (kiểm chứng được), 7. Nâng cấp `scripts/audit-truth.sh` (bắt buộc chạy trong CI) (+21 more)
 
-### Community 3 - "🐋 BELOOGA — Master Migration & Conversion Blueprint"
-Cohesion: 0.12
-Nodes (15): 1.1 Project Identity, 1.2 Conversion Mandate, 1. Executive Summary & Conversion Mission, 2. Complete Legacy Route Inventory & Parity Matrix (All 16 Routes), 3.1 Strict Icon & Play Button Geometry Standard, 3. Design System Tokens & Visual Foundations, 4. Component Architecture & Conversion Hierarchy, 5. Engineering Quality Harness (Operational Violations Log) (+7 more)
+### Community 2 - "2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)"
+Cohesion: 0.07
+Nodes (27): 1. CORE ARCHITECTURAL PHILOSOPHY, 2.1. Clean 4-Layer Architecture (Ports & Adapters), 2.2. Repository & Unit of Work (UoW) Pattern, 2.3. Pessimistic Concurrency Locking Pattern (`SELECT FOR UPDATE`), 2.4. CQRS (Command Query Responsibility Segregation) with GIN/Trigram Indexing, 2.5. Transactional Outbox Pattern, 2.6. Non-Blocking Event-Loop Offloading Pattern, 2.7. Circuit Breaker & Exponential Backoff with Full Jitter (+19 more)
+
+### Community 3 - "🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE"
+Cohesion: 0.07
+Nodes (26): 10. POSTGRESQL ADVISORY LOCKS FOR CONCURRENT ASYNC CHUNK WRITES, 11. CROSS-ORIGIN COOKIE TOPOLOGY & THE BFF (BACKEND-FOR-FRONTEND) PATTERN, 12. MASTER TECHNICAL KNOWLEDGE AUDIT CHECKLIST, 1. CORE ENGINEERING PHILOSOPHY, 2.1. PostgreSQL MVCC & Dead Tuple Bloat, 2.2. Transaction Anomalies & The Write Skew Trap, 2.3. Query Optimizer Join Algorithms, 2. DATABASE INTERNALS & CONCURRENCY ANOMALIES (+18 more)
 
 ### Community 4 - "Ponytail"
 Cohesion: 0.22
@@ -167,9 +167,9 @@ Nodes (8): 🎨 1. Brand & Primary Colors (Màu chủ đạo & Điểm nhấn), 
 Cohesion: 0.25
 Nodes (7): Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
 
-### Community 7 - "🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)"
-Cohesion: 0.25
-Nodes (7): Belooga Engineering Harness & Anti-Hallucination Violations Register, 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log), 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules), [VIOLATION-001] Tự ý vẽ SVG / Icon xấp xỉ thay vì dùng asset gốc, [VIOLATION-002] Hiển thị icon Play đè lên ảnh walkthrough sai lệch quy chuẩn SCSS gốc, [VIOLATION-003] Dùng icon font / background teal cho nút play walkthrough thay vì Stack Theme pure CSS, [VIOLATION-004] Hallucinate style cho `.modal-trigger` gây xung đột biến nút play thành hình Elip đen khổng lồ & Báo cáo hoàn thành khi chưa test hover
+### Community 7 - "🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint"
+Cohesion: 0.09
+Nodes (21): 1.1 Project Identity & Core Value Proposition, 1.2 The Conversion Mandate, 3.1 CSS Design Tokens, 3.2 Exact Video Play Button Specification, 4.1 Recommended Modern Stack, 4.2 Modern Directory Structure, 🛡️ Anti-Hallucination Engineering Harness (Lessons Learned & Violations Register), 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint (+13 more)
 
 ### Community 8 - "🧠 Markmap Architect Skill"
 Cohesion: 0.29
@@ -196,12 +196,12 @@ Cohesion: 0.50
 Nodes (3): Boundaries, Output, Scan
 
 ### Community 19 - "endpoints/auth.py"
-Cohesion: 0.26
-Nodes (13): check_email_exists(), check_username_exists(), get_current_session_user(), login(), logout(), refresh_tokens(), register_user(), hash_token() (+5 more)
+Cohesion: 0.15
+Nodes (19): check_email_exists(), check_username_exists(), get_current_session_user(), login(), logout(), refresh_tokens(), register_user(), generate_refresh_token() (+11 more)
 
 ### Community 20 - "Button"
 Cohesion: 0.08
-Nodes (36): Phase 2: Application Shell (Header & Footer), nextConfig, ForgotPasswordPage(), LoginPage(), RegisterPage(), metadata, RootLayout(), NotFound() (+28 more)
+Nodes (36): Phase 2: Application Shell (Header & Footer), Phase 2: Page Object Models (POMs) Development (`qc/pages/`), nextConfig, ForgotPasswordPage(), LoginPage(), RegisterPage(), metadata, RootLayout() (+28 more)
 
 ### Community 21 - "frontend/package.json"
 Cohesion: 0.09
@@ -211,37 +211,37 @@ Nodes (21): ignoreScripts, @types/node, typescript, name, packageManager, privat
 Cohesion: 0.07
 Nodes (17): description, devDependencies, @playwright/test, @types/node, typescript, @types/node, typescript, name (+9 more)
 
-### Community 23 - "3. Common UI Components Specification (`src/components/ui/`)"
-Cohesion: 0.10
-Nodes (20): 1. Technical Stack & Environment, 2. Design System Tokens (`src/app/globals.css`), 3.1 Button (`src/components/ui/button.tsx`), 3.2 Input (`src/components/ui/input.tsx`), 3.3 Modal / Dialog (`src/components/ui/dialog.tsx`), 3.4 Card (`src/components/ui/card.tsx`), 3.5 Badge (`src/components/ui/badge.tsx`), 3.6 Avatar (`src/components/ui/avatar.tsx`) (+12 more)
+### Community 23 - "Belooga Frontend Engineering Guide"
+Cohesion: 0.29
+Nodes (6): Architectural Invariants, Belooga Frontend Engineering Guide, Core Design Tokens (`src/app/globals.css`), Current Reality (AS-IS), Known Traps, Self-Verification
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
-### Community 25 - "2. Complete Database Schema (24 Core Tables in `initdb.sql`)"
-Cohesion: 0.13
-Nodes (14): 1. Technical Stack & Architecture, 2. Complete Database Schema (24 Core Tables in `initdb.sql`), 3.1 AuthService (`app/services/auth_service.py`), 3.2 TimelineService (`app/services/timeline_service.py`), 3.3 SearchService (`app/services/search_service.py`), 3. Service Layer Design & Business Logic, 4. Docker Environment Specification (`docker-compose.yml`), ⚡ Belooga Backend Engineering Skill & Architecture Guide (+6 more)
+### Community 25 - "Belooga Backend Engineering Guide"
+Cohesion: 0.33
+Nodes (5): Belooga Backend Engineering Guide, Core Architectural Invariants, Current Reality (AS-IS), Infrastructure Configuration, Self-Verification
 
-### Community 26 - "3. Phase-by-Phase Implementation Checklist"
-Cohesion: 0.14
-Nodes (13): 1. Sub-Agent Mission & Anti-Hallucination Boundaries, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), 🚀 Belooga Frontend Sub-Agent Execution Plan, Phase 1: Foundation, Asset Pipeline & Design Tokens, Phase 2: Common UI Primitives (`src/components/ui/`), Phase 3: Services & State Architecture (+5 more)
+### Community 26 - "🐋 BELOOGA — Master Migration & Conversion Blueprint"
+Cohesion: 0.12
+Nodes (15): 1.1 Project Identity, 1.2 Conversion Mandate, 1. Executive Summary & Conversion Mission, 2. Complete Legacy Route Inventory & Parity Matrix (All 16 Routes), 3.1 Strict Icon & Play Button Geometry Standard, 3. Design System Tokens & Visual Foundations, 4. Component Architecture & Conversion Hierarchy, 5. Engineering Quality Harness (Operational Violations Log) (+7 more)
 
 ### Community 27 - "dependencies"
 Cohesion: 0.15
 Nodes (13): dependencies, axios, clsx, @hookform/resolvers, lucide-react, next, react, react-dom (+5 more)
 
 ### Community 28 - "3. Phase-by-Phase Implementation Checklist"
+Cohesion: 0.14
+Nodes (13): 1. Sub-Agent Mission & Anti-Hallucination Boundaries, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), 🚀 Belooga Frontend Sub-Agent Execution Plan, Phase 1: Foundation, Asset Pipeline & Design Tokens, Phase 2: Common UI Primitives (`src/components/ui/`), Phase 3: Services & State Architecture (+5 more)
+
+### Community 29 - "3. Phase-by-Phase Implementation Checklist"
 Cohesion: 0.17
 Nodes (11): 1. Sub-Agent Mission & Concurrency Rules, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), ⚡ Belooga Backend Sub-Agent Execution Plan, Phase 1: Environment & Database Infrastructure, Phase 2: Domain 1 — Identity & Authentication Service (10 APIs), Phase 3: Domain 2 & 4 — Candidate Profile & Media Storage (20 APIs) (+3 more)
 
-### Community 29 - "🤖 Parallel 3-Sub-Agent Orchestration Blueprint"
+### Community 30 - "🤖 Parallel 3-Sub-Agent Orchestration Blueprint"
 Cohesion: 0.17
 Nodes (11): 1. Sub-Agent Roster & Operational Boundaries, 2. Sub-Agent Profiles & Execution Briefs, 3. Parallel Execution Matrix (Milestones M1 – M5), 4. Immediate Commands to Run, Backend:, Frontend:, 🤖 Parallel 3-Sub-Agent Orchestration Blueprint, QC / Playwright: (+3 more)
-
-### Community 30 - "3. Phase-by-Phase Implementation Checklist"
-Cohesion: 0.18
-Nodes (10): 1. Sub-Agent Mission & Quality Gates, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), 🛡️ Belooga QC & Automation Testing Sub-Agent Execution Plan, Phase 1: Test Harness & Environment Setup, Phase 3: Suite 1 — Anti-Hallucination & Visual Regression Gate, Phase 4: Suite 2 — Authentication & Security E2E (`tests/e2e/auth-flow.spec.ts`) (+2 more)
 
 ### Community 31 - "compilerOptions"
 Cohesion: 0.18
@@ -255,73 +255,73 @@ Nodes (9): 1. Technical Stack & Test Environment, 2. Test Architecture & Directo
 Cohesion: 0.50
 Nodes (3): Deploy on Vercel, Getting Started, Learn More
 
-### Community 37 - "BaseModel"
-Cohesion: 0.33
-Nodes (5): AwardCertificationCreate, EducationExperienceCreate, JobExperienceCreate, ReorderItem, ReorderRequest
+### Community 37 - "3. Phase-by-Phase Implementation Checklist"
+Cohesion: 0.18
+Nodes (10): 1. Sub-Agent Mission & Quality Gates, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), 🛡️ Belooga QC & Automation Testing Sub-Agent Execution Plan, Phase 1: Test Harness & Environment Setup, Phase 3: Suite 1 — Anti-Hallucination & Visual Regression Gate, Phase 4: Suite 2 — Authentication & Security E2E (`tests/e2e/auth-flow.spec.ts`) (+2 more)
 
-### Community 38 - "2. Backend API Inventory (`backend/app/api/v1/endpoints/`)"
-Cohesion: 0.17
-Nodes (16): delete_resume(), add_candidate_skill(), get_candidate_public_profile(), remove_candidate_skill(), update_candidate_profile(), create_education(), create_job_experience(), delete_education() (+8 more)
+### Community 38 - "AuthenticatedUser"
+Cohesion: 0.20
+Nodes (16): Backend Rules (FastAPI + SQLAlchemy 2.0 Async), AwardCertificationCreate, create_education(), create_job_experience(), delete_education(), delete_job_experience(), EducationExperienceCreate, JobExperienceCreate (+8 more)
 
 ### Community 41 - "2. 8 Service Domains & Verified API Catalog (36 Active Endpoints)"
 Cohesion: 0.13
 Nodes (14): 1. 16-Route Frontend Page Inventory, 2. 8 Service Domains & Verified API Catalog (36 Active Endpoints), 3. Database Schema Mapping (24 Tables in `backend/initdb.sql`), 4. QC Automation & Testing Matrix, 🧠 Belooga Master Knowledge Vault & API / Page Catalog, Domain 1: Identity & Authentication Vault — 7 Endpoints, Domain 2: Candidate Profiles — 4 Endpoints, Domain 3: Career Timeline & Reordering — 8 Endpoints (+6 more)
 
 ### Community 42 - "security.py"
-Cohesion: 0.15
-Nodes (4): get_db(), verify_identity_owner(), verify_password(), lifespan()
+Cohesion: 0.19
+Nodes (3): get_current_user(), get_current_user_optional(), verify_identity_owner()
 
-### Community 43 - "2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)"
-Cohesion: 0.07
-Nodes (27): 1. CORE ARCHITECTURAL PHILOSOPHY, 2.1. Clean 4-Layer Architecture (Ports & Adapters), 2.2. Repository & Unit of Work (UoW) Pattern, 2.3. Pessimistic Concurrency Locking Pattern (`SELECT FOR UPDATE`), 2.4. CQRS (Command Query Responsibility Segregation) with GIN/Trigram Indexing, 2.5. Transactional Outbox Pattern, 2.6. Non-Blocking Event-Loop Offloading Pattern, 2.7. Circuit Breaker & Exponential Backoff with Full Jitter (+19 more)
+### Community 43 - "🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS"
+Cohesion: 0.20
+Nodes (9): 1. COMPONENT-SCOPED PAGE OBJECT MODEL (POM) ARCHITECTURE, 2. DETERMINISTIC LOCATOR HIERARCHY, 3. ZERO-SLEEP & ANTI-FLAKINESS INVARIANTS, 4. HERMETIC TEST FIXTURES & DATA ISOLATION, 5. VISUAL REGRESSION & CANVAS STABILIZATION, 6. REJECTION CHECKLIST FOR SENIOR QC CODE, Best Practice Blueprint:, 🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS (+1 more)
 
-### Community 45 - "🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE"
-Cohesion: 0.07
-Nodes (26): 10. POSTGRESQL ADVISORY LOCKS FOR CONCURRENT ASYNC CHUNK WRITES, 11. CROSS-ORIGIN COOKIE TOPOLOGY & THE BFF (BACKEND-FOR-FRONTEND) PATTERN, 12. MASTER TECHNICAL KNOWLEDGE AUDIT CHECKLIST, 1. CORE ENGINEERING PHILOSOPHY, 2.1. PostgreSQL MVCC & Dead Tuple Bloat, 2.2. Transaction Anomalies & The Write Skew Trap, 2.3. Query Optimizer Join Algorithms, 2. DATABASE INTERNALS & CONCURRENCY ANOMALIES (+18 more)
+### Community 44 - "profile.py"
+Cohesion: 0.21
+Nodes (7): add_candidate_skill(), get_candidate_public_profile(), ProfileUpdate, remove_candidate_skill(), SkillAdd, update_candidate_profile(), 9.3 Câu hỏi bắt buộc trả lời
 
-### Community 46 - "⚖️ Audit Round 3: Bộ Skill sau commit `3a0250b`"
-Cohesion: 0.05
-Nodes (38): 1. Kết luận, 2. Ghi nhận điểm mạnh (để công bằng), 3. Bằng chứng: Skill nói vs Code thật, 4.1. Không tách "Hiện trạng" khỏi "Mục tiêu", 4.2. Không có quy tắc giải quyết mâu thuẫn, 4.3. Toàn bộ "enforcement" chỉ là văn xuôi và nhập vai, 4.4. Quá tải token và chồng chéo, 4.5. Các rule mâu thuẫn triết lý (+30 more)
+### Community 45 - "🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist"
+Cohesion: 0.25
+Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejection Checklist (The "Kill-Switch" Criteria), 3. The 3-Step Backend Review SOP (Standard Operating Procedure), 4. Formal Reviewer Decision Templates, 🟢 Approval Template (Emit only when all 3 steps pass 100%):, 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist, 🔴 Rejection Template (Emit when code fails any check):
+
+### Community 46 - "🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist"
+Cohesion: 0.25
+Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejection Checklist (The "Kill-Switch" Criteria), 3. The 3-Step Frontend Review SOP (Standard Operating Procedure), 4. Formal Reviewer Decision Templates, 🟢 Approval Template (Emit only when all 3 steps pass 100%):, 🔴 Rejection Template (Emit when code fails any check):, 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
 
 ### Community 47 - "media.py"
-Cohesion: 0.11
-Nodes (14): assemble_chunks_async(), _assemble_chunks_sync(), complete_chunked_video_upload(), CompleteUploadRequest, generate_candidate_pdf(), get_validated_upload_dir(), get_video_transcoding_status(), run_cmd_async() (+6 more)
+Cohesion: 0.13
+Nodes (10): assemble_chunks_async(), _assemble_chunks_sync(), complete_chunked_video_upload(), CompleteUploadRequest, get_validated_upload_dir(), run_cmd_async(), _run_cmd_sync(), upload_video_chunk() (+2 more)
 
-### Community 48 - "AsyncClient"
-Cohesion: 0.27
+### Community 48 - "test_idor_guards.py"
+Cohesion: 0.26
 Nodes (4): test_idor_cross_user_media_upload_forbidden(), test_idor_cross_user_profile_mutation_forbidden(), test_idor_cross_user_timeline_mutation_forbidden(), test_unauthenticated_mutations_rejected()
 
-### Community 49 - "⚙️ SENIOR BACKEND ENGINEER — PRODUCTION PATTERNS & STANDARDS"
-Cohesion: 0.10
-Nodes (19): 10. CREATIONAL PATTERNS: ABSTRACT FACTORY & BUILDER, 11. IDENTITY & TOKEN VAULT SECURITY PATTERNS, 12.1. Big-O Database Query Complexity ($O(\log N)$ Mandatory), 12.2. Anti-N+1 Query Invariant (The $O(1)$ Eager Loading Rule), 12.3. Lock Contention & Duration Budget ($< 50\text{ms}$), 12.4. Cyclomatic Complexity Limit ($\le 10$) & Guard Clauses, 12.5. The Rule of Three (Anti-Overengineering & YAGNI), 12. COMPLEXITY CONTROL & ALGORITHMIC INVARIANTS (+11 more)
+### Community 49 - "Workflow: Definition of Done (DoD)"
+Cohesion: 0.25
+Nodes (7): Step 1: Regenerate Single Source of Truth, Step 2: Run SSOT Ground Truth Auditor, Step 3: Run Backend Tests, Step 4: Run Frontend Typecheck, Step 5: Visual Verification (If UI was modified), Step 6: Git Status Review, Workflow: Definition of Done (DoD)
 
-### Community 50 - "🎨 SENIOR FRONTEND ENGINEER — PRODUCTION PATTERNS & STANDARDS"
-Cohesion: 0.11
-Nodes (18): 10. ACCESSIBILITY (WCAG 2.1 AA) INVARIANTS, 11.1. Algorithmic Complexity in JSX (The $O(1)$ Lookup Rule), 11.2. Frame Budget (16.6ms) & Long Task Budget (< 50ms), 11.3. Cyclomatic Complexity Limit ($\le 10$) & Component Flattening, 11.4. Memory Leak & Resource Cleanup Invariants, 11.5. The Rule of Three (Anti-Overengineering & YAGNI), 11. COMPLEXITY CONTROL & PERFORMANCE BUDGETS, 12. REJECTION CHECKLIST FOR SENIOR FRONTEND CODE (+10 more)
+### Community 50 - "Workflow: Database Schema Change"
+Cohesion: 0.25
+Nodes (7): 1. Edit Schema Definition, 2. Update Seed Data, 3. Reset Local & Test Database, 4. Run Pytest Suite, 5. Regenerate SSOT, 6. Run SSOT Audit, Workflow: Database Schema Change
 
-### Community 51 - "get_current_user"
-Cohesion: 0.16
-Nodes (16): get_current_user(), get_current_user_optional(), 0. Kết luận một dòng, 2.1 🚨 CRITICAL: Path traversal dẫn tới xoá thư mục tuỳ ý (lỗ hổng mới), 2.2 🚨 Upload video pitch, avatar, resume: 100% trả 401 cho mọi user, 2.3 🚨 Reorder timeline: 100% trả 500 (đã có repro), 2.4 Các vấn đề bảo mật khác của bản vá, 2. "Sửa bảo mật" nhưng làm hỏng tính năng và mở lỗ hổng mới (+8 more)
+### Community 51 - "🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)"
+Cohesion: 0.25
+Nodes (7): Belooga Engineering Harness & Anti-Hallucination Violations Register, 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log), 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules), [VIOLATION-001] Tự ý vẽ SVG / Icon xấp xỉ thay vì dùng asset gốc, [VIOLATION-002] Hiển thị icon Play đè lên ảnh walkthrough sai lệch quy chuẩn SCSS gốc, [VIOLATION-003] Dùng icon font / background teal cho nút play walkthrough thay vì Stack Theme pure CSS, [VIOLATION-004] Hallucinate style cho `.modal-trigger` gây xung đột biến nút play thành hình Elip đen khổng lồ & Báo cáo hoàn thành khi chưa test hover
 
-### Community 52 - "RTK Commands by Workflow"
-Cohesion: 0.13
-Nodes (14): Analysis & Debug (70-90% savings), Build & Compile (80-90% savings), Files & Search (60-75% savings), Git (59-80% savings), GitHub (26-87% savings), Golden Rule, Infrastructure (85% savings), JavaScript/TypeScript Tooling (70-90% savings) (+6 more)
+### Community 52 - "Belooga Engineering System (GEMINI.md)"
+Cohesion: 0.25
+Nodes (6): CLAUDE.md (Redirect to GEMINI.md), 1. Verified Tech Stack (Ground Truth), 2. Precedence of Truth, 3. Top 5 Absolute Prohibitions, 4. Task Routing, Belooga Engineering System (GEMINI.md)
 
 ### Community 53 - "generate-current-state.py"
-Cohesion: 0.22
+Cohesion: 0.20
 Nodes (6): extract_backend_routes(), extract_database_tables(), extract_dependencies(), extract_frontend_routes(), get_git_info(), main()
 
-### Community 54 - "🏛️ PRINCIPAL SYSTEMS ARCHITECT — PRODUCTION PATTERNS & STANDARDS"
-Cohesion: 0.20
-Nodes (9): 1. DISTRIBUTED DATA CONSISTENCY & THE TRANSACTIONAL OUTBOX PATTERN, 2.1. Circuit Breaker Pattern, 2.2. Exponential Backoff with Full Jitter, 2. SYSTEM RESILIENCE & CASCADING FAILURE PREVENTION, 3. CROSS-SERVICE TRANSACTIONS: THE SAGA PATTERN, 4. INWARD DEPENDENCY RULE & ARCHITECTURAL PURITY, 5. DUAL-KEY CODE REVIEW GOVERNANCE, 6. REJECTION CHECKLIST FOR PRINCIPAL ARCHITECT AUDITS (+1 more)
+### Community 54 - "Workflow: Visual Verification"
+Cohesion: 0.33
+Nodes (5): 1. Locate Legacy Source, 2. Check CSS Scoping, 3. Live Browser Inspection, 4. Run Playwright Visual Tests, Workflow: Visual Verification
 
 ### Community 55 - "🏁 ENTERPRISE DEFINITION OF DONE (DoD) QUALITY CONTRACT"
 Cohesion: 0.20
 Nodes (9): 1. THE DEFINITION OF DONE MANDATE, 2. LAYER 1: ARCHITECTURAL PURITY & DESIGN PATTERNS, 3. LAYER 2: COMPUTATIONAL COMPLEXITY & PERFORMANCE BUDGETS, 4. LAYER 3: CLIENT RESILIENCE, SECURITY & ERROR BOUNDARIES, 5. LAYER 4: DATABASE MIGRATION & ZERO-DOWNTIME EVOLUTION, 6. LAYER 5: TESTING PYRAMID & ZERO-FLAKINESS INVARIANTS, 7. LAYER 6: OBSERVABILITY, AUDIT & HEALTH PROBES, 8. LAYER 7: DUAL-KEY REVIEWER APPROVAL & PROOF BLOCK (+1 more)
-
-### Community 56 - "🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS"
-Cohesion: 0.20
-Nodes (9): 1. COMPONENT-SCOPED PAGE OBJECT MODEL (POM) ARCHITECTURE, 2. DETERMINISTIC LOCATOR HIERARCHY, 3. ZERO-SLEEP & ANTI-FLAKINESS INVARIANTS, 4. HERMETIC TEST FIXTURES & DATA ISOLATION, 5. VISUAL REGRESSION & CANVAS STABILIZATION, 6. REJECTION CHECKLIST FOR SENIOR QC CODE, Best Practice Blueprint:, 🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS (+1 more)
 
 ### Community 57 - "3. Quickstart Setup (Step-by-Step)"
 Cohesion: 0.09
@@ -331,17 +331,13 @@ Nodes (22): 1. System Architecture & Tech Stack, 2. Infrastructure Port Allocati
 Cohesion: 0.22
 Nodes (8): 1. PURPOSE & ORGANIZATIONAL OPERATING MODEL, 2. THE MANDATORY 6-STEP EXECUTION PIPELINE, 3. INTENT-BASED SKILL ROUTING MATRIX, 4. CROSS-DEPARTMENTAL IMPACT MATRIX, 5. THE DUAL-KEY INDEPENDENT REVIEWER GATE, 6. POST-FEATURE LEARNING & ANTI-REGRESSION PROTOCOL, 7. MANDATORY PROOF BLOCK SPECIFICATION, 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
 
-### Community 59 - "⚡ Belooga Backend Architecture & 8 Service Domains Skill"
-Cohesion: 0.22
-Nodes (8): 1. Clean 4-Layer Architecture (Strict Separation of Concerns), 2. 8 Service Domains & 24 Database Tables Inventory, 3.1. Standard SQLAlchemy 2.0 Mapped Model:, 3.2. Standard Pydantic v2 DTO Schema:, 3.3. Standard Thin API Router:, 3. Production Code Implementation Standards, 4. QC Guardrails & API Consistency, ⚡ Belooga Backend Architecture & 8 Service Domains Skill
+### Community 60 - "Homepage & Candidate Showcase (`/`)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Homepage & Candidate Showcase (`/`), Known Traps, Project-Specific Rules, Self-Verification
 
-### Community 60 - "🏠 Department Skill: Homepage & Candidate Showcase (`/`)"
-Cohesion: 0.22
-Nodes (8): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Strict Visual Standards & Historical Pitfalls, 4. QC Selectors & Automated Test Assertions, 5. Post-Feature Self-Updating Protocol, 🔒 Anti-Regression Rules (Learned from Past Incidents):, 🏠 Department Skill: Homepage & Candidate Showcase (`/`), Target Component Hierarchy & Section Decomposition:
-
-### Community 61 - "🌐 Master Page Orchestrator Skill: Candidate Workspace (`/user/[username]`)"
-Cohesion: 0.22
-Nodes (8): 1. Page Role & Component Hierarchy, 2.1. State Coordination Architecture, 2.2. Cross-Section Communication via Invalidation, 2. State Management Architecture & Cross-Section Coordination, 3. Section Skills Routing Map, 4. QC Guardrails & Essential Shell Selectors, 🌐 Master Page Orchestrator Skill: Candidate Workspace (`/user/[username]`), 📐 Target Component Decomposition Architecture (Target Refactor):
+### Community 61 - "fe-page-workspace/SKILL.md"
+Cohesion: 0.05
+Nodes (35): 1. Scope Boundary, 2.1. Avatar Upload, 2.2. Metadata Updates, 2.3. PDF Resume Download, 2. API Contracts & Network Mutations, 3. QC Anti-Regression Selectors (Mandatory Preservation), 👤 Section Skill: Profile Header & Identity Management, 1. Scope Boundary (+27 more)
 
 ### Community 62 - "devDependencies"
 Cohesion: 0.22
@@ -351,44 +347,24 @@ Nodes (9): devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcs
 Cohesion: 0.25
 Nodes (7): ADR-001: Selection of Bun over Node.js for Frontend & QC Tooling, ADR-002: Next.js 14+ App Router & Server/Client Segregation, ADR-003: FastAPI & Python 3.12+ Async for Modular Monolith Backend, ADR-004: SQLAlchemy 2.0 Async Mapped Models & Unit of Work, ADR-005: PostgreSQL 16 TSVECTOR with GIN Index over External Search Engine, ADR-006: ReportLab Python Canvas over Headless Browser for PDF Resumes, 🏛️ BELOOGA ARCHITECTURE DECISION RECORDS (ADR LOG)
 
-### Community 64 - "🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist"
-Cohesion: 0.25
-Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejection Checklist (The "Kill-Switch" Criteria), 3. The 3-Step Backend Review SOP (Standard Operating Procedure), 4. Formal Reviewer Decision Templates, 🟢 Approval Template (Emit only when all 3 steps pass 100%):, 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist, 🔴 Rejection Template (Emit when code fails any check):
+### Community 65 - "Identity & Authentication (`/(auth)/...`)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Identity & Authentication (`/(auth)/...`), Known Traps, Project-Specific Rules, Self-Verification
 
-### Community 65 - "🔐 Department Skill: Identity & Authentication (`/(auth)/...`)"
-Cohesion: 0.25
-Nodes (7): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Strict Security & Token Storage Standards, 4. QC Selectors & Automated Test Assertions, 5. Post-Feature Self-Updating Protocol, 🔐 Department Skill: Identity & Authentication (`/(auth)/...`), Sub-Route Hierarchy:
+### Community 66 - "Public Candidate Profile (`/public/[username]`)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public Candidate Profile (`/public/[username]`), Self-Verification
 
-### Community 66 - "👤 Department Skill: Public Candidate Profile (`/public/[username]`)"
-Cohesion: 0.25
-Nodes (7): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Security & Read-Only Invariant Rules, 4. QC Selectors & Automated Test Assertions, 5. Post-Feature Self-Updating Protocol, 👤 Department Skill: Public Candidate Profile (`/public/[username]`), Target Component Hierarchy & Section Decomposition:
-
-### Community 67 - "🔍 Department Skill: Talent Discovery & Candidate Search (`/search`)"
-Cohesion: 0.25
-Nodes (7): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Debounced Autocomplete & Query Synchronization Protocol, 4. QC Selectors & Automated Test Assertions, 5. Post-Feature Self-Updating Protocol, 🔍 Department Skill: Talent Discovery & Candidate Search (`/search`), Target Component Hierarchy & Section Decomposition:
-
-### Community 68 - "🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist"
-Cohesion: 0.25
-Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejection Checklist (The "Kill-Switch" Criteria), 3. The 3-Step Frontend Review SOP (Standard Operating Procedure), 4. Formal Reviewer Decision Templates, 🟢 Approval Template (Emit only when all 3 steps pass 100%):, 🔴 Rejection Template (Emit when code fails any check):, 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
-
-### Community 69 - "2. API Contracts & Network Mutations"
-Cohesion: 0.25
-Nodes (7): 1. Scope Boundary, 2.1. Avatar Upload, 2.2. Metadata Updates, 2.3. PDF Resume Download, 2. API Contracts & Network Mutations, 3. QC Anti-Regression Selectors (Mandatory Preservation), 👤 Section Skill: Profile Header & Identity Management
-
-### Community 70 - "2. API Contracts & Autocomplete Flow"
-Cohesion: 0.25
-Nodes (7): 1. Scope Boundary, 2.1. Master Catalog Autocomplete, 2.2. Add Candidate Skill, 2.3. Delete Candidate Skill, 2. API Contracts & Autocomplete Flow, 3. QC Anti-Regression Selectors (Mandatory Preservation), 🏷️ Section Skill: Candidate Skills & Catalog Management
-
-### Community 71 - "🎙️ Section Skill: WebRTC Video Studio & Recording Engine"
-Cohesion: 0.25
-Nodes (7): 1. Scope Boundary, 2. 60fps Re-render Isolation Technique (Leaf-Node Architecture), 3. Chunked Upload Sequence, 4. QC Anti-Regression Selectors (Mandatory Preservation), 🔴 Legacy Architectural Defect:, 🟢 Production Isolation Standard:, 🎙️ Section Skill: WebRTC Video Studio & Recording Engine
+### Community 67 - "Talent Discovery & Search (`/search`)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification, Talent Discovery & Search (`/search`)
 
 ### Community 72 - "1. The Non-Negotiable 3-Phase Cycle"
 Cohesion: 0.25
 Nodes (7): 1. The Non-Negotiable 3-Phase Cycle, 2. Prohibited Anti-Patterns, 3. Standard Verification Commands, 🔴🟢 Mandatory TDD Workflow Standard Operating Procedure (SOP), Phase 1: RED (Test First & Prove the Defect), Phase 2: GREEN (Minimal Sane Fix), Phase 3: REFACTOR & Regression Verification
 
 ### Community 73 - "conftest.py"
-Cohesion: 0.16
+Cohesion: 0.23
 Nodes (4): client(), db_session(), test_candidate_a(), test_candidate_b()
 
 ### Community 74 - "Belooga Codebase Ground Truth (CURRENT_STATE.md)"
@@ -399,49 +375,41 @@ Nodes (8): 1. Database Schema Truth (`backend/initdb.sql`), 3. Frontend Routes I
 Cohesion: 0.29
 Nodes (6): 1. Pillar 1: The "No Proof = Not Done" Iron Rule, 2. Pillar 2: Mandatory Inquiry Protocol (Uncertainty = Mandatory Question), 3. Pillar 3: Zero Full-Stack Hallucination, 4. Pillar 4: Blacklist of Deceptive Behaviors, 5. Pillar 5: Radical Transparency & Honest Reporting, 🛡️ Mandatory Core Engineering Integrity & Evidence Protocol
 
-### Community 77 - "🛡️ Backend Department Skill: Identity & Authentication Vault (Domain 1)"
-Cohesion: 0.33
-Nodes (5): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Database Models Specification (Planned SQLAlchemy 2.0 Async Target), 4. Token Family Rotation & Replay Protection Protocol, 🛡️ Backend Department Skill: Identity & Authentication Vault (Domain 1)
+### Community 77 - "Identity & Authentication Vault (Domain 1)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Identity & Authentication Vault (Domain 1), Known Traps, Project-Specific Rules, Self-Verification
 
-### Community 78 - "⚙️ Department Skill: Candidate User Management & Settings"
-Cohesion: 0.33
-Nodes (5): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Form Validation & Mutation Standards, 4. QC Selectors & Automated Test Assertions, ⚙️ Department Skill: Candidate User Management & Settings
+### Community 78 - "Candidate User Management & Settings (`/user/[username]/update`, `/settings`)"
+Cohesion: 0.29
+Nodes (6): Candidate User Management & Settings (`/user/[username]/update`, `/settings`), Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification
 
-### Community 79 - "📚 Backend Department Skill: Master Catalogs & Taxonomies (Domain 7)"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Resilient Catalog Fallback Standard, 📚 Backend Department Skill: Master Catalogs & Taxonomies (Domain 7)
+### Community 79 - "Master Catalogs & Taxonomies (Domain 7)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Master Catalogs & Taxonomies (Domain 7), Project-Specific Rules, Self-Verification
 
-### Community 80 - "📢 Backend Department Skill: Public CMS & Moderation (Domain 8)"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Moderation Ticket Protocol, 📢 Backend Department Skill: Public CMS & Moderation (Domain 8)
+### Community 80 - "Public CMS & Moderation (Domain 8)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public CMS & Moderation (Domain 8), Self-Verification
 
-### Community 81 - "📹 Backend Department Skill: Media Processing & Storage (Domain 4)"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Non-Blocking Async File I/O Protocol, 📹 Backend Department Skill: Media Processing & Storage (Domain 4)
+### Community 81 - "Media Processing & Document Generation (Domain 4)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Media Processing & Document Generation (Domain 4), Project-Specific Rules, Self-Verification
 
-### Community 82 - "👤 Backend Department Skill: Candidate Profiles (Domain 2)"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Database Model & Search Vector Architecture (Planned Target Model), 👤 Backend Department Skill: Candidate Profiles (Domain 2)
+### Community 82 - "Candidate Profile (Domain 2)"
+Cohesion: 0.29
+Nodes (6): Candidate Profile (Domain 2), Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification
 
-### Community 83 - "🔎 Backend Department Skill: Talent Discovery & Search Engine (Domain 6)"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Weighted TSVECTOR Full-Text Search Specification, 🔎 Backend Department Skill: Talent Discovery & Search Engine (Domain 6)
+### Community 83 - "Talent Discovery & Search (Domain 6)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification, Talent Discovery & Search (Domain 6)
 
-### Community 84 - "⏳ Backend Department Skill: Career Timeline & Reordering (Domain 3)"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. Concurrency & Pessimistic Locking Protocol, ⏳ Backend Department Skill: Career Timeline & Reordering (Domain 3)
+### Community 84 - "Career Timeline & Reordering (Domain 3)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Career Timeline & Reordering (Domain 3), Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification
 
-### Community 85 - "📰 Department Skill: Public Content, CMS & Compliance"
-Cohesion: 0.40
-Nodes (4): 1. Department Role & Mission, 2. Cross-Departmental Impact Matrix (Dependencies), 3. QC Selectors & Automated Test Assertions, 📰 Department Skill: Public Content, CMS & Compliance
-
-### Community 86 - "🎬 Section Skill: 30-Second Pitch Video Player"
-Cohesion: 0.40
-Nodes (4): 1. Scope Boundary, 2. Browser Autoplay Fallback Protocol, 3. QC Anti-Regression Selectors (Mandatory Preservation), 🎬 Section Skill: 30-Second Pitch Video Player
-
-### Community 87 - "⏳ Section Skill: Career Timeline & Credentials Management"
-Cohesion: 0.40
-Nodes (4): 1. Scope Boundary, 2. Drag-and-Drop Reordering & Optimistic Updates, 3. QC Anti-Regression Selectors (Mandatory Preservation), ⏳ Section Skill: Career Timeline & Credentials Management
+### Community 85 - "Public Content, CMS & Compliance (`/(public)/...`)"
+Cohesion: 0.29
+Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public Content, CMS & Compliance (`/(public)/...`), Self-Verification
 
 ### Community 88 - "scripts"
 Cohesion: 0.40
@@ -452,44 +420,44 @@ Cohesion: 0.50
 Nodes (3): eslintConfig, eslint, eslint-config-next
 
 ### Community 91 - "create_access_token"
-Cohesion: 0.19
+Cohesion: 0.16
 Nodes (9): create_access_token(), test_anonymous_profile_view_does_not_leak_pii(), test_cross_user_upload_completion_rejection(), test_happy_path_chunked_upload_and_complete(), test_hidden_profile_blocks_anonymous_and_other_users(), test_hidden_profile_pdf_blocks_unauthorized_access(), test_owner_profile_view_includes_pii(), test_profile_has_zero_hardcoded_mock_fallbacks() (+1 more)
 
 ### Community 92 - "cms.py"
 Cohesion: 0.27
 Nodes (7): ContactInquiryRequest, get_faqs(), JobApplicantRequest, list_career_jobs(), report_candidate_profile(), ReportProfileRequest, submit_contact_inquiry()
 
-### Community 93 - "test_auth_family_rotation.py"
-Cohesion: 0.35
-Nodes (4): generate_refresh_token(), test_refresh_token_grace_window_allows_concurrent_tabs(), test_refresh_token_replay_attack_revokes_entire_family(), test_refresh_token_rotation_success()
+### Community 95 - "2. Backend API Inventory (`backend/app/api/v1/endpoints/`)"
+Cohesion: 0.22
+Nodes (10): list_skills(), suggest_companies(), suggest_locations(), suggest_schools(), delete_resume(), generate_candidate_pdf(), get_video_transcoding_status(), upload_avatar() (+2 more)
 
-### Community 95 - "suggest_companies"
-Cohesion: 0.43
-Nodes (5): list_skills(), suggest_companies(), suggest_locations(), suggest_schools(), 8. Câu hỏi buộc Gemini trả lời thẳng
+### Community 98 - "database.py"
+Cohesion: 0.24
+Nodes (3): search_candidates(), search_suggestions(), get_db()
 
-### Community 96 - "1. HALLUCINATION ngay trong tài liệu "Ground Truth""
-Cohesion: 0.29
-Nodes (7): 1.1 `CURRENT_STATE.md` bịa 14/24 tên bảng, 1.2 `CURRENT_STATE.md` bịa version thư viện, 1.3 `CURRENT_STATE.md` sai ngay trong ngày viết, 1.4 Hai tài liệu "SSOT" mâu thuẫn nhau và cùng mâu thuẫn với code, 1.5 Vault mới: sửa chỗ này, làm hỏng chỗ khác, 1.6 Hơn 30 skill khác chưa được sửa, 1. HALLUCINATION ngay trong tài liệu "Ground Truth"
+### Community 99 - "main.py"
+Cohesion: 0.24
+Nodes (3): api_root(), health_check(), lifespan()
 
 ## Knowledge Gaps
-- **532 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+527 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 679 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **481 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+476 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 628 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `logout()` connect `endpoints/auth.py` to `⚖️ Audit Round 3: Bộ Skill sau commit `3a0250b``, `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)`, `3. Common UI Components Specification (`src/components/ui/`)`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `5.2 Zustand Client Stores (`src/store/`)` connect `3. Common UI Components Specification (`src/components/ui/`)` to `endpoints/auth.py`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Are the 39 inferred relationships involving `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` (e.g. with `check_email_exists()` and `check_username_exists()`) actually correct?**
-  _`2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` has 39 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `Phase 2: Page Object Models (POMs) Development (`qc/pages/`)` connect `Button` to `3. Phase-by-Phase Implementation Checklist`, `@playwright/test`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` connect `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` to `database.py`, `main.py`, `AuthenticatedUser`, `security.py`, `Belooga Codebase Ground Truth (CURRENT_STATE.md)`, `profile.py`, `media.py`, `endpoints/auth.py`, `cms.py`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `BasePage` connect `@playwright/test` to `Button`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Are the 40 inferred relationships involving `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` (e.g. with `check_email_exists()` and `check_username_exists()`) actually correct?**
+  _`2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` has 40 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 17 inferred relationships involving `AuthenticatedUser` (e.g. with `get_current_session_user()` and `complete_chunked_video_upload()`) actually correct?**
   _`AuthenticatedUser` has 17 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 4 inferred relationships involving `verify_profile_owner()` (e.g. with `5. Security & Concurrency Verification Summary` and `5. Thiếu sót vẫn còn từ Round 1`) actually correct?**
-  _`verify_profile_owner()` has 4 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 2 inferred relationships involving `verify_profile_owner()` (e.g. with `Backend Rules (FastAPI + SQLAlchemy 2.0 Async)` and `5. Security & Concurrency Verification Summary`) actually correct?**
+  _`verify_profile_owner()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _532 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint` be split into smaller, more focused modules?**
-  _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._
+  _481 weakly-connected nodes found - possible documentation gaps or missing edges._

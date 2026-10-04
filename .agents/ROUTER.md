@@ -121,6 +121,7 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | **Backend: Master Catalogs**| `backend/app/api/v1/endpoints/catalogs.py` | `be-service-catalogs` | `engineering-integrity-and-evidence` |
 | **Backend: CMS & Trust** | `backend/app/api/v1/endpoints/cms.py` | `be-service-cms` | `engineering-integrity-and-evidence` |
 | **QC & Playwright Testing** | `qc/tests/` | `belooga-qc-engineering` | `engineering-integrity-and-evidence` |
+| **Retrospective & Learning** | All postmortems & harness rules | `belooga-self-learn` | `engineering-integrity-and-evidence` |
 
 ---
 
