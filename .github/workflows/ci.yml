@@ -65,9 +65,9 @@ jobs:
       - name: Initialize Database Schema & Seed Data
         run: |
           PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_db -f backend/initdb.sql
-          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -c "CREATE DATABASE belooga_test;"
+          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_db -c "CREATE DATABASE belooga_test;"
           PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_test -f backend/initdb.sql
-          python3 scripts/seed-data.py
+          backend/.venv/bin/python scripts/seed-data.py
 
       - name: Run Master SSOT Truth Auditor
         env:
