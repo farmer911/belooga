@@ -60,8 +60,28 @@ def read_project_rules() -> str:
     return "Enforce clean code, async safety, zero mock fallbacks, and valid tests."
 
 
+def discover_gemini_models(api_key: str) -> list[str]:
+    """Query Google API to discover available models for this specific API key."""
+    discovered = []
+    for ver in ["v1beta", "v1"]:
+        url = f"https://generativelanguage.googleapis.com/{ver}/models?key={api_key}"
+        try:
+            req = urllib.request.Request(url, method="GET")
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for m in data.get("models", []):
+                    methods = m.get("supportedGenerationMethods", [])
+                    if "generateContent" in methods:
+                        name = m.get("name", "").replace("models/", "")
+                        if name and f"{ver}/{name}" not in discovered:
+                            discovered.append(f"{ver}/{name}")
+        except Exception as e:
+            pass
+    return discovered
+
+
 def call_gemini_api(api_key: str, prompt: str) -> str:
-    """Call Google Gemini API using pure standard library (urllib)."""
+    """Call Google Gemini API using pure standard library (urllib) with dynamic model discovery."""
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [
@@ -78,9 +98,37 @@ def call_gemini_api(api_key: str, prompt: str) -> str:
     }
     data = json.dumps(payload).encode("utf-8")
 
+    available_targets = discover_gemini_models(api_key)
+    if available_targets:
+        print(f"[*] Discovered {len(available_targets)} supported model targets.")
+
+    preferred = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro"
+    ]
+    targets_to_try = []
+    for pref in preferred:
+        for target in available_targets:
+            if pref in target and target not in targets_to_try:
+                targets_to_try.append(target)
+    for target in available_targets:
+        if target not in targets_to_try:
+            targets_to_try.append(target)
+
+    if not targets_to_try:
+        targets_to_try = ["v1beta/gemini-1.5-flash", "v1/gemini-1.5-flash", "v1beta/gemini-pro"]
+
     last_error = None
-    for model in GEMINI_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    for target in targets_to_try:
+        if "/" in target:
+            ver, model = target.split("/", 1)
+        else:
+            ver, model = "v1beta", target
+        url = f"https://generativelanguage.googleapis.com/{ver}/models/{model}:generateContent?key={api_key}"
         try:
             req = urllib.request.Request(url, data=data, headers=headers, method="POST")
             with urllib.request.urlopen(req, timeout=45) as resp:
@@ -89,13 +137,14 @@ def call_gemini_api(api_key: str, prompt: str) -> str:
                 if candidates:
                     parts = candidates[0].get("content", {}).get("parts", [])
                     if parts:
+                        print(f"[✓] Successfully generated review using {ver}/{model}")
                         return parts[0].get("text", "")
         except urllib.error.HTTPError as e:
             err_body = e.read().decode("utf-8")
-            print(f"[!] Gemini API Error on {model} (HTTP {e.code}): {err_body}")
+            print(f"[!] Gemini API Error on {ver}/{model} (HTTP {e.code}): {err_body}")
             last_error = e
         except Exception as e:
-            print(f"[!] Connection error on {model}: {e}")
+            print(f"[!] Connection error on {ver}/{model}: {e}")
             last_error = e
 
     if last_error:
