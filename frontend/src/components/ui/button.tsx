@@ -1,10 +1,7 @@
 import * as React from "react";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn } from "@/lib/utils";
 
-export function cn(...inputs: any[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn };
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
