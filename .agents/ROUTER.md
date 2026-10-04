@@ -1,6 +1,6 @@
 # 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
 
-> **Version:** 2.0.0 — Enterprise Multi-Department Standard  
+> **Version:** 2.1.0 — Enterprise Multi-Department Standard with Dual-Key Reviewers  
 > **Status:** MANDATORY & ENFORCED FOR ALL AGENTS & SUB-AGENTS  
 > **Authority:** Principal Full-Stack Architect  
 
@@ -11,12 +11,13 @@
 This document establishes the **Organizational Operating System** for the Belooga software engineering organization. The repository is structured like an elite technology enterprise where:
 1. **Pages and Services are specialized Departments (Phòng Ban):** Each department maintains exclusive ownership of its domain, technical specifications, and standards.
 2. **Skills are Institutional Knowledge Assets:** Agents are not generic laborers; they act as Senior Specialists equipped with deep, accumulated institutional memory.
-3. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
-4. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
+3. **Zero Blind Trust (50% Agent Confidence Cap):** Coder Agents are trusted at at most 50%. The remaining 50% of verification is enforced by **Independent Reviewer Agents** (Senior Frontend Lead Reviewer and Principal Backend Lead Reviewer).
+4. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
+5. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
 
 ---
 
-## 2. THE MANDATORY 5-STEP EXECUTION PIPELINE
+## 2. THE MANDATORY 6-STEP EXECUTION PIPELINE
 
 ```
 [USER TASK / FEATURE REQUEST / BUG REPORT]
@@ -61,11 +62,21 @@ This document establishes the **Organizational Operating System** for the Beloog
                                        │ YES
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📚 STEP 4: POST-FEATURE LEARNING & EVIDENCE SIGN-OFF                         │
+│ 🧐 STEP 4: DUAL-KEY ADVERSARIAL CODE REVIEW (INDEPENDENT REVIEWER AGENTS)   │
+│ • Frontend PR ➔ Reviewed by Senior Frontend Reviewer (`fe-reviewer-guide`) │
+│ • Backend PR ➔ Reviewed by Principal Backend Reviewer (`be-reviewer-guide`)│
+│ • Reviewers enforce 10+ year checklists (Re-render, AnyIO, IDOR, Tokens).   │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                        [Both Reviewers APPROVE?] ─── NO ➔ Reject to Step 2
+                                       │ YES
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📚 STEP 5: POST-FEATURE LEARNING & EVIDENCE SIGN-OFF                         │
 │ • Update Department Skill: Document any new contracts or props.             │
 │ • If a bug occurred, log root cause in VIOLATIONS_REGISTER.md.              │
 │ • Emit Empirical Proof Block (Exit Code: 0, test logs, browser check).      │
-│ • Run AST sync: `graphify update .`                                         │
+│ • CTO Final Sign-off & Run AST sync: `graphify update .`                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -78,6 +89,8 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | Department / Intent | Target File Scope | MANDATORY Department Skill | Concurrently Loaded |
 | :--- | :--- | :--- | :--- |
 | **Integrity & Evidence** | All tasks across repository | `engineering-integrity-and-evidence` | Assigned department skill |
+| **Frontend Code Review** | All frontend PRs / modifications | `fe-reviewer-guidelines` | `engineering-integrity-and-evidence` |
+| **Backend Code Review** | All backend PRs / modifications | `be-reviewer-guidelines` | `engineering-integrity-and-evidence` |
 | **Homepage & Showcase** | `frontend/src/app/page.tsx`, `src/components/organisms/home/` | `fe-page-home` | `engineering-integrity-and-evidence` |
 | **Talent Search & Discovery** | `frontend/src/app/search/`, `src/components/organisms/search/` | `fe-page-search` | `engineering-integrity-and-evidence` |
 | **Public Candidate Profile** | `frontend/src/app/public/[username]/` | `fe-page-public-profile` | `fe-section-workspace-pitch-player` |
@@ -128,7 +141,22 @@ When modifying a department, the agent must check and verify all downstream depe
 
 ---
 
-## 5. POST-FEATURE LEARNING & ANTI-REGRESSION PROTOCOL
+## 5. THE DUAL-KEY INDEPENDENT REVIEWER GATE
+
+To ensure the CTO is not bogged down with manual code verification, every task undergoes an adversarial peer review:
+
+1. **Frontend Isolation:**
+   - Any PR affecting `frontend/src/` must be reviewed by an agent running the `fe-reviewer-guidelines` skill.
+   - Reviewer audits Atomic Design sizing (< 350 lines), zero arbitrary hex tokens, leaf-node canvas isolation for 60fps VU meters, and strict zero-any TypeScript.
+2. **Backend Isolation:**
+   - Any PR affecting `backend/app/` must be reviewed by an agent running the `be-reviewer-guidelines` skill.
+   - Reviewer audits Clean 4-Layer purity, AnyIO non-blocking event-loop safety, IDOR ownership guards, and pessimistic locking.
+3. **Two-Key Approval Rule:**
+   - A full-stack feature touching both FE and BE requires **both Reviewers to emit formal APPROVAL** before the Chief Architect gives final sign-off.
+
+---
+
+## 6. POST-FEATURE LEARNING & ANTI-REGRESSION PROTOCOL
 
 1. **Self-Updating Knowledge Rule:**
    - After successfully implementing a new feature, the agent MUST inspect the relevant department skill in `.agents/skills/` and update any newly introduced contracts, parameters, or behaviors.
@@ -140,7 +168,7 @@ When modifying a department, the agent must check and verify all downstream depe
 
 ---
 
-## 6. MANDATORY PROOF BLOCK SPECIFICATION
+## 7. MANDATORY PROOF BLOCK SPECIFICATION
 
 Before closing any ticket, the agent must emit verified proof:
 
@@ -150,5 +178,8 @@ Before closing any ticket, the agent must emit verified proof:
 2. **Exit Code:** `0`
 3. **Log Proof:** `[Verified unedited output displaying test suite pass]`
 4. **Compiler Proof:** `cd frontend && bun x tsc --noEmit` ➔ `Exit Code: 0`
-5. **Department Skill Updated:** `[Updated file path with brief summary of new knowledge]`
+5. **Reviewer Approvals:**
+   - Frontend Review: APPROVED by Senior Frontend Lead Reviewer
+   - Backend Review: APPROVED by Principal Backend Lead Reviewer
+6. **Department Skill Updated:** `[Updated file path with brief summary of new knowledge]`
 ```
