@@ -1,6 +1,6 @@
 ---
 name: be-patterns-and-practices
-description: Authoritative Technical Standard & Master Design Patterns for Senior Backend Engineers. Enforces zero-compromise best practices across Clean 4-Layer Architecture, Repository & Unit of Work, Pessimistic Row Locking, CQRS with GIN indexing, AnyIO non-blocking event-loop safety, and Argon2id/Token Vault security.
+description: Authoritative Technical Standard & Master Design Patterns for Senior Backend Engineers. Enforces zero-compromise best practices across Clean 4-Layer Architecture, Repository & Unit of Work, Pessimistic Row Locking, CQRS with GIN indexing, AnyIO non-blocking event-loop safety, and GoF Creational, Structural, and Behavioral patterns (Adapter, Strategy, Factory, Decorator, Chain of Responsibility).
 ---
 
 # ⚙️ SENIOR BACKEND ENGINEER — PRODUCTION PATTERNS & STANDARDS
@@ -34,7 +34,7 @@ Every backend domain service must strictly implement the 4-tier separation. Fat 
 ┌─────────────────────────────────────────────────────────────┐
 │ 3. DOMAIN SERVICE LAYER                                     │
 │ • 100% Pure Business Logic, calculation, authorization      │
-│ • Inforces IDOR guards: current_user.id == target.owner_id  │
+│ • Enforces IDOR guards: current_user.id == target.owner_id  │
 │ • Orchestrates Unit of Work & Transaction Boundaries        │
 └──────────────────────────────┬──────────────────────────────┘
                                ▼
@@ -73,12 +73,9 @@ Every backend domain service must strictly implement the 4-tier separation. Fat 
   # Usage in Domain Service:
   async def reorder_and_record_experience(self, user_id: uuid.UUID, payload: ReorderPayload):
       async with self.uow as uow:
-          # Verify ownership (IDOR guard)
           profile = await uow.profile_repo.get_by_user_id(user_id)
           if not profile:
               raise NotFoundException("Profile not found")
-          
-          # Execute mutations within atomic transaction
           await uow.timeline_repo.reorder_items(profile.id, payload.from_index, payload.to_index)
   ```
 
@@ -116,7 +113,6 @@ Every backend domain service must strictly implement the 4-tier separation. Fat 
 * **The Rule:** Full-text discovery must read from pre-computed `tsvector` columns indexed with GIN. Never execute `ILIKE '%...%'` across full tables.
 * **Best Practice Blueprint:**
   ```sql
-  -- Schema definition with generated TSVECTOR column and GIN Index
   ALTER TABLE candidates 
   ADD COLUMN search_vector tsvector 
   GENERATED ALWAYS AS (
@@ -163,7 +159,181 @@ Every backend domain service must strictly implement the 4-tier separation. Fat 
 
 ---
 
-## 6. IDENTITY & TOKEN VAULT SECURITY PATTERNS
+## 6. STRUCTURAL PATTERN: ADAPTER PATTERN (PLUGGABLE INFRASTRUCTURE)
+
+* **Technical Definition:** Converts the interface of an external third-party service or infrastructure driver into an interface expected by the domain layer, decoupling domain services from vendor lock-in.
+* **When to Use:** File storage (Local Disk vs. AWS S3 vs. Cloudflare R2), email delivery (SendGrid vs. SES), media transcoders.
+* **Best Practice Blueprint:**
+  ```python
+  from abc import ABC, abstractmethod
+
+  class StorageAdapter(ABC):
+      @abstractmethod
+      async def upload_file(self, file_bytes: bytes, destination_path: str) -> str:
+          """Upload file and return public access URL."""
+          pass
+
+      @abstractmethod
+      async def delete_file(self, file_path: str) -> bool:
+          """Delete file from storage."""
+          pass
+
+  class LocalDiskStorageAdapter(StorageAdapter):
+      def __init__(self, base_dir: Path):
+          self.base_dir = base_dir
+
+      async def upload_file(self, file_bytes: bytes, destination_path: str) -> str:
+          target = self.base_dir / destination_path
+          target.parent.mkdir(parents=True, exist_ok=True)
+          await anyio.to_thread.run_sync(target.write_bytes, file_bytes)
+          return f"/uploads/{destination_path}"
+
+  class S3StorageAdapter(StorageAdapter):
+      def __init__(self, bucket_name: str, s3_client):
+          self.bucket = bucket_name
+          self.client = s3_client
+
+      async def upload_file(self, file_bytes: bytes, destination_path: str) -> str:
+          await self.client.put_object(Bucket=self.bucket, Key=destination_path, Body=file_bytes)
+          return f"https://{self.bucket}.s3.amazonaws.com/{destination_path}"
+  ```
+* **Rejection Trigger:** Importing `boto3` or directly using raw file paths in domain services.
+
+---
+
+## 7. BEHAVIORAL PATTERN: STRATEGY PATTERN (INTERCHANGEABLE ALGORITHMS)
+
+* **Technical Definition:** Defines a family of algorithms, encapsulates each one, and makes them interchangeable at runtime without modifying the client code.
+* **When to Use:** Search ranking algorithms (FTS vs Trigram), Password hashing strategies (Argon2id vs Legacy Bcrypt migration), Video encoding bitrates.
+* **Best Practice Blueprint:**
+  ```python
+  class SearchRankingStrategy(ABC):
+      @abstractmethod
+      def apply_ranking(self, query: Select, term: str) -> Select:
+          pass
+
+  class FullTextSearchStrategy(SearchRankingStrategy):
+      def apply_ranking(self, query: Select, term: str) -> Select:
+          tsquery = func.plainto_tsquery("english", term)
+          return query.where(Candidate.search_vector.op("@@")(tsquery)).order_by(
+              func.ts_rank_cd(Candidate.search_vector, tsquery).desc()
+          )
+
+  class TrigramFuzzyStrategy(SearchRankingStrategy):
+      def apply_ranking(self, query: Select, term: str) -> Select:
+          return query.where(
+              or_(
+                  Candidate.first_name.op("%")(term),
+                  Candidate.last_name.op("%")(term)
+              )
+          ).order_by(func.similarity(Candidate.first_name, term).desc())
+  ```
+
+---
+
+## 8. STRUCTURAL PATTERN: DECORATOR PATTERN (CROSS-CUTTING CONCERNS)
+
+* **Technical Definition:** Dynamically attaches additional responsibilities (metrics, execution latency logging, automated retry) to a function without modifying its signature.
+* **When to Use:** Audit trails, latency timing, connection retry policies.
+* **Best Practice Blueprint:**
+  ```python
+  from functools import wraps
+  import time
+  import structlog
+
+  logger = structlog.get_logger()
+
+  def track_latency(operation_name: str):
+      def decorator(func):
+          @wraps(func)
+          async def wrapper(*args, **kwargs):
+              start_time = time.perf_counter()
+              try:
+                  return await func(*args, **kwargs)
+              finally:
+                  elapsed_ms = (time.perf_counter() - start_time) * 1000
+                  logger.info("operation_timed", operation=operation_name, latency_ms=round(elapsed_ms, 2))
+          return wrapper
+      return decorator
+
+  # Application:
+  @track_latency("talent_search_query")
+  async def search_candidates(self, query_str: str) -> List[Candidate]:
+      ...
+  ```
+
+---
+
+## 9. BEHAVIORAL PATTERN: CHAIN OF RESPONSIBILITY (REQUEST PIPELINE)
+
+* **Technical Definition:** Passes a request along a chain of potential handlers, allowing each handler to either process the request, apply security checks, or pass it to the next handler in the chain.
+* **When to Use:** Request security pipelines, multi-layer authorization (Auth ➔ RateLimit ➔ IDOR Guard ➔ Payload Sanitizer).
+* **Best Practice Blueprint:**
+  ```python
+  class RequestHandler(ABC):
+      def __init__(self, next_handler: Optional['RequestHandler'] = None):
+          self._next_handler = next_handler
+
+      async def handle(self, context: SecurityContext) -> None:
+          await self.process(context)
+          if self._next_handler:
+              await self._next_handler.handle(context)
+
+      @abstractmethod
+      async def process(self, context: SecurityContext) -> None:
+          pass
+
+  class AuthenticationGuard(RequestHandler):
+      async def process(self, context: SecurityContext) -> None:
+          if not context.user_id:
+              raise HTTPException(status_code=401, detail="Unauthenticated")
+
+  class IDOROwnershipGuard(RequestHandler):
+      async def process(self, context: SecurityContext) -> None:
+          if context.user_id != context.resource_owner_id and not context.is_admin:
+              raise HTTPException(status_code=403, detail="Access denied: IDOR violation")
+  ```
+
+---
+
+## 10. CREATIONAL PATTERNS: ABSTRACT FACTORY & BUILDER
+
+1. **Factory Method (Database & Session Instantiation):**
+   * Encapsulates connection pooling and session options (`expire_on_commit=False` for Async SQLAlchemy):
+   ```python
+   class AsyncDatabaseSessionFactory:
+       def __init__(self, database_url: str):
+           self.engine = create_async_engine(database_url, pool_size=20, max_overflow=10)
+           self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
+
+       def create_session(self) -> AsyncSession:
+           return self.session_factory()
+   ```
+
+2. **Builder Pattern (Dynamic SQL Query Builders):**
+   * Incrementally constructs complex multi-predicate queries without string concatenation:
+   ```python
+   class CandidateSearchQueryBuilder:
+       def __init__(self):
+           self.query = select(Candidate).where(Candidate.is_hidden.is_(False))
+
+       def with_location(self, location: Optional[str]):
+           if location:
+               self.query = self.query.where(Candidate.location.ilike(f"%{location}%"))
+           return self
+
+       def with_seeking_status(self, status: Optional[str]):
+           if status:
+               self.query = self.query.where(Candidate.seeking_status == status)
+           return self
+
+       def build(self) -> Select:
+           return self.query
+   ```
+
+---
+
+## 11. IDENTITY & TOKEN VAULT SECURITY PATTERNS
 
 1. **Password Hashing:** Argon2id with strict parameters (Memory cost: 65,536 KiB, Time cost: 3 iterations, Parallelism: 4 threads).
 2. **JWT Token Family Replay Protection:**
@@ -174,10 +344,12 @@ Every backend domain service must strictly implement the 4-tier separation. Fat 
 
 ---
 
-## 7. REJECTION CHECKLIST FOR SENIOR BACKEND CODE
+## 12. REJECTION CHECKLIST FOR SENIOR BACKEND CODE
 
 Before submitting any code for review, verify:
 - [ ] Clean 4-Layer structure strictly preserved (zero SQL in routers).
+- [ ] Third-party I/O (S3, disk, transcoders) abstracted behind an **Adapter**.
+- [ ] Multi-criteria filters constructed via **Query Builder**, not raw string concatenation.
 - [ ] All database writes modifying multiple records run within a Unit of Work transaction.
 - [ ] Sequence order shifts are guarded by `.with_for_update()`.
 - [ ] All synchronous disk I/O and PDF compilation are wrapped in `anyio.to_thread.run_sync()`.

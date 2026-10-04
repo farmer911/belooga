@@ -1,6 +1,6 @@
 ---
 name: fe-patterns-and-practices
-description: Authoritative Technical Standard & Master Design Patterns for Senior Frontend Engineers. Enforces zero-compromise best practices across Atomic Design sizing, Headless UI, 4-Tier State Segregation, 60fps Leaf-Node Canvas Isolation, 3-Tier Design Tokens via CVA, and WCAG 2.1 AA Accessibility.
+description: Authoritative Technical Standard & Master Design Patterns for Senior Frontend Engineers. Enforces zero-compromise best practices across Atomic Design sizing, Headless UI, 4-Tier State Segregation, 60fps Leaf-Node Canvas Isolation, 3-Tier Design Tokens via CVA, WCAG 2.1 AA Accessibility, and GoF patterns (Adapter/Mapper, Finite State Machine, Command Pattern, Proxy/Interceptor).
 ---
 
 # 🎨 SENIOR FRONTEND ENGINEER — PRODUCTION PATTERNS & STANDARDS
@@ -50,48 +50,220 @@ Every frontend file must strictly adhere to the **Atomic Design Hierarchy**. Com
 
 ---
 
-## 2. HEADLESS UI & INVERSION OF CONTROL (IoC) PATTERN
+## 2. STRUCTURAL PATTERN: ADAPTER / MAPPER PATTERN (DTO TO VIEWMODEL)
 
-* **The Rule:** Presentation components must never contain device I/O, WebRTC, MediaRecorder, speech synthesis, or complex timers. All non-visual state machines must reside in **Custom Hooks**.
+* **Technical Definition:** A translation layer that normalizes raw backend API responses (snake_case, nullable database fields) into clean, type-safe Frontend ViewModels (camelCase, deterministic fallbacks).
+* **The Problem It Solves:** Prevents frontend crashes caused by missing fields (`Cannot read properties of undefined`) and isolates the UI from backend schema migrations.
 * **Best Practice Blueprint:**
-  ```tsx
-  // /hooks/use-media-recorder.ts (Headless Logic Engine)
-  export function useMediaRecorder({ maxDurationSec = 30 }: UseMediaRecorderOptions) {
-    const [status, setStatus] = useState<RecorderStatus>("idle");
-    const [duration, setDuration] = useState(0);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
-
-    const startRecording = useCallback(async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      if (videoPreviewRef.current) videoPreviewRef.current.srcObject = stream;
-      // Initialize MediaRecorder...
-      setStatus("recording");
-    }, []);
-
-    const stopRecording = useCallback(() => {
-      mediaRecorderRef.current?.stop();
-      setStatus("stopped");
-    }, []);
-
-    return { status, duration, videoPreviewRef, startRecording, stopRecording };
+  ```typescript
+  // /types/candidate.dto.ts (Raw Backend Response)
+  export interface CandidateProfileDTO {
+    id: string;
+    identity_id: string;
+    first_name: string;
+    last_name: string;
+    headline: string | null;
+    avatar_url: string | null;
+    is_hidden: boolean;
   }
 
-  // /components/organisms/video-studio-section.tsx (Pure View Component)
-  export function VideoStudioSection() {
-    const { status, duration, videoPreviewRef, startRecording, stopRecording } = useMediaRecorder({ maxDurationSec: 30 });
-    return (
-      <Card className="p-6">
-        <video ref={videoPreviewRef} autoPlay playsInline muted className="w-full rounded-lg" />
-        <StudioControls status={status} duration={duration} onStart={startRecording} onStop={stopRecording} />
-      </Card>
-    );
+  // /types/candidate.vm.ts (Frontend ViewModel)
+  export interface CandidateProfileViewModel {
+    id: string;
+    fullName: string;
+    headline: string;
+    avatarUrl: string;
+    isVisible: boolean;
+  }
+
+  // /adapters/candidate.adapter.ts
+  export function toCandidateViewModel(dto: CandidateProfileDTO): CandidateProfileViewModel {
+    return {
+      id: dto.id,
+      fullName: `${dto.first_name} ${dto.last_name}`.trim() || "Anonymous Candidate",
+      headline: dto.headline ?? "Open to opportunities",
+      avatarUrl: dto.avatar_url ?? "/images/default-avatar.svg",
+      isVisible: !dto.is_hidden,
+    };
+  }
+  ```
+* **Rejection Trigger:** Consuming raw `snake_case` DTO properties directly inside leaf UI components.
+
+---
+
+## 3. BEHAVIORAL PATTERN: FINITE STATE MACHINE (FSM) PATTERN
+
+* **Technical Definition:** Models component behavior as a finite set of discrete states, with explicit allowed transitions triggered by specific events.
+* **The Problem It Solves:** Eliminates "impossible UI states" caused by multiple boolean flags (e.g. `isLoading: true` and `isError: true` occurring simultaneously).
+* **Best Practice Blueprint (WebRTC Video Studio FSM):**
+  ```typescript
+  export type StudioState =
+    | { status: "idle" }
+    | { status: "requesting_devices" }
+    | { status: "device_ready"; stream: MediaStream }
+    | { status: "recording"; stream: MediaStream; durationSec: number }
+    | { status: "paused"; stream: MediaStream; durationSec: number }
+    | { status: "transcoding"; blob: Blob }
+    | { status: "uploading"; progress: number }
+    | { status: "completed"; videoUrl: string }
+    | { status: "error"; message: string };
+
+  export type StudioAction =
+    | { type: "INIT_DEVICES" }
+    | { type: "DEVICES_GRANTED"; stream: MediaStream }
+    | { type: "START_RECORDING" }
+    | { type: "TICK" }
+    | { type: "STOP_RECORDING"; blob: Blob }
+    | { type: "UPLOAD_PROGRESS"; progress: number }
+    | { type: "UPLOAD_SUCCESS"; videoUrl: string }
+    | { type: "FAIL"; error: string };
+
+  export function studioReducer(state: StudioState, action: StudioAction): StudioState {
+    switch (state.status) {
+      case "idle":
+        if (action.type === "INIT_DEVICES") return { status: "requesting_devices" };
+        break;
+      case "requesting_devices":
+        if (action.type === "DEVICES_GRANTED") return { status: "device_ready", stream: action.stream };
+        if (action.type === "FAIL") return { status: "error", message: action.error };
+        break;
+      case "device_ready":
+        if (action.type === "START_RECORDING") return { status: "recording", stream: state.stream, durationSec: 0 };
+        break;
+      case "recording":
+        if (action.type === "TICK") return { ...state, durationSec: state.durationSec + 1 };
+        if (action.type === "STOP_RECORDING") return { status: "transcoding", blob: action.blob };
+        break;
+      // Additional deterministic transitions...
+    }
+    return state;
   }
   ```
 
 ---
 
-## 3. 4-TIER STATE SEGREGATION PROTOCOL
+## 4. BEHAVIORAL PATTERN: COMMAND PATTERN (UNDO / REDO)
+
+* **Technical Definition:** Encapsulates a UI mutation as an object containing all information necessary to execute the action or revert (undo) it.
+* **When to Use:** Career timeline drag-and-drop reordering, accidental skill badge deletions, form section reverts.
+* **Best Practice Blueprint:**
+  ```typescript
+  export interface Command {
+    execute(): Promise<void>;
+    undo(): Promise<void>;
+  }
+
+  export class ReorderTimelineCommand implements Command {
+    constructor(
+      private timelineService: TimelineService,
+      private profileId: string,
+      private fromIndex: number,
+      private toIndex: number
+    ) {}
+
+    async execute(): Promise<void> {
+      await this.timelineService.reorder(this.profileId, this.fromIndex, this.toIndex);
+    }
+
+    async undo(): Promise<void> {
+      await this.timelineService.reorder(this.profileId, this.toIndex, this.fromIndex);
+    }
+  }
+
+  export class CommandHistoryManager {
+    private undoStack: Command[] = [];
+    private redoStack: Command[] = [];
+
+    async executeCommand(cmd: Command): Promise<void> {
+      await cmd.execute();
+      this.undoStack.push(cmd);
+      this.redoStack = [];
+    }
+
+    async undo(): Promise<void> {
+      const cmd = this.undoStack.pop();
+      if (cmd) {
+        await cmd.undo();
+        this.redoStack.push(cmd);
+      }
+    }
+  }
+  ```
+
+---
+
+## 5. STRUCTURAL PATTERN: PROXY / INTERCEPTOR PATTERN (SILENT TOKEN REFRESH)
+
+* **Technical Definition:** Intercepts outgoing HTTP requests and incoming responses to transparently handle cross-cutting network concerns.
+* **When to Use:** Authentication expiration: catching `401 Unauthorized`, pausing downstream requests, refreshing the JWT via `/auth/refresh`, and silently replaying the original request.
+* **Best Practice Blueprint:**
+  ```typescript
+  let isRefreshing = false;
+  let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+
+  apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then((token) => {
+            originalRequest.headers["Authorization"] = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const { accessToken } = await refreshAuthToken();
+          useAuthStore.getState().setAccessToken(accessToken);
+          failedQueue.forEach((prom) => prom.resolve(accessToken));
+          failedQueue = [];
+          originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
+          return apiClient(originalRequest);
+        } catch (refreshErr) {
+          failedQueue.forEach((prom) => prom.reject(refreshErr));
+          failedQueue = [];
+          useAuthStore.getState().logout();
+          return Promise.reject(refreshErr);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+  ```
+
+---
+
+## 6. STRUCTURAL PATTERN: POLYMORPHIC COMPONENT PATTERN (`asChild`)
+
+* **Technical Definition:** Enables a component to forward its styles, behavior, and accessibility props to an alternative child element (e.g. rendering a `<Button>` as a Next.js `<Link>`) without DOM wrapper duplication.
+* **Best Practice Blueprint (Radix Slot Composition):**
+  ```tsx
+  import { Slot } from "@radix-ui/react-slot";
+  import { cva, type VariantProps } from "class-variance-authority";
+
+  export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+    asChild?: boolean;
+  }
+
+  export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ className, variant, size, asChild = false, ...props }, ref) => {
+      const Comp = asChild ? Slot : "button";
+      return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    }
+  );
+  ```
+
+---
+
+## 7. 4-TIER STATE SEGREGATION PROTOCOL
 
 State must be categorized into one of 4 strict tiers. Mixing tiers is an immediate rejection trigger:
 
@@ -104,7 +276,7 @@ State must be categorized into one of 4 strict tiers. Mixing tiers is an immedia
 
 ---
 
-## 4. 60FPS LEAF-NODE ISOLATION PATTERN
+## 8. 60FPS LEAF-NODE ISOLATION PATTERN
 
 * **The Invariant:** High-frequency audio/visual telemetry must NEVER trigger reconciliation on parent components or siblings.
 * **Canvas VU Meter Blueprint:**
@@ -148,66 +320,17 @@ State must be categorized into one of 4 strict tiers. Mixing tiers is an immedia
 
 ---
 
-## 5. OPTIMISTIC UI MUTATIONS WITH AUTOMATIC ROLLBACK
-
-* **The Invariant:** Every user mutation (delete, reorder, toggle) must render instantly in 0ms, backed by automatic rollback if the backend rejects the request.
-* **Implementation Standard:**
-  ```tsx
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: (skillId: string) => api.deleteSkill(skillId),
-    onMutate: async (skillId) => {
-      await queryClient.cancelQueries({ queryKey: ["skills", username] });
-      const previousSkills = queryClient.getQueryData<Skill[]>(["skills", username]);
-      queryClient.setQueryData<Skill[]>(["skills", username], (old = []) =>
-        old.filter((s) => s.id !== skillId)
-      );
-      return { previousSkills };
-    },
-    onError: (_err, _skillId, context) => {
-      if (context?.previousSkills) {
-        queryClient.setQueryData(["skills", username], context.previousSkills);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["skills", username] });
-    },
-  });
-  ```
-
----
-
-## 6. DESIGN SYSTEM INTEGRATION & ZERO ARBITRARY TOKENS
+## 9. DESIGN SYSTEM INTEGRATION & ZERO ARBITRARY TOKENS
 
 1. **3-Tier Design Tokens:**
    * Tier 1: Primitive (`colors.blue.500`) ➔ Tier 2: Semantic (`color.brand.primary`) ➔ Tier 3: Component (`button.primary.bg`).
    * **STRICT PROHIBITION:** Arbitrary Tailwind hex classes like `bg-[#0f172a]`, `text-[#ffffff]`, `w-[54px]`. Only semantic tokens (`bg-surface-elevated`, `text-primary`) are permitted.
 2. **Component Variance Authority (CVA):**
-   * Reusable atoms and molecules must define variants using CVA:
-   ```typescript
-   export const buttonVariants = cva(
-     "inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50",
-     {
-       variants: {
-         variant: {
-           primary: "bg-brand-primary text-white hover:bg-brand-primary/90",
-           outline: "border border-border-subtle bg-transparent hover:bg-surface-muted",
-           ghost: "hover:bg-surface-muted hover:text-text-primary",
-         },
-         size: {
-           sm: "h-8 px-3 text-xs rounded-md",
-           md: "h-10 px-4 text-sm rounded-lg",
-           lg: "h-12 px-6 text-base rounded-xl",
-         },
-       },
-       defaultVariants: { variant: "primary", size: "md" },
-     }
-   );
-   ```
+   * Reusable atoms and molecules must define variants using CVA.
 
 ---
 
-## 7. ACCESSIBILITY (WCAG 2.1 AA) INVARIANTS
+## 10. ACCESSIBILITY (WCAG 2.1 AA) INVARIANTS
 
 1. **Focus Trapping:** Active dialogs/modals must trap keyboard focus (`Tab` / `Shift+Tab`) within the modal boundary.
 2. **Keyboard Escapability:** Pressing `Escape` must dismiss any active modal, popover, or dropdown.
@@ -216,9 +339,11 @@ State must be categorized into one of 4 strict tiers. Mixing tiers is an immedia
 
 ---
 
-## 8. REJECTION CHECKLIST FOR SENIOR FRONTEND CODE
+## 11. REJECTION CHECKLIST FOR SENIOR FRONTEND CODE
 
 Before submitting any code for review, verify:
+- [ ] Raw API DTOs are mapped through an **Adapter** into ViewModels before reaching UI components.
+- [ ] Complex multi-stage asynchronous interactions implement a **Finite State Machine**.
 - [ ] Component is under line limit: Atoms <50, Molecules <100, Organisms <300, Pages <100 LOC.
 - [ ] Page component contains zero inline layout DOM or raw HTML tags.
 - [ ] No high-frequency telemetry exists in React `useState`.
