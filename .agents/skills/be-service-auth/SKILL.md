@@ -22,7 +22,7 @@ This department owns the security perimeter of Belooga: credentials management, 
 | Dependency Direction | Department | Interface & Contract |
 | :--- | :--- | :--- |
 | **Downstream (Outputs to)** | `be-service-profile` | Identity creation automatically provisions a row in `candidate_profiles` linked via `identity_id` |
-| **Downstream (Outputs to)** | `fe-page-auth` | Serves `/v1/users/login/`, `/v1/users/register/`, `/v1/users/refresh/` |
+| **Downstream (Outputs to)** | `fe-page-auth` | Serves `/v1/auth/login/`, `/v1/users/register/`, `/v1/auth/refresh/` |
 | **Upstream (Depends on)** | `identities` table | Master primary key UUID identifying all actors in the platform |
 
 ---

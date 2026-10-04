@@ -540,9 +540,9 @@
     "semantic_hash": ""
   },
   "frontend/src/app/user/[username]/page.tsx": {
-    "mtime": 1791095469.8556454,
-    "seen": 1791095570.1381361,
-    "ast_hash": "f4ef4dea9271395dfb1e81150965af38",
+    "mtime": 1791096516.4606612,
+    "seen": 1791096714.423913,
+    "ast_hash": "c774b5d2f75dbff707ed942fd898368b",
     "semantic_hash": ""
   },
   "frontend/src/components/layout/Footer.tsx": {
@@ -600,8 +600,8 @@
     "semantic_hash": ""
   },
   "qc/test-results/.last-run.json": {
-    "mtime": 1791095559.1130528,
-    "seen": 1791095570.138358,
+    "mtime": 1791096581.0139825,
+    "seen": 1791096714.424101,
     "ast_hash": "f196824657d8858bc7fa44eecbba38b1",
     "semantic_hash": ""
   },
@@ -708,9 +708,9 @@
     "semantic_hash": ""
   },
   "qc/playwright-report/index.html": {
-    "mtime": 1791095559.1124167,
-    "seen": 1791095570.139023,
-    "ast_hash": "9d41fe99b62af0c2a9c01e05d9173e9a",
+    "mtime": 1791096581.0133493,
+    "seen": 1791096714.424771,
+    "ast_hash": "7f353c6d62614675668b43fc22756e31",
     "semantic_hash": ""
   },
   "frontend/public/file.svg": {
@@ -978,9 +978,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/media.py": {
-    "mtime": 1791071473.7905424,
-    "seen": 1791071995.339096,
-    "ast_hash": "58a5435c7bcae24c13adc4d0e61688e0",
+    "mtime": 1791096440.8801827,
+    "seen": 1791096714.4234838,
+    "ast_hash": "d2e3b0792dd3eae3d4f7f94228c93dfa",
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/search.py": {
@@ -1056,9 +1056,9 @@
     "semantic_hash": ""
   },
   "frontend/src/app/public/[username]/page.tsx": {
-    "mtime": 1791070324.8335962,
-    "seen": 1791070415.987966,
-    "ast_hash": "1e35073e80237fdd1845694c87e5f1d9",
+    "mtime": 1791096539.144711,
+    "seen": 1791096714.423897,
+    "ast_hash": "26f9f4cc49b53d5444bee3aa743e2dce",
     "semantic_hash": ""
   },
   "frontend/src/app/search/page.tsx": {
@@ -1845,6 +1845,72 @@
     "mtime": 1791094596.91281,
     "seen": 1791095570.142051,
     "ast_hash": "4b56cbdc5538cf0f7e05c1f09cfe8076",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_poster_1791095729.jpg": {
+    "mtime": 1791095729.8311775,
+    "seen": 1791096714.4249358,
+    "ast_hash": "0e99fa768ea1d3321ce0d8544c4b831f",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791096560.webm": {
+    "mtime": 1791096560.0856817,
+    "seen": 1791096714.427752,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791096569.webm": {
+    "mtime": 1791096569.4318142,
+    "seen": 1791096714.427753,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791096573.webm": {
+    "mtime": 1791096573.2853208,
+    "seen": 1791096714.427754,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791096577.webm": {
+    "mtime": 1791096577.0941195,
+    "seen": 1791096714.427754,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791071068.mp4": {
+    "mtime": 1791096417.2046452,
+    "seen": 1791096714.427791,
+    "ast_hash": "697ec0ea1e2b55aa16f5408c35ab3711",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791072930.mp4": {
+    "mtime": 1791096418.9032214,
+    "seen": 1791096714.427806,
+    "ast_hash": "a7a76254b5474c9162489324ddffcf46",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791094596.mp4": {
+    "mtime": 1791096422.1628292,
+    "seen": 1791096714.427822,
+    "ast_hash": "9d244f4e2bea2b1696087f6e67e2175a",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791095729.mp4": {
+    "mtime": 1791096227.3812883,
+    "seen": 1791096714.427836,
+    "ast_hash": "aea119f6b062200da5e5b1ec6bfaa101",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791095729.webm": {
+    "mtime": 1791095729.7501106,
+    "seen": 1791096714.427836,
+    "ast_hash": "c830653243eb5b22ac6bb72b35ae4ba3",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/test.mp4": {
+    "mtime": 1791096002.9020627,
+    "seen": 1791096714.427837,
+    "ast_hash": "aea119f6b062200da5e5b1ec6bfaa101",
     "semantic_hash": ""
   }
 }

@@ -25,27 +25,17 @@ async def search_candidates(
                    ts_rank(p.search_vector, plainto_tsquery('english', :q)) AS rank
             FROM candidate_profiles p
             WHERE p.is_hidden = FALSE
-              AND (
-                p.search_vector @@ plainto_tsquery('english', :q)
-                OR p.first_name ILIKE :wildcard
-                OR p.last_name ILIKE :wildcard
-                OR p.headline ILIKE :wildcard
-              )
+              AND p.search_vector @@ plainto_tsquery('english', :q)
             ORDER BY rank DESC, p.created_at DESC
             LIMIT :limit OFFSET :offset
         """)
         count_query = text("""
             SELECT COUNT(*) FROM candidate_profiles p
             WHERE p.is_hidden = FALSE
-              AND (
-                p.search_vector @@ plainto_tsquery('english', :q)
-                OR p.first_name ILIKE :wildcard
-                OR p.last_name ILIKE :wildcard
-                OR p.headline ILIKE :wildcard
-              )
+              AND p.search_vector @@ plainto_tsquery('english', :q)
         """)
-        params = {"q": clean_key, "wildcard": f"%{clean_key}%", "limit": limit, "offset": offset}
-        count_params = {"q": clean_key, "wildcard": f"%{clean_key}%"}
+        params = {"q": clean_key, "limit": limit, "offset": offset}
+        count_params = {"q": clean_key}
     else:
         query = text("""
             SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.location,

@@ -15,9 +15,12 @@ description: Authoritative Department Skill for the Talent Discovery & Candidate
 
 The Search Department enables recruiters, hiring managers, and visitors to discover top-tier candidate profiles through keyword matching, location filtering, and technical skill taxonomy.
 
-### Component Hierarchy & Section Decomposition:
+### Target Component Hierarchy & Section Decomposition:
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER PAGE SHELL
+> The tree below represents the planned Atomic Design decomposition. In the current production codebase, search logic and results are implemented inside `frontend/src/app/search/page.tsx`.
+
 ```
-frontend/src/app/search/page.tsx (Page Shell & Suspense Boundary)
+frontend/src/app/search/page.tsx (Page Shell & Current Unified Implementation)
 │
 ├── 1. SearchBarSection (`src/components/organisms/search/search-bar-section.tsx`)
 │      └── Primary input, clear button, debounced autocomplete dropdown

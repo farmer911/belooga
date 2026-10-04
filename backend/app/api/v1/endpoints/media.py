@@ -2,6 +2,11 @@ import os
 import io
 import time
 import shutil
+import asyncio
+import subprocess
+import re
+import uuid
+import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status, Response
 from pydantic import BaseModel
@@ -9,6 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from app.core.database import get_db
+from app.core.security import get_current_user, AuthenticatedUser, verify_profile_owner
+
+logger = logging.getLogger(__name__)
 
 # ReportLab for real PDF generation
 from reportlab.lib.pagesizes import letter
@@ -18,7 +26,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 
 router = APIRouter()
 
-UPLOAD_BASE = "/app/uploads"
+DEFAULT_UPLOAD_BASE = (
+    "/app/uploads"
+    if os.path.exists("/app") and os.access("/app", os.W_OK)
+    else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "uploads"))
+)
+UPLOAD_BASE = os.getenv("UPLOAD_DIR", DEFAULT_UPLOAD_BASE)
 AVATARS_DIR = os.path.join(UPLOAD_BASE, "avatars")
 RESUMES_DIR = os.path.join(UPLOAD_BASE, "resumes")
 VIDEOS_DIR = os.path.join(UPLOAD_BASE, "videos")
@@ -26,6 +39,62 @@ CHUNKS_DIR = os.path.join(UPLOAD_BASE, "chunks")
 
 for d in [AVATARS_DIR, RESUMES_DIR, VIDEOS_DIR, CHUNKS_DIR]:
     os.makedirs(d, exist_ok=True)
+
+UPLOAD_ID_REGEX = re.compile(r"^upload_\d+_[a-zA-Z0-9]+$")
+
+
+def get_validated_upload_dir(upload_id: str, user_id: Optional[uuid.UUID] = None) -> str:
+    """Strictly validates upload_id against path traversal attacks and scopes by user."""
+    if not UPLOAD_ID_REGEX.match(upload_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid upload session identifier format"
+        )
+    base_dir = os.path.join(CHUNKS_DIR, str(user_id)) if user_id else CHUNKS_DIR
+    os.makedirs(base_dir, exist_ok=True)
+    chunks_base_real = os.path.realpath(base_dir)
+    resolved_path = os.path.realpath(os.path.join(base_dir, upload_id))
+    if not resolved_path.startswith(chunks_base_real + os.sep):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Path traversal attempt detected"
+        )
+    return resolved_path
+
+
+def _write_bytes_sync(path: str, data: bytes) -> None:
+    with open(path, "wb") as f:
+        f.write(data)
+
+
+async def write_bytes_async(path: str, data: bytes) -> None:
+    await asyncio.to_thread(_write_bytes_sync, path, data)
+
+
+def _assemble_chunks_sync(upload_dir: str, target_path: str, total_chunks: int) -> None:
+    with open(target_path, "wb") as outfile:
+        for idx in range(total_chunks):
+            chunk_filename = f"chunk_{idx:05d}"
+            chunk_path = os.path.join(upload_dir, chunk_filename)
+            if not os.path.exists(chunk_path):
+                raise FileNotFoundError(f"Missing chunk index {idx}")
+            with open(chunk_path, "rb") as infile:
+                outfile.write(infile.read())
+
+
+async def assemble_chunks_async(upload_dir: str, target_path: str, total_chunks: int) -> None:
+    await asyncio.to_thread(_assemble_chunks_sync, upload_dir, target_path, total_chunks)
+
+
+def _run_cmd_sync(cmd: list, timeout: Optional[int] = None, capture_output: bool = False) -> subprocess.CompletedProcess:
+    if capture_output:
+        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
+    return subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout)
+
+
+async def run_cmd_async(cmd: list, timeout: Optional[int] = None, capture_output: bool = False) -> subprocess.CompletedProcess:
+    return await asyncio.to_thread(_run_cmd_sync, cmd, timeout=timeout, capture_output=capture_output)
+
 
 class CompleteUploadRequest(BaseModel):
     upload_id: str
@@ -40,8 +109,10 @@ class CompleteUploadRequest(BaseModel):
 async def upload_avatar(
     username: str,
     file: UploadFile = File(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    verify_profile_owner(current_user, username)
     clean_username = username.lower().strip()
     prof_res = await db.execute(
         text("SELECT id FROM candidate_profiles WHERE username = :u"),
@@ -58,9 +129,8 @@ async def upload_avatar(
     safe_filename = f"{clean_username}_{int(time.time())}{ext}"
     target_path = os.path.join(AVATARS_DIR, safe_filename)
 
-    with open(target_path, "wb") as buffer:
-        content = await file.read()
-        buffer.write(content)
+    content = await file.read()
+    await write_bytes_async(target_path, content)
 
     avatar_url = f"http://localhost:8000/uploads/avatars/{safe_filename}"
 
@@ -84,8 +154,10 @@ async def upload_avatar(
 async def upload_resume(
     username: str,
     file: UploadFile = File(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    verify_profile_owner(current_user, username)
     clean_username = username.lower().strip()
     prof_res = await db.execute(
         text("SELECT id FROM candidate_profiles WHERE username = :u"),
@@ -98,9 +170,8 @@ async def upload_resume(
     safe_filename = f"{clean_username}_resume_{int(time.time())}.pdf"
     target_path = os.path.join(RESUMES_DIR, safe_filename)
 
-    with open(target_path, "wb") as buffer:
-        content = await file.read()
-        buffer.write(content)
+    content = await file.read()
+    await write_bytes_async(target_path, content)
 
     resume_url = f"http://localhost:8000/uploads/resumes/{safe_filename}"
 
@@ -111,7 +182,12 @@ async def upload_resume(
     }
 
 @router.delete("/profile/{username}/resume/", tags=["Domain 4: Media & Uploads"])
-async def delete_resume(username: str, db: AsyncSession = Depends(get_db)):
+async def delete_resume(
+    username: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
     return {"message": "Resume PDF removed successfully"}
 
 # ============================================================================
@@ -300,7 +376,8 @@ async def generate_candidate_pdf(
     elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#d1d6da'), spaceAfter=8))
     elements.append(Paragraph("Official candidate profile verified via Belooga Talent Discovery & Video Elevator Pitch Platform © 2026", meta_style))
 
-    doc.build(elements)
+    # Non-blocking PDF document compilation
+    await asyncio.to_thread(doc.build, elements)
     pdf_bytes = pdf_buffer.getvalue()
     pdf_buffer.close()
 
@@ -322,17 +399,18 @@ async def upload_video_chunk(
     chunk_index: int = Form(...),
     total_chunks: int = Form(...),
     username: str = Form(...),
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    upload_dir = os.path.join(CHUNKS_DIR, upload_id)
+    verify_profile_owner(current_user, username)
+    upload_dir = get_validated_upload_dir(upload_id, current_user.id)
     os.makedirs(upload_dir, exist_ok=True)
 
     chunk_filename = f"chunk_{chunk_index:05d}"
     chunk_path = os.path.join(upload_dir, chunk_filename)
 
-    with open(chunk_path, "wb") as buffer:
-        content = await file.read()
-        buffer.write(content)
+    content = await file.read()
+    await write_bytes_async(chunk_path, content)
 
     return {
         "upload_id": upload_id,
@@ -345,9 +423,11 @@ async def upload_video_chunk(
 @router.post("/media/upload/complete", tags=["Domain 4: Media & Uploads"])
 async def complete_chunked_video_upload(
     payload: CompleteUploadRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    upload_dir = os.path.join(CHUNKS_DIR, payload.upload_id)
+    verify_profile_owner(current_user, payload.username)
+    upload_dir = get_validated_upload_dir(payload.upload_id, current_user.id)
     if not os.path.exists(upload_dir):
         raise HTTPException(status_code=400, detail="Invalid upload session or chunks expired")
 
@@ -360,28 +440,23 @@ async def complete_chunked_video_upload(
     if not p_row:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
-    import subprocess
     timestamp = int(time.time())
 
     # Temporary raw assembled video path
     raw_filename = f"{clean_username}_raw_{timestamp}.webm"
     raw_path = os.path.join(VIDEOS_DIR, raw_filename)
 
-    # Reassemble all chunks in numerical order
-    with open(raw_path, "wb") as outfile:
-        for idx in range(payload.total_chunks):
-            chunk_filename = f"chunk_{idx:05d}"
-            chunk_path = os.path.join(upload_dir, chunk_filename)
-            if not os.path.exists(chunk_path):
-                raise HTTPException(status_code=400, detail=f"Missing chunk index {idx}")
-            with open(chunk_path, "rb") as infile:
-                outfile.write(infile.read())
-
-    # Clean up chunk directory
+    # Reassemble all chunks in numerical order non-blockingly
     try:
-        shutil.rmtree(upload_dir)
+        await assemble_chunks_async(upload_dir, raw_path, payload.total_chunks)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Clean up chunk directory non-blockingly
+    try:
+        await asyncio.to_thread(shutil.rmtree, upload_dir)
     except Exception as e:
-        print(f"Error cleaning up chunks: {e}")
+        logger.warning(f"Error cleaning up chunks directory {upload_dir}: {e}")
 
     # Transcode to faststart streaming MP4 (Universal H.264 + AAC compatible with 100% of browsers)
     mp4_filename = f"{clean_username}_pitch_{timestamp}.mp4"
@@ -389,7 +464,7 @@ async def complete_chunked_video_upload(
     transcode_success = False
 
     try:
-        proc = subprocess.run(
+        proc = await run_cmd_async(
             [
                 "ffmpeg", "-y",
                 "-i", raw_path,
@@ -401,20 +476,18 @@ async def complete_chunked_video_upload(
                 "-movflags", "+faststart",
                 mp4_path
             ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
             timeout=45
         )
         if proc.returncode == 0 and os.path.exists(mp4_path) and os.path.getsize(mp4_path) > 0:
             transcode_success = True
     except Exception as e:
-        print(f"Error during MP4 transcode: {e}")
+        logger.warning(f"Error during MP4 transcode: {e}")
 
     if transcode_success:
         final_filename = mp4_filename
         final_path = mp4_path
         try:
-            os.remove(raw_path)
+            await asyncio.to_thread(os.remove, raw_path)
         except Exception:
             pass
     else:
@@ -422,23 +495,21 @@ async def complete_chunked_video_upload(
         final_filename = f"{clean_username}_pitch_{timestamp}.webm"
         final_path = os.path.join(VIDEOS_DIR, final_filename)
         try:
-            os.rename(raw_path, final_path)
+            await asyncio.to_thread(os.rename, raw_path, final_path)
         except Exception:
             final_path = raw_path
             final_filename = raw_filename
 
     video_url = f"http://localhost:8000/uploads/videos/{final_filename}"
 
-    # Auto-generate thumbnail poster from video via ffmpeg
+    # Auto-generate thumbnail poster from video via ffmpeg non-blockingly
     poster_filename = f"{clean_username}_poster_{timestamp}.jpg"
     poster_path = os.path.join(VIDEOS_DIR, poster_filename)
 
     try:
         # Try extracting frame at 0.5s with -update 1
-        subprocess.run(
+        await run_cmd_async(
             ["ffmpeg", "-y", "-ss", "00:00:00.500", "-i", final_path, "-vframes", "1", "-q:v", "2", "-update", "1", poster_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
             timeout=10
         )
     except Exception as e:
@@ -447,10 +518,8 @@ async def complete_chunked_video_upload(
     # Fallback to first frame if needed
     if not os.path.exists(poster_path) or os.path.getsize(poster_path) == 0:
         try:
-            subprocess.run(
+            await run_cmd_async(
                 ["ffmpeg", "-y", "-i", final_path, "-vframes", "1", "-q:v", "2", "-update", "1", poster_path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
                 timeout=10
             )
         except Exception as e:
@@ -462,11 +531,9 @@ async def complete_chunked_video_upload(
     # Extract duration in seconds
     duration_sec = 30
     try:
-        dur_proc = subprocess.run(
+        dur_proc = await run_cmd_async(
             ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", final_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
+            capture_output=True,
             timeout=5
         )
         if dur_proc.stdout and dur_proc.stdout.strip():

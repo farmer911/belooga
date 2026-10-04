@@ -1,13 +1,15 @@
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, select
+from sqlalchemy import text
 
 from app.core.database import get_db
+from app.core.security import get_current_user, AuthenticatedUser, verify_profile_owner
 
 router = APIRouter()
+
 
 # DTOs
 class JobExperienceCreate(BaseModel):
@@ -21,6 +23,7 @@ class JobExperienceCreate(BaseModel):
     description: Optional[str] = ""
     logo_url: Optional[str] = "/images/logo.svg"
 
+
 class EducationExperienceCreate(BaseModel):
     school_name: str
     degree_name: str
@@ -32,6 +35,7 @@ class EducationExperienceCreate(BaseModel):
     to_date_year: Optional[int] = 2022
     description: Optional[str] = ""
 
+
 class AwardCertificationCreate(BaseModel):
     title: str
     location_name: Optional[str] = "Global"
@@ -39,12 +43,15 @@ class AwardCertificationCreate(BaseModel):
     from_date_year: Optional[int] = 2023
     description: Optional[str] = ""
 
+
 class ReorderItem(BaseModel):
     id: str
     order: int
 
+
 class ReorderRequest(BaseModel):
     orders: List[ReorderItem]
+
 
 # --- 1. JOB EXPERIENCES ---
 
@@ -64,16 +71,31 @@ async def list_job_experiences(username: str, db: AsyncSession = Depends(get_db)
     )
     return [dict(r._mapping) for r in res.fetchall()]
 
+
 @router.post("/profile/{username}/job-experiences/", status_code=status.HTTP_201_CREATED, tags=["Domain 3: Timeline CRUD & Reordering"])
-async def create_job_experience(username: str, payload: JobExperienceCreate, db: AsyncSession = Depends(get_db)):
-    prof_res = await db.execute(text("SELECT id FROM candidate_profiles WHERE username = :u"), {"u": username.lower().strip()})
+async def create_job_experience(
+    username: str,
+    payload: JobExperienceCreate,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
+    clean_username = username.lower().strip()
+
+    prof_res = await db.execute(
+        text("SELECT id FROM candidate_profiles WHERE username = :u"),
+        {"u": clean_username}
+    )
     p_row = prof_res.fetchone()
     if not p_row:
         raise HTTPException(status_code=404, detail="Candidate not found")
     profile_id = p_row.id
 
     # Get max display_order
-    max_res = await db.execute(text("SELECT COALESCE(MAX(display_order), -1) + 1 FROM job_experiences WHERE profile_id = :pid"), {"pid": profile_id})
+    max_res = await db.execute(
+        text("SELECT COALESCE(MAX(display_order), -1) + 1 FROM job_experiences WHERE profile_id = :pid"),
+        {"pid": profile_id}
+    )
     next_order = max_res.scalar()
 
     item_id = uuid.uuid4()
@@ -96,17 +118,51 @@ async def create_job_experience(username: str, payload: JobExperienceCreate, db:
     await db.commit()
     return {"id": str(item_id), "display_order": next_order, "message": "Job experience added"}
 
+
 @router.delete("/profile/{username}/job-experiences/{item_id}/", tags=["Domain 3: Timeline CRUD & Reordering"])
-async def delete_job_experience(username: str, item_id: str, db: AsyncSession = Depends(get_db)):
-    await db.execute(text("DELETE FROM job_experiences WHERE id = :id"), {"id": item_id})
+async def delete_job_experience(
+    username: str,
+    item_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
+    clean_username = username.lower().strip()
+
+    prof_res = await db.execute(
+        text("SELECT id FROM candidate_profiles WHERE username = :u"),
+        {"u": clean_username}
+    )
+    p_row = prof_res.fetchone()
+    if not p_row:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    del_res = await db.execute(
+        text("DELETE FROM job_experiences WHERE id = :id AND profile_id = :pid"),
+        {"id": item_id, "pid": p_row.id}
+    )
+    if del_res.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Job experience not found on this profile")
+
     await db.commit()
     return {"message": "Job experience deleted"}
 
+
 @router.post("/profile/{username}/job-experiences/order/", tags=["Domain 3: Timeline CRUD & Reordering"])
-async def reorder_job_experiences(username: str, payload: ReorderRequest, db: AsyncSession = Depends(get_db)):
-    # Concurrency Control: Pessimistic locking inside explicit transaction
-    async with db.begin():
-        prof_res = await db.execute(text("SELECT id FROM candidate_profiles WHERE username = :u"), {"u": username.lower().strip()})
+async def reorder_job_experiences(
+    username: str,
+    payload: ReorderRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
+    clean_username = username.lower().strip()
+
+    try:
+        prof_res = await db.execute(
+            text("SELECT id FROM candidate_profiles WHERE username = :u"),
+            {"u": clean_username}
+        )
         p_row = prof_res.fetchone()
         if not p_row:
             raise HTTPException(status_code=404, detail="Candidate not found")
@@ -122,8 +178,13 @@ async def reorder_job_experiences(username: str, payload: ReorderRequest, db: As
                 text("UPDATE job_experiences SET display_order = :ord WHERE id = :id AND profile_id = :pid"),
                 {"ord": item.order, "id": item.id, "pid": p_row.id}
             )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     return {"message": "Job experiences reordered successfully"}
+
 
 # --- 2. EDUCATION EXPERIENCES ---
 
@@ -143,13 +204,32 @@ async def list_education_experiences(username: str, db: AsyncSession = Depends(g
     )
     return [dict(r._mapping) for r in res.fetchall()]
 
+
 @router.post("/profile/{username}/education/", status_code=status.HTTP_201_CREATED, tags=["Domain 3: Timeline CRUD & Reordering"])
-async def create_education(username: str, payload: EducationExperienceCreate, db: AsyncSession = Depends(get_db)):
-    prof_res = await db.execute(text("SELECT id FROM candidate_profiles WHERE username = :u"), {"u": username.lower().strip()})
+async def create_education(
+    username: str,
+    payload: EducationExperienceCreate,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
+    clean_username = username.lower().strip()
+
+    prof_res = await db.execute(
+        text("SELECT id FROM candidate_profiles WHERE username = :u"),
+        {"u": clean_username}
+    )
     p_row = prof_res.fetchone()
     if not p_row:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
+    # Get max display_order
+    max_res = await db.execute(
+        text("SELECT COALESCE(MAX(display_order), -1) + 1 FROM education_experiences WHERE profile_id = :pid"),
+        {"pid": p_row.id}
+    )
+    next_order = max_res.scalar()
+
     item_id = uuid.uuid4()
     await db.execute(
         text("""
@@ -157,21 +237,81 @@ async def create_education(username: str, payload: EducationExperienceCreate, db
                 id, profile_id, school_name, degree_name, gpa, from_date_month, from_date_year,
                 currently_work_here, to_date_month, to_date_year, description, display_order
             ) VALUES (
-                :id, :pid, :school, :degree, :gpa, :fm, :fy, :cur, :tm, :ty, :desc, 0
+                :id, :pid, :school, :degree, :gpa, :fm, :fy, :cur, :tm, :ty, :desc, :ord
             )
         """),
         {
             "id": item_id, "pid": p_row.id, "school": payload.school_name, "degree": payload.degree_name,
             "gpa": payload.gpa, "fm": payload.from_date_month, "fy": payload.from_date_year,
             "cur": payload.currently_work_here, "tm": payload.to_date_month, "ty": payload.to_date_year,
-            "desc": payload.description
+            "desc": payload.description, "ord": next_order
         }
     )
     await db.commit()
-    return {"id": str(item_id), "message": "Education added successfully"}
+    return {"id": str(item_id), "display_order": next_order, "message": "Education added successfully"}
+
 
 @router.delete("/profile/{username}/education/{item_id}/", tags=["Domain 3: Timeline CRUD & Reordering"])
-async def delete_education(username: str, item_id: str, db: AsyncSession = Depends(get_db)):
-    await db.execute(text("DELETE FROM education_experiences WHERE id = :id"), {"id": item_id})
+async def delete_education(
+    username: str,
+    item_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
+    clean_username = username.lower().strip()
+
+    prof_res = await db.execute(
+        text("SELECT id FROM candidate_profiles WHERE username = :u"),
+        {"u": clean_username}
+    )
+    p_row = prof_res.fetchone()
+    if not p_row:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    del_res = await db.execute(
+        text("DELETE FROM education_experiences WHERE id = :id AND profile_id = :pid"),
+        {"id": item_id, "pid": p_row.id}
+    )
+    if del_res.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Education experience not found on this profile")
+
     await db.commit()
     return {"message": "Education experience deleted"}
+
+
+@router.post("/profile/{username}/education/order/", tags=["Domain 3: Timeline CRUD & Reordering"])
+async def reorder_education_experiences(
+    username: str,
+    payload: ReorderRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    verify_profile_owner(current_user, username)
+    clean_username = username.lower().strip()
+
+    try:
+        prof_res = await db.execute(
+            text("SELECT id FROM candidate_profiles WHERE username = :u"),
+            {"u": clean_username}
+        )
+        p_row = prof_res.fetchone()
+        if not p_row:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        await db.execute(
+            text("SELECT id FROM education_experiences WHERE profile_id = :pid FOR UPDATE"),
+            {"pid": p_row.id}
+        )
+
+        for item in payload.orders:
+            await db.execute(
+                text("UPDATE education_experiences SET display_order = :ord WHERE id = :id AND profile_id = :pid"),
+                {"ord": item.order, "id": item.id, "pid": p_row.id}
+            )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
+    return {"message": "Education experiences reordered successfully"}

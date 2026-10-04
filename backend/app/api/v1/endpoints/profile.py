@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from app.core.database import get_db
+from app.core.security import get_current_user, AuthenticatedUser, verify_profile_owner
 
 router = APIRouter()
 
@@ -122,8 +123,10 @@ async def get_candidate_public_profile(
 async def update_candidate_profile(
     username: str,
     payload: ProfileUpdate,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    verify_profile_owner(current_user, username)
     clean_username = username.lower().strip()
     prof_res = await db.execute(
         text("SELECT id FROM candidate_profiles WHERE username = :u"),
@@ -166,8 +169,10 @@ async def update_candidate_profile(
 async def add_candidate_skill(
     username: str,
     payload: SkillAdd,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    verify_profile_owner(current_user, username)
     clean_username = username.lower().strip()
     prof_res = await db.execute(
         text("SELECT id FROM candidate_profiles WHERE username = :u"),
@@ -203,8 +208,10 @@ async def add_candidate_skill(
 async def remove_candidate_skill(
     username: str,
     skill_name: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    verify_profile_owner(current_user, username)
     clean_username = username.lower().strip()
     prof_res = await db.execute(
         text("SELECT id FROM candidate_profiles WHERE username = :u"),

@@ -74,11 +74,24 @@ async def list_career_jobs(db: AsyncSession = Depends(get_db)):
     return jobs
 
 @router.post("/profile/{user_id}/report/", tags=["Domain 8: Public CMS & Moderation"])
-async def report_candidate_profile(user_id: str, payload: ReportProfileRequest, db: AsyncSession = Depends(get_db)):
+async def report_candidate_profile(
+    user_id: uuid.UUID,
+    payload: ReportProfileRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    reason = payload.reason.strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="Report reason cannot be empty")
+
+    # Verify candidate exists
+    chk = await db.execute(text("SELECT id FROM candidate_profiles WHERE id = :pid"), {"pid": user_id})
+    if not chk.fetchone():
+        raise HTTPException(status_code=404, detail="Candidate profile not found")
+
     report_id = uuid.uuid4()
     await db.execute(
         text("INSERT INTO profile_reports (id, reported_profile_id, reason) VALUES (:id, :pid, :r)"),
-        {"id": report_id, "pid": user_id, "r": payload.reason}
+        {"id": report_id, "pid": user_id, "r": reason}
     )
     await db.commit()
     return {"message": "Candidate profile reported. Our trust and safety team will investigate.", "id": str(report_id)}

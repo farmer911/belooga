@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient } from "@/services/api-client";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const CHUNK_SIZE = 1024 * 1024; // 1MB chunks for streaming chunked upload
@@ -29,7 +29,7 @@ export async function uploadChunkedVideo(
     formData.append("username", username);
     formData.append("file", chunkBlob, `chunk_${chunkIndex}.webm`);
 
-    await axios.post(`${API_BASE_URL}/v1/media/upload/chunk`, formData, {
+    await apiClient.post("/v1/media/upload/chunk", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
@@ -44,7 +44,7 @@ export async function uploadChunkedVideo(
   }
 
   // Finalize and reassemble
-  const completeRes = await axios.post(`${API_BASE_URL}/v1/media/upload/complete`, {
+  const completeRes = await apiClient.post("/v1/media/upload/complete", {
     upload_id: uploadId,
     total_chunks: totalChunks,
     username: username,
@@ -61,8 +61,8 @@ export async function uploadAvatar(
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await axios.patch(
-    `${API_BASE_URL}/v1/profile/${username}/avatar/`,
+  const res = await apiClient.patch(
+    `/v1/profile/${username}/avatar/`,
     formData,
     {
       headers: { "Content-Type": "multipart/form-data" },
@@ -79,8 +79,8 @@ export async function uploadResume(
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await axios.patch(
-    `${API_BASE_URL}/v1/profile/${username}/resume/`,
+  const res = await apiClient.patch(
+    `/v1/profile/${username}/resume/`,
     formData,
     {
       headers: { "Content-Type": "multipart/form-data" },

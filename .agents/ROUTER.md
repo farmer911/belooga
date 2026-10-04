@@ -27,9 +27,11 @@ This document establishes the **Organizational Operating System** for the Beloog
                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 🧠 STEP 0: THE PRE-WALK (CHIEF ARCHITECT - PRO / HIGH-REASONING MODEL)      │
+│ • Consult `CURRENT_STATE.md` (SSOT generated dynamically from SQL & AST).   │
 │ • Survey Cross-Department Impact Matrix (Section 4).                        │
 │ • Inspect blast radius, target files, and historical violation registers.    │
 │ • Formulate the PRE-WALK SPEC: Target files, frozen DTOs, and test IDs.     │
+│ • Enforce TDD Workflow (`tdd-workflow`): Require failing test proof first.   │
 │ • Assign the exact Department Skill to the executing Worker.                │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -40,23 +42,26 @@ This document establishes the **Organizational Operating System** for the Beloog
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 👨‍💻 STEP 1: DISPATCH & SCOPED SKILL INGESTION (SPECIALIST WORKER)            │
 │ • Worker consults Intent Matrix (Section 3) to load department skill.       │
-│ • Concurrently load: `engineering-integrity-and-evidence`.                  │
+│ • Concurrently load: `engineering-integrity-and-evidence` & `tdd-workflow`. │
 │ • IF ANY SPEC IS UNCLEAR: Halt and ask immediately. Never assume!           │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 🔨 STEP 2: SCOPED CODING & ARCHITECTURAL IMPLEMENTATION                     │
+│ • Write failing test first (Red phase of TDD in backend/tests/ or qc/).     │
 │ • Implement code strictly within assigned department boundaries.            │
-│ • Frontend: Atomic Design, leaf-node state isolation for 60fps telemetry.  │
+│ • Frontend: Inlined App Router page logic + shared UI primitives in `ui/`.   │
 │ • Backend: Clean 4-Layer (Thin Router ➔ DTO ➔ Service ➔ Repo ➔ ORM Model).   │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 🧪 STEP 3: MANDATORY AUTOMATED QC GATE (PLAYWRIGHT & BUILD)                 │
-│ • Run Playwright suite: `cd qc && bun run test`                              │
-│ • Run typecheck & build: `cd frontend && bun run build`                      │
+│ 🧪 STEP 3: MANDATORY AUTOMATED QC GATE (SSOT ENGINE & TEST SUITES)          │
+│ • Run SSOT Integrity Auditor: `bash scripts/audit-truth.sh`                  │
+│ • Run Backend Pytest suite: `backend/.venv/bin/pytest backend/tests/ -v`     │
+│ • Run Frontend typecheck: `cd frontend && bun x tsc --noEmit`                │
+│ • Run Playwright E2E suite: `cd qc && bun run test:e2e`                      │
 │ • IF FAILS: Self-debug. NEVER delete tests or suppress compiler errors!     │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -76,6 +81,7 @@ This document establishes the **Organizational Operating System** for the Beloog
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 📚 STEP 5: DEFINITION OF DONE (DoD) & EVIDENCE SIGN-OFF                     │
 │ • Enforce 7-Tier DoD Contract (`definition-of-done` skill).                 │
+│ • Refresh `CURRENT_STATE.md`: `python3 scripts/generate-current-state.py`    │
 │ • Update Department Skill: Document any new contracts or props.             │
 │ • If a bug occurred, log root cause in VIOLATIONS_REGISTER.md.              │
 │ • Emit Empirical Proof Block (Exit Code: 0, test logs, browser check).      │
@@ -100,26 +106,26 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | **Senior QC Standards** | All test suites, fixtures & POMs | `qc-patterns-and-practices` | `belooga-qc-engineering` |
 | **Frontend Code Review** | All frontend PRs / modifications | `fe-reviewer-guidelines` | `fe-patterns-and-practices` |
 | **Backend Code Review** | All backend PRs / modifications | `be-reviewer-guidelines` | `be-patterns-and-practices` |
-| **Homepage & Showcase** | `frontend/src/app/page.tsx`, `src/components/organisms/home/` | `fe-page-home` | `engineering-integrity-and-evidence` |
-| **Talent Search & Discovery** | `frontend/src/app/search/`, `src/components/organisms/search/` | `fe-page-search` | `engineering-integrity-and-evidence` |
-| **Public Candidate Profile** | `frontend/src/app/public/[username]/` | `fe-page-public-profile` | `fe-section-workspace-pitch-player` |
+| **Homepage & Showcase** | `frontend/src/app/page.tsx` | `fe-page-home` | `engineering-integrity-and-evidence` |
+| **Talent Search & Discovery** | `frontend/src/app/search/page.tsx` | `fe-page-search` | `engineering-integrity-and-evidence` |
+| **Public Candidate Profile** | `frontend/src/app/public/[username]/page.tsx` | `fe-page-public-profile` | `fe-section-workspace-pitch-player` |
 | **Candidate Workspace Hub** | `frontend/src/app/user/[username]/page.tsx` | `fe-page-workspace` | `engineering-integrity-and-evidence` |
-| **Workspace: Header & Bio** | `src/components/organisms/workspace/profile-header-*` | `fe-section-workspace-header` | `fe-page-workspace` |
-| **Workspace: 30s Pitch Player**| `src/components/organisms/workspace/video-pitch-*` | `fe-section-workspace-pitch-player`| `fe-page-workspace` |
-| **Workspace: WebRTC Studio** | `src/components/organisms/workspace/video-studio-*` | `fe-section-workspace-studio` | `fe-page-workspace` |
-| **Workspace: Timeline CRUD** | `src/components/organisms/workspace/timeline-*` | `fe-section-workspace-timeline` | `fe-page-workspace` |
-| **Workspace: Skills Badges** | `src/components/organisms/workspace/skills-*` | `fe-section-workspace-skills` | `fe-page-workspace` |
-| **Identity & Authentication**| `frontend/src/app/(auth)/...` | `fe-page-auth` | `engineering-integrity-and-evidence` |
+| **Workspace: Header & Bio** | `frontend/src/app/user/[username]/page.tsx` (Header Section) | `fe-section-workspace-header` | `fe-page-workspace` |
+| **Workspace: 30s Pitch Player**| `frontend/src/app/user/[username]/page.tsx` (Pitch Section) | `fe-section-workspace-pitch-player`| `fe-page-workspace` |
+| **Workspace: WebRTC Studio** | `frontend/src/app/user/[username]/page.tsx` (Studio Modal) | `fe-section-workspace-studio` | `fe-page-workspace` |
+| **Workspace: Timeline CRUD** | `frontend/src/app/user/[username]/page.tsx` (Timeline Section)| `fe-section-workspace-timeline` | `fe-page-workspace` |
+| **Workspace: Skills Badges** | `frontend/src/app/user/[username]/page.tsx` (Skills Section)  | `fe-section-workspace-skills` | `fe-page-workspace` |
+| **Identity & Authentication**| `frontend/src/app/(auth)/login/`, `register/`, `callback/` | `fe-page-auth` | `engineering-integrity-and-evidence` |
 | **User Settings & Update** | `frontend/src/app/user/[username]/settings/`, `update/` | `fe-page-user-management` | `engineering-integrity-and-evidence` |
-| **Public Content & Legal** | `frontend/src/app/(public)/...` (Blog, Careers, Help) | `fe-page-cms-public` | `engineering-integrity-and-evidence` |
-| **Backend: Auth & Vault** | `backend/app/api/v1/endpoints/auth.py`, `models/identity.py` | `be-service-auth` | `engineering-integrity-and-evidence` |
-| **Backend: Candidate Profile**| `backend/app/api/v1/endpoints/profile.py`, `models/profile.py`| `be-service-profile` | `engineering-integrity-and-evidence` |
-| **Backend: Timeline CRUD** | `backend/app/api/v1/endpoints/timeline.py`, `models/timeline.py`| `be-service-timeline` | `engineering-integrity-and-evidence` |
-| **Backend: Media & Video** | `backend/app/api/v1/endpoints/media.py`, `services/media_*.py` | `be-service-media` | `engineering-integrity-and-evidence` |
-| **Backend: Trigram Search** | `backend/app/api/v1/endpoints/search.py`, `repositories/search*`| `be-service-search` | `engineering-integrity-and-evidence` |
+| **Public Content & Legal** | `frontend/src/app/(public)/blog/`, `careers/`, `contact-us/`, `help/` | `fe-page-cms-public` | `engineering-integrity-and-evidence` |
+| **Backend: Auth & Vault** | `backend/app/api/v1/endpoints/auth.py` | `be-service-auth` | `engineering-integrity-and-evidence` |
+| **Backend: Candidate Profile**| `backend/app/api/v1/endpoints/profile.py` | `be-service-profile` | `engineering-integrity-and-evidence` |
+| **Backend: Timeline CRUD** | `backend/app/api/v1/endpoints/timeline.py` | `be-service-timeline` | `engineering-integrity-and-evidence` |
+| **Backend: Media & Video** | `backend/app/api/v1/endpoints/media.py` | `be-service-media` | `engineering-integrity-and-evidence` |
+| **Backend: Trigram Search** | `backend/app/api/v1/endpoints/search.py` | `be-service-search` | `engineering-integrity-and-evidence` |
 | **Backend: Master Catalogs**| `backend/app/api/v1/endpoints/catalogs.py` | `be-service-catalogs` | `engineering-integrity-and-evidence` |
 | **Backend: CMS & Trust** | `backend/app/api/v1/endpoints/cms.py` | `be-service-cms` | `engineering-integrity-and-evidence` |
-| **QC & Playwright Testing** | `qc/tests/`, `qc/pages/` | `belooga-qc-engineering` | `engineering-integrity-and-evidence` |
+| **QC & Playwright Testing** | `qc/tests/` | `belooga-qc-engineering` | `engineering-integrity-and-evidence` |
 
 ---
 

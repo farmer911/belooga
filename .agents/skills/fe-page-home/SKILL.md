@@ -15,9 +15,12 @@ description: Authoritative Department Skill for the Belooga Homepage (/). Covers
 
 The Homepage serves as the primary storefront and conversion engine for Belooga. It introduces the core value proposition: pairing conventional candidate profiles with authentic **30-second video elevator pitches**.
 
-### Component Hierarchy & Section Decomposition:
+### Target Component Hierarchy & Section Decomposition:
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER PAGE SHELL
+> The tree below represents the planned Atomic Design decomposition. In the current production codebase, the homepage sections are consolidated inside `frontend/src/app/page.tsx`.
+
 ```
-frontend/src/app/page.tsx (Page Shell & Modal Host)
+frontend/src/app/page.tsx (Page Shell & Current Unified Implementation)
 │
 ├── 1. HeroSection (`src/components/organisms/home/hero-section.tsx`)
 │      └── Value proposition, background poster overlay, search quick-launcher

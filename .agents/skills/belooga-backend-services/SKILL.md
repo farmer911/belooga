@@ -1,6 +1,6 @@
 ---
 name: belooga-backend-services
-description: Authoritative Technical Architecture Skill for Backend Service Domains. Covers Clean 4-Layer Architecture (Router -> DTO Schemas -> Domain Services -> Repositories -> 19 SQLAlchemy 2.0 Async Models), async transactions, and OpenAPI contracts.
+description: Authoritative Technical Architecture Skill for Backend Service Domains. Covers Clean 4-Layer Architecture (Router -> DTO Schemas -> Domain Services -> Repositories -> 24 PostgreSQL Models in initdb.sql), async transactions, and OpenAPI contracts.
 ---
 
 # ⚡ Belooga Backend Architecture & 8 Service Domains Skill
@@ -42,18 +42,18 @@ HTTP Request
 
 ---
 
-## 2. 8 Service Domains & 19 Core Tables Inventory
+## 2. 8 Service Domains & 24 Database Tables Inventory
 
-| Domain | Business Responsibility | Core Database Tables (19 Tables) | DTO Schemas & Services |
+| Domain | Business Responsibility | Core Database Tables (24 Tables in initdb.sql) | DTO Schemas & Services |
 | :--- | :--- | :--- | :--- |
 | **Domain 1: Identity & Auth** | Registration, Login, JWT tokens, Refresh Token Family Rotation | `identities`, `refresh_sessions`, `social_accounts`, `password_reset_tokens`, `email_verification_tokens` | `AuthService`, `IdentityRepository` |
 | **Domain 2: Candidate Profile** | Profile CRUD, Bio, Headline, Avatar mutations, Visibility toggles | `candidate_profiles`, `profile_media` | `ProfileService`, `ProfileRepository` |
-| **Domain 3: Timeline & CRUD** | Work Experience, Education, Awards, HTML5 DnD Reordering | `job_experiences`, `education_experiences`, `awards_certifications` | `TimelineService`, `TimelineRepository` |
-| **Domain 4: Media & Uploads** | Chunked video uploads, WebM/MP4 merging, Avatar I/O, PDF resume generation | Filesystem / S3 bucket, `profile_media` | `MediaService`, `PdfService` |
+| **Domain 3: Timeline & CRUD** | Work Experience, Education, Awards, HTML5 DnD Reordering | `job_experiences`, `education_experiences`, `award_certifications` | `TimelineService`, `TimelineRepository` |
+| **Domain 4: Media & Uploads** | Chunked video uploads, WebM/MP4 merging, Avatar I/O, PDF resume generation | Filesystem storage, `profile_media`, `video_archives` | `MediaService`, `PdfService` |
 | **Domain 5: Video Studio** | WebRTC Studio session coordination, recording telemetry | Ephemeral state, `profile_media` | `StudioService` |
-| **Domain 6: Discovery & Search** | Full-Text Search TSVECTOR, Trigram autocomplete suggestions | `candidate_profiles.search_vector`, `search_queries` | `SearchService`, `SearchRepository` |
-| **Domain 7: Master Catalogs** | Master Skills catalog, company & university suggestions | `skills_catalog`, `candidate_skills` | `CatalogService`, `CatalogRepository` |
-| **Domain 8: CMS & Moderation** | Blog posts, Contact inquiries, Candidate reporting logs | `contact_inquiries`, `cms_posts`, `moderation_logs` | `CmsService`, `CmsRepository` |
+| **Domain 6: Discovery & Search** | Full-Text Search TSVECTOR, Trigram autocomplete suggestions | `candidate_profiles.search_vector` | `SearchService`, `SearchRepository` |
+| **Domain 7: Master Catalogs** | Master Skills catalog, company & university suggestions | `skills`, `profile_skills`, `catalog_companies`, `catalog_schools`, `catalog_locations` | `CatalogService`, `CatalogRepository` |
+| **Domain 8: CMS & Moderation** | Career jobs, Contact inquiries, Candidate reporting | `contact_inquiries`, `profile_reports`, `career_postings`, `career_applications` | `CmsService`, `CmsRepository` |
 
 ---
 

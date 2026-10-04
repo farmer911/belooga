@@ -1,24 +1,29 @@
 ---
 name: belooga-backend-engineering
-description: Authoritative technical architecture and implementation guide for the Belooga Backend using Python 3.12+, FastAPI, PostgreSQL 16, SQLAlchemy 2.0 Async, Alembic, and Docker. Contains complete schema definitions for all 19 tables, 8 service domain designs, 72 API endpoint contracts, concurrency locking rules, and token vault rotation.
+description: Authoritative technical architecture and implementation guide for the Belooga Backend using Python 3.12+, FastAPI, PostgreSQL 16, SQLAlchemy 2.0 Async, Alembic, and Docker. Contains complete schema definitions for all 24 tables, 8 service domain designs, 36 API endpoint contracts, concurrency locking rules, and token vault rotation.
 ---
 
 # ⚡ Belooga Backend Engineering Skill & Architecture Guide
 
-This skill serves as the single source of truth for the **Backend Sub-Agent**. It defines the complete database schema (19 tables), service layer contracts, repository patterns, concurrency controls, and API endpoints for the FastAPI modular monolith.
+This skill serves as the single source of truth for the **Backend Sub-Agent**. It defines the verified database schema (24 tables in `initdb.sql`), service domain contracts, concurrency controls, IDOR ownership guards, and API endpoints for the FastAPI modular monolith.
+
+> [!IMPORTANT]
+> **Architecture Transition Baseline:**
+> - **AS-IS (Active Monolith):** 36 domain endpoints + 2 root probes across 7 endpoint files in `app/api/v1/endpoints/`, security and IDOR guards in `app/core/security.py`, async session in `app/core/database.py`.
+> - **TO-BE (Clean 4-Layer Architecture):** Gradual migration to Router -> Schemas -> Domain Services -> Repositories -> SQLAlchemy 2.0 Mapped Models, with zero regressions to the 36 active endpoint contracts.
 
 ---
 
 ## 1. Technical Stack & Architecture
 
-- **Language & Runtime:** `Python 3.12+` with strict type annotations (`mypy` compliant).
+- **Language & Runtime:** `Python 3.12+` with strict type annotations.
 - **Web Framework:** `FastAPI` (Async request lifecycle, Dependency Injection, automatic OpenAPI v3 schema generation).
-- **Database Engine:** `PostgreSQL 16` with `pg_trgm` (trigram fuzzy matching) and `btree_gin` extensions.
-- **ORM & Migrations:** `SQLAlchemy 2.0` (Declarative Base, Mapped types, `asyncpg` driver) + `Alembic` (Async migration runner).
+- **Database Engine:** `PostgreSQL 16` with `uuid-ossp`, `pg_trgm` (trigram fuzzy matching), and `btree_gin` extensions.
+- **ORM & Migrations:** `SQLAlchemy 2.0` (Declarative Base, Mapped types, `asyncpg` driver) + `Alembic`.
 - **DTOs & Settings:** `Pydantic v2` (`BaseModel`, `Field`, `ConfigDict(from_attributes=True)`), `pydantic-settings`.
-- **Authentication & Security:** `Argon2id` (Password hashing via `pwdlib`/`passlib`), `PyJWT` (ECDSA or HMAC access tokens), Secure `HttpOnly` refresh cookies.
-- **Storage:** S3-compatible Object Storage (LocalStack / MinIO for local development, AWS S3 for production).
-- **Containerization:** `Docker` & `Docker Compose` with multi-stage build.
+- **Authentication & Security:** `Argon2id` (Password hashing via `pwdlib`), `PyJWT` (HMAC HS256 access tokens), Secure `HttpOnly` refresh token family cookies with replay protection.
+- **Storage & Transcoding:** Local filesystem `/app/uploads` volume (avatars, resumes, videos, chunks), non-blocking disk I/O via `asyncio.to_thread`, FFmpeg faststart streaming MP4 transcoding.
+- **Containerization:** `Docker` & `Docker Compose` with volume hot-reloading (`./backend:/app`).
 
 ### Directory Layout
 ```
@@ -28,60 +33,32 @@ backend/
 │   └── env.py
 ├── app/
 │   ├── api/                      # Routing & Controller layer
-│   │   ├── deps.py               # Dependency injection (get_db, get_current_user)
 │   │   └── v1/
-│   │       ├── api.py            # API router aggregating all domain routers
-│   │       └── endpoints/
-│   │           ├── auth.py       # Domain 1: Auth & Session
-│   │           ├── users.py      # Domain 1: User existence & verification
-│   │           ├── profile.py    # Domain 2: Candidate Profile
-│   │           ├── timeline.py   # Domain 3: Experiences, Education, Awards
-│   │           ├── media.py      # Domain 4: Avatar, Resume, Video Pitch
-│   │           ├── opentok.py    # Domain 5: WebRTC Studio
-│   │           ├── search.py     # Domain 6: Talent Discovery & Suggest
-│   │           ├── catalogs.py   # Domain 7: Skills, Companies, Locations
-│   │           └── cms.py        # Domain 8: Careers, Contact, Legal
+│   │       └── endpoints/        # AS-IS: 7 Domain endpoint files (36 active routes)
+│   │           ├── auth.py       # Domain 1: Auth, refresh token family rotation, me
+│   │           ├── profile.py    # Domain 2: Candidate Profile, skills CRUD (IDOR guarded)
+│   │           ├── timeline.py   # Domain 3: Work experience, education, reordering (IDOR guarded)
+│   │           ├── media.py      # Domain 4: Chunked upload, ReportLab PDF, FFmpeg (IDOR guarded)
+│   │           ├── search.py     # Domain 6: TSVECTOR ranking & Trigram autocomplete
+│   │           ├── catalogs.py   # Domain 7: Skills, companies, schools, locations
+│   │           └── cms.py        # Domain 8: Contact, FAQs, careers, reporting
 │   ├── core/                     # Configuration, database engine, security
-│   │   ├── config.py             # Pydantic Settings
-│   │   ├── database.py           # SQLAlchemy async_engine & async_sessionmaker
-│   │   └── security.py           # Password hashing, JWT creation & verification
-│   ├── models/                   # SQLAlchemy 2.0 ORM Models (19 Tables)
-│   │   ├── base.py               # Base class & timestamp mixins
-│   │   ├── identity.py           # identities, refresh_sessions, social_accounts
-│   │   ├── profile.py            # candidate_profiles, profile_media
-│   │   ├── timeline.py           # job_experiences, education_experiences, awards
-│   │   ├── catalog.py            # skills, languages, interests, companies, schools
-│   │   └── cms.py                # video_archives, contact, careers
-│   ├── repositories/             # Data access layer with SQLAlchemy queries
-│   │   ├── base.py
-│   │   ├── user_repo.py
-│   │   ├── profile_repo.py
-│   │   ├── timeline_repo.py
-│   │   └── search_repo.py
+│   │   ├── database.py           # SQLAlchemy async_engine & async_sessionmaker (get_db)
+│   │   └── security.py           # Argon2id, JWT encode/decode, get_current_user, IDOR guards
 │   ├── schemas/                  # Pydantic v2 DTOs (Request & Response)
-│   │   ├── auth.py
-│   │   ├── profile.py
-│   │   ├── timeline.py
-│   │   ├── search.py
-│   │   └── common.py
-│   ├── services/                 # Business logic layer
-│   │   ├── auth_service.py
-│   │   ├── profile_service.py
-│   │   ├── timeline_service.py
-│   │   ├── media_service.py
-│   │   ├── search_service.py
-│   │   └── catalog_service.py
-│   └── main.py                   # FastAPI Application Factory & Middleware
-├── tests/                        # Backend unit & integration test suite
-├── docker-compose.yml
-├── Dockerfile
+│   │   └── auth.py
+│   ├── models/                   # TO-BE: SQLAlchemy 2.0 ORM Declarative Mapped Models
+│   ├── repositories/             # TO-BE: Clean data access layer
+│   ├── services/                 # TO-BE: Business logic layer
+│   └── main.py                   # FastAPI Application Factory, CORS & static file mounts
+├── initdb.sql                    # Verified Ground Truth Database Schema (24 Tables)
 ├── requirements.txt
-└── pyproject.toml
+└── Dockerfile
 ```
 
 ---
 
-## 2. Complete Database Schema (19 Core Tables)
+## 2. Complete Database Schema (24 Core Tables in `initdb.sql`)
 
 ### Domain 1: Identity & Authentication Vault
 ```sql

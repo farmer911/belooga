@@ -70,10 +70,24 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     expect(pdfResponse.status()).toBe(200);
     expect(pdfResponse.headers()['content-type']).toContain('application/pdf');
 
-    // 3. Verify chunked upload chunk endpoint
+    // 3. Obtain auth token for authenticated upload endpoints
+    const authRes = await request.post('http://localhost:8000/v1/auth/login/', {
+      data: {
+        email: 'alex@belooga.com',
+        password: 'SecurePassword123!',
+      },
+    });
+    expect(authRes.status()).toBe(200);
+    const { access_token } = await authRes.json();
+
+    // 4. Verify chunked upload chunk endpoint
+    const uploadId = `upload_${Date.now()}_qctest`;
     const chunkRes = await request.post('http://localhost:8000/v1/media/upload/chunk', {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
       multipart: {
-        upload_id: 'qc_test_upload',
+        upload_id: uploadId,
         chunk_index: '0',
         total_chunks: '1',
         username: 'alexnguyen',
@@ -116,10 +130,10 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     // Assert REC indicator appears with 05:00 format
     await expect(page.locator('text=/REC.*05:00/')).toBeVisible({ timeout: 3000 });
 
-    // 5. Stop recording after brief interval
-    await page.waitForTimeout(1200);
+    // 5. Stop recording once stop control is available
     const stopRecBtn = page.locator('[data-testid="studio-stop-btn"]');
-    await expect(stopRecBtn).toBeVisible();
+    await expect(stopRecBtn).toBeVisible({ timeout: 5000 });
+    await expect(stopRecBtn).toBeEnabled();
     await stopRecBtn.click();
 
     // Assert Save & Publish button appears
@@ -131,9 +145,21 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await page.locator('button:has-text("Close")').click();
 
     // 6. Verify backend auto-generated thumbnail generation end-to-end
+    const authRes = await request.post('http://localhost:8000/v1/auth/login/', {
+      data: {
+        email: 'alex@belooga.com',
+        password: 'SecurePassword123!',
+      },
+    });
+    expect(authRes.status()).toBe(200);
+    const { access_token } = await authRes.json();
+
     // Upload a small test webm chunk
-    const testUploadId = `qc_thumb_${Date.now()}`;
+    const testUploadId = `upload_${Date.now()}_thumbtest`;
     const chunkUploadRes = await request.post('http://localhost:8000/v1/media/upload/chunk', {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
       multipart: {
         upload_id: testUploadId,
         chunk_index: '0',
@@ -151,6 +177,9 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
 
     // Complete upload and verify auto thumbnail poster generation
     const completeRes = await request.post('http://localhost:8000/v1/media/upload/complete', {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
       data: {
         upload_id: testUploadId,
         total_chunks: 1,
@@ -332,8 +361,10 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await expect(voiceStatus).toBeVisible();
     await expect(voiceStatus).toContainText('Awaiting Voice');
 
-    // Wait 400ms during silence and verify text remains frozen at index 0 (never runs ahead)
+    // Wait 400ms during silence to prove teleprompter does not advance without voice input
     await page.waitForTimeout(400);
+
+    // Verify text remains frozen at index 0 during silence (never runs ahead)
     const initialWord = page.locator('[data-word-idx="0"]');
     await expect(initialWord).toBeVisible();
     // Word 1 must NOT be highlighted as past word because silence prevents advancement

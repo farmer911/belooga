@@ -5,7 +5,9 @@ description: Specialized Section Skill for the WebRTC Video Recording Studio. Co
 
 # 🎙️ Section Skill: WebRTC Video Studio & Recording Engine
 
-> **Component Path:** `frontend/src/components/organisms/workspace/video-studio-section.tsx`  
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
+> **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Studio Recording Modal)  
+> **Target Modular Path:** `frontend/src/components/organisms/workspace/video-studio-section.tsx`  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 4 (Media & Uploads) & Domain 5 (Video Studio)  
 

@@ -39,10 +39,10 @@ Creates an interactive, pan-and-zoomable mindmap artifact using `markmap-autoloa
 ---
 
 ## 3. Structural Rules for High-Density Technical Mindmaps
-1. **Central Node:** Clear System Name + Target Architecture (e.g. `Belooga Legacy → Next.js 14+`).
+1. **Central Node:** Clear System Name + Target Architecture (e.g. `Belooga Legacy → Next.js 16+ App Router`).
 2. **Level 1 Branches (4–6 max):**
    - User Journeys / Page Families (16 Routes)
-   - API & Service Domains (8 Domains / 72 APIs)
+   - API & Service Domains (8 Domains / 36 Verified APIs)
    - Technical Stack & Data Flow (RSC, Server Actions, BFF)
    - Quality & Anti-Hallucination Gates (Asset parity, CSS discipline)
 3. **Level 2 Branches:** Grouped functional modules (e.g. `Candidate Workspace`, `Identity & Auth`).

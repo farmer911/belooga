@@ -13,7 +13,10 @@ class RegisterRequest(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
 
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+
 class UserProfileDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     email: EmailStr
     username: str
@@ -21,9 +24,6 @@ class UserProfileDTO(BaseModel):
     last_name: str
     role: str = "candidate"
     avatar_url: Optional[str] = "/images/avatar.jpg"
-
-    class Config:
-        from_attributes = True
 
 class TokenResponse(BaseModel):
     access_token: str

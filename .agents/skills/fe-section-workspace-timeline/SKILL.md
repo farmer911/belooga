@@ -5,7 +5,9 @@ description: Specialized Section Skill for Career Timeline Management. Covers Wo
 
 # ⏳ Section Skill: Career Timeline & Credentials Management
 
-> **Component Path:** `frontend/src/components/organisms/workspace/timeline-section.tsx`  
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
+> **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Career Timeline Section)  
+> **Target Modular Path:** `frontend/src/components/organisms/workspace/timeline-section.tsx`  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 3 (Timeline CRUD & Reordering)  
 

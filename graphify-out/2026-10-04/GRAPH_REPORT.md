@@ -1,7 +1,7 @@
 # Graph Report - Beloga  (2026-10-04)
 
 ## Corpus Check
-- 85 files · ~899,916 words
+- 85 files · ~906,736 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 8 file(s) not represented in the graph (top: (none) 3, .lock 2, .css 2)
 

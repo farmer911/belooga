@@ -5,7 +5,9 @@ description: Specialized Section Skill for Candidate Profile Header and Identity
 
 # 👤 Section Skill: Profile Header & Identity Management
 
-> **Component Path:** `frontend/src/components/organisms/workspace/profile-header-section.tsx`  
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
+> **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Profile Header Section)  
+> **Target Modular Path:** `frontend/src/components/organisms/workspace/profile-header-section.tsx`  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 2 (Candidate Profile) & Domain 4 (Media & Uploads)  
 

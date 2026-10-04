@@ -34,13 +34,12 @@ app.add_middleware(
 
 from fastapi.staticfiles import StaticFiles
 import os
+from app.api.v1.endpoints.media import UPLOAD_BASE
 
-os.makedirs("/app/uploads/avatars", exist_ok=True)
-os.makedirs("/app/uploads/resumes", exist_ok=True)
-os.makedirs("/app/uploads/videos", exist_ok=True)
-os.makedirs("/app/uploads/chunks", exist_ok=True)
+for sub in ["avatars", "resumes", "videos", "chunks"]:
+    os.makedirs(os.path.join(UPLOAD_BASE, sub), exist_ok=True)
 
-app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_BASE), name="uploads")
 
 # Domain Routers Mounting
 app.include_router(auth_router, prefix="/v1")

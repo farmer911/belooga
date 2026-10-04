@@ -5,7 +5,9 @@ description: Specialized Section Skill for Candidate Skills and Endorsements. Co
 
 # 🏷️ Section Skill: Candidate Skills & Catalog Management
 
-> **Component Path:** `frontend/src/components/organisms/workspace/skills-section.tsx`  
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
+> **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Skills Section)  
+> **Target Modular Path:** `frontend/src/components/organisms/workspace/skills-section.tsx`  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 2 (Candidate Profile) & Domain 7 (Master Catalogs)  
 

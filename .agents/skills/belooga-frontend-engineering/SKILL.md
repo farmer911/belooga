@@ -1,6 +1,6 @@
 ---
 name: belooga-frontend-engineering
-description: Complete ground-truth engineering guide for the Belooga Frontend conversion to Next.js 14+ (App Router), Bun, Tailwind CSS, shadcn/ui, Zustand, and TanStack Query. Contains 16-route inventory, component hierarchy, common UI components, services architecture, design tokens, and anti-hallucination rules.
+description: Complete ground-truth engineering guide for the Belooga Frontend in Next.js 16.3.8 + React 19 (App Router), Bun, Tailwind CSS v4, Zustand, and TanStack Query. Contains 16-route inventory, component hierarchy, common UI components, services architecture, design tokens, and anti-hallucination rules.
 ---
 
 # 🎨 Belooga Frontend Engineering Skill & Architecture Guide
@@ -12,85 +12,75 @@ This skill serves as the authoritative, zero-hallucination engineering blueprint
 ## 1. Technical Stack & Environment
 
 - **Runtime & Package Manager:** `Bun 1.4+` (lightning fast package resolution, scripts, and runtime).
-- **Core Framework:** `Next.js 14+` (App Router, React Server Components for SEO/marketing, Client Components for interactive workspace).
-- **Styling:** `Tailwind CSS v3.4+` configured with exact Belooga design system tokens.
-- **Component Primitives:** `shadcn/ui` (accessible Radix UI primitives + Tailwind styling).
+- **Core Framework:** `Next.js 16.3.8` + `React 19.2.8` (App Router, Server Components for SEO/marketing, Client Components for interactive workspace).
+- **Styling:** `Tailwind CSS v4` configured via `@theme` in `src/app/globals.css`. (No `tailwind.config.ts` required in Tailwind v4).
+- **Component Primitives:** Custom Tailwind CSS v4 primitives in `src/components/ui/` (e.g. `button.tsx`) with CVA variants.
 - **Client State Management:** `Zustand` (authentication tokens, candidate profile draft, video modal state, search query).
 - **Server State & Data Fetching:** `@tanstack/react-query v5` (caching, optimistic mutations, pagination, automatic retries).
-- **Form Management & Validation:** `react-hook-form` + `zod` schemas matching backend DTOs.
+- **Form Management & Validation:** `react-hook-form` + `zod` 4 schemas matching backend DTOs.
 - **Icons & Assets:** Strict literal imports from `/images/` (verified legacy assets). Zero synthetic SVG approximations.
 
 ---
 
-## 2. Design System Tokens (`tailwind.config.ts`)
+## 2. Design System Tokens (`src/app/globals.css`)
 
-Configure `tailwind.config.ts` with these exact tokens:
+Tailwind CSS v4 replaces `tailwind.config.ts` with CSS-first `@theme` declarations inside `src/app/globals.css`:
 
-```typescript
-// tailwind.config.ts
-import type { Config } from "tailwindcss";
+```css
+@import "tailwindcss";
 
-const config: Config = {
-  darkMode: ["class"],
-  content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  theme: {
-    container: {
-      center: true,
-      padding: "1.5rem",
-      screens: {
-        "2xl": "1280px",
-      },
-    },
-    extend: {
-      colors: {
-        brand: {
-          primary: "#5bbbae",       // Signature Seafoam Teal
-          hover: "#497d76",         // Darkened Interaction Teal
-          accent: "#3fc6b7",        // Vibrant Highlight Teal
-          dark: "#21655e",          // Deep Contrast Anchor
-          blue: "#39a0e8",          // Action & Link Blue
-          overlay: "#d7ecea",       // Auth Split-screen Overlay Tint
-        },
-        surface: {
-          page: "#f8f9fa",          // Background canvas
-          card: "#ffffff",          // Clean card surface
-          border: "#d1d6da",        // Muted structural border
-          divider: "#f0f2f5",       // Section separator
-          subtle: "#fafafa",        // Subtle card highlight
-        },
-        typography: {
-          main: "#252525",          // High contrast headline
-          heading: "#515151",       // Standard header
-          body: "#666666",          // Main reading copy
-          muted: "#737475",         // Secondary metadata
-          inverse: "#ffffff",
-        },
-      },
-      borderRadius: {
-        lg: "0.5rem",
-        md: "0.375rem",
-        sm: "0.25rem",
-      },
-      fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
-      },
-    },
-  },
-  plugins: [require("tailwindcss-animate")],
-};
+:root {
+  --background: #f8f9fa;
+  --foreground: #252525;
+  
+  /* Belooga Brand Tokens */
+  --brand-primary: #5bbbae;       /* Signature Seafoam Teal */
+  --brand-hover: #497d76;         /* Darkened Interaction Teal */
+  --brand-accent: #3fc6b7;        /* Vibrant Highlight Teal */
+  --brand-dark: #21655e;          /* Deep Contrast Anchor */
+  --brand-blue: #39a0e8;          /* Action & Link Blue */
+  --brand-overlay: #d7ecea;       /* Auth Split-screen Overlay Tint */
+  
+  /* Belooga Surface Tokens */
+  --surface-page: #f8f9fa;        /* Background canvas */
+  --surface-card: #ffffff;        /* Clean card surface */
+  --surface-border: #d1d6da;      /* Muted structural border */
+  --surface-divider: #f0f2f5;     /* Section separator */
+  --surface-subtle: #fafafa;      /* Subtle card highlight */
+  
+  /* Belooga Typography Tokens */
+  --typography-main: #252525;     /* High contrast headline */
+  --typography-heading: #515151;  /* Standard header */
+  --typography-body: #666666;     /* Main reading copy */
+  --typography-muted: #737475;    /* Secondary metadata */
+}
 
-export default config;
+@theme inline {
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-overlay: var(--brand-overlay);
+  
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-border: var(--surface-border);
+  --color-surface-divider: var(--surface-divider);
+  --color-surface-subtle: var(--surface-subtle);
+
+  --color-typography-main: var(--typography-main);
+  --color-typography-heading: var(--typography-heading);
+  --color-typography-body: var(--typography-body);
+  --color-typography-muted: var(--typography-muted);
+}
 ```
 
 ---
 
 ## 3. Common UI Components Specification (`src/components/ui/`)
 
-All common components are built on `shadcn/ui` primitives with Belooga brand customization:
+> [!NOTE] CURRENT IMPLEMENTATION: `src/components/ui/button.tsx` is implemented with custom CVA variants. Other UI components (inputs, modals, cards) are currently inlined within their respective App Router page shells. Decomposing inlined elements into standalone `src/components/ui/` primitives is a target refactor.
 
 ### 3.1 Button (`src/components/ui/button.tsx`)
 - **Variants:**
@@ -306,7 +296,7 @@ frontend/
 │   │   ├── not-found.tsx                    # Route 16: 404 Error Screen
 │   │   └── globals.css                      # Tailwind imports + legacy tokens
 │   ├── components/
-│   │   ├── ui/                              # shadcn primitives (button, dialog, input, etc.)
+│   │   ├── ui/                              # UI primitives (button.tsx, etc.)
 │   │   ├── layout/                          # Header, Footer, Sidebar, Navigation
 │   │   ├── workspace/                       # VideoPitchPlayer, TimelineCard, PDFViewer
 │   │   ├── search/                          # SearchBar, FilterBar, CandidateCardGrid
@@ -315,7 +305,6 @@ frontend/
 │   ├── services/                            # API endpoints & HTTP client
 │   ├── store/                               # Zustand state stores
 │   └── types/                               # TypeScript DTO interfaces
-├── tailwind.config.ts
 ├── package.json
 └── tsconfig.json
 ```

@@ -31,7 +31,7 @@ frontend/src/app/(auth)/
 
 | Dependency Direction | Department | Interface & Contract |
 | :--- | :--- | :--- |
-| **Upstream (Depends on)** | `be-service-auth` | `POST /v1/users/login/`, `POST /v1/users/register/`, `GET /v1/users/exists/email/`, `GET /v1/users/exists/username/` |
+| **Upstream (Depends on)** | `be-service-auth` | `POST /v1/auth/login/`, `POST /v1/users/register/`, `GET /v1/users/exists/email/`, `GET /v1/users/exists/username/` |
 | **Downstream (Outputs to)** | `frontend/src/store/auth-store.ts` | In-memory token storage: `{ token, user, setAuth, logout }` |
 | **Downstream (Outputs to)** | `fe-page-workspace` | On successful authentication, router redirects candidate to `/user/[username]` |
 

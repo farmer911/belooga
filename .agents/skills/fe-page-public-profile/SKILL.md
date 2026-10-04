@@ -15,9 +15,12 @@ description: Authoritative Department Skill for the Public Candidate Profile Pag
 
 The Public Profile Department renders the recruiter-facing view of a candidate. It exhibits the candidate's authentic elevator pitch, career credentials, and skills without exposing private edit controls or settings.
 
-### Component Hierarchy & Section Decomposition:
+### Target Component Hierarchy & Section Decomposition:
+> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER PAGE SHELL
+> The tree below represents the planned Atomic Design decomposition. In the current production codebase, the public profile view is implemented inside `frontend/src/app/public/[username]/page.tsx`.
+
 ```
-frontend/src/app/public/[username]/page.tsx (Page Shell & Query Provider)
+frontend/src/app/public/[username]/page.tsx (Page Shell & Current Unified Implementation)
 │
 ├── 1. PublicHeaderSection (`src/components/organisms/public/public-header-section.tsx`)
 │      └── Avatar, full name, headline, location, contact inquiry button, and report modal trigger

@@ -8,3 +8,6 @@
 6. **Author Alignment:** If an asset, style, or contract is unknown or ambiguous, ask the system author (user) directly. Never guess or fabricate.
 7. **Execution Router & Integrity Protocol:** Always follow the workflow sequence in `.agents/ROUTER.md` and abide by `.agents/skills/engineering-integrity-and-evidence/SKILL.md`. Adhere strictly to the "No Proof = Not Done" rule.
 8. **Mandatory Inquiry Gate:** If any requirement, contract, or design decision is unclear or undocumented, STOP and ASK the user via `ask_question` or direct inquiry. Never make unverified assumptions.
+9. **SSOT Ground-Truth Consultation:** Always consult `CURRENT_STATE.md` (the dynamically generated ground truth from AST and PostgreSQL schemas). Never cite or invent unverified table names, route paths, or package versions.
+10. **Automated SSOT Integrity Gate:** Run `bash scripts/audit-truth.sh` before declaring completion. It verifies zero schema drift, zero unindexed search fallbacks, zero blocking calls in async event loop, and executes the backend pytest suite.
+11. **Mandatory TDD Workflow:** Follow `.agents/skills/tdd-workflow/SKILL.md`. Always produce and record a failing test (Red phase) before writing or modifying code.
