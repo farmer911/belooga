@@ -236,14 +236,157 @@ A junior programmer writes code that "appears to work" on localhost. A **Senior 
 
 ---
 
-## 7. MASTER TECHNICAL KNOWLEDGE AUDIT CHECKLIST
+## 7. WEBRTC CROSS-BROWSER CODEC MATRIX & SAFARI/IOS QUIRKS
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. CROSS-BROWSER MEDIARECORDER CODEC COMPATIBILITY          │
+│ • Chromium (Chrome, Edge, Brave): video/webm;codecs=vp9,opus│
+│ • Mozilla Firefox: video/webm;codecs=vp8,opus               │
+│ • Apple Safari (macOS & iOS): video/mp4;codecs=avc1 (H.264) │
+│   *CRITICAL: Safari iOS DOES NOT SUPPORT video/webm!        │
+└──────────────────────────────┬──────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. DYNAMIC MIME-TYPE NEGOTIATION ALGORITHM                  │
+│ • Sniff via MediaRecorder.isTypeSupported() in strict order │
+│ • Universal fallback to video/mp4 or raw container          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 7.1. The Safari iOS WebM Trap & Invariant
+* **The Invariant:** Hardcoding `new MediaRecorder(stream, { mimeType: "video/webm" })` causes an immediate, fatal `NotSupportedError` on 100% of iPhones and iPads.
+* **Mandatory Sniffing Engine:**
+  ```typescript
+  export function resolveOptimalRecordingMimeType(): string {
+    const candidates = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4;codecs=avc1.42E01E,mp4a.40.2", // Safari iOS preferred
+      "video/mp4",
+    ];
+
+    for (const mimeType of candidates) {
+      if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(mimeType)) {
+        return mimeType;
+      }
+    }
+    return ""; // Default container fallback
+  }
+  ```
+
+---
+
+## 8. STANDARDIZED RFC 7807 PROBLEM DETAILS & ERROR TAXONOMY
+
+In an enterprise architecture, errors must never be formatted as arbitrary string messages (`detail: "error"`). All API domain services must emit machine-readable errors adhering strictly to **RFC 7807**:
+
+### 8.1. RFC 7807 Schema Specification
+```json
+{
+  "type": "https://belooga.com/errors/err-auth-token-expired",
+  "title": "Authentication Token Expired",
+  "status": 401,
+  "code": "ERR_AUTH_TOKEN_EXPIRED",
+  "detail": "The provided JWT access token expired at 2026-10-04T16:00:00Z.",
+  "instance": "/v1/auth/refresh",
+  "timestamp": "2026-10-04T16:05:00Z",
+  "invalid_params": []
+}
+```
+
+### 8.2. Master Machine-Readable Error Registry
+
+| Domain | Error Code (`code`) | HTTP Status | Trigger Condition |
+| :--- | :--- | :--- | :--- |
+| **Auth** | `ERR_AUTH_CREDENTIALS_INVALID` | 401 | Password verification failed via Argon2id. |
+| **Auth** | `ERR_AUTH_TOKEN_EXPIRED` | 401 | Access token expired signature. |
+| **Auth** | `ERR_AUTH_REPLAY_DETECTED` | 401 | Revoked refresh token presented; family revoked. |
+| **Auth** | `ERR_AUTH_IDENTITY_CONFLICT` | 409 | Email or username already exists. |
+| **Security** | `ERR_IDOR_FORBIDDEN` | 403 | `current_user.id != target.identity_id`. |
+| **Timeline** | `ERR_TIMELINE_INDEX_OUT_OF_BOUNDS` | 422 | `display_order` outside $[0, N-1]$. |
+| **Media** | `ERR_MEDIA_UNSUPPORTED_MIME` | 415 | Upload format not in permitted MIME whitelist. |
+| **Media** | `ERR_MEDIA_CHUNK_CORRUPT` | 400 | Chunk byte length or checksum mismatch. |
+| **Search** | `ERR_SEARCH_SYNTAX_ERROR` | 400 | Malformed full-text search operators. |
+
+---
+
+## 9. ZERO-DOWNTIME DATABASE SCHEMA EVOLUTION (THE EXPAND/CONTRACT PATTERN)
+
+A senior engineer never executes destructive `ALTER TABLE RENAME COLUMN` or drops columns on a live production database. All schema migrations must follow the **3-Phase Expand & Contract (Parallel Run) Protocol**:
+
+```
+[PHASE 1: EXPAND (Version N)]
+ • Add new column as NULLABLE (e.g. ALTER TABLE candidate_profiles ADD COLUMN pitch_url VARCHAR(512);)
+ • Deploy backend writing to BOTH old and new columns (Dual-Write).
+ • Reads continue from old column.
+                 │
+                 ▼
+[PHASE 2: BACKFILL & SHADOW READ (Version N+1)]
+ • Execute idempotent background migration migrating historical data:
+   UPDATE candidate_profiles SET pitch_url = video_pitch_url WHERE pitch_url IS NULL;
+ • Switch backend read traffic to new column (`pitch_url`).
+                 │
+                 ▼
+[PHASE 3: CONTRACT (Version N+2)]
+ • Remove dual-write logic; old column is no longer referenced in code.
+ • Drop old column safely: ALTER TABLE candidate_profiles DROP COLUMN video_pitch_url;
+```
+
+---
+
+## 10. POSTGRESQL ADVISORY LOCKS FOR CONCURRENT ASYNC CHUNK WRITES
+
+* **The Problem:** When client browsers upload video chunks concurrently across multiple HTTP connections, chunks arrive out of order (Chunk 2 before Chunk 1). If two workers attempt to reassemble or mutate chunk metadata simultaneously, race conditions corrupt the destination stream.
+* **The Solution:** **Session-Level / Transaction-Level PostgreSQL Advisory Locks** (`pg_advisory_xact_lock`):
+  * Unlike row locks, advisory locks do not lock actual table rows. They lock an application-defined 64-bit integer identifier (e.g. hash of `upload_id`), serializing chunk assembly safely across distributed workers.
+* **Best Practice Blueprint:**
+  ```python
+  async def acquire_upload_session_lock(session: AsyncSession, upload_id: str) -> None:
+      # Hashes upload UUID string into a 64-bit integer lock key
+      stmt = text("SELECT pg_advisory_xact_lock(hashtext(:upload_id))")
+      await session.execute(stmt, {"upload_id": upload_id})
+      # Lock is automatically released when transaction commits or aborts
+  ```
+
+---
+
+## 11. CROSS-ORIGIN COOKIE TOPOLOGY & THE BFF (BACKEND-FOR-FRONTEND) PATTERN
+
+* **The Challenge:** Next.js frontend (`localhost:3000`) and FastAPI backend (`localhost:8000`) are distinct origins. Modern browser security policies (Safari ITP, Chrome Privacy Sandbox) block **Third-Party Cookies** by default, preventing cross-origin `HttpOnly` refresh token persistence.
+* **The Architecture:** **BFF (Backend-For-Frontend) Internal Route Proxy**:
+  ```
+  ┌────────────────────────────────────────────────────────┐
+  │ Browser Client (Origin: http://localhost:3000)         │
+  └───────────────────────────┬────────────────────────────┘
+                              │ First-Party Request (Same Origin)
+                              ▼
+  ┌────────────────────────────────────────────────────────┐
+  │ Next.js BFF Route Handler (/api/auth/login)            │
+  │ • Sets First-Party HttpOnly Cookie on port 3000        │
+  │ • Proxies request server-to-server to FastAPI (port 8000)│
+  └───────────────────────────┬────────────────────────────┘
+                              │ Server-to-Server Network Call
+                              ▼
+  ┌────────────────────────────────────────────────────────┐
+  │ FastAPI Backend (Internal Port 8000)                   │
+  └────────────────────────────────────────────────────────┘
+  ```
+
+---
+
+## 12. MASTER TECHNICAL KNOWLEDGE AUDIT CHECKLIST
 
 Before any software engineer or autonomous agent marks a technical task complete, verify against these physical and algorithmic invariants:
 
 - [ ] **Database MVCC:** Table write volume does not cause runaway dead tuple bloat; autovacuum settings are tuned for write-heavy tables.
 - [ ] **Concurrency Isolation:** Operations updating business invariants across multiple rows guard against **Write Skew** via row locks or `SERIALIZABLE` transactions.
-- [ ] **Join Efficiency:** Execution plans for joined relations use Hash Join or Merge Join appropriately without spilling `work_mem` to disk.
-- [ ] **Transport Protocols:** Interactive media strictly utilizes RTP/UDP; reliable file delivery utilizes HTTP chunking over TCP/QUIC.
+- [ ] **Zero-Downtime Migration:** Schema alterations follow the 3-phase **Expand & Contract** protocol; zero destructive instant column renames.
+- [ ] **Concurrent I/O:** Parallel chunk uploads are serialized using **PostgreSQL Advisory Locks** (`pg_advisory_xact_lock`).
+- [ ] **Cross-Browser Media:** WebRTC recording implements dynamic MIME sniffing, strictly supporting Safari iOS (`video/mp4`).
+- [ ] **Error Standardization:** All API error payloads strictly conform to **RFC 7807** with machine-readable `ERR_...` codes.
+- [ ] **Cookie Security:** Authentication tokens adhere to the **BFF Pattern** or First-Party cookie topology, preventing cross-origin drops.
 - [ ] **Browser Compositing:** High-frequency UI animations utilize only `transform` and `opacity`, avoiding forced synchronous reflows.
 - [ ] **V8 Memory Safety:** 60fps loops allocate zero temporary objects, reusing typed arrays to eliminate GC micro-pauses.
 - [ ] **Cache Resilience:** Caching layers incorporate **TTL Jitter** (anti-avalanche) and **Bloom Filters** or null-value caching (anti-penetration).

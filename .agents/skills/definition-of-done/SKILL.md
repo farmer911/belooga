@@ -43,6 +43,8 @@ No feature, refactoring, bug fix, or technical improvement may be marked as "DON
   - Routers contain **zero SQL queries** and **zero business logic**. Execution is 100% delegated to Domain Services.
   - Multi-table mutations and sequence reordering execute within an atomic **Unit of Work** transaction.
   - All mutating endpoints require strict Pydantic v2 `response_model` annotations.
+- [ ] **Error Standardization (RFC 7807):**
+  - All HTTP error payloads strictly follow RFC 7807 Problem Details with machine-readable `ERR_...` error codes. Arbitrary string error dicts are rejected.
 - [ ] **Frontend Atomic Hierarchy:**
   - Route pages (`page.tsx`) are pure orchestrators strictly under **100 LOC** (zero inline layout DOM, zero raw SVG/div soup).
   - Organisms remain strictly under **300 LOC**.
@@ -74,6 +76,10 @@ No feature, refactoring, bug fix, or technical improvement may be marked as "DON
 
 ## 4. LAYER 3: CLIENT RESILIENCE, SECURITY & ERROR BOUNDARIES
 
+- [ ] **WebRTC Cross-Browser Compatibility:**
+  - Media recording implements dynamic MIME sniffing via `MediaRecorder.isTypeSupported()`, supporting `video/mp4` on Apple Safari/iOS. Hardcoded `video/webm` is strictly forbidden.
+- [ ] **Cookie Security & BFF Topology:**
+  - Authentication sessions use First-Party cookies via Next.js BFF Route Handlers or proper proxying, preventing third-party cookie drops across ports 3000 and 8000.
 - [ ] **Error Boundaries:**
   - Next.js route has an `error.tsx` component implementing an isolated fallback UI with recovery actions (`reset()`), preventing white-screen crashes.
 - [ ] **Suspense & Streaming Skeletons:**
@@ -85,8 +91,10 @@ No feature, refactoring, bug fix, or technical improvement may be marked as "DON
 
 ---
 
-## 5. LAYER 4: DATABASE MIGRATION INTEGRITY (ALEMBIC)
+## 5. LAYER 4: DATABASE MIGRATION & ZERO-DOWNTIME EVOLUTION
 
+- [ ] **Expand & Contract Protocol:**
+  - Schema alterations follow the 3-phase Expand & Contract pattern: column renames or type changes run parallel dual-writes without dropping active production columns prematurely.
 - [ ] **Migration Scripts:**
   - Any relational schema change is captured in a dedicated Alembic revision script in `backend/alembic/versions/`.
   - Direct schema mutation via raw SQL scripts or unversioned manual commands is strictly forbidden.

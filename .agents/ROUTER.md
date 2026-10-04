@@ -1,6 +1,6 @@
 # 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
 
-> **Version:** 2.3.0 — Enterprise Multi-Department Standard with 7-Tier Definition of Done (DoD)  
+> **Version:** 2.4.0 — Enterprise Multi-Department Standard with Architecture Decision Records (ADR)  
 > **Status:** MANDATORY & ENFORCED FOR ALL AGENTS & SUB-AGENTS  
 > **Authority:** Principal Full-Stack Architect  
 
@@ -13,8 +13,9 @@ This document establishes the **Organizational Operating System** for the Beloog
 2. **Skills are Institutional Knowledge Assets:** Agents are not generic laborers; they act as Senior Specialists equipped with deep, accumulated institutional memory.
 3. **Zero Blind Trust (50% Agent Confidence Cap):** Coder Agents are trusted at at most 50%. The remaining 50% of verification is enforced by **Independent Reviewer Agents** (Senior Frontend Lead Reviewer and Principal Backend Lead Reviewer).
 4. **Strict Definition of Done (DoD):** No work is complete without satisfying the binary 7-tier DoD quality contract (`definition-of-done` skill).
-5. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
-6. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
+5. **Architectural Decisions are Invariant (ADRs):** All tech stack selections and architectural choices are bound by [`.agents/ADR.md`](.agents/ADR.md). Agents are forbidden from introducing unapproved libraries or deviating from recorded ADRs.
+6. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
+7. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
 
 ---
 
