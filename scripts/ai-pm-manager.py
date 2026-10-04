@@ -53,7 +53,8 @@ def call_gemini_api(api_key: str, prompt: str) -> str:
         ],
         "generationConfig": {
             "temperature": 0.2,
-            "maxOutputTokens": 8192
+            "maxOutputTokens": 8192,
+            "responseMimeType": "application/json"
         }
     }
     data = json.dumps(payload).encode("utf-8")
@@ -205,28 +206,32 @@ Title: {idea_title}
 Details:
 {idea_body}
 
+### STRICT LANGUAGE REQUIREMENT (NON-NEGOTIABLE)
+ALL generated outputs (summaries, PRDs, task titles, user stories, acceptance criteria, and task bodies) MUST BE 100% IN PROFESSIONAL TECHNICAL ENGLISH.
+Even if the user's input idea or title is in Vietnamese or another language, you must translate, synthesize, and write ALL ticket titles and content strictly in English. Never use Vietnamese in any ticket title or body.
+
 ### YOUR TASK
 1. Assess feasibility, data architecture, and existing API reuse.
-2. Formulate a technical architecture specification (PRD).
-3. Decompose the feature into strictly 2 to 3 discrete engineering tasks:
+2. Formulate a technical architecture specification (PRD) in English.
+3. Decompose the feature into strictly 2 to 3 discrete engineering tasks in English:
    - Backend Task (FastAPI endpoint, PostgreSQL migration/schema, IDOR guard, TDD Pytest)
    - Frontend Task (Next.js App Router UI, state management, API integration, Tailwind styling)
    - (Optional) QC Task (Playwright test scenario)
 
 You MUST respond strictly with valid JSON conforming to this schema (do not wrap in extra prose, output ONLY the JSON object):
 {{
-  "summary": "2-3 sentence executive summary of the feature and architecture",
-  "spec_markdown": "Full PRD with User Stories, Architectural Decisions, Endpoints to touch, Tables to modify or create, and Acceptance Criteria",
+  "summary": "2-3 sentence executive summary of the feature and architecture in English",
+  "spec_markdown": "Full PRD with User Stories, Architectural Decisions, Endpoints to touch, Tables to modify or create, and Acceptance Criteria in English",
   "tasks": [
     {{
       "role": "backend",
-      "title": "[BE]: Brief descriptive title",
-      "body": "Detailed backend implementation plan citing specific files, endpoints, schema changes, and test files."
+      "title": "[BE]: Brief descriptive English title",
+      "body": "Detailed backend implementation plan in English citing specific files, endpoints, schema changes, and test files."
     }},
     {{
       "role": "frontend",
-      "title": "[FE]: Brief descriptive title",
-      "body": "Detailed frontend implementation plan citing specific page files, UI components, states, and data fetching."
+      "title": "[FE]: Brief descriptive English title",
+      "body": "Detailed frontend implementation plan in English citing specific page files, UI components, states, and data fetching."
     }}
   ]
 }}
@@ -239,11 +244,11 @@ You MUST respond strictly with valid JSON conforming to this schema (do not wrap
         print(f"[!] Gemini call failed: {e}")
         sys.exit(1)
 
-    # Clean markdown json fencing if returned
+    # Extract JSON object reliably
     clean_json = raw_response.strip()
-    if clean_json.startswith("```"):
-        clean_json = re.sub(r"^```(?:json)?\n", "", clean_json)
-        clean_json = re.sub(r"\n```$", "", clean_json)
+    match = re.search(r"\{.*\}", clean_json, re.DOTALL)
+    if match:
+        clean_json = match.group(0)
 
     try:
         plan = json.loads(clean_json)
