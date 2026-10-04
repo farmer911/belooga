@@ -48,3 +48,6 @@ backend/uploads/resumes/*
 
 # Graphify Cache
 graphify-out/cache/
+
+# Audit Reports
+SKILLS_AUDIT*.md

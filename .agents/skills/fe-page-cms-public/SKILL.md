@@ -26,7 +26,7 @@ This department delivers the informational, regulatory, and community touchpoint
 
 | Dependency Direction | Department | Interface & Contract |
 | :--- | :--- | :--- |
-| **Upstream (Depends on)** | `be-service-cms` | `POST /v1/contact/`, `GET /v1/faqs`, `POST /v1/careers/apply/` |
+| **Upstream (Depends on)** | `be-service-cms` | `POST /v1/contact/`, `GET /v1/faqs`, `GET /v1/career/jobs/` (careers application modal is currently client-side stub) |
 | **Downstream (Outputs to)** | `fe-page-home` | Footer and navigation links route to all public CMS pages |
 
 ---

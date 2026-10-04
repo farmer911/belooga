@@ -36,7 +36,7 @@ export default function HelpPage() {
         </div>
 
         {/* FAQs Accordion */}
-        <div className="bg-white rounded-xl border border-[#d1d6da] p-8 shadow-sm divide-y divide-[#f0f2f5] space-y-4">
+        <div data-testid="help-faq-accordion" className="bg-white rounded-xl border border-[#d1d6da] p-8 shadow-sm divide-y divide-[#f0f2f5] space-y-4">
           {faqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (

@@ -171,7 +171,7 @@ export default function PublicCandidatePage() {
   const skills = profile.skills || [];
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-10">
+    <div data-testid="public-profile-container" className="min-h-screen bg-[#f8f9fa] py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Public Header Card */}
@@ -184,7 +184,7 @@ export default function PublicCandidatePage() {
             />
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-[#252525]">{profile.full_name}</h1>
+                <h1 data-testid="public-candidate-name" className="text-2xl font-bold text-[#252525]">{profile.full_name}</h1>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
                   {profile.seeking_status}
                 </span>
@@ -200,6 +200,7 @@ export default function PublicCandidatePage() {
             <Button
               variant="outline"
               size="sm"
+              data-testid="report-profile-btn"
               className="gap-2 text-[#737475] border-[#d1d6da] hover:text-red-600 cursor-pointer"
               onClick={() => setReportModalOpen(true)}
             >
@@ -239,16 +240,22 @@ export default function PublicCandidatePage() {
                 {profile.bio}
               </p>
 
-              <div className="pt-4 border-t border-[#f0f2f5] space-y-2 text-xs text-[#515151]">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-slate-400" />
-                  <span>{profile.email}</span>
+              {(profile.email || profile.phone) && (
+                <div className="pt-4 border-t border-[#f0f2f5] space-y-2 text-xs text-[#515151]">
+                  {profile.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-slate-400" />
+                      <span>{profile.email}</span>
+                    </div>
+                  )}
+                  {profile.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-slate-400" />
+                      <span>{profile.phone}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-slate-400" />
-                  <span>{profile.phone}</span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Skills & Strengths */}
@@ -310,6 +317,7 @@ export default function PublicCandidatePage() {
               </div>
 
               <div
+                data-testid="public-pitch-player-btn"
                 className="start-content-video cursor-pointer shadow-md group relative rounded-lg overflow-hidden bg-black"
                 onClick={() => setVideoModalOpen(true)}
               >
@@ -328,7 +336,7 @@ export default function PublicCandidatePage() {
             </div>
 
             {/* Experience Timeline */}
-            <div className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-6">
+            <div data-testid="public-timeline-section" className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-[#5bbbae]" />
                 <h2 className="text-lg font-bold text-[#252525]">Work Experience</h2>
@@ -648,7 +656,7 @@ export default function PublicCandidatePage() {
                   placeholder="Describe the issue..."
                   className="w-full p-3 border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
                 />
-                <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
+                <Button type="submit" data-testid="report-modal-submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
                   Submit Report
                 </Button>
               </form>

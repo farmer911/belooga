@@ -53,7 +53,7 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
           <div className="space-y-4">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase leading-tight">
+            <h1 data-testid="home-hero-headline" className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase leading-tight">
               Reinventing the <span className="text-[#5bbbae]">Candidate</span> Experience.
             </h1>
             <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto">
@@ -71,6 +71,7 @@ export default function HomePage() {
             </div>
             <input
               type="text"
+              data-testid="home-search-input"
               value={searchKey}
               onChange={(e) => setSearchKey(e.target.value)}
               placeholder="Search Candidates by skill, title, or name..."
@@ -79,6 +80,7 @@ export default function HomePage() {
             <Button
               type="submit"
               size="default"
+              data-testid="home-search-submit"
               className="rounded-full px-6 bg-[#5bbbae] hover:bg-[#497d76] text-white font-medium"
             >
               Search
@@ -179,7 +181,7 @@ export default function HomePage() {
           </div>
 
           {/* Walkthrough 1: Ava's Profile Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div data-testid="walkthrough-card" className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Video Thumbnail with Hover Overlay & 54px Play Button */}
             <div
               className="start-content-video cursor-pointer shadow-lg group relative"
@@ -261,7 +263,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div data-testid="candidate-showcase-grid" className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Candidate 1: Jazmin */}
             <div
               className="bg-[#f8f9fa] rounded-xl overflow-hidden border border-[#d1d6da] shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
@@ -341,7 +343,7 @@ export default function HomePage() {
       {/* VIDEO POPUP MODAL                                        */}
       {/* ======================================================== */}
       {activeModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div data-testid="walkthrough-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden max-w-3xl w-full shadow-2xl relative">
             <div className="flex items-center justify-between p-4 border-b border-slate-800">
               <h3 className="text-lg font-semibold text-white">{activeModal.title}</h3>

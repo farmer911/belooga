@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from app.core.database import get_db
-from app.core.security import get_current_user, AuthenticatedUser, verify_profile_owner
+from app.core.security import get_current_user, get_current_user_optional, AuthenticatedUser, verify_profile_owner
 
 logger = logging.getLogger(__name__)
 
@@ -196,12 +196,13 @@ async def delete_resume(
 @router.get("/profile/{username}/pdf/", tags=["Domain 4: Media & Uploads"])
 async def generate_candidate_pdf(
     username: str,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     clean_username = username.lower().strip()
     query = text("""
         SELECT p.id, p.first_name, p.last_name, p.headline, p.bio, p.location, p.phone,
-               p.seeking_status, i.email
+               p.seeking_status, p.is_hidden, i.email
         FROM candidate_profiles p
         JOIN identities i ON i.id = p.identity_id
         WHERE p.username = :username
@@ -210,6 +211,12 @@ async def generate_candidate_pdf(
     res = await db.execute(query, {"username": clean_username})
     row = res.fetchone()
     if not row:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    is_owner = current_user is not None and (
+        current_user.username.lower() == clean_username or current_user.role == "admin"
+    )
+    if row.is_hidden and not is_owner:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     profile_id = row.id
@@ -541,11 +548,20 @@ async def complete_chunked_video_upload(
     except Exception as e:
         print(f"Duration probe error: {e}")
 
-    # Update candidate profile in DB with video_pitch_url and video_pitch_poster
+    # Update candidate profile in DB with video_pitch_url and save poster to profile_media
     await db.execute(
-        text("UPDATE candidate_profiles SET video_pitch_url = :vurl, video_pitch_poster = :purl, updated_at = NOW() WHERE id = :pid"),
-        {"vurl": video_url, "purl": poster_url, "pid": p_row.id}
+        text("UPDATE candidate_profiles SET video_pitch_url = :vurl, updated_at = NOW() WHERE id = :pid"),
+        {"vurl": video_url, "pid": p_row.id}
     )
+    if poster_url:
+        await db.execute(
+            text("""
+                INSERT INTO profile_media (id, profile_id, category, file_url, mime_type, file_size_bytes)
+                VALUES (gen_random_uuid(), :pid, 'pitch_poster', :purl, 'image/jpeg', 0)
+                ON CONFLICT (profile_id, category) DO UPDATE SET file_url = :purl, updated_at = NOW()
+            """),
+            {"pid": p_row.id, "purl": poster_url}
+        )
     await db.commit()
 
     return {
@@ -561,7 +577,7 @@ async def complete_chunked_video_upload(
 async def get_video_transcoding_status(username: str, db: AsyncSession = Depends(get_db)):
     clean_username = username.lower().strip()
     prof_res = await db.execute(
-        text("SELECT video_pitch_url, video_pitch_poster FROM candidate_profiles WHERE username = :u"),
+        text("SELECT video_pitch_url FROM candidate_profiles WHERE username = :u"),
         {"u": clean_username}
     )
     p_row = prof_res.fetchone()

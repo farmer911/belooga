@@ -7,7 +7,7 @@ description: Specialized Section Skill for Career Timeline Management. Covers Wo
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
 > **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Career Timeline Section)  
-> **Target Modular Path:** `frontend/src/components/organisms/workspace/timeline-section.tsx`  
+> **Target Modular Path:** frontend/src/components/organisms/workspace/timeline-section.tsx (planned target)  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 3 (Timeline CRUD & Reordering)  
 
@@ -29,7 +29,7 @@ This section maintains responsibility for:
 When a candidate reorders a timeline item:
 1. Apply an immediate optimistic UI update to prevent visual latency.
 2. Dispatch the updated order array to the backend:
-   * **Endpoint:** `POST /v1/profile/{username}/job-experiences/reorder/`
+   * **Endpoint:** `POST /v1/profile/{username}/job-experiences/order/`
    * **Payload:**
      ```json
      {
@@ -50,10 +50,9 @@ When a candidate reorders a timeline item:
 ## 3. QC Anti-Regression Selectors (Mandatory Preservation)
 
 Playwright E2E tests target these exact timeline selectors:
-* `[data-testid="timeline-tabs"]`: Container holding Experience and Education tabs.
+* `[data-testid="timeline-job-card"]`: Card container for individual job entries (with `draggable="true"`).
 * `[data-testid="add-experience-btn"]`: Trigger opening new job modal.
 * `[data-testid="add-education-btn"]`: Trigger opening new education modal.
-* `[data-testid="experience-item"]`: Card container for individual job entries.
 * `[data-testid="dnd-handle"]`: Grip handle icon initiating HTML5 drag.
 * `[data-testid="delete-experience-btn"]`: Action deleting a job entry.
 * `[data-testid="experience-modal-submit"]`: Form submit button in the modal.

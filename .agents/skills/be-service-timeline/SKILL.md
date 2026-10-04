@@ -5,9 +5,12 @@ description: Authoritative Backend Department Skill for Career Timeline & Reorde
 
 # ⏳ Backend Department Skill: Career Timeline & Reordering (Domain 3)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/timeline.py`
+> **Target Modular Service:** backend/app/services/timeline_service.py (planned target)
+> **Target Modular Model:** backend/app/models/timeline.py (planned target)
 > **Department:** Backend Systems Engineering — Career Timeline Division  
-> **Target Files:** `backend/app/api/v1/endpoints/timeline.py`, `backend/app/services/timeline_service.py`, `backend/app/models/timeline.py`  
-> **Database Tables:** `job_experiences`, `education_experiences`, `awards_certifications`  
+> **Database Tables:** `job_experiences`, `education_experiences`, `award_certifications`  
 
 ---
 
@@ -30,24 +33,25 @@ This department manages structured career trajectories: previous and current job
 
 ## 3. Concurrency & Pessimistic Locking Protocol
 
-When reordering timeline items (`POST /v1/profile/{username}/job-experiences/reorder/`):
+When ordering timeline items (`POST /v1/profile/{username}/job-experiences/order/`):
 ```python
-# Standard Pessimistic Reordering Transaction
-async with db.begin():
-    # 1. Lock all job experience rows for this candidate
-    stmt = (
-        select(JobExperience)
-        .where(JobExperience.profile_id == profile_id)
-        .with_for_update()
-    )
-    res = await db.execute(stmt)
-    existing_jobs = {job.id: job for job in res.scalars()}
+# Standard Pessimistic Reordering Transaction in backend/app/api/v1/endpoints/timeline.py
+# 1. Lock all job experience rows for this candidate
+stmt = (
+    text("SELECT id, display_order FROM job_experiences WHERE profile_id = :pid FOR UPDATE")
+)
+res = await db.execute(stmt, {"pid": profile_id})
+existing_jobs = {str(row.id): row for row in res.fetchall()}
 
-    # 2. Apply verified new sequence
-    for item in reorder_payload.orders:
-        if item.id in existing_jobs:
-            existing_jobs[item.id].display_order = item.order
+# 2. Apply verified new sequence
+for item in payload.orders:
+    if str(item.id) in existing_jobs:
+        await db.execute(
+            text("UPDATE job_experiences SET display_order = :order WHERE id = :id"),
+            {"order": item.order, "id": item.id}
+        )
 
-    # Transaction commits automatically on context exit
+# 3. Explicit commit
+await db.commit()
 ```
 👉 **Guarantees zero race conditions or sequence gaps.**

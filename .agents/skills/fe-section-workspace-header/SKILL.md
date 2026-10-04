@@ -7,7 +7,7 @@ description: Specialized Section Skill for Candidate Profile Header and Identity
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
 > **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Profile Header Section)  
-> **Target Modular Path:** `frontend/src/components/organisms/workspace/profile-header-section.tsx`  
+> **Target Modular Path:** frontend/src/components/organisms/workspace/profile-header-section.tsx (planned target)  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 2 (Candidate Profile) & Domain 4 (Media & Uploads)  
 
@@ -35,7 +35,7 @@ This section maintains exclusive responsibility for:
   const handleAvatarChange = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    await apiClient.patch(`/v1/profile/${username}/avatar/`, formData);
+    await uploadAvatar(username, formData); // Calls PATCH /v1/profile/{username}/avatar/
     queryClient.invalidateQueries({ queryKey: ["candidate-profile", username] });
   };
   ```

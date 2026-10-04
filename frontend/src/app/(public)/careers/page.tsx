@@ -40,7 +40,7 @@ export default function CareersPage() {
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-[#252525]">Open Positions</h2>
           
-          <div className="space-y-4">
+          <div data-testid="careers-openings-list" className="space-y-4">
             {jobs.map((job) => (
               <div
                 key={job.id}
@@ -62,6 +62,7 @@ export default function CareersPage() {
                 </div>
 
                 <Button
+                  data-testid="careers-apply-modal"
                   className="bg-[#5bbbae] hover:bg-[#497d76] text-white flex-shrink-0"
                   onClick={() => alert(`Applying for ${job.title} — Application submission modal opens.`)}
                 >

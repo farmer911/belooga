@@ -5,8 +5,11 @@ description: Authoritative Backend Department Skill for Candidate Profiles (Doma
 
 # 👤 Backend Department Skill: Candidate Profiles (Domain 2)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/profile.py`. Video posters are stored in `profile_media` with category `pitch_poster` (not a column on `candidate_profiles`).
+> **Target Modular Service:** backend/app/services/profile_service.py (planned target)
+> **Target Modular Model:** backend/app/models/profile.py (planned target)
 > **Department:** Backend Systems Engineering — Candidate Domain Division  
-> **Target Files:** `backend/app/api/v1/endpoints/profile.py`, `backend/app/services/profile_service.py`, `backend/app/models/profile.py`  
 > **Database Tables:** `candidate_profiles`, `profile_media`  
 
 ---
@@ -29,10 +32,12 @@ This department manages the primary entity in the system: `CandidateProfile`. It
 
 ---
 
-## 3. Database Model & Search Vector Architecture
+## 3. Database Model & Search Vector Architecture (Planned Target Model)
+
+> [!NOTE] TARGET SPECIFICATION: In the current implementation, queries execute via `text()` against `backend/initdb.sql`. Posters are stored in `profile_media` rather than a direct column on `candidate_profiles`.
 
 ```python
-# backend/app/models/profile.py
+# Planned Target Model: backend/app/models/profile.py
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Text, Boolean, ForeignKey, DateTime
@@ -55,7 +60,6 @@ class CandidateProfile(Base):
     seeking_status: Mapped[str | None] = mapped_column(String(64))
     avatar_url: Mapped[str | None] = mapped_column(Text)
     video_pitch_url: Mapped[str | None] = mapped_column(Text)
-    video_pitch_poster: Mapped[str | None] = mapped_column(Text)
     resume_url: Mapped[str | None] = mapped_column(Text)
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)
     is_fresh: Mapped[bool] = mapped_column(Boolean, default=True)

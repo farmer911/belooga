@@ -58,7 +58,7 @@ export default function LoginPage() {
           </div>
 
           {errorMessage && (
-            <div className="flex items-center gap-3 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            <div data-testid="auth-error-banner" className="flex items-center gap-3 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -76,6 +76,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   required
+                  data-testid="login-email-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
@@ -103,6 +104,7 @@ export default function LoginPage() {
                 <input
                   type="password"
                   required
+                  data-testid="login-password-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -114,6 +116,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               size="lg"
+              data-testid="login-submit-btn"
               disabled={isLoading}
               className="w-full bg-[#5bbbae] hover:bg-[#497d76] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
             >

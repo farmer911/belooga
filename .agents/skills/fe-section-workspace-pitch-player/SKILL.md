@@ -7,7 +7,7 @@ description: Specialized Section Skill for the 30-Second Elevator Pitch Video Pl
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
 > **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Video Pitch Player Section)  
-> **Target Modular Path:** `frontend/src/components/organisms/workspace/video-pitch-section.tsx`  
+> **Target Modular Path:** frontend/src/components/organisms/workspace/video-pitch-section.tsx (planned target)  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 4 (Media & Uploads)  
 

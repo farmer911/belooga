@@ -5,9 +5,11 @@ description: Authoritative Backend Department Skill for Public CMS & Moderation 
 
 # 📢 Backend Department Skill: Public CMS & Moderation (Domain 8)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/cms.py`. Contact inquiries persist to `contact_inquiries`, moderation reports persist to `profile_reports`. FAQs and career listings are currently served via in-memory dictionaries.
+> **Target Modular Service:** backend/app/services/cms_service.py (planned target)
 > **Department:** Backend Systems Engineering — CMS & Trust Division  
-> **Target Files:** `backend/app/api/v1/endpoints/cms.py`, `backend/app/services/cms_service.py`  
-> **Database Tables:** `contact_inquiries`, `cms_posts`, `cms_categories`, `moderation_logs`  
+> **Database Tables:** `contact_inquiries`, `profile_reports`  
 
 ---
 
@@ -21,14 +23,14 @@ This department powers the communications, customer support, and safety infrastr
 
 | Dependency Direction | Department | Interface & Contract |
 | :--- | :--- | :--- |
-| **Downstream (Outputs to)** | `fe-page-cms-public` | Serves `POST /v1/contact/`, `GET /v1/faqs` |
-| **Downstream (Outputs to)** | `fe-page-public-profile` | Serves `POST /v1/report/` for recruiter abuse reporting |
+| **Downstream (Outputs to)** | `fe-page-cms-public` | Serves `POST /v1/contact/`, `GET /v1/faqs`, `GET /v1/career/jobs/` |
+| **Downstream (Outputs to)** | `fe-page-public-profile` | Serves `POST /v1/profile/{user_id}/report/` for recruiter abuse reporting |
 
 ---
 
 ## 3. Moderation Ticket Protocol
 
 When a recruiter or user reports a profile:
-1. `POST /v1/report/` captures target candidate ID, reporter IP/account, and report reason.
-2. Ingests record into `moderation_logs` with status `pending_review`.
-3. If a profile exceeds 3 flagged violations, automated notification triggers for administrative review.
+1. `POST /v1/profile/{user_id}/report/` captures target candidate ID, reporter email, and report reason.
+2. Ingests record into `profile_reports` table in PostgreSQL.
+3. Automatically confirms submission to caller with `{ "message": "Report submitted successfully" }`.

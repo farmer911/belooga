@@ -10,10 +10,10 @@ from sqlalchemy import text
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Use the real PostgreSQL test container on port 5433
+# Use the isolated PostgreSQL test database on port 5433
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_db"
+    "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_test"
 )
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["ENVIRONMENT"] = "testing"

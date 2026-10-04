@@ -120,7 +120,7 @@ export default function RegisterPage() {
           </div>
 
           {errorMessage && (
-            <div className="flex items-center gap-3 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            <div data-testid="auth-error-banner" className="flex items-center gap-3 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -186,6 +186,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   required
+                  data-testid="register-username-input"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                   placeholder="janedoe"
@@ -226,6 +227,7 @@ export default function RegisterPage() {
                 <input
                   type="email"
                   required
+                  data-testid="register-email-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="jane@example.com"
@@ -246,6 +248,7 @@ export default function RegisterPage() {
                 <input
                   type="password"
                   required
+                  data-testid="register-password-input"
                   minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -281,6 +284,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               size="lg"
+              data-testid="register-submit-btn"
               disabled={isLoading}
               className="w-full bg-[#5bbbae] hover:bg-[#497d76] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 mt-4"
             >

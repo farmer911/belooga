@@ -85,10 +85,13 @@ async def search_suggestions(
     query = text("""
         SELECT p.username, p.first_name, p.last_name, p.headline
         FROM candidate_profiles p
-        WHERE p.first_name ILIKE :q
-           OR p.last_name ILIKE :q
-           OR p.headline ILIKE :q
-           OR p.username ILIKE :q
+        WHERE p.is_hidden = FALSE
+          AND (
+            p.first_name ILIKE :q
+            OR p.last_name ILIKE :q
+            OR p.headline ILIKE :q
+            OR p.username ILIKE :q
+          )
         LIMIT 5
     """)
     res = await db.execute(query, {"q": f"%{clean_key}%"})

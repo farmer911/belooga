@@ -68,4 +68,4 @@ Playwright test suite `qc/tests/e2e/auth-flow.spec.ts` verifies:
 Whenever modifying the Auth flows:
 1. Verify both successful login and invalid password error handling.
 2. Confirm username/email availability debounce prevents excessive backend hits.
-3. Test session persistence across page refreshes via `/v1/users/refresh/`.
+3. Test session persistence across page refreshes via `/v1/auth/refresh/`.

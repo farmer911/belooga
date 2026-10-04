@@ -7,7 +7,7 @@ description: Specialized Section Skill for the WebRTC Video Recording Studio. Co
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
 > **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Studio Recording Modal)  
-> **Target Modular Path:** `frontend/src/components/organisms/workspace/video-studio-section.tsx`  
+> **Target Modular Path:** frontend/src/components/organisms/workspace/video-studio-section.tsx (planned target)  
 > **Master Skill:** `fe-page-workspace`  
 > **Backend Domain:** Domain 4 (Media & Uploads) & Domain 5 (Video Studio)  
 
@@ -67,29 +67,30 @@ Upon recording completion:
 1. `MediaRecorder.stop()` generates the final video `Blob` (`video/webm;codecs=vp8,opus`).
 2. Generate upload transaction ID: `upload_id = "rec_" + Date.now()`.
 3. Slice the Blob into 1MB chunks (`1024 * 1024` bytes).
-4. Sequentially transmit each chunk: `POST /v1/profile/{username}/video-pitch/chunk/` (`upload_id`, `chunk_index`, binary file).
+4. Sequentially transmit each chunk: `POST /v1/media/upload/chunk` (`upload_id`, `chunk_index`, `total_chunks`, `username`, binary file).
 5. Transmit the completion signal:
-   `POST /v1/profile/{username}/video-pitch/complete/`
+   `POST /v1/media/upload/complete`
    ```json
    {
-     "upload_id": "rec_1712345678",
+     "upload_id": "upload_1712345678_valid",
      "total_chunks": 4,
      "username": "alexnguyen",
      "filename": "pitch.webm"
    }
    ```
 6. Backend merges chunks on disk/S3 and returns the persistent `video_pitch_url`.
-7. Client invalidates the cache: `queryClient.invalidateQueries({ queryKey: ['candidate-profile', username] })`.
+7. Client updates the candidate profile state.
 
 ---
 
 ## 4. QC Anti-Regression Selectors (Mandatory Preservation)
 
 Playwright E2E tests target these exact studio selectors:
-* `[data-testid="open-studio-btn"]`: Studio dialog opener button.
-* `[data-testid="studio-modal"]`: WebRTC studio dialog overlay.
-* `[data-testid="camera-preview-video"]`: Video element displaying active camera stream.
-* `[data-testid="record-start-btn"]`: Button initiating video capture.
-* `[data-testid="record-stop-btn"]`: Button completing capture.
-* `[data-testid="teleprompter-textarea"]`: Textarea accepting speech script.
-* `[data-testid="vu-meter-bar"]`: Audio telemetry level indicator.
+* `[data-testid="record-pitch-studio-btn"]`: Studio dialog opener button.
+* `[data-testid="studio-live-cam"]`: Video element displaying active camera stream.
+* `[data-testid="studio-record-btn"]`: Button initiating video capture.
+* `[data-testid="studio-stop-btn"]`: Button completing capture.
+* `[data-testid="studio-retake-btn"]`: Button to retake recording.
+* `[data-testid="studio-save-btn"]`: Button to assemble chunks and publish pitch.
+* `[data-testid="script-textarea"]`: Textarea accepting speech script.
+* `[data-testid="mic-recognition-badge"]`: Microphone audio recognition status badge.

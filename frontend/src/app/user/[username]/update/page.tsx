@@ -89,7 +89,7 @@ export default function UpdateProfilePage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" data-testid="update-profile-form">
             {/* Avatar Section */}
             <div className="flex items-center gap-5 p-4 rounded-lg bg-[#f8f9fa] border border-[#d1d6da]">
               <img
@@ -139,6 +139,7 @@ export default function UpdateProfilePage() {
               <input
                 type="text"
                 required
+                data-testid="update-headline-input"
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
                 placeholder="Senior Fullstack Engineer | React & Python"
@@ -186,6 +187,7 @@ export default function UpdateProfilePage() {
               <label className="text-xs font-semibold text-[#515151]">Bio</label>
               <textarea
                 rows={4}
+                data-testid="update-bio-textarea"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Share your technical background and career achievements..."
@@ -197,7 +199,7 @@ export default function UpdateProfilePage() {
               <Link href={`/user/${username}`}>
                 <Button variant="ghost" type="button">Cancel</Button>
               </Link>
-              <Button type="submit" className="bg-[#5bbbae] hover:bg-[#497d76] text-white gap-2">
+              <Button type="submit" data-testid="update-submit-btn" className="bg-[#5bbbae] hover:bg-[#497d76] text-white gap-2">
                 <Save className="w-4 h-4" /> Save Profile
               </Button>
             </div>

@@ -1,7 +1,7 @@
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white border border-[#d1d6da] rounded-xl p-8 shadow-sm space-y-6">
+      <div data-testid="legal-content-container" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white border border-[#d1d6da] rounded-xl p-8 shadow-sm space-y-6">
         <h1 className="text-3xl font-extrabold text-[#252525]">Privacy Policy</h1>
         <p className="text-xs text-[#737475]">Last Updated: October 2026</p>
 

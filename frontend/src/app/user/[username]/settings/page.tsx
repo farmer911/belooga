@@ -59,7 +59,7 @@ export default function AccountSettingsPage() {
           )}
 
           {/* Change Password Form */}
-          <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-2">
+          <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-2" data-testid="settings-password-form">
             <h3 className="text-base font-bold text-[#252525] flex items-center gap-2">
               <Lock className="w-4 h-4 text-[#5bbbae]" /> Change Password
             </h3>
@@ -119,6 +119,7 @@ export default function AccountSettingsPage() {
             <Button
               type="button"
               variant="destructive"
+              data-testid="settings-delete-account-btn"
               className="gap-2 bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {
                 if (confirm("Are you sure you want to permanently delete your Belooga account?")) {

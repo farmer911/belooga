@@ -42,12 +42,13 @@ frontend/src/app/user/[username]/page.tsx (Page Shell & Current Unified Implemen
 
 ## 2. State Management Architecture & Cross-Section Coordination
 
-### 2.1. Server State: TanStack React Query as Single Source of Truth
-Candidate profile data is fetched, cached, and coordinated through a unified query key:
+### 2.1. State Coordination Architecture
+> [!NOTE] TARGET ARCHITECTURE: In current production, state is coordinated via React hooks and apiClient in `frontend/src/app/user/[username]/page.tsx`. TanStack Query is planned for state refactoring.
+
 ```typescript
 const { data: profile, isLoading, error } = useQuery({
   queryKey: ['candidate-profile', username],
-  queryFn: () => apiClient.get(`/v1/profile/${username}`).then(res => res.data),
+  queryFn: () => apiClient.get(getProfileUrl(username)).then(res => res.data), // GET /v1/profile/{username}
   staleTime: 1000 * 60 * 5, // 5-minute cache freshness
 });
 ```

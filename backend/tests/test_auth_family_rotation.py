@@ -113,3 +113,58 @@ async def test_refresh_token_replay_attack_revokes_entire_family(
         {"thash": active_hash}
     )
     assert chk_res.scalar() is not None, "Active session should have been revoked upon replay attack detection!"
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_grace_window_allows_concurrent_tabs(
+    client: AsyncClient,
+    test_candidate_a: dict,
+    db_session: AsyncSession
+):
+    """
+    If a token was revoked within the 15-second grace window (e.g. concurrent tabs refreshing simultaneously),
+    it should NOT trigger catastrophic family revocation.
+    """
+    uid = test_candidate_a["id"]
+    family_id = uuid.uuid4()
+    recently_revoked_token = generate_refresh_token()
+    recent_hash = hash_token(recently_revoked_token)
+    now = datetime.now(timezone.utc)
+
+    # Revoked only 3 seconds ago (well within 15s grace window)
+    revoked_time = now - timedelta(seconds=3)
+    await db_session.execute(
+        text("""
+            INSERT INTO refresh_sessions (identity_id, family_id, token_hash, expires_at, revoked_at)
+            VALUES (:uid, :fid, :thash, :exp, :rev)
+        """),
+        {"uid": uid, "fid": family_id, "thash": recent_hash, "exp": now + timedelta(days=30), "rev": revoked_time}
+    )
+
+    # Active session in family
+    active_token = generate_refresh_token()
+    active_hash = hash_token(active_token)
+    await db_session.execute(
+        text("""
+            INSERT INTO refresh_sessions (identity_id, family_id, token_hash, expires_at)
+            VALUES (:uid, :fid, :thash, :exp)
+        """),
+        {"uid": uid, "fid": family_id, "thash": active_hash, "exp": now + timedelta(days=30)}
+    )
+    await db_session.commit()
+
+    # Call refresh with recently revoked token
+    client.cookies.set("belooga_refresh_token", recently_revoked_token)
+    response = await client.post("/v1/auth/refresh/")
+
+    # Should return 401 with "Token was recently refreshed" but NOT revoke the family
+    assert response.status_code == 401
+    assert "recently refreshed" in response.text
+
+    # The active session in the family must STILL BE ACTIVE (not revoked)
+    chk_res = await db_session.execute(
+        text("SELECT revoked_at FROM refresh_sessions WHERE token_hash = :thash"),
+        {"thash": active_hash}
+    )
+    assert chk_res.scalar() is None, "Active session should NOT be revoked during grace window!"
+

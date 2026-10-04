@@ -132,7 +132,7 @@ test('TC-WORK-003: Reordering timeline sends batch order update to backend', asy
   
   // Intercept reorder API
   const reorderPromise = page.waitForRequest(req => 
-    req.url().includes('/v1/profile/job-experiences/order/') && req.method() === 'POST'
+    req.url().includes('/job-experiences/order/') && req.method() === 'POST'
   );
 
   const firstCard = page.locator('[data-testid="timeline-job-card"]').first();

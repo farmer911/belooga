@@ -1497,7 +1497,7 @@ export default function WorkspacePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center" data-testid="workspace-loading-spinner">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#5bbbae]" />
       </div>
     );
@@ -1505,7 +1505,7 @@ export default function WorkspacePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4" data-testid="workspace-error-banner">
         <h2 className="text-2xl font-bold text-[#252525]">Candidate Profile Not Found</h2>
         <p className="text-sm text-[#737475]">The profile @{username} does not exist or is set to private.</p>
         <Link href="/">
@@ -1516,7 +1516,7 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-8">
+    <div className="min-h-screen bg-[#f8f9fa] py-8" data-testid="workspace-container">
       {/* Hidden file inputs for avatar & resume */}
       <input
         type="file"
@@ -1527,6 +1527,7 @@ export default function WorkspacePage() {
       />
       <input
         type="file"
+        id="avatar-upload-input"
         ref={avatarInputRef}
         accept="image/*"
         className="hidden"
@@ -1545,6 +1546,23 @@ export default function WorkspacePage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              data-testid="visibility-toggle"
+              className="gap-2 text-xs border-[#d1d6da]"
+              onClick={async () => {
+                try {
+                  const newStatus = !profile.is_hidden;
+                  await apiClient.patch(`/v1/profile/${username}`, { is_hidden: newStatus });
+                  setProfile({ ...profile, is_hidden: newStatus });
+                } catch (e) {
+                  console.error("Failed to toggle visibility", e);
+                }
+              }}
+            >
+              {profile.is_hidden ? "🔒 Profile Hidden" : "🌐 Profile Public"}
+            </Button>
             <Link href={`/public/${username}`}>
               <Button variant="outline" size="sm" className="gap-2 text-[#515151]">
                 <ExternalLink className="w-4 h-4" /> View Public CV
@@ -1558,6 +1576,7 @@ export default function WorkspacePage() {
             <Button
               variant="default"
               size="sm"
+              data-testid="download-pdf-btn"
               className="gap-2 bg-[#5bbbae] hover:bg-[#497d76] text-white"
               onClick={handleDownloadPdf}
             >
@@ -1578,6 +1597,7 @@ export default function WorkspacePage() {
             <div className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm text-center space-y-4">
               <div className="relative inline-block">
                 <img
+                  data-testid="profile-avatar-img"
                   src={avatarPreview || "/images/avatar.jpg"}
                   alt={profile.full_name}
                   className="w-28 h-28 rounded-full object-cover border-4 border-[#5bbbae]/20 mx-auto shadow-sm"
@@ -1598,9 +1618,9 @@ export default function WorkspacePage() {
               </div>
 
               <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-[#252525]">{profile.full_name}</h1>
+                <h1 data-testid="profile-fullname" className="text-2xl font-bold text-[#252525]">{profile.full_name}</h1>
                 <p className="text-sm font-medium text-[#5bbbae]">@{profile.username}</p>
-                <p className="text-sm text-[#515151] pt-1 font-medium">{profile.headline}</p>
+                <p data-testid="profile-headline" className="text-sm text-[#515151] pt-1 font-medium">{profile.headline}</p>
               </div>
 
               <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-[#5bbbae]/15 text-[#21655e]">
@@ -1615,7 +1635,7 @@ export default function WorkspacePage() {
               <div className="space-y-2 text-left pt-3 border-t border-[#f0f2f5] text-xs text-[#515151]">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  <span>{profile.location}</span>
+                  <span data-testid="profile-location">{profile.location}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -1629,13 +1649,14 @@ export default function WorkspacePage() {
             </div>
 
             {/* Skills & Expertise */}
-            <div className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-4">
+            <div data-testid="skills-container" className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-[#252525]">
                   Skills & Strengths
                 </h3>
                 <button
                   type="button"
+                  data-testid="add-skill-btn"
                   onClick={() => setSkillModalOpen(true)}
                   className="text-xs font-semibold text-[#5bbbae] hover:underline flex items-center gap-1 cursor-pointer"
                 >
@@ -1647,11 +1668,13 @@ export default function WorkspacePage() {
                 {skills.map((skill: string, idx: number) => (
                   <span
                     key={idx}
+                    data-testid="skill-badge"
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#f8f9fa] border border-[#d1d6da] rounded-md text-xs font-medium text-[#515151] hover:border-[#5bbbae] transition-colors"
                   >
                     <span>{skill}</span>
                     <button
                       type="button"
+                      data-testid="remove-skill-btn"
                       onClick={() => handleRemoveSkill(skill)}
                       className="text-slate-400 hover:text-red-500 rounded p-0.5"
                       title="Remove skill"
@@ -1672,6 +1695,7 @@ export default function WorkspacePage() {
                       <button
                         key={s}
                         type="button"
+                        data-testid="skill-suggestion-item"
                         onClick={() => handleAddSkill(s)}
                         className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-[#5bbbae]/15 hover:text-[#21655e] text-[#515151] transition-colors cursor-pointer"
                       >
@@ -1737,10 +1761,11 @@ export default function WorkspacePage() {
 
               {/* Video Player Container with 54px hover play button */}
               <div
+                data-testid="pitch-thumbnail-card"
                 className="start-content-video cursor-pointer shadow-md group relative rounded-lg overflow-hidden bg-black"
                 onClick={() => setVideoModalOpen(true)}
               >
-                <div className="modal-start">
+                <div className="modal-start" data-testid="play-pitch-modal-btn">
                   <div className="video-play-icon" />
                 </div>
                 <img
@@ -1770,6 +1795,7 @@ export default function WorkspacePage() {
                 <Button
                   size="sm"
                   variant="outline"
+                  data-testid="add-experience-btn"
                   className="gap-1.5 border-[#5bbbae] text-[#5bbbae] hover:bg-[#5bbbae]/10 cursor-pointer"
                   onClick={() => setExpModalOpen(true)}
                 >
@@ -1787,6 +1813,7 @@ export default function WorkspacePage() {
                   <Button
                     size="sm"
                     variant="default"
+                    data-testid="add-experience-btn"
                     className="bg-[#5bbbae] hover:bg-[#497d76] text-white gap-2 cursor-pointer"
                     onClick={() => setExpModalOpen(true)}
                   >
@@ -1811,7 +1838,7 @@ export default function WorkspacePage() {
                           : "border-[#d1d6da] bg-[#f8f9fa] hover:border-[#5bbbae]"
                       }`}
                     >
-                      <div className="text-slate-400 group-hover:text-[#5bbbae] pt-1">
+                      <div className="text-slate-400 group-hover:text-[#5bbbae] pt-1" data-testid="dnd-handle">
                         <GripVertical className="w-5 h-5 cursor-grab active:cursor-grabbing" />
                       </div>
                       
@@ -1830,6 +1857,7 @@ export default function WorkspacePage() {
                             </span>
                             <button
                               type="button"
+                              data-testid="delete-experience-btn"
                               onClick={() => handleDeleteExperience(job.id)}
                               className="text-slate-300 hover:text-red-500 transition-colors p-1 cursor-pointer"
                               title="Delete experience"
@@ -1861,6 +1889,7 @@ export default function WorkspacePage() {
                 <Button
                   size="sm"
                   variant="outline"
+                  data-testid="add-education-btn"
                   className="gap-1.5 border-[#5bbbae] text-[#5bbbae] hover:bg-[#5bbbae]/10 cursor-pointer"
                   onClick={() => setEduModalOpen(true)}
                 >
@@ -1984,6 +2013,7 @@ export default function WorkspacePage() {
           }}
         >
           <div 
+            data-testid="pitch-video-modal"
             className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden max-w-3xl w-full shadow-2xl space-y-0 relative"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1996,6 +2026,7 @@ export default function WorkspacePage() {
                 </div>
               </div>
               <button
+                data-testid="close-pitch-modal-btn"
                 onClick={() => {
                   if (modalVideoRef.current) modalVideoRef.current.pause();
                   setVideoModalOpen(false);
@@ -2013,6 +2044,7 @@ export default function WorkspacePage() {
               onClick={toggleModalVideoPlay}
             >
               <video
+                data-testid="modal-video-player"
                 ref={modalVideoRef}
                 src={profile.video_pitch_url || "/images/home/Ava_s_Video.mp4"}
                 poster={profile.video_pitch_poster || "/images/home/matt-poster.png"}
@@ -2054,6 +2086,7 @@ export default function WorkspacePage() {
               {isModalVideoPlaying && isModalVideoMuted && (
                 <button
                   type="button"
+                  data-testid="video-mute-toggle"
                   onClick={toggleModalVideoMute}
                   className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-amber-500/90 hover:bg-amber-500 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-full shadow-lg transition-transform hover:scale-105 animate-bounce pointer-events-auto"
                 >
@@ -2587,7 +2620,7 @@ export default function WorkspacePage() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {isRecording && !hasVoiceStarted && (
+                            {(process.env.NEXT_PUBLIC_E2E === "1" || process.env.NODE_ENV === "development") && isRecording && !hasVoiceStarted && (
                               <button
                                 type="button"
                                 data-testid="simulate-voice-btn"
@@ -2872,6 +2905,7 @@ export default function WorkspacePage() {
                 </Button>
                 <Button
                   type="submit"
+                  data-testid="experience-modal-submit"
                   className="bg-[#5bbbae] hover:bg-[#497d76] text-white"
                 >
                   Save Experience to DB
@@ -2971,6 +3005,7 @@ export default function WorkspacePage() {
                 </Button>
                 <Button
                   type="submit"
+                  data-testid="education-modal-submit"
                   className="bg-[#5bbbae] hover:bg-[#497d76] text-white"
                 >
                   Save Education to DB
@@ -2997,6 +3032,7 @@ export default function WorkspacePage() {
             <div className="space-y-3">
               <input
                 type="text"
+                data-testid="skill-autocomplete-input"
                 autoFocus
                 placeholder="e.g. Next.js, Kubernetes, FastAPI"
                 value={newSkillText}

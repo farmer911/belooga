@@ -21,10 +21,13 @@ This department equips candidates with comprehensive self-service management:
 
 ## 2. Cross-Departmental Impact Matrix (Dependencies)
 
+> [!NOTE] STUB / UNIMPLEMENTED ENDPOINTS
+> In current production, password rotation and account deletion in `/settings` are client-side UI stubs (planned target endpoints for password rotation and account deletion are not yet implemented in backend).
+
 | Dependency Direction | Department | Interface & Contract |
 | :--- | :--- | :--- |
 | **Upstream (Depends on)** | `be-service-profile` | `PATCH /v1/profile/{username}` for biographical updates |
-| **Upstream (Depends on)** | `be-service-auth` | `POST /v1/users/change-password/`, `DELETE /v1/users/account/` |
+| **Upstream (Depends on)** | `be-service-auth` | Target password update and deletion endpoints (currently client-side stubs) |
 | **Downstream (Outputs to)** | `fe-page-workspace` | On form submit, candidate is redirected back to `/user/[username]` with refreshed cache |
 
 ---

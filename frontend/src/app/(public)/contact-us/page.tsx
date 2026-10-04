@@ -50,7 +50,7 @@ export default function ContactUsPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} data-testid="contact-form" className="space-y-5">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[#515151]">Full Name</label>
               <input
@@ -89,6 +89,7 @@ export default function ContactUsPage() {
 
             <Button
               type="submit"
+              data-testid="contact-submit-btn"
               disabled={isLoading}
               className="w-full bg-[#5bbbae] hover:bg-[#497d76] text-white py-3 gap-2"
             >

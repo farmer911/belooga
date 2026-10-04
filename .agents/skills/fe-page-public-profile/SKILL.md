@@ -46,7 +46,7 @@ frontend/src/app/public/[username]/page.tsx (Page Shell & Current Unified Implem
 | :--- | :--- | :--- |
 | **Upstream (Depends on)** | `be-service-profile` | `GET /v1/profile/{username}` returning candidate details |
 | **Upstream (Depends on)** | `be-service-media` | Streams public video pitch and dynamic PDF resume |
-| **Upstream (Depends on)** | `be-service-cms` | `POST /v1/report/` to submit candidate moderation tickets |
+| **Upstream (Depends on)** | `be-service-cms` | `POST /v1/profile/{user_id}/report/` to submit candidate moderation tickets |
 | **Shared Component** | `fe-section-workspace-pitch-player` | Reuses exact same modal player logic across public and private views |
 
 ---
@@ -76,4 +76,4 @@ Playwright test suite `qc/tests/e2e/public-routes.spec.ts` verifies:
 
 Whenever modifying the Public Profile:
 1. Ensure visual parity matches the Candidate Workspace without leaking private actions.
-2. Verify Report Candidate modal submits successfully to `/v1/report/`.
+2. Verify Report Candidate modal submits successfully to `/v1/profile/{user_id}/report/`.

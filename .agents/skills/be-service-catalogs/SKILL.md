@@ -5,8 +5,10 @@ description: Authoritative Backend Department Skill for Master Catalogs & Taxono
 
 # 📚 Backend Department Skill: Master Catalogs & Taxonomies (Domain 7)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/catalogs.py`. Note: `skills` is queried from the database table; `company`, `school`, and `location` autocompletes are currently served via in-memory dictionaries.
+> **Target Modular Service:** backend/app/services/catalog_service.py (planned target)
 > **Department:** Backend Systems Engineering — Taxonomies & Master Data Division  
-> **Target Files:** `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/services/catalog_service.py`  
 > **Database Tables:** `skills`, `profile_skills`, `catalog_companies`, `catalog_schools`, `catalog_locations`  
 
 ---
@@ -30,5 +32,5 @@ This department establishes standardized vocabularies across the Belooga platfor
 ## 3. Resilient Catalog Fallback Standard
 
 To guarantee zero frontend disruption even during database seed or cold-start scenarios, the Catalog Service implements a resilient tiered lookup:
-1. Primary query: Scan PostgreSQL `skills` table with trigram index.
+1. Primary query: Scan PostgreSQL `skills` table.
 2. Resilient fallback: If catalog table returns empty, serve curated master seed array (React, Python, TypeScript, etc.) without throwing an HTTP 500 error.

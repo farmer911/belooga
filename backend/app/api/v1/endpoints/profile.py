@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from app.core.database import get_db
-from app.core.security import get_current_user, AuthenticatedUser, verify_profile_owner
+from app.core.security import get_current_user, get_current_user_optional, AuthenticatedUser, verify_profile_owner
 
 router = APIRouter()
 
@@ -24,6 +24,7 @@ class SkillAdd(BaseModel):
 @router.get("/profile/{username}", tags=["Domain 2: Candidate Profile"])
 async def get_candidate_public_profile(
     username: str,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     clean_username = username.lower().strip()
@@ -32,7 +33,7 @@ async def get_candidate_public_profile(
     query = text("""
         SELECT p.id, p.identity_id, p.username, p.first_name, p.last_name,
                p.headline, p.bio, p.location, p.phone, p.employment_status,
-               p.seeking_status, p.avatar_url, p.video_pitch_url, p.video_pitch_poster, p.resume_url,
+               p.seeking_status, p.avatar_url, p.video_pitch_url, p.resume_url,
                p.is_hidden, p.is_fresh, p.created_at,
                i.email
         FROM candidate_profiles p
@@ -44,6 +45,16 @@ async def get_candidate_public_profile(
     row = res.fetchone()
 
     if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Candidate @{username} not found"
+        )
+
+    # Privacy Guard: Hidden profile can only be viewed by its owner or admin
+    is_owner = current_user is not None and (
+        current_user.username.lower() == clean_username or current_user.role == "admin"
+    )
+    if row.is_hidden and not is_owner:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Candidate @{username} not found"
@@ -92,8 +103,39 @@ async def get_candidate_public_profile(
     )
     skills = [r[0] for r in skills_res.fetchall()]
 
-    # If new user has no custom skills yet, initialize default
-    default_skills = ["Product Design", "React", "TypeScript", "FastAPI", "PostgreSQL"]
+    # Fetch Poster from profile_media
+    poster_res = await db.execute(
+        text("SELECT file_url FROM profile_media WHERE profile_id = :pid AND category = 'pitch_poster' LIMIT 1"),
+        {"pid": profile_id}
+    )
+    poster_row = poster_res.fetchone()
+    video_pitch_poster = poster_row[0] if poster_row else None
+
+    # Fetch Languages
+    langs_res = await db.execute(
+        text("""
+            SELECT l.name, pl.proficiency
+            FROM languages l
+            JOIN profile_languages pl ON pl.language_id = l.id
+            WHERE pl.profile_id = :pid
+            ORDER BY l.name ASC
+        """),
+        {"pid": profile_id}
+    )
+    languages = [{"name": r[0], "proficiency": r[1]} for r in langs_res.fetchall()]
+
+    # Fetch Interests
+    int_res = await db.execute(
+        text("""
+            SELECT i.name
+            FROM interests i
+            JOIN profile_interests pi ON pi.interest_id = i.id
+            WHERE pi.profile_id = :pid
+            ORDER BY i.name ASC
+        """),
+        {"pid": profile_id}
+    )
+    interests = [r[0] for r in int_res.fetchall()]
 
     return {
         "id": str(row.id),
@@ -101,22 +143,22 @@ async def get_candidate_public_profile(
         "first_name": row.first_name,
         "last_name": row.last_name,
         "full_name": f"{row.first_name} {row.last_name}",
-        "email": row.email,
-        "headline": row.headline or "Candidate at Belooga",
-        "bio": row.bio or "Passionate professional sharing authentic video elevator pitch and career journey on Belooga.",
-        "location": row.location or "San Francisco, CA",
-        "phone": row.phone or "+1 (555) 019-2834",
+        "email": row.email if is_owner else None,
+        "headline": row.headline,
+        "bio": row.bio,
+        "location": row.location,
+        "phone": row.phone if is_owner else None,
         "avatar_url": row.avatar_url or "/images/avatar.jpg",
-        "video_pitch_url": row.video_pitch_url or "/images/home/Ava_s_Video.mp4",
-        "video_pitch_poster": row.video_pitch_poster or "/images/home/matt-poster.png",
+        "video_pitch_url": row.video_pitch_url,
+        "video_pitch_poster": video_pitch_poster,
         "resume_url": row.resume_url or f"http://localhost:8000/v1/profile/{clean_username}/pdf/",
-        "seeking_status": row.seeking_status or "Actively Looking",
-        "employment_status": row.employment_status or "Full-Time",
+        "seeking_status": row.seeking_status,
+        "employment_status": row.employment_status,
         "job_experiences": jobs,
         "education_experiences": education,
-        "skills": skills if skills else default_skills,
-        "languages": [{"name": "English", "proficiency": "Native"}, {"name": "Spanish", "proficiency": "Professional"}],
-        "interests": ["UI/UX Architecture", "Video Storytelling", "Open Source", "Machine Learning"]
+        "skills": skills,
+        "languages": languages,
+        "interests": interests
     }
 
 @router.patch("/profile/{username}", tags=["Domain 2: Candidate Profile"])

@@ -99,6 +99,7 @@ function SearchContent() {
                 </div>
                 <input
                   type="text"
+                  data-testid="search-input"
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -109,7 +110,7 @@ function SearchContent() {
                   className="w-full pl-11 pr-4 py-3 bg-[#f8f9fa] border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae] focus:bg-white transition-all"
                 />
               </div>
-              <Button type="submit" size="lg" className="bg-[#5bbbae] hover:bg-[#497d76] text-white px-8">
+              <Button type="submit" size="lg" data-testid="search-submit-btn" className="bg-[#5bbbae] hover:bg-[#497d76] text-white px-8">
                 Search
               </Button>
             </form>
@@ -152,7 +153,7 @@ function SearchContent() {
               <Loader2 className="w-8 h-8 animate-spin text-[#5bbbae]" />
             </div>
           ) : data.results.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center border border-[#d1d6da] space-y-3">
+            <div data-testid="search-empty-state" className="bg-white rounded-xl p-12 text-center border border-[#d1d6da] space-y-3">
               <p className="text-lg font-bold text-[#252525]">No candidates found</p>
               <p className="text-sm text-[#737475]">Try adjusting your search keyword or clearing filters.</p>
               <Button variant="outline" size="sm" onClick={() => { setQuery(""); router.push("/search"); }}>
@@ -164,6 +165,7 @@ function SearchContent() {
               {data.results.map((candidate) => (
                 <div
                   key={candidate.id}
+                  data-testid="candidate-card"
                   className="bg-white rounded-xl border border-[#d1d6da] overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col justify-between"
                 >
                   <Link href={`/public/${candidate.username}`}>
@@ -192,11 +194,11 @@ function SearchContent() {
                         />
                         <div>
                           <Link href={`/public/${candidate.username}`}>
-                            <h3 className="text-base font-bold text-[#252525] group-hover:text-[#5bbbae] transition-colors">
+                            <h3 data-testid="candidate-card-name" className="text-base font-bold text-[#252525] group-hover:text-[#5bbbae] transition-colors">
                               {candidate.full_name}
                             </h3>
                           </Link>
-                          <p className="text-xs text-[#515151]">{candidate.headline}</p>
+                          <p data-testid="candidate-card-headline" className="text-xs text-[#515151]">{candidate.headline}</p>
                         </div>
                       </div>
 
@@ -224,7 +226,7 @@ function SearchContent() {
 
           {/* Numeric Pagination */}
           {data.total_pages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-8">
+            <div data-testid="search-pagination" className="flex items-center justify-center gap-2 pt-8">
               {Array.from({ length: data.total_pages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}

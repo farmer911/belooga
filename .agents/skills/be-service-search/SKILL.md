@@ -5,15 +5,18 @@ description: Authoritative Backend Department Skill for Talent Discovery & Searc
 
 # 🔎 Backend Department Skill: Talent Discovery & Search Engine (Domain 6)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/search.py`. Full-text search executes against `search_vector` via `plainto_tsquery`, with suggest filtering candidates by `ILIKE` on `is_hidden = FALSE`.
+> **Target Modular Service:** backend/app/services/search_service.py (planned target)
+> **Target Modular Repository:** backend/app/repositories/search_repo.py (planned target)
 > **Department:** Backend Systems Engineering — Search & Information Retrieval Division  
-> **Target Files:** `backend/app/api/v1/endpoints/search.py`, `backend/app/services/search_service.py`, `backend/app/repositories/search_repo.py`  
 > **Database Extensions:** `pg_trgm`, `btree_gin`  
 
 ---
 
 ## 1. Department Role & Mission
 
-This department powers the talent discovery engine: indexing candidate profiles, performing ranked full-text search queries using weighted `tsvector` columns, and executing fuzzy trigram autocomplete recommendations.
+This department powers the talent discovery engine: indexing candidate profiles, performing ranked full-text search queries using weighted `tsvector` columns, and executing debounced candidate suggestions.
 
 ---
 
@@ -40,7 +43,7 @@ SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.location,
        ts_rank(p.search_vector, plainto_tsquery('english', :q)) AS rank
 FROM candidate_profiles p
 WHERE p.is_hidden = FALSE
-  AND (p.search_vector @@ plainto_tsquery('english', :q) OR p.headline ILIKE :wildcard)
+  AND p.search_vector @@ plainto_tsquery('english', :q)
 ORDER BY rank DESC, p.created_at DESC
 LIMIT :limit OFFSET :offset;
 ```

@@ -46,4 +46,4 @@ Creates an interactive, pan-and-zoomable mindmap artifact using `markmap-autoloa
    - Technical Stack & Data Flow (RSC, Server Actions, BFF)
    - Quality & Anti-Hallucination Gates (Asset parity, CSS discipline)
 3. **Level 2 Branches:** Grouped functional modules (e.g. `Candidate Workspace`, `Identity & Auth`).
-4. **Level 3+ Leaf Nodes:** Concrete endpoints, methods, and payload contracts (`GET /v1/profile/me`, `54px CSS button`).
+4. **Level 3+ Leaf Nodes:** Concrete endpoints, methods, and payload contracts (`GET /v1/auth/me/`, `54px CSS button`).

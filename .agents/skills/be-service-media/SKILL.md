@@ -5,8 +5,10 @@ description: Authoritative Backend Department Skill for Media Processing & Stora
 
 # 📹 Backend Department Skill: Media Processing & Storage (Domain 4)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/media.py` (chunked streaming, upload session validation, ReportLab PDF generation via asyncio.to_thread).
+> **Target Modular Services:** backend/app/services/media_service.py, backend/app/services/pdf_service.py (planned target)
 > **Department:** Backend Systems Engineering — Media & Document Processing Division  
-> **Target Files:** `backend/app/api/v1/endpoints/media.py`, `backend/app/services/media_service.py`, `backend/app/services/pdf_service.py`  
 > **Storage Directories:** `/app/uploads/avatars/`, `/app/uploads/videos/`, `/app/uploads/chunks/`, `/app/uploads/resumes/`  
 
 ---

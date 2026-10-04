@@ -5,8 +5,11 @@ description: Authoritative Backend Department Skill for Identity & Authenticatio
 
 # 🛡️ Backend Department Skill: Identity & Authentication Vault (Domain 1)
 
+> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
+> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/auth.py`
+> **Target Modular Service:** backend/app/services/auth_service.py (planned target)
+> **Target Modular Model:** backend/app/models/identity.py (planned target)
 > **Department:** Backend Systems Engineering — Identity & Cryptography Division  
-> **Target Files:** `backend/app/api/v1/endpoints/auth.py`, `backend/app/services/auth_service.py`, `backend/app/models/identity.py`  
 > **Database Tables:** `identities`, `refresh_sessions`, `social_accounts`, `password_reset_tokens`, `email_verification_tokens`  
 
 ---
@@ -27,10 +30,12 @@ This department owns the security perimeter of Belooga: credentials management, 
 
 ---
 
-## 3. Database Models Specification (SQLAlchemy 2.0 Async)
+## 3. Database Models Specification (Planned SQLAlchemy 2.0 Async Target)
+
+> [!NOTE] TARGET SPECIFICATION: In the current implementation, queries run via `text()` statements against tables initialized in `backend/initdb.sql`. The declarative classes below represent the planned target models.
 
 ```python
-# backend/app/models/identity.py
+# Planned Target Model: backend/app/models/identity.py
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Text, ForeignKey, DateTime
