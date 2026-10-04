@@ -339,9 +339,60 @@ State must be categorized into one of 4 strict tiers. Mixing tiers is an immedia
 
 ---
 
-## 11. REJECTION CHECKLIST FOR SENIOR FRONTEND CODE
+## 11. COMPLEXITY CONTROL & PERFORMANCE BUDGETS
+
+Frontend applications are distributed client systems running on constrained hardware. Senior Frontend Engineers must enforce strict computational and cognitive complexity budgets:
+
+### 11.1. Algorithmic Complexity in JSX (The $O(1)$ Lookup Rule)
+* **The Invariant:** Chaining `.filter().map()` inside JSX render blocks is **STRICTLY PROHIBITED**.
+  ```tsx
+  // REJECT: O(N * M) executed on EVERY re-render
+  {candidates.map(candidate => (
+    <Card key={candidate.id}>
+      {skills.filter(s => s.candidateId === candidate.id).map(renderSkill)}
+    </Card>
+  ))}
+  ```
+* **Mandatory Standard:** Normalize relational data into $O(1)$ Hash Maps (`Map<string, Skill[]>` or `Record<string, Skill[]>`) within the **Adapter Layer** or a memoized selector (`useMemo`), reducing rendering loops from $O(N \times M)$ to linear $O(N)$.
+
+### 11.2. Frame Budget (16.6ms) & Long Task Budget (< 50ms)
+* **60fps Frame Budget:** Any UI animation, Canvas drawing, or reactive telemetry must execute in under **16.6ms**.
+* **Zero Long Tasks:** No synchronous JavaScript execution on the browser main thread may exceed **50ms** (guaranteeing Interaction to Next Paint - INP $\le 200\text{ms}$).
+* **Heavy Offloading:** CPU-intensive computations (e.g. video transcode chunking, large CSV imports) must be offloaded to a **Web Worker**.
+
+### 11.3. Cyclomatic Complexity Limit ($\le 10$) & Component Flattening
+* **The Rule:** No component or hook may exceed a Cyclomatic Complexity of **10**.
+* **The Invariant:** Max nesting depth of ternary expressions or conditional blocks is **1**.
+  * FORBIDDEN: Nested ternaries: `condition ? a : (otherCondition ? b : c)`.
+  * MANDATORY: Extract sub-components or use guard clauses / early returns.
+
+### 11.4. Memory Leak & Resource Cleanup Invariants
+* **The Rule:** Any `useEffect` subscribing to hardware streams, WebSockets, or DOM listeners must implement strict idempotent teardown:
+  ```tsx
+  useEffect(() => {
+    const stream = ...;
+    return () => {
+      // Mandatory: Stop hardware tracks immediately on unmount
+      stream.getTracks().forEach(track => track.stop());
+      audioContext.close();
+    };
+  }, []);
+  ```
+
+### 11.5. The Rule of Three (Anti-Overengineering & YAGNI)
+* **The Invariant:** Do not construct speculative Compound Components, Provider hierarchies, or complex factories for one-off widgets.
+* Abstract logic into reusable components ONLY when identical UI patterns occur $\ge 3$ times across separate routes.
+
+---
+
+## 12. REJECTION CHECKLIST FOR SENIOR FRONTEND CODE
 
 Before submitting any code for review, verify:
+- [ ] Zero $O(N \times M)$ nested `.filter().map()` inside JSX; $O(1)$ Hash Maps used for relational lookups.
+- [ ] Frame Budget respected: High-frequency telemetry executes in $< 16.6\text{ms}$ with zero parent re-renders.
+- [ ] Zero synchronous Long Tasks ($> 50\text{ms}$) on the main thread.
+- [ ] Cyclomatic complexity $\le 10$; zero nested ternary operators in JSX.
+- [ ] All hardware media streams and audio contexts implement idempotent cleanup in `useEffect`.
 - [ ] Raw API DTOs are mapped through an **Adapter** into ViewModels before reaching UI components.
 - [ ] Complex multi-stage asynchronous interactions implement a **Finite State Machine**.
 - [ ] Component is under line limit: Atoms <50, Molecules <100, Organisms <300, Pages <100 LOC.

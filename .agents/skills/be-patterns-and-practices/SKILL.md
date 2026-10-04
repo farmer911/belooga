@@ -344,10 +344,69 @@ Every backend domain service must strictly implement the 4-tier separation. Fat 
 
 ---
 
-## 12. REJECTION CHECKLIST FOR SENIOR BACKEND CODE
+## 12. COMPLEXITY CONTROL & ALGORITHMIC INVARIANTS
+
+Even the cleanest patterns will destroy production systems if algorithmic and operational complexity budgets are violated. Senior Backend Engineers must enforce:
+
+### 12.1. Big-O Database Query Complexity ($O(\log N)$ Mandatory)
+* **The Rule:** Any database query executed against tables exceeding 1,000 rows MUST resolve to $O(1)$ (Primary Key / Unique Hash lookup) or $O(\log N)$ (B-Tree index seek) or $O(k \log N)$ (GIN inverted index scan).
+* **The Invariant:** Table scans ($O(N)$ `Seq Scan`) are **STRICTLY PROHIBITED** on production entity tables.
+* **Verification Protocol:** All repository queries must be verified via `EXPLAIN (ANALYZE, BUFFERS)`. If `Filter: (seq_scan)` appears on large tables, the query is rejected immediately.
+
+### 12.2. Anti-N+1 Query Invariant (The $O(1)$ Eager Loading Rule)
+* **The Rule:** Iterating through an entity collection and executing lazy relationship queries inside a loop ($1 + N$ roundtrips) is a severe architectural flaw.
+* **Best Practice Blueprint:**
+  * One-to-Many / Many-to-Many: Bắt buộc dùng `selectinload(Candidate.skills)` ($O(2)$ queries regardless of $N$).
+  * One-to-One / Many-to-One: Bắt buộc dùng `joinedload(Candidate.identity)` ($O(1)$ query via SQL JOIN).
+  ```python
+  stmt = (
+      select(Candidate)
+      .options(selectinload(Candidate.skills), selectinload(Candidate.experiences))
+      .where(Candidate.is_hidden.is_(False))
+      .limit(20)
+  )
+  ```
+
+### 12.3. Lock Contention & Duration Budget ($< 50\text{ms}$)
+* **The Invariant:** An open transaction holding pessimistic row locks (`SELECT FOR UPDATE`) must commit or abort within **$\le 50\text{ms}$**.
+* **Forbidden Anti-Pattern:** Holding a database transaction while awaiting external network I/O, S3 file uploads, or password hashing.
+  * *CORRECT:* Hash password / upload file FIRST ➔ Acquire lock ➔ Mutate database ➔ Commit immediately.
+
+### 12.4. Cyclomatic Complexity Limit ($\le 10$) & Guard Clauses
+* **The Rule:** No backend method may have a Cyclomatic Complexity score exceeding **10**.
+* **The Invariant:** Deeply nested `if-else` staircases ($\ge 3$ levels) are rejected. Engineers must use **Guard Clauses (Early Returns)**:
+  ```python
+  # REJECT: Nested pyramid of doom (Complexity = 14)
+  if user:
+      if user.is_active:
+          if profile:
+              ...
+
+  # MANDATORY: Flattened Guard Clauses (Complexity = 3)
+  if not user:
+      raise UnauthorizedException("User not authenticated")
+  if not user.is_active:
+      raise InactiveUserException("User account suspended")
+  if not profile:
+      raise NotFoundException("Profile not found")
+  ```
+
+### 12.5. The Rule of Three (Anti-Overengineering & YAGNI)
+* **The Invariant:** Speculative abstractions (writing generic interfaces, complex factories, or strategies for features with only 1 single concrete case) are forbidden.
+* Abstraction is strictly permitted ONLY when:
+  1. Interacting across physical boundaries (external cloud vendor / disk / hardware driver).
+  2. The identical algorithmic variation exists in $\ge 3$ concrete production locations.
+
+---
+
+## 13. REJECTION CHECKLIST FOR SENIOR BACKEND CODE
 
 Before submitting any code for review, verify:
 - [ ] Clean 4-Layer structure strictly preserved (zero SQL in routers).
+- [ ] Query execution plan verified: Zero $O(N)$ Seq Scans on indexed tables.
+- [ ] Anti-N+1 enforced via `selectinload` / `joinedload` on all relationship queries.
+- [ ] Row lock duration is strictly budgeted ($< 50\text{ms}$, zero external I/O inside lock).
+- [ ] Cyclomatic complexity $\le 10$ with flattened guard clauses.
 - [ ] Third-party I/O (S3, disk, transcoders) abstracted behind an **Adapter**.
 - [ ] Multi-criteria filters constructed via **Query Builder**, not raw string concatenation.
 - [ ] All database writes modifying multiple records run within a Unit of Work transaction.
