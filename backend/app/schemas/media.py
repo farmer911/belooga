@@ -25,7 +25,7 @@ class ChunkUploadResponse(BaseModel):
 class CompleteUploadRequest(BaseModel):
     """Request to assemble chunks into final video or asset."""
 
-    upload_id: str = Field(..., pattern=r"^upload_\d+_[a-zA-Z0-9]+$")
+    upload_id: str
     total_chunks: int = Field(..., ge=1)
     username: str = Field(..., min_length=1)
     filename: Optional[str] = "pitch.webm"

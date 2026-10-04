@@ -37,6 +37,7 @@ Thumbs.db
 .rtk/
 
 # Backend User Uploads (Dynamic test uploads & binary video recordings)
+uploads/
 backend/uploads/chunks/*
 !backend/uploads/chunks/.gitkeep
 backend/uploads/videos/*
