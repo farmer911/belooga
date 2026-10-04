@@ -52,7 +52,7 @@ This document establishes the **Organizational Operating System** for the Beloog
 │ • Write failing test first (Red phase of TDD in backend/tests/ or qc/).     │
 │ • Implement code strictly within assigned department boundaries.            │
 │ • Frontend: Inlined App Router page logic + shared UI primitives in `ui/`.   │
-│ • Backend: Clean 4-Layer (Thin Router ➔ DTO ➔ Service ➔ Repo ➔ ORM Model).   │
+│ • Backend: Modular Monolith Endpoints (FastAPI + AsyncSession + SQL Guards). │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
@@ -108,13 +108,8 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | **Backend Code Review** | All backend PRs / modifications | `be-reviewer-guidelines` | `be-patterns-and-practices` |
 | **Homepage & Showcase** | `frontend/src/app/page.tsx` | `fe-page-home` | `engineering-integrity-and-evidence` |
 | **Talent Search & Discovery** | `frontend/src/app/search/page.tsx` | `fe-page-search` | `engineering-integrity-and-evidence` |
-| **Public Candidate Profile** | `frontend/src/app/public/[username]/page.tsx` | `fe-page-public-profile` | `fe-section-workspace-pitch-player` |
+| **Public Candidate Profile** | `frontend/src/app/public/[username]/page.tsx` | `fe-page-public-profile` | `fe-page-workspace` |
 | **Candidate Workspace Hub** | `frontend/src/app/user/[username]/page.tsx` | `fe-page-workspace` | `engineering-integrity-and-evidence` |
-| **Workspace: Header & Bio** | `frontend/src/app/user/[username]/page.tsx` (Header Section) | `fe-section-workspace-header` | `fe-page-workspace` |
-| **Workspace: 30s Pitch Player**| `frontend/src/app/user/[username]/page.tsx` (Pitch Section) | `fe-section-workspace-pitch-player`| `fe-page-workspace` |
-| **Workspace: WebRTC Studio** | `frontend/src/app/user/[username]/page.tsx` (Studio Modal) | `fe-section-workspace-studio` | `fe-page-workspace` |
-| **Workspace: Timeline CRUD** | `frontend/src/app/user/[username]/page.tsx` (Timeline Section)| `fe-section-workspace-timeline` | `fe-page-workspace` |
-| **Workspace: Skills Badges** | `frontend/src/app/user/[username]/page.tsx` (Skills Section)  | `fe-section-workspace-skills` | `fe-page-workspace` |
 | **Identity & Authentication**| `frontend/src/app/(auth)/login/`, `register/`, `callback/` | `fe-page-auth` | `engineering-integrity-and-evidence` |
 | **User Settings & Update** | `frontend/src/app/user/[username]/settings/`, `update/` | `fe-page-user-management` | `engineering-integrity-and-evidence` |
 | **Public Content & Legal** | `frontend/src/app/(public)/blog/`, `careers/`, `contact-us/`, `help/` | `fe-page-cms-public` | `engineering-integrity-and-evidence` |

@@ -1,42 +1,33 @@
 ---
 name: fe-page-cms-public
-description: Authoritative Department Skill for Public Content & CMS Pages (Blog, Careers, Contact Us, Help FAQs, Legal Compliance). Covers dynamic article rendering, job applicant modals, contact inquiries, and FAQ accordions.
+description: Public Content and CMS Pages (Blog, Careers, Contact Us, Help FAQs, Legal) in frontend/src/app/(public)/. Use when modifying static content, contact inquiry forms, FAQ accordions, or legal policy terms. Not for candidate workspace (fe-page-workspace).
 ---
 
-# 📰 Department Skill: Public Content, CMS & Compliance
+# Public Content, CMS & Compliance (`/(public)/...`)
 
-> **Department:** Frontend Product Engineering — Public Content & Legal Division  
-> **Routes:** `frontend/src/app/(public)/blog/`, `careers/`, `contact-us/`, `help/`, `privacy-policy/`, `terms-and-conditions/`  
-> **Type:** Public Content, Support, and Regulatory Compliance  
+## Current Reality (AS-IS)
+- Public routes located in `frontend/src/app/(public)/`:
+  - `blog/`: Article listings and slug detail pages.
+  - `careers/`: Internal job vacancies and application modal (mock).
+  - `contact-us/`: Visitor inquiry form posting to `POST /v1/contact/`.
+  - `help/`: FAQ accordion fetching `GET /v1/faqs`.
+  - `privacy-policy/`, `terms-and-conditions/`: Legal disclosure documents.
 
----
+## Project-Specific Rules
+- **Public Accessibility:** All pages in this group must remain accessible to anonymous visitors without triggering authentication redirects.
+- **QC Selectors:**
+  - `[data-testid="contact-form"]`
+  - `[data-testid="contact-submit-btn"]`
+  - `[data-testid="careers-openings-list"]`
+  - `[data-testid="help-faq-accordion"]`
+  - `[data-testid="legal-content-container"]`
 
-## 1. Department Role & Mission
+## Known Traps
+- Career applications modal does not have a backend persistence endpoint yet (`career_applications` is a stub in current release). Do not fake backend success.
 
-This department delivers the informational, regulatory, and community touchpoints of Belooga:
-1. **Blog (`/blog`, `/blog/[slug]`):** Editorial articles, industry insights, and career growth advice.
-2. **Careers (`/careers`):** Open positions at Belooga, company culture, and direct job applicant modal.
-3. **Contact Us (`/contact-us`):** Support inquiries, sales contact form, and enterprise partnerships.
-4. **Help Center (`/help`):** Searchable category-based FAQ accordions for candidates and recruiters.
-5. **Legal (`/privacy-policy`, `/terms-and-conditions`):** Regulatory GDPR/CCPA disclosures and platform terms.
+## Canonical Example
+- `frontend/src/app/(public)/contact-us/page.tsx`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Upstream (Depends on)** | `be-service-cms` | `POST /v1/contact/`, `GET /v1/faqs`, `GET /v1/career/jobs/` (careers application modal is currently client-side stub) |
-| **Downstream (Outputs to)** | `fe-page-home` | Footer and navigation links route to all public CMS pages |
-
----
-
-## 3. QC Selectors & Automated Test Assertions
-
-Playwright test suite `qc/tests/e2e/public-routes.spec.ts` verifies:
-* `[data-testid="contact-form"]`: Main inquiry form on `/contact-us`.
-* `[data-testid="contact-submit-btn"]`: Inquiry submit button.
-* `[data-testid="careers-openings-list"]`: List of current job vacancies on `/careers`.
-* `[data-testid="careers-apply-modal"]`: Applicant submission dialog.
-* `[data-testid="help-faq-accordion"]`: Interactive FAQ accordion on `/help`.
-* `[data-testid="legal-content-container"]`: Regulatory disclosure text on legal routes.
+## Self-Verification
+- `cd frontend && bun x tsc --noEmit`
+- `cd qc && bun run test:e2e`

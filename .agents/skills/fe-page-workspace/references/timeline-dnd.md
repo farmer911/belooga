@@ -1,8 +1,3 @@
----
-name: fe-section-workspace-timeline
-description: Specialized Section Skill for Career Timeline Management. Covers Work Experience & Education CRUD modals, HTML5 Drag-and-Drop reordering, and display_order synchronization.
----
-
 # ⏳ Section Skill: Career Timeline & Credentials Management
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER

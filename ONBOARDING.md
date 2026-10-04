@@ -111,8 +111,8 @@ The seed script creates three reference personas for testing authentication, aut
 Belooga strictly enforces a **Zero-Hallucination Policy** between documentation, AI agent skills, and executable code.
 
 ### Ground Truth vs. Target Architecture
-- **Current Ground Truth (AS-IS)**: The backend operates as a Clean 2-Layer modular monolith where endpoints in `backend/app/api/v1/endpoints/` directly interact with SQLAlchemy 2.0 Async models and database sessions.
-- **Target Architecture (TO-BE)**: Documented under `> [!WARNING] TARGET ARCHITECTURE` banners in `.agents/skills/be-service-*/SKILL.md` (Domain Services and Repositories layers planned for high-scale enterprise decoupling).
+- **Current Ground Truth (AS-IS)**: The backend operates as a modular monolith where endpoints in `backend/app/api/v1/endpoints/` directly interact with SQLAlchemy 2.0 Async database sessions. Skills strictly document this runtime reality.
+- **Target Architecture (TO-BE)**: Documented in Architecture Decision Records under `docs/adr/`. Future service/repository decoupling must never be documented as active code in skills.
 
 ### Known Architecture Stubs & Gaps (AS-IS Registry)
 1. **Password Reset (`/forgot-password`)**: Frontend UI allows entering email with client-side modal confirmation. Backend password reset token generation and email dispatch are currently mocked.

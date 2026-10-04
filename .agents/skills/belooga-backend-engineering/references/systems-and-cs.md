@@ -1,8 +1,3 @@
----
-name: systems-and-cs-knowledge
-description: Authoritative Computer Science & Deep Systems Engineering Knowledge Base for Principal Architects and Senior Engineers. Covers Database Internals (MVCC, WAL, Isolation Levels, Write Skew), Networking & WebRTC (ICE, STUN, TURN, QUIC), Browser & V8 Internals (Critical Rendering Path, GPU Compositing, GC Pauses), Distributed Systems (Cache Stampede, Bloom Filters, PACELC), and Cryptographic Invariants (Constant-Time Comparison, SSRF, CSP).
----
-
 # 🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE
 
 > **Authority:** Principal Software Architect & Chief Technology Officer  

@@ -1,8 +1,3 @@
----
-name: fe-section-workspace-skills
-description: Specialized Section Skill for Candidate Skills and Endorsements. Covers badge rendering, master catalog autocomplete, and skill add/delete operations.
----
-
 # 🏷️ Section Skill: Candidate Skills & Catalog Management
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER

@@ -1,8 +1,3 @@
----
-name: fe-section-workspace-studio
-description: Specialized Section Skill for the WebRTC Video Recording Studio. Covers MediaRecorder, camera/mic selection, 60fps VU meter re-render isolation, Voice Activity Detection (VAD), speech-following Teleprompter, and chunked video uploads.
----
-
 # 🎙️ Section Skill: WebRTC Video Studio & Recording Engine
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER

@@ -1,8 +1,3 @@
----
-name: qc-patterns-and-practices
-description: Authoritative Technical Standard & Master Design Patterns for Senior QC and Test Automation Engineers. Enforces zero-compromise best practices across Component-Scoped Page Object Models (POM), Deterministic data-testid Locators, Web-First Auto-Waiting Assertions, Zero-Sleep Flakiness Elimination, and Hermetic Test Data Isolation.
----
-
 # 🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS
 
 > **Role Authority:** Lead QC Automation Engineer (10+ Years Experience)  

@@ -8,8 +8,7 @@ description: Master ground-truth knowledge repository for Belooga full-stack arc
 This skill provides an authoritative, complete, and instant knowledge ingestion baseline ("nạp knowledge") for all AI agents, engineers, and automated quality gates working on the Belooga Platform.
 
 > [!IMPORTANT]
-> **Single Source of Truth (SSOT) Rule:**
-> Code is the Single Source of Truth. If any documentation contradicts running code, the code is right and the documentation must be updated. This skill documents the **AS-IS (Current Reality)** alongside the **TO-BE (Target Architecture)**.
+> Code is the Single Source of Truth. If any documentation contradicts running code, the code is right and the documentation must be updated. This skill documents the **AS-IS (Current Runtime Reality)**. For architectural evolution, see `docs/adr/`.
 
 ---
 

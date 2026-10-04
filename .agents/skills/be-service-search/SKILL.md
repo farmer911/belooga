@@ -1,49 +1,29 @@
 ---
 name: be-service-search
-description: Authoritative Backend Department Skill for Talent Discovery & Search (Domain 6). Covers PostgreSQL TSVECTOR generated columns, GIN indexing, ts_rank ranking, and pg_trgm fuzzy matching.
+description: Candidate full-text search and autocomplete suggestions in backend/app/api/v1/endpoints/search.py. Use when modifying search rankings, TSVECTOR queries, ts_rank scoring, or autocomplete filtering. Not for profile updates (be-service-profile) or frontend search UI (fe-page-search).
 ---
 
-# 🔎 Backend Department Skill: Talent Discovery & Search Engine (Domain 6)
+# Talent Discovery & Search (Domain 6)
 
-> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
-> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/search.py`. Full-text search executes against `search_vector` via `plainto_tsquery`, with suggest filtering candidates by `ILIKE` on `is_hidden = FALSE`.
-> **Target Modular Service:** backend/app/services/search_service.py (planned target)
-> **Target Modular Repository:** backend/app/repositories/search_repo.py (planned target)
-> **Department:** Backend Systems Engineering — Search & Information Retrieval Division  
-> **Database Extensions:** `pg_trgm`, `btree_gin`  
+## Current Reality (AS-IS)
+- Implemented directly in `backend/app/api/v1/endpoints/search.py` using `AsyncSession`.
+- Full-text search executes against `candidate_profiles.search_vector` via `plainto_tsquery('english', :q)`.
+- Autocomplete suggestions filter out hidden candidates (`is_hidden = FALSE`).
+- GIN index on `candidate_profiles(search_vector)`.
 
----
+## Project-Specific Rules
+- **ADR-005 Conformance:**
+  - Queries must use `search_vector @@ plainto_tsquery('english', :q)`.
+  - NEVER combine `search_vector @@` with `OR p.headline ILIKE '%...%'` — this disables index scanning and fails SSOT Gate 6.
+- **Hidden Candidate Protection:**
+  - Always enforce `WHERE is_hidden = FALSE` in search queries to prevent leaking hidden candidate data to public recruiters.
 
-## 1. Department Role & Mission
+## Known Traps
+- Adding an unindexed `OR ILIKE` fallback destroys query performance across large datasets and is strictly rejected by the auditor.
 
-This department powers the talent discovery engine: indexing candidate profiles, performing ranked full-text search queries using weighted `tsvector` columns, and executing debounced candidate suggestions.
+## Canonical Example
+- `backend/app/api/v1/endpoints/search.py:search_candidates`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Upstream (Depends on)** | `be-service-profile` | Queries `candidate_profiles` where `is_hidden = FALSE` |
-| **Downstream (Outputs to)** | `fe-page-search` | Serves `GET /v1/profile/search/` with pagination and rank scores |
-| **Downstream (Outputs to)** | `fe-page-home` | Powers home quick search launcher |
-
----
-
-## 3. Weighted TSVECTOR Full-Text Search Specification
-
-The database automatically compiles a weighted search vector on `candidate_profiles`:
-* **Weight 'A' (Highest Priority):** `first_name`, `last_name`
-* **Weight 'B':** `headline`
-* **Weight 'C':** `bio`
-* **Weight 'D':** `location`
-
-```sql
-SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.location,
-       ts_rank(p.search_vector, plainto_tsquery('english', :q)) AS rank
-FROM candidate_profiles p
-WHERE p.is_hidden = FALSE
-  AND p.search_vector @@ plainto_tsquery('english', :q)
-ORDER BY rank DESC, p.created_at DESC
-LIMIT :limit OFFSET :offset;
-```
+## Self-Verification
+- `backend/.venv/bin/pytest backend/tests/test_profile_privacy_and_pii.py -k search -v`
+- `bash scripts/audit-truth.sh`

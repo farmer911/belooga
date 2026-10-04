@@ -18,6 +18,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -36,12 +37,25 @@ def get_git_info():
     except Exception:
         commit = "unknown"
     try:
-        dirty_files = subprocess.check_output(
-            ["git", "status", "--porcelain"], cwd=str(ROOT_DIR), text=True
+        # Ignore untracked review artifacts and the output file itself
+        porcelain = subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=str(ROOT_DIR), text=True
         ).strip().splitlines()
+        dirty_files = [
+            f for f in porcelain 
+            if f and not f.endswith("CURRENT_STATE.md")
+        ]
         dirty_count = len(dirty_files)
     except Exception:
+        dirty_files = []
         dirty_count = 0
+
+    if dirty_count > 0 and "--allow-dirty" not in sys.argv:
+        print(f"ERROR: Working tree is dirty ({dirty_count} uncommitted files). Commit changes or pass --allow-dirty.")
+        for f in dirty_files[:10]:
+            print(f"  {f}")
+        sys.exit(1)
+
     return commit, dirty_count
 
 
@@ -117,12 +131,13 @@ def extract_backend_routes():
                                             tags.append(elt.value)
 
                             # Extract auth dependency
-                            has_auth = False
-                            for arg in node.args.args:
-                                # Look for default with Depends(get_current_user)
-                                pass
                             source_segment = ast.get_source_segment(file_path.read_text(encoding="utf-8"), node) or ""
-                            has_auth = "get_current_user" in source_segment
+                            if "get_current_user_optional" in source_segment:
+                                auth_status = "Optional auth"
+                            elif "get_current_user" in source_segment:
+                                auth_status = "Required auth"
+                            else:
+                                auth_status = "Public"
 
                             endpoints.append({
                                 "file": file_path.relative_to(ROOT_DIR).as_posix(),
@@ -130,7 +145,7 @@ def extract_backend_routes():
                                 "method": method.upper(),
                                 "path": path,
                                 "tags": ", ".join(tags) if tags else "Root",
-                                "auth_required": has_auth,
+                                "auth_status": auth_status,
                             })
 
     return endpoints
@@ -262,7 +277,12 @@ def main():
     lines.append("|---|---|---|---|---|---|")
 
     for e in sorted(endpoints, key=lambda x: (x["path"], x["method"])):
-        auth_badge = "✅ `get_current_user`" if e["auth_required"] else "Public"
+        if e["auth_status"] == "Required auth":
+            auth_badge = "🔒 `get_current_user` (Required)"
+        elif e["auth_status"] == "Optional auth":
+            auth_badge = "🔓 `get_current_user_optional` (Optional)"
+        else:
+            auth_badge = "Public"
         lines.append(f"| `{e['method']}` | `{e['path']}` | `{e['function']}` | {auth_badge} | `{e['file']}` | {e['tags']} |")
 
     lines.append("")
@@ -298,8 +318,8 @@ def main():
     lines.append("")
     lines.append("## 5. Security & Concurrency Verification Summary")
     lines.append("")
-    lines.append("| Security / Quality Check | Status | Verification Detail |")
-    lines.append("|---|---|---|")
+    lines.append("| Security / Quality Invariant | Code Present (AST) | Test Covered (Runtime Test / Gate) | Enforced Status |")
+    lines.append("|---|---|---|---|")
 
     # Dynamic verification of security invariants
     auth_code = (BACKEND_DIR / "app/api/v1/endpoints/auth.py").read_text(encoding="utf-8")
@@ -314,44 +334,44 @@ def main():
     has_grace = "15" in auth_code or "grace_window" in auth_code
     has_delete_cookie = "delete_cookie" in auth_code
     status_refresh = "✅ ENFORCED" if (has_for_update and has_grace and has_delete_cookie) else "❌ VIOLATION"
-    lines.append(f"| **Refresh Token Replay Protection** | {status_refresh} | Dynamic code AST verified: `FOR UPDATE` pessimistic row lock, 15-second grace window, and HttpOnly `delete_cookie` replay termination. |")
+    lines.append(f"| **Refresh Token Replay Protection** | `FOR UPDATE` lock, 15s grace window, `delete_cookie` | `backend/tests/test_auth_family_rotation.py` | {status_refresh} |")
 
     # 2. IDOR
     has_verify_owner = "def verify_profile_owner" in sec_code
     no_email_split = 'split("@")[0]' not in sec_code
     status_idor = "✅ ENFORCED" if (has_verify_owner and no_email_split) else "❌ VIOLATION"
-    lines.append(f"| **IDOR Profile Ownership Guard** | {status_idor} | Dynamic code AST verified: `verify_profile_owner` enforced; unlinked identities rejected with 403 Forbidden; zero email-prefix fallback guessing. |")
+    lines.append(f"| **IDOR Profile Ownership Guard** | `verify_profile_owner`, rejection of unlinked IDs | `backend/tests/test_idor_guards.py` | {status_idor} |")
 
     # 3. Path Traversal
     regex_match = re.search(r'UPLOAD_ID_REGEX\s*=\s*re\.compile\((r["\'].*?["\'])\)', media_code)
     regex_str = regex_match.group(1) if regex_match else "None"
     has_realpath = "realpath" in media_code
     status_traversal = "✅ ENFORCED" if (regex_match and has_realpath) else "❌ VIOLATION"
-    lines.append(f"| **Path Traversal Guard in Video Upload** | {status_traversal} | Dynamic code AST verified: `upload_id` pattern `{regex_str}`, scoped per `current_user.id`, resolved via `os.path.realpath`. |")
+    lines.append(f"| **Path Traversal Guard in Video Upload** | Pattern `{regex_str}`, `os.path.realpath` | `backend/tests/test_media_traversal.py` | {status_traversal} |")
 
     # 4. Reorder
     has_for_update_tl = "FOR UPDATE" in timeline_code
     no_db_begin = "db.begin()" not in timeline_code
     status_reorder = "✅ ENFORCED" if (has_for_update_tl and no_db_begin) else "❌ VIOLATION"
-    lines.append(f"| **Transaction Isolation in Timeline Reordering** | {status_reorder} | Dynamic code AST verified: Explicit `db.commit()` and `SELECT ... FOR UPDATE` row locks; zero nested `db.begin()` conflicts. |")
+    lines.append(f"| **Transaction Isolation in Timeline Reordering** | `SELECT ... FOR UPDATE`, explicit `db.commit()` | `backend/tests/test_timeline_reorder.py` | {status_reorder} |")
 
     # 5. Search
     search_candidates_fn = search_code.split("async def search_suggestions")[0]
     has_tsquery = "plainto_tsquery" in search_candidates_fn
     no_ilike = "OR p.headline ILIKE" not in search_candidates_fn
     status_search = "✅ ENFORCED" if (has_tsquery and no_ilike) else "❌ VIOLATION"
-    lines.append(f"| **Search Query Optimization (ADR-005)** | {status_search} | Dynamic code AST verified: Pure PostgreSQL `search_vector @@ plainto_tsquery('english', :q)` with GIN index; zero unindexed `OR ILIKE` fallback. |")
+    lines.append(f"| **Search Query Optimization (ADR-005)** | Pure PostgreSQL `search_vector @@ plainto_tsquery`, 0 `OR ILIKE` | `scripts/audit-truth.sh:Gate 6` | {status_search} |")
 
     # 6. Non-blocking I/O
     has_to_thread = "asyncio.to_thread" in media_code
     status_io = "✅ ENFORCED" if has_to_thread else "❌ VIOLATION"
-    lines.append(f"| **Non-blocking Event Loop I/O (ADR-006)** | {status_io} | Dynamic code AST verified: ReportLab `doc.build`, `shutil.rmtree`, and chunk file writes delegated to worker threads via `asyncio.to_thread`. |")
+    lines.append(f"| **Non-blocking Event Loop I/O (ADR-006)** | `doc.build`, `rmtree`, file writes via `asyncio.to_thread` | `scripts/audit-truth.sh:Gate 5` | {status_io} |")
 
     # 7. PII & Privacy Guard
     has_hidden = "row.is_hidden and not is_owner" in profile_code
     has_pii = '"email": row.email if is_owner else None' in profile_code
     status_pii = "✅ ENFORCED" if (has_hidden and has_pii) else "❌ VIOLATION"
-    lines.append(f"| **PII & Privacy Protection (Round 3 Fix)** | {status_pii} | Dynamic code AST verified: `is_hidden=TRUE` returns 404 to unauthorized visitors; email and phone concealed (`null`) for public callers. |")
+    lines.append(f"| **PII & Privacy Protection** | `is_hidden=TRUE` returns 404; email/phone hidden for public | `backend/tests/test_profile_privacy_and_pii.py` | {status_pii} |")
 
     lines.append("")
     lines.append("---")

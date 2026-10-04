@@ -1,8 +1,3 @@
----
-name: fe-section-workspace-header
-description: Specialized Section Skill for Candidate Profile Header and Identity Management. Covers avatar uploads, bio updates, visibility toggles, and PDF resume export.
----
-
 # 👤 Section Skill: Profile Header & Identity Management
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER

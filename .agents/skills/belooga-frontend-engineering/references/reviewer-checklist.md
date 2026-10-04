@@ -1,8 +1,3 @@
----
-name: fe-reviewer-guidelines
-description: Authoritative Code Review SOP & Rejection Checklist for Senior Frontend Lead Reviewer (10+ years exp). Enforces Atomic Design, zero arbitrary hex tokens, 60fps re-render isolation, strict zero-any TypeScript, and empirical Playwright verification.
----
-
 # 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
 
 > **Role:** Senior Frontend Lead Reviewer (10+ Years Experience in React, Next.js, Atomic Design & Performance)  

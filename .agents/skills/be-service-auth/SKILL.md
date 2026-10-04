@@ -1,78 +1,31 @@
 ---
 name: be-service-auth
-description: Authoritative Backend Department Skill for Identity & Authentication Vault (Domain 1). Covers Argon2id password hashing, JWT token rotation, refresh session replay protection, and user availability queries.
+description: Identity, authentication, JWT tokens, and refresh session vault in backend/app/api/v1/endpoints/auth.py. Use when updating login, registration, password hashing, JWT creation, or refresh token family rotation. Not for candidate profile attributes (be-service-profile) or frontend auth forms (fe-page-auth).
 ---
 
-# 🛡️ Backend Department Skill: Identity & Authentication Vault (Domain 1)
+# Identity & Authentication Vault (Domain 1)
 
-> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
-> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/auth.py`
-> **Target Modular Service:** backend/app/services/auth_service.py (planned target)
-> **Target Modular Model:** backend/app/models/identity.py (planned target)
-> **Department:** Backend Systems Engineering — Identity & Cryptography Division  
-> **Database Tables:** `identities`, `refresh_sessions`, `social_accounts`, `password_reset_tokens`, `email_verification_tokens`  
+## Current Reality (AS-IS)
+- Implemented in `backend/app/api/v1/endpoints/auth.py` and `backend/app/core/security.py`.
+- No separate service/repository layer; queries execute directly via `AsyncSession` and raw SQL `text(...)`.
+- Tables in `backend/initdb.sql`: `identities`, `refresh_sessions`, `social_accounts`, `password_reset_tokens`, `email_verification_tokens`.
 
----
+## Project-Specific Rules
+- **Argon2id Hashing:** Always use `pwdlib` (`PasswordHash.recommended()`) for password verification and hashing.
+- **Refresh Token Family Rotation:**
+  - Stored in `refresh_sessions`.
+  - On refresh (`POST /v1/auth/refresh/`), lock row with `SELECT ... FOR UPDATE`.
+  - Enforce 15-second grace window to allow concurrent client requests.
+  - If a revoked token is used outside the grace window, revoke all sessions belonging to `family_id` (replay detection) and delete the HttpOnly cookie.
+- **Access Tokens:** Issued as HMAC-SHA256 JWTs with 15-minute expiration. Returned in JSON body, stored in-memory by frontend client.
 
-## 1. Department Role & Mission
+## Known Traps
+- Always hash refresh tokens (`token_hash = sha256(raw_token)`) before DB lookup; never store plaintext tokens in `refresh_sessions`.
+- The refresh cookie must be set with `httponly=True`, `samesite="lax"`, and `secure=False` (in local development).
 
-This department owns the security perimeter of Belooga: credentials management, password hashing via Argon2id, cryptographically secure JWT issuance, and **Token Family Refresh Vault** with automated token reuse/replay detection.
+## Canonical Example
+- `backend/app/api/v1/endpoints/auth.py:refresh_tokens`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Downstream (Outputs to)** | `be-service-profile` | Identity creation automatically provisions a row in `candidate_profiles` linked via `identity_id` |
-| **Downstream (Outputs to)** | `fe-page-auth` | Serves `/v1/auth/login/`, `/v1/users/register/`, `/v1/auth/refresh/` |
-| **Upstream (Depends on)** | `identities` table | Master primary key UUID identifying all actors in the platform |
-
----
-
-## 3. Database Models Specification (Planned SQLAlchemy 2.0 Async Target)
-
-> [!NOTE] TARGET SPECIFICATION: In the current implementation, queries run via `text()` statements against tables initialized in `backend/initdb.sql`. The declarative classes below represent the planned target models.
-
-```python
-# Planned Target Model: backend/app/models/identity.py
-import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, Text, ForeignKey, DateTime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.core.database import Base
-
-class Identity(Base):
-    __tablename__ = "identities"
-
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    password_hash: Mapped[str | None] = mapped_column(String(255))
-    role: Mapped[str] = mapped_column(String(32), default="candidate")
-    status: Mapped[str] = mapped_column(String(32), default="active")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-
-    refresh_sessions: Mapped[list["RefreshSession"]] = relationship(back_populates="identity", cascade="all, delete-orphan")
-    profile: Mapped["CandidateProfile"] = relationship(back_populates="identity", uselist=False)
-
-class RefreshSession(Base):
-    __tablename__ = "refresh_sessions"
-
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    identity_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("identities.id", ondelete="CASCADE"), index=True)
-    family_id: Mapped[uuid.UUID] = mapped_column(index=True, nullable=False)
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    identity: Mapped["Identity"] = relationship(back_populates="refresh_sessions")
-```
-
----
-
-## 4. Token Family Rotation & Replay Protection Protocol
-
-To prevent token theft and replay attacks:
-1. Every login allocates a new `family_id` (UUID).
-2. Refreshing an access token revokes the previous refresh token and issues a child token sharing the same `family_id`.
-3. If an already-revoked refresh token is ever submitted, **the entire token family is immediately revoked**, invalidating all sessions across all devices for that user.
+## Self-Verification
+- `backend/.venv/bin/pytest backend/tests/test_auth_family_rotation.py -v`
+- `bash scripts/audit-truth.sh`

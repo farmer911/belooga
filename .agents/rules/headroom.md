@@ -1,3 +1,8 @@
+---
+trigger: always_on
+description: Headroom context and token optimization guidelines.
+---
+
 # Headroom Context Optimization Guidelines
 
 Headroom MCP server is active with tools `headroom_compress`, `headroom_retrieve`, `headroom_stats`, and `headroom_read`.

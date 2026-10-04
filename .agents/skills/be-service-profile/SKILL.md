@@ -1,71 +1,31 @@
 ---
 name: be-service-profile
-description: Authoritative Backend Department Skill for Candidate Profiles (Domain 2). Covers candidate entity models, biographical updates, search vector indexing, and profile visibility controls.
+description: Candidate profile CRUD, visibility (is_hidden), PII privacy, and skills endorsement in backend/app/api/v1/endpoints/profile.py. Use when modifying candidate bios, headlines, seeking status, or skills associations. Not for work/education timeline (be-service-timeline) or media uploads (be-service-media).
 ---
 
-# 👤 Backend Department Skill: Candidate Profiles (Domain 2)
+# Candidate Profile (Domain 2)
 
-> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
-> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/profile.py`. Video posters are stored in `profile_media` with category `pitch_poster` (not a column on `candidate_profiles`).
-> **Target Modular Service:** backend/app/services/profile_service.py (planned target)
-> **Target Modular Model:** backend/app/models/profile.py (planned target)
-> **Department:** Backend Systems Engineering — Candidate Domain Division  
-> **Database Tables:** `candidate_profiles`, `profile_media`  
+## Current Reality (AS-IS)
+- Implemented directly in `backend/app/api/v1/endpoints/profile.py` using `AsyncSession`.
+- Database tables: `candidate_profiles`, `profile_skills`, `profile_media`.
+- Video pitch posters are stored in `profile_media` with category `pitch_poster` (not a column on `candidate_profiles`).
 
----
+## Project-Specific Rules
+- **Privacy & PII Protection:**
+  - `GET /v1/profile/{username}` uses `Depends(get_current_user_optional)`.
+  - For anonymous visitors or non-owners: if `is_hidden=TRUE`, return `404 Not Found`.
+  - For public callers: `email` and `phone` MUST be set to `None` in the returned JSON.
+  - Profile owners (`current_user.username == username`) or admins receive full PII (`email`, `phone`).
+- **IDOR Protection on Mutations:**
+  - `PATCH /v1/profile/{username}`, `POST /v1/profile/{username}/skills/`, `DELETE /v1/profile/{username}/skills/{skill_name}/` MUST enforce `current_user: AuthenticatedUser = Depends(get_current_user)` and `verify_profile_owner(username, current_user)`.
 
-## 1. Department Role & Mission
+## Known Traps
+- Never guess owner identity by splitting email strings. Always check `current_user.username.lower() == clean_username` or match `candidate_profiles.identity_id == current_user.id`.
 
-This department manages the primary entity in the system: `CandidateProfile`. It encapsulates candidate biographical information, search index generation, profile visibility toggles, and connects the candidate to their timeline, media, and skills.
+## Canonical Example
+- `backend/app/api/v1/endpoints/profile.py:get_candidate_public_profile`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Upstream (Depends on)** | `be-service-auth` | Linked to `identities.id` via foreign key constraint |
-| **Downstream (Outputs to)** | `be-service-timeline` | Parent profile owning `job_experiences` and `education_experiences` |
-| **Downstream (Outputs to)** | `be-service-media` | Stores media URLs (`avatar_url`, `video_pitch_url`, `resume_url`) |
-| **Downstream (Outputs to)** | `be-service-search` | `search_vector` generated column drives candidate discovery |
-| **Downstream (Outputs to)** | `fe-page-workspace` | Primary source for `GET /v1/profile/{username}` |
-
----
-
-## 3. Database Model & Search Vector Architecture (Planned Target Model)
-
-> [!NOTE] TARGET SPECIFICATION: In the current implementation, queries execute via `text()` against `backend/initdb.sql`. Posters are stored in `profile_media` rather than a direct column on `candidate_profiles`.
-
-```python
-# Planned Target Model: backend/app/models/profile.py
-import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, Text, Boolean, ForeignKey, DateTime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.core.database import Base
-
-class CandidateProfile(Base):
-    __tablename__ = "candidate_profiles"
-
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    identity_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("identities.id", ondelete="CASCADE"), unique=True)
-    username: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    headline: Mapped[str | None] = mapped_column(String(255))
-    bio: Mapped[str | None] = mapped_column(Text)
-    location: Mapped[str | None] = mapped_column(String(255))
-    phone: Mapped[str | None] = mapped_column(String(50))
-    employment_status: Mapped[str | None] = mapped_column(String(64))
-    seeking_status: Mapped[str | None] = mapped_column(String(64))
-    avatar_url: Mapped[str | None] = mapped_column(Text)
-    video_pitch_url: Mapped[str | None] = mapped_column(Text)
-    resume_url: Mapped[str | None] = mapped_column(Text)
-    is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_fresh: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-
-    identity: Mapped["Identity"] = relationship(back_populates="profile")
-    jobs: Mapped[list["JobExperience"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
-    education: Mapped[list["EducationExperience"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
-```
+## Self-Verification
+- `backend/.venv/bin/pytest backend/tests/test_profile_privacy_and_pii.py -v`
+- `backend/.venv/bin/pytest backend/tests/test_idor_guards.py -v`
+- `bash scripts/audit-truth.sh`

@@ -1,8 +1,3 @@
----
-name: be-reviewer-guidelines
-description: Authoritative Code Review SOP & Rejection Checklist for Principal Backend Lead Reviewer (10+ years exp). Enforces Clean 4-Layer Architecture, non-blocking event-loop safety, IDOR ownership guards, pessimistic concurrency locking, and GIN/Trigram query optimization.
----
-
 # 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist
 
 > **Role:** Principal Backend Lead Reviewer (10+ Years Experience in Python, FastAPI, PostgreSQL, Distributed Systems)  

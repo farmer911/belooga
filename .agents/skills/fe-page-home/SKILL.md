@@ -1,86 +1,35 @@
 ---
 name: fe-page-home
-description: Authoritative Department Skill for the Belooga Homepage (/). Covers the Hero showcase, Walkthrough video modal, Testimonials, CTA, and strict legacy visual assets.
+description: Homepage and candidate showcase in frontend/src/app/page.tsx. Use when modifying hero section, walkthrough video modals, candidate cards, or CTA conversion banners. Not for talent search (fe-page-search) or candidate workspace (fe-page-workspace).
 ---
 
-# 🏠 Department Skill: Homepage & Candidate Showcase (`/`)
+# Homepage & Candidate Showcase (`/`)
 
-> **Department:** Frontend Product Engineering — Marketing & Showcase Division  
-> **Route:** `frontend/src/app/page.tsx`  
-> **Type:** Public Marketing Landing Page & Talent Showcase  
+## Current Reality (AS-IS)
+- Unified Next.js page in `frontend/src/app/page.tsx`.
+- Contains Hero showcase, 3-step walkthrough cards with video modals, candidate showcase grid, testimonials, and CTA banners.
+- Assets: Literal images stored in `frontend/public/images/home/` (`matt-poster.png`, `Rileigh-1.jpg`, `Jazmin-1.jpg`, `Ana.png`, `Inspire.png`).
 
----
+## Project-Specific Rules
+- **54px Pure CSS Play Button:**
+  - Rendered using `.video-play-icon:before` triangle trick.
+  - Hidden by default (`display: none`), reveals only on card hover (`:hover .modal-start`).
+  - Triangle fill color must strictly match legacy `#9b9b9b`.
+- **QC Selectors:**
+  - `[data-testid="home-hero-headline"]`
+  - `[data-testid="home-search-input"]`
+  - `[data-testid="home-search-submit"]`
+  - `[data-testid="walkthrough-card"]`
+  - `[data-testid="walkthrough-modal"]`
+  - `[data-testid="candidate-showcase-grid"]`
 
-## 1. Department Role & Mission
+## Known Traps
+- **CSS Pollution (VIOLATION-004):** NEVER assign dimensions (`height`, `width`) or `background` to generic modal classes like `.modal-trigger` or `.modal-start`. Use Tailwind utility classes scoped to the element.
+- Do not synthesize inline SVGs for logos; always reference `public/images/home/` directly.
 
-The Homepage serves as the primary storefront and conversion engine for Belooga. It introduces the core value proposition: pairing conventional candidate profiles with authentic **30-second video elevator pitches**.
+## Canonical Example
+- `frontend/src/app/page.tsx:WalkthroughModal`
 
-### Target Component Hierarchy & Section Decomposition:
-> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER PAGE SHELL
-> The tree below represents the planned Atomic Design decomposition. In the current production codebase, the homepage sections are consolidated inside `frontend/src/app/page.tsx`.
-
-```
-frontend/src/app/page.tsx (Page Shell & Current Unified Implementation)
-│
-├── 1. HeroSection (`src/components/organisms/home/hero-section.tsx`)
-│      └── Value proposition, background poster overlay, search quick-launcher
-│
-├── 2. WorkflowWalkthroughSection (`src/components/organisms/home/workflow-section.tsx`)
-│      └── 3-step candidate walkthrough cards (Rileigh, Matt, Jazmin) with video triggers
-│
-├── 3. CandidateShowcaseSection (`src/components/organisms/home/candidate-showcase-section.tsx`)
-│      └── Grid of verified candidates with hover play buttons and career tags
-│
-├── 4. TestimonialsSection (`src/components/organisms/home/testimonials-section.tsx`)
-│      └── Recruiter quotes, enterprise logos, social proof metrics
-│
-├── 5. CtaSection (`src/components/organisms/home/cta-section.tsx`)
-│      └── Candidate registration & Recruiter discovery conversion buttons
-│
-└── 6. WalkthroughModal (`src/components/organisms/home/walkthrough-modal.tsx`)
-       └── Reusable modal video player displaying guided platform walkthroughs
-```
-
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Downstream (Outputs to)** | `fe-page-search` | Quick search input redirects to `/search?key={keyword}` |
-| **Downstream (Outputs to)** | `fe-page-public-profile` | Clicking candidate card navigates to `/public/[username]` |
-| **Downstream (Outputs to)** | `fe-page-auth` | Hero and CTA triggers navigate to `/register` or `/login` |
-| **Upstream (Depends on)** | `public/images/home/` | Strict literal legacy assets: `matt-poster.png`, `Rileigh-1.jpg`, `Jazmin-1.jpg`, `Ana.png`, `Inspire.png` |
-
----
-
-## 3. Strict Visual Standards & Historical Pitfalls
-
-### 🔒 Anti-Regression Rules (Learned from Past Incidents):
-1. **The 54px Pure CSS Play Button (`VIOLATION-002`, `VIOLATION-003`, `VIOLATION-004`):**
-   - The walkthrough video play button MUST be rendered using the pure CSS `:before` border trick (`.video-play-icon`).
-   - The button is strictly `display: none` by default and reveals ONLY on card hover (`:hover .modal-start`).
-   - **NEVER** assign `height`, `width`, or `background` to `.modal-trigger` in CSS. That bug turned the play button into a catastrophic 240px black ellipse.
-2. **Literal Asset Provenance (`VIOLATION-001`):**
-   - Use strictly literal image files from `/images/home/`. Never approximate logos or icons with synthetic SVG code.
-
----
-
-## 4. QC Selectors & Automated Test Assertions
-
-Playwright test suite `qc/tests/e2e/public-routes.spec.ts` verifies:
-* `[data-testid="home-hero-headline"]`: Main value proposition headline.
-* `[data-testid="home-search-input"]`: Quick search input in hero.
-* `[data-testid="home-search-submit"]`: Hero search submit button.
-* `[data-testid="walkthrough-card"]`: Step-by-step feature cards.
-* `[data-testid="walkthrough-modal"]`: Dialog modal triggered when clicking play on walkthrough cards.
-* `[data-testid="candidate-showcase-grid"]`: Verified talent discovery grid.
-
----
-
-## 5. Post-Feature Self-Updating Protocol
-
-Whenever a developer or agent modifies the Homepage:
-1. If new sections or cards are added, append their specifications to Section 1.
-2. Verify all image paths exist on disk: `ls -la frontend/public/images/home/`.
-3. If an assertion fails, log the root cause in `VIOLATIONS_REGISTER.md` before resolving.
+## Self-Verification
+- `cd frontend && bun x tsc --noEmit`
+- `cd qc && bun run test:e2e`

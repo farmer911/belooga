@@ -1,8 +1,3 @@
----
-name: enterprise-design-patterns
-description: Authoritative Technical Standard & Master Catalog of Production-Grade Design Patterns for Senior Frontend, Backend, QC, and Systems Engineers. Enforces zero-compromise best practices across Clean Architecture, Concurrency, State Segregation, Headless UI, Enterprise Design Systems, and Test Automation.
----
-
 # 🏛️ ENTERPRISE DESIGN PATTERNS & ZERO-COMPROMISE PRODUCTION STANDARDS
 
 > **Scope:** Repository-Wide Engineering Mandate  

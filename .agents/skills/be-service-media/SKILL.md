@@ -1,51 +1,34 @@
 ---
 name: be-service-media
-description: Authoritative Backend Department Skill for Media Processing & Storage (Domain 4). Covers chunked video uploads, binary reassembly, non-blocking disk I/O, ReportLab PDF generation, and storage strategies.
+description: Chunked video uploads, avatar/resume media storage, and ReportLab PDF resume generation in backend/app/api/v1/endpoints/media.py. Use when updating file uploads, path traversal checks, chunk reassembly, or PDF layout. Not for video recording UI (fe-section-workspace-studio) or general profile attributes (be-service-profile).
 ---
 
-# 📹 Backend Department Skill: Media Processing & Storage (Domain 4)
+# Media Processing & Document Generation (Domain 4)
 
-> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
-> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/media.py` (chunked streaming, upload session validation, ReportLab PDF generation via asyncio.to_thread).
-> **Target Modular Services:** backend/app/services/media_service.py, backend/app/services/pdf_service.py (planned target)
-> **Department:** Backend Systems Engineering — Media & Document Processing Division  
-> **Storage Directories:** `/app/uploads/avatars/`, `/app/uploads/videos/`, `/app/uploads/chunks/`, `/app/uploads/resumes/`  
+## Current Reality (AS-IS)
+- Implemented directly in `backend/app/api/v1/endpoints/media.py`.
+- No separate service layer; endpoints handle chunked file I/O and PDF generation directly.
+- Storage volumes: `/app/uploads/avatars/`, `/app/uploads/resumes/`, `/app/uploads/videos/`, `/app/uploads/chunks/`.
 
----
+## Project-Specific Rules
+- **Non-blocking Event Loop I/O (ADR-006):**
+  - Never call `open()`, `shutil.rmtree()`, `os.remove()`, or `ReportLab doc.build()` synchronously inside async functions.
+  - Always wrap filesystem operations in `asyncio.to_thread` or `anyio.to_thread.run_sync`.
+- **Path Traversal Protection:**
+  - `upload_id` must match `r"^upload_\d+_[a-zA-Z0-9]+$"`.
+  - All file paths must be scoped under user ID and validated using `os.path.realpath`.
+- **Public & Hidden PDF Generation:**
+  - `GET /v1/profile/{username}/pdf/` uses `Depends(get_current_user_optional)`.
+  - Hidden profiles return `404` for non-owners/unauthenticated users.
+  - Public caller receives sanitized PDF; owner receives PDF with full contact details.
 
-## 1. Department Role & Mission
+## Known Traps
+- ReportLab canvas drawing is CPU-bound; running it in the main thread stalls all concurrent HTTP requests.
+- Always verify chunk index sequence and byte size during `/v1/media/upload/complete`.
 
-This department manages all binary assets: candidate avatar image validation, multi-chunk video pitch uploads, atomic chunk reassembly, WebM/MP4 format conversion, and server-side PDF resume compilation via ReportLab.
+## Canonical Example
+- `backend/app/api/v1/endpoints/media.py:generate_candidate_pdf`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Upstream (Depends on)** | `be-service-profile` | Associates merged media URLs with `candidate_profiles` |
-| **Upstream (Depends on)** | `be-service-timeline` | Ingests job/edu credentials into ReportLab PDF generator |
-| **Downstream (Outputs to)** | `fe-section-workspace-studio` | Serves chunk upload endpoints: `/chunk/` and `/complete/` |
-| **Downstream (Outputs to)** | `fe-section-workspace-header` | Serves avatar upload and PDF export endpoints |
-| **Downstream (Outputs to)** | `fe-section-workspace-pitch-player` | Streams public video pitch and poster |
-
----
-
-## 3. Non-Blocking Async File I/O Protocol
-
-Merging large video chunks (10MB - 100MB) synchronously in FastAPI blocks the event loop. The Media Department enforces non-blocking execution:
-
-```python
-import anyio
-import shutil
-
-async def assemble_chunks_async(chunk_paths: list[str], output_path: str):
-    def _sync_merge():
-        with open(output_path, "wb") as outfile:
-            for cp in chunk_paths:
-                with open(cp, "rb") as infile:
-                    shutil.copyfileobj(infile, outfile)
-    # Offload blocking disk writes to AnyIO worker thread
-    await anyio.to_thread.run_sync(_sync_merge)
-```
-👉 **Guarantees FastAPI event loop remains 100% responsive during multi-megabyte video assembly.**
+## Self-Verification
+- `backend/.venv/bin/pytest backend/tests/test_media_traversal.py -v`
+- `bash scripts/audit-truth.sh`

@@ -1,92 +1,35 @@
 ---
 name: fe-page-workspace
-description: Master Orchestrator Architecture Skill for the Candidate Workspace page (/user/[username]). Defines page shell layout, unified React Query state coordination, cross-section communication, and sub-component routing.
+description: Candidate Workspace page (/user/[username]) in frontend/src/app/user/[username]/page.tsx. Use when modifying workspace layout, bio header, video pitch player, WebRTC studio modal, career timeline, or skills badges. Not for public profile view (fe-page-public-profile) or settings (fe-page-user-management).
 ---
 
-# 🌐 Master Page Orchestrator Skill: Candidate Workspace (`/user/[username]`)
+# Candidate Workspace (`/user/[username]`)
 
-> **Route:** `frontend/src/app/user/[username]/page.tsx`  
-> **Type:** Protected Client Workspace / Candidate Profile Management Hub  
-> **Master Query Key:** `['candidate-profile', username]`  
+## Current Reality (AS-IS)
+- Unified client component in `frontend/src/app/user/[username]/page.tsx` (`"use client"`).
+- State coordination: Managed via React hooks (`useState`, `useEffect`, `useCallback`) and `apiClient`.
+- Sub-section guides are maintained under `references/`:
+  - Bio & Identity: [`references/header-and-bio.md`](references/header-and-bio.md)
+  - 30s Pitch Player: [`references/pitch-player.md`](references/pitch-player.md)
+  - WebRTC Video Studio: [`references/webrtc-studio.md`](references/webrtc-studio.md)
+  - Timeline Drag-and-Drop: [`references/timeline-dnd.md`](references/timeline-dnd.md)
+  - Skills Badges: [`references/skills-badges.md`](references/skills-badges.md)
 
----
+## Project-Specific Rules
+- **Data Fetching:** Load candidate profile using `/v1/profile/{username}` via `apiClient`. After any child mutation (bio save, video complete, timeline reorder), re-invoke `loadProfileData()` to ensure fresh state.
+- **WebRTC Studio:** The video recording studio is gated by `NEXT_PUBLIC_E2E` in test mode to allow hermetic mock stream injection during automated Playwright runs.
+- **QC Test IDs:** Required selectors:
+  - `[data-testid="workspace-container"]`
+  - `[data-testid="workspace-loading-spinner"]`
+  - `[data-testid="workspace-error-banner"]`
 
-## 1. Page Role & Component Hierarchy
+## Known Traps
+- Sub-components are currently inlined within `page.tsx` (over 3,000 lines). Do not import non-existent components from `src/components/organisms/workspace/`.
+- Ensure MediaStream tracks are stopped (`track.stop()`) when closing the WebRTC recording modal to prevent device lock.
 
-The Candidate Workspace is the central control hub allowing candidates to manage their career identity, elevator pitch video, work history, education credentials, and technical skills.
+## Canonical Example
+- State refresh callback in `frontend/src/app/user/[username]/page.tsx`
 
-### 📐 Target Component Decomposition Architecture (Target Refactor):
-> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER PAGE SHELL
-> The tree below represents the planned Atomic Design decomposition. In the current production codebase, the workspace layout and its interactive sections are implemented within `frontend/src/app/user/[username]/page.tsx`.
-
-```
-frontend/src/app/user/[username]/page.tsx (Page Shell & Current Unified Implementation)
-│
-├── 1. ProfileHeaderSection (`src/components/organisms/workspace/profile-header-section.tsx`)
-│      └── Avatar uploads, full name, headline, bio, seeking status, PDF resume export
-│
-├── 2. VideoPitchPlayerSection (`src/components/organisms/workspace/video-pitch-section.tsx`)
-│      └── 30-second pitch preview, custom modal video player, unmuted/muted autoplay fallback
-│
-├── 3. VideoStudioModalSection (`src/components/organisms/workspace/video-studio-section.tsx`)
-│      └── WebRTC recording studio, device selector, 60fps VU meter isolation, speech teleprompter, chunked upload
-│
-├── 4. TimelineSection (`src/components/organisms/workspace/timeline-section.tsx`)
-│      └── Work Experience & Education tabs, HTML5 Drag-and-Drop reordering, CRUD modals
-│
-└── 5. SkillsSection (`src/components/organisms/workspace/skills-section.tsx`)
-       └── Skill badges, Master Skills Catalog autocomplete, skill additions/deletions
-```
-
----
-
-## 2. State Management Architecture & Cross-Section Coordination
-
-### 2.1. State Coordination Architecture
-> [!NOTE] TARGET ARCHITECTURE: In current production, state is coordinated via React hooks and apiClient in `frontend/src/app/user/[username]/page.tsx`. TanStack Query is planned for state refactoring.
-
-```typescript
-const { data: profile, isLoading, error } = useQuery({
-  queryKey: ['candidate-profile', username],
-  queryFn: () => apiClient.get(getProfileUrl(username)).then(res => res.data), // GET /v1/profile/{username}
-  staleTime: 1000 * 60 * 5, // 5-minute cache freshness
-});
-```
-
-### 2.2. Cross-Section Communication via Invalidation
-When an individual section executes a mutation, it **MUST NOT** use prop-drilled callbacks or window events. Instead, it invalidates the central query cache:
-```typescript
-import { useQueryClient } from '@tanstack/react-query';
-
-const queryClient = useQueryClient();
-
-// When Studio finishes uploading a new pitch video:
-await queryClient.invalidateQueries({ queryKey: ['candidate-profile', username] });
-
-// When Timeline completes a drag-and-drop reorder:
-await queryClient.invalidateQueries({ queryKey: ['candidate-profile', username] });
-```
-👉 The Header, Pitch Player, and Timeline automatically receive fresh data without a full page reload.
-
----
-
-## 3. Section Skills Routing Map
-
-When assigned to modify a specific section of the workspace, agents must consult and ingest the corresponding skill:
-
-| Target Functional Block | Specialized Section Skill to Ingest |
-| :--- | :--- |
-| Avatar, Bio, Resume PDF download, Public/Hidden visibility | `fe-section-workspace-header` |
-| 30s elevator pitch preview, modal player, audio fallback | `fe-section-workspace-pitch-player` |
-| WebRTC camera/mic recording, VU meter, voice-following teleprompter | `fe-section-workspace-studio` |
-| Add/Edit/Delete Work Experience, Education, Drag-and-Drop reordering | `fe-section-workspace-timeline` |
-| Skill badges, Master catalog search autocomplete | `fe-section-workspace-skills` |
-
----
-
-## 4. QC Guardrails & Essential Shell Selectors
-
-The following structural selectors are required by Playwright E2E suites:
-* `[data-testid="workspace-container"]`: Primary page container element.
-* `[data-testid="workspace-loading-spinner"]`: Skeleton/loading state indicator.
-* `[data-testid="workspace-error-banner"]`: 404 candidate not found state.
+## Self-Verification
+- `cd frontend && bun x tsc --noEmit`
+- `cd qc && bun run test:e2e`

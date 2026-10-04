@@ -1,0 +1,81 @@
+name: Belooga SSOT & Integrity CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  audit-and-test:
+    name: SSOT Ground Truth & Test Verification
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: belooga
+          POSTGRES_PASSWORD: belooga_secret_password
+          POSTGRES_DB: belooga_db
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Backend Dependencies & Create Virtualenv
+        run: |
+          python3 -m venv backend/.venv
+          backend/.venv/bin/pip install --upgrade pip
+          backend/.venv/bin/pip install -r backend/requirements.txt
+          backend/.venv/bin/pip install pytest pytest-asyncio httpx
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend && bun install --frozen-lockfile || bun install
+
+      - name: Initialize Database Schema & Seed Data
+        run: |
+          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_db -f backend/initdb.sql
+          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -c "CREATE DATABASE belooga_test;"
+          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_test -f backend/initdb.sql
+          python3 scripts/seed-data.py
+
+      - name: Run Master SSOT Truth Auditor
+        env:
+          CI: "true"
+        run: |
+          bash scripts/audit-truth.sh
+
+      - name: Verify Zero State Drift (Generator must match repo)
+        run: |
+          python3 scripts/generate-current-state.py
+          git diff --exit-code CURRENT_STATE.md

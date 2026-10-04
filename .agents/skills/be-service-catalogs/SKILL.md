@@ -1,36 +1,26 @@
 ---
 name: be-service-catalogs
-description: Authoritative Backend Department Skill for Master Catalogs & Taxonomies (Domain 7). Covers standardized skill dictionaries, company branding logos, accredited universities, and geographic locations.
+description: Master taxonomies for skills, company names, schools, and locations in backend/app/api/v1/endpoints/catalogs.py. Use when modifying catalog lookup endpoints or dictionary fallback lists. Not for candidate profile associations (be-service-profile) or frontend catalog tags (fe-section-workspace-skills).
 ---
 
-# 📚 Backend Department Skill: Master Catalogs & Taxonomies (Domain 7)
+# Master Catalogs & Taxonomies (Domain 7)
 
-> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
-> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/catalogs.py`. Note: `skills` is queried from the database table; `company`, `school`, and `location` autocompletes are currently served via in-memory dictionaries.
-> **Target Modular Service:** backend/app/services/catalog_service.py (planned target)
-> **Department:** Backend Systems Engineering — Taxonomies & Master Data Division  
-> **Database Tables:** `skills`, `profile_skills`, `catalog_companies`, `catalog_schools`, `catalog_locations`  
+## Current Reality (AS-IS)
+- Implemented directly in `backend/app/api/v1/endpoints/catalogs.py`.
+- No separate service layer.
+- `skills` is queried from the PostgreSQL `skills` table with in-memory fallback.
+- `company`, `school`, and `location` autocompletes are currently served via in-memory dictionaries in `catalogs.py`.
 
----
+## Project-Specific Rules
+- **Resilient Fallback:** If the `skills` database table is empty, return a curated default list without raising an HTTP 500 error.
+- **Case-Insensitive Prefix Matching:** Suggestions must filter using lowercase case-insensitive prefix/contains checks.
 
-## 1. Department Role & Mission
+## Known Traps
+- `catalog_companies`, `catalog_schools`, and `catalog_locations` database tables exist in `initdb.sql`, but active endpoint code currently serves in-memory dictionary lists. Do not assume foreign key lookups against these catalog tables in router endpoints.
 
-This department establishes standardized vocabularies across the Belooga platform: master technical skills, verified company names and logos, accredited universities, and geographical locations.
+## Canonical Example
+- `backend/app/api/v1/endpoints/catalogs.py:list_skills`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Downstream (Outputs to)** | `fe-section-workspace-skills` | Serves `GET /v1/profile/skills/` for candidate skill tags |
-| **Downstream (Outputs to)** | `fe-section-workspace-timeline` | Serves `GET /v1/profile/company/` and `GET /v1/profile/school/` |
-| **Downstream (Outputs to)** | `fe-page-search` | Supplies autocomplete taxonomy for discovery filters |
-
----
-
-## 3. Resilient Catalog Fallback Standard
-
-To guarantee zero frontend disruption even during database seed or cold-start scenarios, the Catalog Service implements a resilient tiered lookup:
-1. Primary query: Scan PostgreSQL `skills` table.
-2. Resilient fallback: If catalog table returns empty, serve curated master seed array (React, Python, TypeScript, etc.) without throwing an HTTP 500 error.
+## Self-Verification
+- `curl -s http://localhost:8000/v1/profile/skills/`
+- `bash scripts/audit-truth.sh`

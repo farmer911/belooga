@@ -1,8 +1,3 @@
----
-name: fe-section-workspace-pitch-player
-description: Specialized Section Skill for the 30-Second Elevator Pitch Video Player and Preview Modal. Covers video playback, autoplay fallback rules, progress bars, and modal controls.
----
-
 # 🎬 Section Skill: 30-Second Pitch Video Player
 
 > [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER

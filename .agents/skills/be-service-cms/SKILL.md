@@ -1,36 +1,26 @@
 ---
 name: be-service-cms
-description: Authoritative Backend Department Skill for Public CMS & Moderation (Domain 8). Covers contact inquiry tickets, platform FAQs, candidate moderation reporting, and legal compliance.
+description: Public CMS endpoints, contact inquiries, FAQs, job postings, and profile abuse reporting in backend/app/api/v1/endpoints/cms.py. Use when modifying contact forms, platform FAQs, career listings, or candidate report flow. Not for frontend public CMS page UI (fe-page-cms-public).
 ---
 
-# 📢 Backend Department Skill: Public CMS & Moderation (Domain 8)
+# Public CMS & Moderation (Domain 8)
 
-> [!WARNING] TARGET ARCHITECTURE (NOT YET IMPLEMENTED) – CURRENTLY INLINED IN ROUTER ENDPOINTS
-> **Current Reality:** Inlined directly in router endpoints at `backend/app/api/v1/endpoints/cms.py`. Contact inquiries persist to `contact_inquiries`, moderation reports persist to `profile_reports`. FAQs and career listings are currently served via in-memory dictionaries.
-> **Target Modular Service:** backend/app/services/cms_service.py (planned target)
-> **Department:** Backend Systems Engineering — CMS & Trust Division  
-> **Database Tables:** `contact_inquiries`, `profile_reports`  
+## Current Reality (AS-IS)
+- Implemented directly in `backend/app/api/v1/endpoints/cms.py` using `AsyncSession`.
+- No separate service layer.
+- `contact_inquiries` and `profile_reports` tables store persisted inquiries and reports.
+- FAQs and career postings are served via in-memory dictionaries in `cms.py`.
 
----
+## Project-Specific Rules
+- **Public Submissions:** `POST /v1/contact/` and `POST /v1/profile/{user_id}/report/` are public endpoints (no authentication required).
+- **Graceful Error Handling:** Inquiries and reports return a standard JSON confirmation: `{"message": "..."}` or `{"success": true}`.
 
-## 1. Department Role & Mission
+## Known Traps
+- `career_postings` table exists in `initdb.sql`, but `GET /v1/career/jobs/` currently returns in-memory dictionaries. Do not expect database foreign keys on jobs.
 
-This department powers the communications, customer support, and safety infrastructure: recording visitor contact inquiries, serving platform FAQs, and processing candidate abuse/moderation reports.
+## Canonical Example
+- `backend/app/api/v1/endpoints/cms.py:submit_contact_inquiry`
 
----
-
-## 2. Cross-Departmental Impact Matrix (Dependencies)
-
-| Dependency Direction | Department | Interface & Contract |
-| :--- | :--- | :--- |
-| **Downstream (Outputs to)** | `fe-page-cms-public` | Serves `POST /v1/contact/`, `GET /v1/faqs`, `GET /v1/career/jobs/` |
-| **Downstream (Outputs to)** | `fe-page-public-profile` | Serves `POST /v1/profile/{user_id}/report/` for recruiter abuse reporting |
-
----
-
-## 3. Moderation Ticket Protocol
-
-When a recruiter or user reports a profile:
-1. `POST /v1/profile/{user_id}/report/` captures target candidate ID, reporter email, and report reason.
-2. Ingests record into `profile_reports` table in PostgreSQL.
-3. Automatically confirms submission to caller with `{ "message": "Report submitted successfully" }`.
+## Self-Verification
+- `curl -s http://localhost:8000/v1/faqs`
+- `bash scripts/audit-truth.sh`
