@@ -34,6 +34,7 @@ Thumbs.db
 *.swp
 *.swo
 .idea/
+.rtk/
 
 # Backend User Uploads (Dynamic test uploads & binary video recordings)
 backend/uploads/chunks/*

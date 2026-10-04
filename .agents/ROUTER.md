@@ -92,7 +92,8 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | :--- | :--- | :--- | :--- |
 | **Integrity & Evidence** | All tasks across repository | `engineering-integrity-and-evidence` | Assigned department skill |
 | **Definition of Done (DoD)**| All task completions / sign-offs | `definition-of-done` | `engineering-integrity-and-evidence` |
-| **Architect Standards** | All system architecture & designs | `architect-patterns-and-practices` | `enterprise-design-patterns` |
+| **Systems & CS Knowledge** | All architectural and engineering decisions | `systems-and-cs-knowledge` | `enterprise-design-patterns` |
+| **Architect Standards** | All system architecture & designs | `architect-patterns-and-practices` | `systems-and-cs-knowledge` |
 | **Senior FE Standards** | All frontend components & hooks | `fe-patterns-and-practices` | `fe-reviewer-guidelines` |
 | **Senior BE Standards** | All backend models, repos, services | `be-patterns-and-practices` | `be-reviewer-guidelines` |
 | **Senior QC Standards** | All test suites, fixtures & POMs | `qc-patterns-and-practices` | `belooga-qc-engineering` |
