@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Belooga — Create Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="home-scene">
+
+    <!-- ============================================== -->
+  <!-- MOCKUP CONTROL BAR (HARNESS ACTIVE)            -->
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 03</span>
+      <strong>Legacy Mockup: <code>/register (Register)</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" class="harness-route-select" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569; font-weight: 600;">
+        <option value="index.html" >Route 01: / (Public Home)</option>
+        <option value="login.html" >Route 02: /login (Login)</option>
+        <option value="register.html" selected>Route 03: /register (Register)</option>
+        <option value="forgot-password.html" >Route 04: /forgot-password (Recovery)</option>
+        <option value="user.html" >Route 05: /user/:username (Candidate Profile)</option>
+        <option value="update-profile.html" >Route 06: /user/:username/update-profile (Edit Profile)</option>
+        <option value="account-setting.html" >Route 07: /user/:username/account-setting (Account Settings)</option>
+        <option value="search.html" >Route 08: /user/search (Search Results)</option>
+        <option value="public-profile.html" >Route 09: /public/:username (Public Profile)</option>
+        <option value="privacy-policy.html" >Route 10A: /privacy-policy (Privacy Policy)</option>
+        <option value="terms-and-conditions.html" >Route 10B: /terms-and-conditions (Terms)</option>
+        <option value="contact-us.html" >Route 11: /contact-us (Contact Us)</option>
+        <option value="help.html" >Route 12: /help (Help Center)</option>
+        <option value="careers.html" >Route 13: /careers (Careers)</option>
+        <option value="blog.html" >Route 14: /blog (Blog)</option>
+        <option value="404.html" >Route 16: /404-not-found (404 Page)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 03</span>
+      <strong>Legacy Register Page: <code>/register</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" style="margin-left: 15px; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569;">
+        <option value="index.html">Route 01: / (Home)</option>
+        <option value="login.html">Route 02: /login (Login)</option>
+        <option value="register.html" selected>Route 03: /register (Register)</option>
+        <option value="forgot-password.html">Route 04: /forgot-password (Recovery)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- LEGACY SITE NAVBAR (header.tsx Line 203)       -->
+  <!-- ============================================== -->
+  <header class="navbar-wrapper">
+    <nav class="navbar container">
+      <div class="nav-brand-container">
+        <a href="index.html" class="nav-link nav-link-logo">
+          <img src="/images/logo-big.png" class="header-logo" alt="Belooga Logo">
+        </a>
+      </div>
+      <div class="nav-links-right">
+        <a href="login.html" class="nav-auth-link">Login</a>
+        <a href="register.html" class="nav-btn-register" style="background: var(--main-color-hover);">Register</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ============================================== -->
+  <!-- REGISTER SCENE (register.scene.tsx)            -->
+  <!-- ============================================== -->
+  <section class="imagebg login-page-section" data-overlay="5">
+    <div class="background-image-holder"></div>
+    <div class="container-custom">
+      <div class="row">
+        <div class="login-scene register-scene">
+          <h2>Join Belooga</h2>
+          
+          <div class="social-container-button">
+            <button type="button" class="btn block btn--icon bg--facebook type--uppercase" onclick="alert('Facebook Sign up API')">
+              <span class="btn__text"><i class="fa-brands fa-facebook-f"></i> Sign up with Facebook</span>
+            </button>
+            <button type="button" class="btn block btn--icon bg--googleplus type--uppercase" onclick="alert('Google Sign up API')">
+              <span class="btn__text"><i class="fa-brands fa-google-plus-g"></i> Sign up with Google</span>
+            </button>
+            <button type="button" class="btn block btn--icon bg--linkedin type--uppercase" onclick="alert('LinkedIn Sign up API')">
+              <span class="btn__text"><i class="fa-brands fa-linkedin-in"></i> Sign up with LinkedIn</span>
+            </button>
+            <hr data-title="OR">
+          </div>
+
+          <form class="register-form" onsubmit="event.preventDefault(); alert('Registration submitted');">
+            <div class="form-grid-2">
+              <div class="form-group text-left">
+                <label for="reg-firstname">First Name</label>
+                <input type="text" id="reg-firstname" placeholder="First Name" required autofocus>
+              </div>
+              <div class="form-group text-left">
+                <label for="reg-lastname">Last Name</label>
+                <input type="text" id="reg-lastname" placeholder="Last Name" required>
+              </div>
+            </div>
+
+            <div class="form-group text-left">
+              <label for="reg-username">Username</label>
+              <input type="text" id="reg-username" placeholder="Username" required>
+              <span class="type--fine-print" style="margin-top: -12px; margin-bottom: 12px; text-align: left;">
+                <i>Required 30 characters or fewer. Letters, digits and @/./+/-/_ only</i>
+              </span>
+            </div>
+
+            <div class="form-group text-left">
+              <label for="reg-email">Email</label>
+              <input type="email" id="reg-email" placeholder="Email" required>
+            </div>
+
+            <div class="form-group text-left">
+              <label for="reg-password">Password</label>
+              <input type="password" id="reg-password" placeholder="Password" required>
+            </div>
+
+            <div class="checkbox-container">
+              <input type="checkbox" id="reg-terms" required>
+              <label for="reg-terms">
+                I agree to the <a href="#terms" target="_blank" style="color: var(--main-color); font-weight: 700;">Terms & Conditions</a> and <a href="#privacy" target="_blank" style="color: var(--main-color); font-weight: 700;">Privacy Policy</a>.
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn--primary type--uppercase">Create account</button>
+          </form>
+
+          <span class="type--fine-print block">
+            Already have an account? <a href="login.html">Login</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================== -->
+  <!-- LEGACY SITE FOOTER (footer.tsx)                -->
+  <!-- ============================================== -->
+  <footer class="site-footer">
+    <div class="container-custom">
+      <div class="footer-row">
+        <div class="footer-left">
+          <span class="type--fine-print copyright-text">
+            © <span class="update-year">2026</span> Belooga Beta — All Rights Reserved
+          </span>
+        </div>
+        <div class="footer-center">
+          <ul class="footer-nav-list">
+            <li><a href="#policy" class="type--fine-print">Privacy Policy</a></li>
+            <li><a href="#terms" class="type--fine-print">Terms and Conditions</a></li>
+            <li><a href="#help" class="type--fine-print">Help</a></li>
+            <li><a href="#contact" class="type--fine-print">Contact us</a></li>
+            <li><a href="#careers" class="type--fine-print">Careers</a></li>
+            <li><a href="#blog" class="type--fine-print">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-right">
+          <div class="social-icons-group">
+            <a href="#twitter" class="social-icon-circle"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#facebook" class="social-icon-circle"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#instagram" class="social-icon-circle"><i class="fa-brands fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

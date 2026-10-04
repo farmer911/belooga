@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Next.js Build Outputs
+.next/
+*/.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Python & Environment
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.env.local
+.venv/
+venv/
+ENV/
+
+# Playwright & QC Test Artifacts
+qc/test-results/
+qc/playwright-report/
+test-results/
+playwright-report/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+
+# Backend User Uploads (Dynamic test uploads & binary video recordings)
+backend/uploads/chunks/*
+!backend/uploads/chunks/.gitkeep
+backend/uploads/videos/*
+!backend/uploads/videos/.gitkeep
+backend/uploads/avatars/*
+!backend/uploads/avatars/.gitkeep
+backend/uploads/resumes/*
+!backend/uploads/resumes/.gitkeep
+
+# Graphify Cache
+graphify-out/cache/

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Belooga — Reinventing the Candidate Experience</title>
+  <meta name="description" content="Belooga is an interactive platform that pairs candidates' resumes with a 30-second video introduction.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="home-scene">
+
+    <!-- ============================================== -->
+  <!-- MOCKUP CONTROL BAR (HARNESS ACTIVE)            -->
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 01</span>
+      <strong>Legacy Mockup: <code>/ (Public Home)</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" class="harness-route-select" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569; font-weight: 600;">
+        <option value="index.html" selected>Route 01: / (Public Home)</option>
+        <option value="login.html" >Route 02: /login (Login)</option>
+        <option value="register.html" >Route 03: /register (Register)</option>
+        <option value="forgot-password.html" >Route 04: /forgot-password (Recovery)</option>
+        <option value="user.html" >Route 05: /user/:username (Candidate Profile)</option>
+        <option value="update-profile.html" >Route 06: /user/:username/update-profile (Edit Profile)</option>
+        <option value="account-setting.html" >Route 07: /user/:username/account-setting (Account Settings)</option>
+        <option value="search.html" >Route 08: /user/search (Search Results)</option>
+        <option value="public-profile.html" >Route 09: /public/:username (Public Profile)</option>
+        <option value="privacy-policy.html" >Route 10A: /privacy-policy (Privacy Policy)</option>
+        <option value="terms-and-conditions.html" >Route 10B: /terms-and-conditions (Terms)</option>
+        <option value="contact-us.html" >Route 11: /contact-us (Contact Us)</option>
+        <option value="help.html" >Route 12: /help (Help Center)</option>
+        <option value="careers.html" >Route 13: /careers (Careers)</option>
+        <option value="blog.html" >Route 14: /blog (Blog)</option>
+        <option value="404.html" >Route 16: /404-not-found (404 Page)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 01</span>
+      <strong>Legacy Home Page: <code>/</code> and <code>/home</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" style="margin-left: 15px; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569;">
+        <option value="index.html" selected>Route 01: / (Home)</option>
+        <option value="login.html">Route 02: /login (Login)</option>
+        <option value="register.html">Route 03: /register (Register)</option>
+        <option value="forgot-password.html">Route 04: /forgot-password (Recovery)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- LEGACY SITE NAVBAR (header.tsx Line 203)       -->
+  <!-- ============================================== -->
+  <header class="navbar-wrapper">
+    <nav class="navbar container">
+      <div class="nav-brand-container">
+        <a href="/" class="nav-link nav-link-logo">
+          <!-- Exact legacy asset: /images/logo-big.png -->
+          <img class="header-logo" alt="logo" src="/images/logo-big.png">
+        </a>
+      </div>
+
+      <div class="navbar-collapse-area">
+        <ul id="menu-sub-horizontal" class="navbar-nav menu-horizontal">
+          <li class="nav-item belooga-container">
+            <a href="/login" class="nav-link">Login</a>
+          </li>
+          <li class="nav-item belooga-container">
+            <a href="/register" class="nav-link nav-register-btn">Register</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ============================================== -->
+  <!-- 1. HERO SECTION (.main-home-section)          -->
+  <!-- ============================================== -->
+  <section class="main-home-section" id="home">
+    <div class="hero-video-background">
+      <div class="video-overlay-tint"></div>
+      <img src="/images/home/matt-poster.png" class="hero-poster-img" alt="Belooga candidate showcase">
+    </div>
+
+    <div class="container-custom hero-content-container">
+      <div class="hero-text-block">
+        <h1 class="hero-main-title">
+          REINVENTING THE CANDIDATE EXPERIENCE.
+        </h1>
+        <p class="hero-sub-title">
+          Belooga is an interactive platform that pairs candidates' resumes with a 30-second video introduction.
+        </p>
+
+        <!-- Candidate Search Box (commons/components/search-box) -->
+        <div class="hero-search-wrapper" id="search">
+          <div class="search-bar-inner">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="candidate-search-input" class="search-input-field" placeholder="Search Candidates" autocomplete="off">
+            <button class="search-action-btn" id="btn-search-trigger">Search</button>
+          </div>
+          <div class="search-suggestions-dropdown" id="search-dropdown" style="display: none;">
+            <div class="suggestion-item"><i class="fa-solid fa-user"></i> Alex Nguyen — <span>Product Designer</span></div>
+            <div class="suggestion-item"><i class="fa-solid fa-user"></i> Jeremy Tran — <span>Fullstack Engineer</span></div>
+            <div class="suggestion-item"><i class="fa-solid fa-user"></i> Jazmin Cole — <span>Marketing Lead</span></div>
+          </div>
+        </div>
+
+        <!-- Scroll Down Arrow (commons/components/scroll-down-arrow) -->
+        <a href="#features" class="scroll-down-anchor" aria-label="Scroll Down">
+          <div class="scroll-down-arrow">
+            <i class="fa-solid fa-chevron-down bounce-animation"></i>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================== -->
+  <!-- 2. THREE-STEP PROCESS (.features-section)      -->
+  <!-- ============================================== -->
+  <section class="features-section" id="features">
+    <div class="container-custom">
+      <div class="row features-grid">
+        
+        <!-- Step 1: Prepare (icon-Cranium) -->
+        <div class="feature-col">
+          <div class="box-feature-inner">
+            <div class="box-shadow-wide feature feature-3 boxed boxed--lg boxed--border text-center">
+              <div class="feature-icon-box">
+                <i class="fa-solid fa-brain icon color--primary icon--lg"></i>
+              </div>
+              <h4 class="text-center feature-title">Prepare</h4>
+              <p class="content-box-tt">
+                Brainstorm ideas for your 30-second introduction video, including a highlight reel of your
+                education, work experience, and skills.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Record (icon-Tripod-withCamera) -->
+        <div class="feature-col">
+          <div class="box-feature-inner">
+            <div class="box-shadow-wide feature feature-3 boxed boxed--lg boxed--border text-center">
+              <div class="feature-icon-box">
+                <i class="fa-solid fa-video icon color--primary icon--lg"></i>
+              </div>
+              <h4 class="text-center feature-title">Record</h4>
+              <p class="content-box-tt">
+                With your device’s camera, film the centerpiece of your profile in as many takes as you’d like.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Get Creative (icon-Video-2) -->
+        <div class="feature-col">
+          <div class="box-feature-inner">
+            <div class="box-shadow-wide feature feature-3 boxed boxed--lg boxed--border text-center">
+              <div class="feature-icon-box">
+                <i class="fa-solid fa-wand-magic-sparkles icon color--primary icon--lg"></i>
+              </div>
+              <h4 class="text-center feature-title">Get Creative</h4>
+              <p class="content-box-tt">
+                Be sure to fill out the rest of your profile, add personal flair, and share on your social
+                networks.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Get Started Button (home.scene.tsx Line 189) -->
+      <div class="col-12 col-md-12 stated-section text-center">
+        <a href="/register">
+          <button class="get-started-btn">Get Started</button>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================== -->
+  <!-- 3. VIDEO WALKTHROUGHS (.stated-video-section)  -->
+  <!-- ============================================== -->
+  <section class="stated-video-section">
+    <div class="container-custom">
+      <div class="stated-video-container">
+
+        <!-- Walkthrough 1: Ava's Profile Overview -->
+        <div class="stated-video">
+          <div class="start-content-video" onclick="openVideoModal('AVA\'S PROFILE OVERVIEW', 'Ava_s_Video.mp4', 'Ana.png')">
+            <div class="modal-instance modal-start">
+              <div class="video-play-icon modal-trigger" data-modal-index="0"></div>
+            </div>
+            <!-- Clean legacy screenshot Ana.png without fake overlays -->
+            <img src="/images/home/Ana.png" class="video-bg-image" alt="Ava's Profile Overview">
+          </div>
+          <div class="video-content">
+            <div class="stated-text">
+              <h3>AVA'S PROFILE OVERVIEW</h3>
+              <p>Walk through Belooga's user friendly video resume platform with Ava. See how you can easily record and share your video with potential employers.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Walkthrough 2: Inspire Your Resume -->
+        <div class="stated-video">
+          <div class="video-content">
+            <div class="stated-text">
+              <h3>INSPIRE YOUR RESUME</h3>
+              <p>Regardless of your career path, Belooga helps you land the job of your dreams. Take a look at how to bring your resume to the next level!</p>
+            </div>
+          </div>
+          <div class="start-content-video" id="start-video-inspire" onclick="openVideoModal('INSPIRE YOUR RESUME', 'Inspire_Your_Resume.mp4', 'Inspire.png')">
+            <div class="modal-instance modal-start">
+              <div class="video-play-icon modal-trigger" data-modal-index="0"></div>
+            </div>
+            <!-- Clean legacy screenshot Inspire.png without fake overlays -->
+            <img src="/images/home/Inspire.png" class="video-bg-image" alt="Inspire Your Resume">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================== -->
+  <!-- 4. ELEVATOR PITCH EXAMPLES (.examples-section) -->
+  <!-- ============================================== -->
+  <section class="examples-section">
+    <div class="container-custom">
+      <div class="row">
+        <div class="col-12 col-md-12 text-center section-header-wrap">
+          <h2>Here are some 30-second elevator pitch examples.</h2>
+        </div>
+      </div>
+      <div class="row examples-cards-grid">
+        
+        <!-- Example 1: Jazmin -->
+        <div class="example-box">
+          <div class="box-shadow-wide jazmin feature feature-1" onclick="openVideoModal('Jazmin — Elevator Pitch', 'Jazmin-Pitch.mp4', 'Jazmin-1.jpg')">
+            <a class="modal-trigger">
+              <img src="/images/home/Jazmin-1.jpg" class="attachment-large size-large" alt="Jazmin">
+              <div class="play-overlay-badge"><i class="fa-solid fa-play"></i></div>
+            </a>
+            <div class="feature__body boxed boxed--border text-center">
+              <h3>Jazmin</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 2: Jeremy -->
+        <div class="example-box">
+          <div class="box-shadow-wide jazmin feature feature-1" onclick="openVideoModal('Jeremy — Elevator Pitch', 'Jeremy-Pitch.mp4', 'Jeremy-1.jpg')">
+            <a class="modal-trigger">
+              <img src="/images/home/Jeremy-1.jpg" class="attachment-large size-large" alt="Jeremy">
+              <div class="play-overlay-badge"><i class="fa-solid fa-play"></i></div>
+            </a>
+            <div class="feature__body boxed boxed--border text-center">
+              <h3>Jeremy</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 3: Rileigh -->
+        <div class="example-box">
+          <div class="box-shadow-wide jazmin feature feature-1" onclick="openVideoModal('Rileigh — Elevator Pitch', 'Rileigh-Pitch.mp4', 'Rileigh-1.jpg')">
+            <a class="modal-trigger">
+              <img src="/images/home/Rileigh-1.jpg" class="attachment-large size-large" alt="Rileigh">
+              <div class="play-overlay-badge"><i class="fa-solid fa-play"></i></div>
+            </a>
+            <div class="feature__body boxed boxed--border text-center">
+              <h3>Rileigh</h3>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================== -->
+  <!-- 5. FOOTER (.site-footer)                       -->
+  <!-- ============================================== -->
+  <footer class="site-footer">
+    <div class="container-custom footer-inner">
+      <div class="footer-top-row">
+        <div class="footer-brand">
+          <img class="footer-logo-img" alt="belooga logo" src="/images/logo-big.png">
+          <p class="footer-slogan">Connecting candidates and recruiters through authentic video resumes.</p>
+        </div>
+        <div class="footer-links-group">
+          <div class="footer-col">
+            <h5>Navigation</h5>
+            <a href="/">Home</a>
+            <a href="/user/search">Search</a>
+            <a href="/help">Help</a>
+            <a href="/careers">Careers</a>
+          </div>
+          <div class="footer-col">
+            <h5>Support</h5>
+            <a href="/help-faqs">Help & FAQs</a>
+            <a href="/contact-us">Contact Us</a>
+            <a href="/video-tutorials">Video Tutorials</a>
+          </div>
+          <div class="footer-col">
+            <h5>Legal</h5>
+            <a href="/privacy-policy">Privacy Policy</a>
+            <a href="/terms-and-conditions">Terms & Conditions</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom-row">
+        <div class="social-icons-list">
+          <a href="https://facebook.com" class="social-icon-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="https://linkedin.com" class="social-icon-btn" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="https://twitter.com" class="social-icon-btn" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+          <a href="https://instagram.com" class="social-icon-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        </div>
+        <p class="copyright-text">© 2026 Belooga. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================== -->
+  <!-- VIDEO MODAL (commons/components/modal)         -->
+  <!-- ============================================== -->
+  <div id="video-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 id="modal-video-title">Video Introduction</h4>
+        <button class="modal-close-btn" onclick="closeVideoModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="simulated-player-viewport">
+          <div class="sim-player-center">
+            <i class="fa-solid fa-circle-play sim-play-btn"></i>
+            <span id="modal-video-filename">home-bg-full.mp4</span>
+          </div>
+          <div class="sim-player-controls">
+            <button class="ctrl-btn"><i class="fa-solid fa-play"></i></button>
+            <div class="ctrl-progress"><div class="ctrl-progress-fill" style="width: 35%;"></div></div>
+            <span class="ctrl-time">0:12 / 0:30</span>
+            <button class="ctrl-btn"><i class="fa-solid fa-volume-high"></i></button>
+            <button class="ctrl-btn"><i class="fa-solid fa-expand"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

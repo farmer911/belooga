@@ -1,0 +1,1850 @@
+{
+  "app.js": {
+    "mtime": 1791020471.5955334,
+    "seen": 1791057922.1467159,
+    "ast_hash": "2f50760444d5dbaa3c03ffd6faf0d1b8",
+    "semantic_hash": "2f50760444d5dbaa3c03ffd6faf0d1b8"
+  },
+  "build_all_pages.py": {
+    "mtime": 1791022801.747265,
+    "seen": 1791057922.146718,
+    "ast_hash": "dd140ec616403ff83c22cbd743fd9aa7",
+    "semantic_hash": "dd140ec616403ff83c22cbd743fd9aa7"
+  },
+  ".vscode/settings.json": {
+    "mtime": 1791058333.6911023,
+    "seen": 1791063735.151696,
+    "ast_hash": "240d5b638006d6fd1767ede1812579cd",
+    "semantic_hash": ""
+  },
+  ".agents/rules/anti-hallucination-harness.md": {
+    "mtime": 1791021725.0149918,
+    "seen": 1791063735.151701,
+    "ast_hash": "78f4dfcc72ac343868718d621093c8cd",
+    "semantic_hash": ""
+  },
+  ".agents/rules/graphify.md": {
+    "mtime": 1791057881.9252367,
+    "seen": 1791063735.151702,
+    "ast_hash": "f1e53ecc9194573d3c28fc116c743a2e",
+    "semantic_hash": ""
+  },
+  ".agents/rules/headroom.md": {
+    "mtime": 1791057591.4058156,
+    "seen": 1791063735.151702,
+    "ast_hash": "50f4ab728875083fbc1916a11e35e5e4",
+    "semantic_hash": ""
+  },
+  ".agents/rules/ponytail.md": {
+    "mtime": 1791058611.5923464,
+    "seen": 1791063735.151702,
+    "ast_hash": "2d922daa034b7081de0bcd1a1fd01040",
+    "semantic_hash": ""
+  },
+  ".agents/skills/legacy-ground-truth-enforcement/SKILL.md": {
+    "mtime": 1791021731.6156864,
+    "seen": 1791063735.1517031,
+    "ast_hash": "edcf1f5e65c58a1d33d6845b376d56b1",
+    "semantic_hash": ""
+  },
+  ".agents/skills/markmap-architect/SKILL.md": {
+    "mtime": 1791063710.3411548,
+    "seen": 1791063735.1517031,
+    "ast_hash": "1002953d73300df5f9e3bb0c96a1ed17",
+    "semantic_hash": ""
+  },
+  ".agents/skills/ponytail-audit/SKILL.md": {
+    "mtime": 1791058608.569115,
+    "seen": 1791063735.1517031,
+    "ast_hash": "8829f0faaab836f65588631c8a33e58b",
+    "semantic_hash": ""
+  },
+  ".agents/skills/ponytail-debt/SKILL.md": {
+    "mtime": 1791058608.5697973,
+    "seen": 1791063735.151704,
+    "ast_hash": "6b6c07be7f3c7695502ce683d0b1f873",
+    "semantic_hash": ""
+  },
+  ".agents/skills/ponytail-gain/SKILL.md": {
+    "mtime": 1791058608.5706887,
+    "seen": 1791063735.151704,
+    "ast_hash": "e0090358fafc0a4b01716b88399e8405",
+    "semantic_hash": ""
+  },
+  ".agents/skills/ponytail-help/SKILL.md": {
+    "mtime": 1791058608.5714257,
+    "seen": 1791063735.151705,
+    "ast_hash": "f744f6bfd7d078d382334d0176804056",
+    "semantic_hash": ""
+  },
+  ".agents/skills/ponytail-review/SKILL.md": {
+    "mtime": 1791058608.5721505,
+    "seen": 1791063735.151705,
+    "ast_hash": "931178da0808fb6ed63d21653c48d02d",
+    "semantic_hash": ""
+  },
+  ".agents/skills/ponytail/SKILL.md": {
+    "mtime": 1791058608.5683384,
+    "seen": 1791063735.151705,
+    "ast_hash": "421e40917db6cc732864011799da3235",
+    "semantic_hash": ""
+  },
+  ".agents/workflows/graphify.md": {
+    "mtime": 1791057881.9254274,
+    "seen": 1791063735.1517062,
+    "ast_hash": "6d73634a678cf1e1c71930adf80bd1f0",
+    "semantic_hash": ""
+  },
+  "404.html": {
+    "mtime": 1791022801.795897,
+    "seen": 1791063735.1517062,
+    "ast_hash": "d001ccfa651b121ef3eb2aa3f86f1cc1",
+    "semantic_hash": ""
+  },
+  "BELOOGA_CONVERSION_TEMPLATE.md": {
+    "mtime": 1791059632.1632502,
+    "seen": 1791063735.1517062,
+    "ast_hash": "712c786027d10855972d4ab802bf6e55",
+    "semantic_hash": ""
+  },
+  "BELOOGA_MIGRATION_BLUEPRINT.md": {
+    "mtime": 1791059632.1662908,
+    "seen": 1791063735.151707,
+    "ast_hash": "cf645f1fdd2d388b6a46966866fa4ac1",
+    "semantic_hash": ""
+  },
+  "DESIGN_SYSTEM.md": {
+    "mtime": 1791019791.7398827,
+    "seen": 1791063735.151707,
+    "ast_hash": "d6af2a9ab99b2015f2d987d49d076eb4",
+    "semantic_hash": ""
+  },
+  "VIOLATIONS_REGISTER.md": {
+    "mtime": 1791021719.9960446,
+    "seen": 1791063735.151707,
+    "ast_hash": "af42fe54de2ae1d075b54eca68bb72f9",
+    "semantic_hash": ""
+  },
+  "account-setting.html": {
+    "mtime": 1791022801.7949479,
+    "seen": 1791063735.151708,
+    "ast_hash": "85829a700210d4111ca9a2d0a5954d23",
+    "semantic_hash": ""
+  },
+  "belooga_migration_mindmap.html": {
+    "mtime": 1791063725.8090978,
+    "seen": 1791063735.151708,
+    "ast_hash": "54d474e3bc01a4157d0b3d7b3146cd8e",
+    "semantic_hash": ""
+  },
+  "blog.html": {
+    "mtime": 1791022801.7954988,
+    "seen": 1791063735.151708,
+    "ast_hash": "8ee3b512c173e89ca3f139252f2676ea",
+    "semantic_hash": ""
+  },
+  "careers.html": {
+    "mtime": 1791022801.795415,
+    "seen": 1791063735.1517088,
+    "ast_hash": "096cad7f8ca24d0b7889d301badabf8d",
+    "semantic_hash": ""
+  },
+  "contact-us.html": {
+    "mtime": 1791022801.7952983,
+    "seen": 1791063735.1517088,
+    "ast_hash": "db426eb69e48985a1c3961f41b3e4014",
+    "semantic_hash": ""
+  },
+  "help.html": {
+    "mtime": 1791022801.7955756,
+    "seen": 1791063735.1517088,
+    "ast_hash": "e15e63ef742510da23d496c9068fb7b3",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1791022816.8375895,
+    "seen": 1791063735.15171,
+    "ast_hash": "f6625ee894a6563a737932c4b2fb84f7",
+    "semantic_hash": ""
+  },
+  "login.html": {
+    "mtime": 1791022816.83789,
+    "seen": 1791063735.15171,
+    "ast_hash": "cdba4b31252b8b651d5699907b86444b",
+    "semantic_hash": ""
+  },
+  "privacy-policy.html": {
+    "mtime": 1791022801.7956352,
+    "seen": 1791063735.15171,
+    "ast_hash": "50a2820c22c6c1688fca5bbd3966a9ae",
+    "semantic_hash": ""
+  },
+  "public-profile.html": {
+    "mtime": 1791022801.7951121,
+    "seen": 1791063735.151711,
+    "ast_hash": "388ac428a606681b7b88ace13e84f3a7",
+    "semantic_hash": ""
+  },
+  "register.html": {
+    "mtime": 1791022816.8382769,
+    "seen": 1791063735.151711,
+    "ast_hash": "14ed73c62ed8969816be428dbee3385a",
+    "semantic_hash": ""
+  },
+  "search.html": {
+    "mtime": 1791022801.795045,
+    "seen": 1791063735.151711,
+    "ast_hash": "9fd9384a97c0fbb3ae77df4ac14c9e1c",
+    "semantic_hash": ""
+  },
+  "terms-and-conditions.html": {
+    "mtime": 1791022801.795914,
+    "seen": 1791063735.151712,
+    "ast_hash": "99902f6e0bc7c1f9a8d38712c7968b76",
+    "semantic_hash": ""
+  },
+  "update-profile.html": {
+    "mtime": 1791022801.7948415,
+    "seen": 1791063735.151712,
+    "ast_hash": "9edb123246e5ed2ba5d00e62c4046dd8",
+    "semantic_hash": ""
+  },
+  "user.html": {
+    "mtime": 1791022801.7948487,
+    "seen": 1791063735.151712,
+    "ast_hash": "4b02f2b9ba997bf49d6aedb36eb39aef",
+    "semantic_hash": ""
+  },
+  "images/avatar.jpg": {
+    "mtime": 1791020926.996927,
+    "seen": 1791063735.1517131,
+    "ast_hash": "5a8a78501e1e8705c334cde01f2e42cf",
+    "semantic_hash": ""
+  },
+  "images/blog-1.jpg": {
+    "mtime": 1791020927.6109943,
+    "seen": 1791063735.1517131,
+    "ast_hash": "dc3f70ecdab6ba062d6fc7d635765ae7",
+    "semantic_hash": ""
+  },
+  "images/blog/banner-blog.png": {
+    "mtime": 1791020929.2227666,
+    "seen": 1791063735.1517131,
+    "ast_hash": "fdc45fb5ae7c8d4da45bbaa620ced94b",
+    "semantic_hash": ""
+  },
+  "images/home/Ana.png": {
+    "mtime": 1791020930.5651283,
+    "seen": 1791063735.151714,
+    "ast_hash": "9d93188c3664060c0b3edf7b11dd22a7",
+    "semantic_hash": ""
+  },
+  "images/home/Inspire.png": {
+    "mtime": 1791020931.4703805,
+    "seen": 1791063735.151714,
+    "ast_hash": "af1562728a945c1c98576d0a808f6ac8",
+    "semantic_hash": ""
+  },
+  "images/home/Jazmin-1.jpg": {
+    "mtime": 1791020931.95515,
+    "seen": 1791063735.151714,
+    "ast_hash": "5015328ec3022ebb81bc995d8920d4e5",
+    "semantic_hash": ""
+  },
+  "images/home/Jeremy-1.jpg": {
+    "mtime": 1791020932.4659019,
+    "seen": 1791063735.151715,
+    "ast_hash": "cdc04d5b0cebf0a51d8b42bada2d2148",
+    "semantic_hash": ""
+  },
+  "images/home/Rileigh-1.jpg": {
+    "mtime": 1791020932.975416,
+    "seen": 1791063735.151715,
+    "ast_hash": "0a19dfedd44385cee35a60ff446dbdd6",
+    "semantic_hash": ""
+  },
+  "images/home/help-first.png": {
+    "mtime": 1791020933.8250625,
+    "seen": 1791063735.151715,
+    "ast_hash": "f75e39618add0cea26faa2c3983b5975",
+    "semantic_hash": ""
+  },
+  "images/home/help-second.png": {
+    "mtime": 1791020934.58322,
+    "seen": 1791063735.151716,
+    "ast_hash": "dda151d28eacc2bfb50c824d8293d22b",
+    "semantic_hash": ""
+  },
+  "images/home/help-third.png": {
+    "mtime": 1791020935.3348122,
+    "seen": 1791063735.151716,
+    "ast_hash": "f6107a5251e296703e0a23779af95ecd",
+    "semantic_hash": ""
+  },
+  "images/home/matt-poster.png": {
+    "mtime": 1791020937.1392279,
+    "seen": 1791063735.151716,
+    "ast_hash": "b58e9a6860572e4d9bd5c8a8fb6dd06b",
+    "semantic_hash": ""
+  },
+  "images/iconPopup/group-2.png": {
+    "mtime": 1791020938.0046687,
+    "seen": 1791063735.1517172,
+    "ast_hash": "f18f5149e755c8ff344c7df89a05d817",
+    "semantic_hash": ""
+  },
+  "images/iconPopup/group-2.svg": {
+    "mtime": 1791020938.5664182,
+    "seen": 1791063735.1517172,
+    "ast_hash": "06275f11368f2409183b52498b738f43",
+    "semantic_hash": ""
+  },
+  "images/iconPopup/group.png": {
+    "mtime": 1791020939.0474668,
+    "seen": 1791063735.1517172,
+    "ast_hash": "3d03378cf724a9c3f52ba37c2edf12f9",
+    "semantic_hash": ""
+  },
+  "images/iconPopup/group.svg": {
+    "mtime": 1791020939.5476,
+    "seen": 1791063735.151718,
+    "ast_hash": "b867a7ea75220830c0b32dd11ce49ead",
+    "semantic_hash": ""
+  },
+  "images/iconPopup/group@3x.png": {
+    "mtime": 1791020940.0376687,
+    "seen": 1791063735.151718,
+    "ast_hash": "a7745744dde4c1342ccc0eb5d98768e7",
+    "semantic_hash": ""
+  },
+  "images/icons/attached.png": {
+    "mtime": 1791020941.1275752,
+    "seen": 1791063735.151718,
+    "ast_hash": "950a0e03f38f6e9ed4fada50ebc932ea",
+    "semantic_hash": ""
+  },
+  "images/icons/briefcase.png": {
+    "mtime": 1791020941.5519438,
+    "seen": 1791063735.1517189,
+    "ast_hash": "6fd0e177d14367ea763f6db0c55e51da",
+    "semantic_hash": ""
+  },
+  "images/icons/check-white.svg": {
+    "mtime": 1791020942.003125,
+    "seen": 1791063735.1517189,
+    "ast_hash": "12a79a56e0213e5973abfcecdd62983e",
+    "semantic_hash": ""
+  },
+  "images/icons/close-modal.png": {
+    "mtime": 1791020942.5632257,
+    "seen": 1791063735.1517189,
+    "ast_hash": "8c0f651104a63715c215303c7977f150",
+    "semantic_hash": ""
+  },
+  "images/icons/college-graduation.png": {
+    "mtime": 1791020943.0636716,
+    "seen": 1791063735.15172,
+    "ast_hash": "13a73b77f3a5c01c932d82124cefa0a3",
+    "semantic_hash": ""
+  },
+  "images/icons/icon-camera.png": {
+    "mtime": 1791020943.5744946,
+    "seen": 1791063735.15172,
+    "ast_hash": "a2e5cc3b1ec1f2ccfa3d00770f397ad9",
+    "semantic_hash": ""
+  },
+  "images/icons/icon-edit.png": {
+    "mtime": 1791020944.599774,
+    "seen": 1791063735.15172,
+    "ast_hash": "3d03378cf724a9c3f52ba37c2edf12f9",
+    "semantic_hash": ""
+  },
+  "images/icons/icon-export.png": {
+    "mtime": 1791020945.0955694,
+    "seen": 1791063735.15172,
+    "ast_hash": "22219256700e6bff04c19721c62b7bc8",
+    "semantic_hash": ""
+  },
+  "images/icons/icon-remove.png": {
+    "mtime": 1791020945.5080392,
+    "seen": 1791063735.151721,
+    "ast_hash": "f18f5149e755c8ff344c7df89a05d817",
+    "semantic_hash": ""
+  },
+  "images/icons/icon-share.png": {
+    "mtime": 1791020946.0349355,
+    "seen": 1791063735.151721,
+    "ast_hash": "bc55e6215895707ece67e76491beed29",
+    "semantic_hash": ""
+  },
+  "images/icons/icon-user.png": {
+    "mtime": 1791020946.4550688,
+    "seen": 1791063735.151721,
+    "ast_hash": "1bafd0340b4e15b64af4764318e13a5f",
+    "semantic_hash": ""
+  },
+  "images/icons/play-button.png": {
+    "mtime": 1791020946.972224,
+    "seen": 1791063735.151722,
+    "ast_hash": "ee54c65565acb8f207e36f1b8be9e4b3",
+    "semantic_hash": ""
+  },
+  "images/icons/premium-badge.png": {
+    "mtime": 1791020947.4125674,
+    "seen": 1791063735.151722,
+    "ast_hash": "2b9e8452511bea93e9f739c25ff675b4",
+    "semantic_hash": ""
+  },
+  "images/icons/record-video.png": {
+    "mtime": 1791020947.9045165,
+    "seen": 1791063735.151722,
+    "ast_hash": "6d093a8a167bb3f7971928d7e55bd9dc",
+    "semantic_hash": ""
+  },
+  "images/icons/search_icon.svg": {
+    "mtime": 1791020948.3390298,
+    "seen": 1791063735.151723,
+    "ast_hash": "b4cd1cd7740ea5c249ac972c4d52501d",
+    "semantic_hash": ""
+  },
+  "images/icons/upload-button-white.png": {
+    "mtime": 1791020948.8593307,
+    "seen": 1791063735.151723,
+    "ast_hash": "90857829837a587299b3abad9d72f010",
+    "semantic_hash": ""
+  },
+  "images/icons/upload-button.png": {
+    "mtime": 1791020949.3093057,
+    "seen": 1791063735.151724,
+    "ast_hash": "2fbeb57e7a9d01fed807d7def50a6382",
+    "semantic_hash": ""
+  },
+  "images/image_cover_introduction.png": {
+    "mtime": 1791020950.1090858,
+    "seen": 1791063735.151724,
+    "ast_hash": "208edb6bc31b5cc6e430160adb19e511",
+    "semantic_hash": ""
+  },
+  "images/login-background.jpg": {
+    "mtime": 1791020950.6854384,
+    "seen": 1791063735.151724,
+    "ast_hash": "9534d24f64cc60c7bd8a31a9989f0abd",
+    "semantic_hash": ""
+  },
+  "images/logo-big.png": {
+    "mtime": 1791020950.910032,
+    "seen": 1791063735.151725,
+    "ast_hash": "a43ff8098a448827c384187f0399b65e",
+    "semantic_hash": ""
+  },
+  "logo-mark.svg": {
+    "mtime": 1791020726.3477323,
+    "seen": 1791063735.151725,
+    "ast_hash": "fbbcc36ba9c9b4370b7f6733ed251cf2",
+    "semantic_hash": ""
+  },
+  "logo.svg": {
+    "mtime": 1791020720.1610694,
+    "seen": 1791063735.151725,
+    "ast_hash": "d388a8c4be8dd4516e342283103d8cb5",
+    "semantic_hash": ""
+  },
+  "belooga_database_architecture.html": {
+    "mtime": 1791065311.958887,
+    "seen": 1791065315.720727,
+    "ast_hash": "c4cd64fdaf323bdcefdce014bd435b93",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/auth.py": {
+    "mtime": 1791066821.5773149,
+    "seen": 1791067105.6968489,
+    "ast_hash": "8208e003cafdeb1b356791f9a3e8601d",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/profile.py": {
+    "mtime": 1791071324.4549286,
+    "seen": 1791071995.339097,
+    "ast_hash": "f534a2bcebc62660d2ef63fd034d5155",
+    "semantic_hash": ""
+  },
+  "backend/app/core/database.py": {
+    "mtime": 1791066810.85003,
+    "seen": 1791067105.696851,
+    "ast_hash": "d02b3e5afa35c180dd02a9548de8f022",
+    "semantic_hash": ""
+  },
+  "backend/app/core/security.py": {
+    "mtime": 1791066844.855579,
+    "seen": 1791067105.696851,
+    "ast_hash": "76267bc968c567fdb4190b621d7025fe",
+    "semantic_hash": ""
+  },
+  "backend/app/main.py": {
+    "mtime": 1791070175.6620862,
+    "seen": 1791070415.987657,
+    "ast_hash": "0acda8f9385d1ddd918fbf206051b631",
+    "semantic_hash": ""
+  },
+  "backend/app/schemas/auth.py": {
+    "mtime": 1791066803.5312212,
+    "seen": 1791067105.696852,
+    "ast_hash": "819c38e906c6220cfb142750930dfc85",
+    "semantic_hash": ""
+  },
+  "frontend/eslint.config.mjs": {
+    "mtime": 1791066375.788675,
+    "seen": 1791067105.696866,
+    "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
+    "semantic_hash": ""
+  },
+  "frontend/next.config.ts": {
+    "mtime": 1791066375.788901,
+    "seen": 1791067105.696866,
+    "ast_hash": "9b77af189a21a7a64e4bd7a426f64176",
+    "semantic_hash": ""
+  },
+  "frontend/package.json": {
+    "mtime": 1791066405.0344658,
+    "seen": 1791067105.696867,
+    "ast_hash": "fb76a6430a7a77b103ebddde79f39e50",
+    "semantic_hash": ""
+  },
+  "frontend/postcss.config.mjs": {
+    "mtime": 1791066375.7889228,
+    "seen": 1791067105.696867,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(auth)/login/page.tsx": {
+    "mtime": 1791066904.8064213,
+    "seen": 1791067105.6968691,
+    "ast_hash": "e850a5c875694efec3984aa6727955c8",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(auth)/register/page.tsx": {
+    "mtime": 1791066915.4415667,
+    "seen": 1791067105.6968691,
+    "ast_hash": "f8ba8a1a92faf83e8300ab7d10d6ac86",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/layout.tsx": {
+    "mtime": 1791066440.6085343,
+    "seen": 1791067105.6968699,
+    "ast_hash": "40f4f3872fdb3392d16e0d87f394f690",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/page.tsx": {
+    "mtime": 1791066675.601414,
+    "seen": 1791067105.6968699,
+    "ast_hash": "6565a82fa2ac2aa61c03184a52a0510d",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/user/[username]/page.tsx": {
+    "mtime": 1791095469.8556454,
+    "seen": 1791095570.1381361,
+    "ast_hash": "f4ef4dea9271395dfb1e81150965af38",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/layout/Footer.tsx": {
+    "mtime": 1791066435.171485,
+    "seen": 1791067105.6968708,
+    "ast_hash": "500726f77066b7f621d3b43e94df270a",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/layout/Header.tsx": {
+    "mtime": 1791066430.9227524,
+    "seen": 1791067105.6968708,
+    "ast_hash": "931f7492038acf709e040a0458b25abb",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/ui/button.tsx": {
+    "mtime": 1791066426.2667832,
+    "seen": 1791067105.696872,
+    "ast_hash": "6e32af3e3713619baaaa3d1ff2367853",
+    "semantic_hash": ""
+  },
+  "frontend/src/services/api-client.ts": {
+    "mtime": 1791066417.8875372,
+    "seen": 1791067105.696872,
+    "ast_hash": "74e36125ff226f6f63fe549e1aa35285",
+    "semantic_hash": ""
+  },
+  "frontend/src/store/auth-store.ts": {
+    "mtime": 1791066420.9046202,
+    "seen": 1791067105.696872,
+    "ast_hash": "77f120d73905e3a3acf1ebb7cac0ee50",
+    "semantic_hash": ""
+  },
+  "frontend/tsconfig.json": {
+    "mtime": 1791066375.789867,
+    "seen": 1791067105.696873,
+    "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
+    "semantic_hash": ""
+  },
+  "qc/package.json": {
+    "mtime": 1791066388.4950054,
+    "seen": 1791067105.696873,
+    "ast_hash": "453101b9a1649b261b8e164e1b721db5",
+    "semantic_hash": ""
+  },
+  "qc/pages/base.page.ts": {
+    "mtime": 1791066454.211262,
+    "seen": 1791067105.696873,
+    "ast_hash": "90f56af99f031d6cf0d197d03ccb1846",
+    "semantic_hash": ""
+  },
+  "qc/playwright.config.ts": {
+    "mtime": 1791071696.6321137,
+    "seen": 1791071995.33971,
+    "ast_hash": "8dcb8bf60304c4ff55ee30746a8081de",
+    "semantic_hash": ""
+  },
+  "qc/test-results/.last-run.json": {
+    "mtime": 1791095559.1130528,
+    "seen": 1791095570.138358,
+    "ast_hash": "f196824657d8858bc7fa44eecbba38b1",
+    "semantic_hash": ""
+  },
+  "qc/tests/e2e/auth-flow.spec.ts": {
+    "mtime": 1791066930.696228,
+    "seen": 1791067105.696875,
+    "ast_hash": "be3d0b2f4f7a6a977bcc0ab3bc849dea",
+    "semantic_hash": ""
+  },
+  "qc/tests/e2e/workspace.spec.ts": {
+    "mtime": 1791095498.499993,
+    "seen": 1791095570.13841,
+    "ast_hash": "483df03a7b9e776b77e8d9da3142a178",
+    "semantic_hash": ""
+  },
+  "qc/tests/visual/asset-integrity.spec.ts": {
+    "mtime": 1791066461.1788292,
+    "seen": 1791067105.696875,
+    "ast_hash": "9a445f82820172bc38133f3a4011c0a0",
+    "semantic_hash": ""
+  },
+  "qc/tests/visual/play-button.spec.ts": {
+    "mtime": 1791066705.8141942,
+    "seen": 1791067105.696876,
+    "ast_hash": "2d98c57d0d462ba1ca9ca77dbc6334f1",
+    "semantic_hash": ""
+  },
+  "qc/tsconfig.json": {
+    "mtime": 1791066470.6229098,
+    "seen": 1791067105.696876,
+    "ast_hash": "0e1ce2a664e2dd6b7498f1e317990a1b",
+    "semantic_hash": ""
+  },
+  ".agents/skills/belooga-backend-engineering/SKILL.md": {
+    "mtime": 1791066297.1599836,
+    "seen": 1791067105.696935,
+    "ast_hash": "05d714e88f2b14d1b28abd5b1d33a6f1",
+    "semantic_hash": ""
+  },
+  ".agents/skills/belooga-frontend-engineering/SKILL.md": {
+    "mtime": 1791066282.0156863,
+    "seen": 1791067105.696935,
+    "ast_hash": "3530cddd5076c467ec392f1238fa2373",
+    "semantic_hash": ""
+  },
+  ".agents/skills/belooga-qc-engineering/SKILL.md": {
+    "mtime": 1791066306.8775804,
+    "seen": 1791067105.696935,
+    "ast_hash": "e7423f7d98b17e009edbafdcff3c4942",
+    "semantic_hash": ""
+  },
+  "PLAN_BACKEND.md": {
+    "mtime": 1791066328.4055018,
+    "seen": 1791067105.697112,
+    "ast_hash": "532e9e98b34abb64a523a28b7a58c7c3",
+    "semantic_hash": ""
+  },
+  "PLAN_FRONTEND.md": {
+    "mtime": 1791066317.934664,
+    "seen": 1791067105.697113,
+    "ast_hash": "994b2ab9a30e07ba852580e9d07a97bd",
+    "semantic_hash": ""
+  },
+  "PLAN_QC.md": {
+    "mtime": 1791066337.771183,
+    "seen": 1791067105.697113,
+    "ast_hash": "fa16148aceaa4738fb708c00ab428481",
+    "semantic_hash": ""
+  },
+  "SUBAGENTS_PARALLEL_ORCHESTRATION.md": {
+    "mtime": 1791066481.8214762,
+    "seen": 1791067105.6971142,
+    "ast_hash": "f7a3de00250dbd7b11d48ebe58244a2e",
+    "semantic_hash": ""
+  },
+  "backend/requirements.txt": {
+    "mtime": 1791070158.5504668,
+    "seen": 1791070415.988682,
+    "ast_hash": "08674f5b5f4d07f81ce6898b9b65dfeb",
+    "semantic_hash": ""
+  },
+  "docker-compose.yml": {
+    "mtime": 1791066635.6026073,
+    "seen": 1791067105.6971881,
+    "ast_hash": "6b45834e09a83233cf88c93bc1be7a9a",
+    "semantic_hash": ""
+  },
+  "frontend/AGENTS.md": {
+    "mtime": 1791066392.897153,
+    "seen": 1791067105.6971881,
+    "ast_hash": "01e8142356e15c3404e0d84c48187cd0",
+    "semantic_hash": ""
+  },
+  "frontend/CLAUDE.md": {
+    "mtime": 1791066392.897329,
+    "seen": 1791067105.697189,
+    "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
+    "semantic_hash": ""
+  },
+  "frontend/README.md": {
+    "mtime": 1791066375.7888663,
+    "seen": 1791067105.697189,
+    "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
+    "semantic_hash": ""
+  },
+  "qc/playwright-report/index.html": {
+    "mtime": 1791095559.1124167,
+    "seen": 1791095570.139023,
+    "ast_hash": "9d41fe99b62af0c2a9c01e05d9173e9a",
+    "semantic_hash": ""
+  },
+  "frontend/public/file.svg": {
+    "mtime": 1791066375.789365,
+    "seen": 1791067105.697292,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": ""
+  },
+  "frontend/public/globe.svg": {
+    "mtime": 1791066375.7887511,
+    "seen": 1791067105.697293,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/avatar.jpg": {
+    "mtime": 1791066397.0944803,
+    "seen": 1791067105.697293,
+    "ast_hash": "5a8a78501e1e8705c334cde01f2e42cf",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/blog-1.jpg": {
+    "mtime": 1791066397.101738,
+    "seen": 1791067105.697293,
+    "ast_hash": "dc3f70ecdab6ba062d6fc7d635765ae7",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/blog/banner-blog.png": {
+    "mtime": 1791066397.0932238,
+    "seen": 1791067105.697294,
+    "ast_hash": "fdc45fb5ae7c8d4da45bbaa620ced94b",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/Ana.png": {
+    "mtime": 1791066397.07711,
+    "seen": 1791067105.697294,
+    "ast_hash": "9d93188c3664060c0b3edf7b11dd22a7",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/Inspire.png": {
+    "mtime": 1791066397.0732338,
+    "seen": 1791067105.6972952,
+    "ast_hash": "af1562728a945c1c98576d0a808f6ac8",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/Jazmin-1.jpg": {
+    "mtime": 1791066397.0754623,
+    "seen": 1791067105.6972952,
+    "ast_hash": "5015328ec3022ebb81bc995d8920d4e5",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/Jeremy-1.jpg": {
+    "mtime": 1791066397.078694,
+    "seen": 1791067105.6972952,
+    "ast_hash": "cdc04d5b0cebf0a51d8b42bada2d2148",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/Rileigh-1.jpg": {
+    "mtime": 1791066397.0716906,
+    "seen": 1791067105.697296,
+    "ast_hash": "0a19dfedd44385cee35a60ff446dbdd6",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/help-first.png": {
+    "mtime": 1791066397.077701,
+    "seen": 1791067105.697296,
+    "ast_hash": "f75e39618add0cea26faa2c3983b5975",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/help-second.png": {
+    "mtime": 1791066397.0763838,
+    "seen": 1791067105.697296,
+    "ast_hash": "dda151d28eacc2bfb50c824d8293d22b",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/help-third.png": {
+    "mtime": 1791066397.078294,
+    "seen": 1791067105.6972969,
+    "ast_hash": "f6107a5251e296703e0a23779af95ecd",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/home/matt-poster.png": {
+    "mtime": 1791066397.0866427,
+    "seen": 1791067105.6972969,
+    "ast_hash": "b58e9a6860572e4d9bd5c8a8fb6dd06b",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/iconPopup/group-2.png": {
+    "mtime": 1791066397.0878308,
+    "seen": 1791067105.6972969,
+    "ast_hash": "f18f5149e755c8ff344c7df89a05d817",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/iconPopup/group-2.svg": {
+    "mtime": 1791066397.0917225,
+    "seen": 1791067105.6972978,
+    "ast_hash": "06275f11368f2409183b52498b738f43",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/iconPopup/group.png": {
+    "mtime": 1791066397.088177,
+    "seen": 1791067105.6972978,
+    "ast_hash": "3d03378cf724a9c3f52ba37c2edf12f9",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/iconPopup/group.svg": {
+    "mtime": 1791066397.0914693,
+    "seen": 1791067105.6972978,
+    "ast_hash": "b867a7ea75220830c0b32dd11ce49ead",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/iconPopup/group@3x.png": {
+    "mtime": 1791066397.091084,
+    "seen": 1791067105.697299,
+    "ast_hash": "a7745744dde4c1342ccc0eb5d98768e7",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/attached.png": {
+    "mtime": 1791066397.0995395,
+    "seen": 1791067105.697299,
+    "ast_hash": "950a0e03f38f6e9ed4fada50ebc932ea",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/briefcase.png": {
+    "mtime": 1791066397.0988693,
+    "seen": 1791067105.697299,
+    "ast_hash": "6fd0e177d14367ea763f6db0c55e51da",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/check-white.svg": {
+    "mtime": 1791066397.1008062,
+    "seen": 1791067105.6973,
+    "ast_hash": "12a79a56e0213e5973abfcecdd62983e",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/close-modal.png": {
+    "mtime": 1791066397.0984142,
+    "seen": 1791067105.6973,
+    "ast_hash": "8c0f651104a63715c215303c7977f150",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/college-graduation.png": {
+    "mtime": 1791066397.0992856,
+    "seen": 1791067105.6973,
+    "ast_hash": "13a73b77f3a5c01c932d82124cefa0a3",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/icon-camera.png": {
+    "mtime": 1791066397.1003103,
+    "seen": 1791067105.697301,
+    "ast_hash": "a2e5cc3b1ec1f2ccfa3d00770f397ad9",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/icon-edit.png": {
+    "mtime": 1791066397.0998418,
+    "seen": 1791067105.697301,
+    "ast_hash": "3d03378cf724a9c3f52ba37c2edf12f9",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/icon-export.png": {
+    "mtime": 1791066397.0958016,
+    "seen": 1791067105.697302,
+    "ast_hash": "22219256700e6bff04c19721c62b7bc8",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/icon-remove.png": {
+    "mtime": 1791066397.1012614,
+    "seen": 1791067105.697302,
+    "ast_hash": "f18f5149e755c8ff344c7df89a05d817",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/icon-share.png": {
+    "mtime": 1791066397.099067,
+    "seen": 1791067105.697302,
+    "ast_hash": "bc55e6215895707ece67e76491beed29",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/icon-user.png": {
+    "mtime": 1791066397.0981355,
+    "seen": 1791067105.697303,
+    "ast_hash": "1bafd0340b4e15b64af4764318e13a5f",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/play-button.png": {
+    "mtime": 1791066397.1010218,
+    "seen": 1791067105.697303,
+    "ast_hash": "ee54c65565acb8f207e36f1b8be9e4b3",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/premium-badge.png": {
+    "mtime": 1791066397.1000931,
+    "seen": 1791067105.697303,
+    "ast_hash": "2b9e8452511bea93e9f739c25ff675b4",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/record-video.png": {
+    "mtime": 1791066397.098647,
+    "seen": 1791067105.697304,
+    "ast_hash": "6d093a8a167bb3f7971928d7e55bd9dc",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/search_icon.svg": {
+    "mtime": 1791066397.096691,
+    "seen": 1791067105.697304,
+    "ast_hash": "b4cd1cd7740ea5c249ac972c4d52501d",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/upload-button-white.png": {
+    "mtime": 1791066397.1005397,
+    "seen": 1791067105.697304,
+    "ast_hash": "90857829837a587299b3abad9d72f010",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/icons/upload-button.png": {
+    "mtime": 1791066397.096357,
+    "seen": 1791067105.6973052,
+    "ast_hash": "2fbeb57e7a9d01fed807d7def50a6382",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/image_cover_introduction.png": {
+    "mtime": 1791066397.0952494,
+    "seen": 1791067105.6973052,
+    "ast_hash": "208edb6bc31b5cc6e430160adb19e511",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/login-background.jpg": {
+    "mtime": 1791066397.0938914,
+    "seen": 1791067105.6973052,
+    "ast_hash": "9534d24f64cc60c7bd8a31a9989f0abd",
+    "semantic_hash": ""
+  },
+  "frontend/public/images/logo-big.png": {
+    "mtime": 1791066397.0873263,
+    "seen": 1791067105.6973062,
+    "ast_hash": "a43ff8098a448827c384187f0399b65e",
+    "semantic_hash": ""
+  },
+  "frontend/public/next.svg": {
+    "mtime": 1791066375.7892303,
+    "seen": 1791067105.6973062,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": ""
+  },
+  "frontend/public/vercel.svg": {
+    "mtime": 1791066375.789214,
+    "seen": 1791067105.6973062,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": ""
+  },
+  "frontend/public/window.svg": {
+    "mtime": 1791066375.7892957,
+    "seen": 1791067105.6973069,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/catalogs.py": {
+    "mtime": 1791067364.307241,
+    "seen": 1791067893.377915,
+    "ast_hash": "f2e1deb6305025607c49bb78950df28c",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/cms.py": {
+    "mtime": 1791067372.3981562,
+    "seen": 1791067893.3779159,
+    "ast_hash": "6249bcf2a1307a159e062bc54811b98c",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/media.py": {
+    "mtime": 1791071473.7905424,
+    "seen": 1791071995.339096,
+    "ast_hash": "58a5435c7bcae24c13adc4d0e61688e0",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/search.py": {
+    "mtime": 1791067354.4164097,
+    "seen": 1791067893.377936,
+    "ast_hash": "1288453ff1bae0a15ba8a90382210bd0",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/timeline.py": {
+    "mtime": 1791068728.2948947,
+    "seen": 1791069295.909662,
+    "ast_hash": "ba94b3e0bbe6c3bd47f7e75dfa3a5522",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(auth)/callback/page.tsx": {
+    "mtime": 1791067507.0446043,
+    "seen": 1791067893.378051,
+    "ast_hash": "edbfc6a77f0d7d39fd2ab4f2d0ffac46",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(auth)/forgot-password/page.tsx": {
+    "mtime": 1791067432.8782446,
+    "seen": 1791067893.378051,
+    "ast_hash": "6e3be2142638219de704b7d5c5c4612a",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/blog/[slug]/page.tsx": {
+    "mtime": 1791067568.3263829,
+    "seen": 1791067893.378091,
+    "ast_hash": "176e75162351f43a2ed70e703db7af61",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/blog/page.tsx": {
+    "mtime": 1791067482.8916862,
+    "seen": 1791067893.378092,
+    "ast_hash": "2e9822b032aed849fc9e7453b54edcb0",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/careers/page.tsx": {
+    "mtime": 1791067474.739807,
+    "seen": 1791067893.378092,
+    "ast_hash": "144cdfb56ef7e4ab556c2688ee047ed2",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/contact-us/page.tsx": {
+    "mtime": 1791067458.2980201,
+    "seen": 1791067893.3780942,
+    "ast_hash": "a7f6aa194e49586ce8abde3b821b3da7",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/help/page.tsx": {
+    "mtime": 1791067562.4812617,
+    "seen": 1791067893.3780942,
+    "ast_hash": "510bc7db605a0bb248ad91d672abe549",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/privacy-policy/page.tsx": {
+    "mtime": 1791067496.1905854,
+    "seen": 1791067893.3780951,
+    "ast_hash": "b7bf527eacab693dcc86678ae9790645",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/terms-and-conditions/page.tsx": {
+    "mtime": 1791067501.4048362,
+    "seen": 1791067893.3780951,
+    "ast_hash": "18fa33f7bb565b371fb1d62e48316bf7",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/not-found.tsx": {
+    "mtime": 1791067516.1314218,
+    "seen": 1791067893.378112,
+    "ast_hash": "077d33fa87e9cf0cd2c4e0ef21489da1",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/public/[username]/page.tsx": {
+    "mtime": 1791070324.8335962,
+    "seen": 1791070415.987966,
+    "ast_hash": "1e35073e80237fdd1845694c87e5f1d9",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/search/page.tsx": {
+    "mtime": 1791067414.8892636,
+    "seen": 1791067893.378127,
+    "ast_hash": "8352aab4728b0219fe8985b1ca89ca4b",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/user/[username]/settings/page.tsx": {
+    "mtime": 1791067450.541861,
+    "seen": 1791067893.378149,
+    "ast_hash": "7896153fab5a9dd86fdcd05595c0ceea",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/user/[username]/update/page.tsx": {
+    "mtime": 1791068809.5429556,
+    "seen": 1791069295.9101062,
+    "ast_hash": "332a53a57abd2899cc3a1ceb290f0978",
+    "semantic_hash": ""
+  },
+  "qc/tests/e2e/public-routes.spec.ts": {
+    "mtime": 1791067541.2450721,
+    "seen": 1791067893.378311,
+    "ast_hash": "7d7a0461ecde53c4e1927ad3ef13bbf2",
+    "semantic_hash": ""
+  },
+  "qc/tests/e2e/search.spec.ts": {
+    "mtime": 1791071845.6935782,
+    "seen": 1791071995.339742,
+    "ast_hash": "e37de9d1217bf2928d607fb5d0c30281",
+    "semantic_hash": ""
+  },
+  ".agents/skills/belooga-knowledge-vault/SKILL.md": {
+    "mtime": 1791067903.6472723,
+    "seen": 1791067908.404244,
+    "ast_hash": "752a49e031b177eb2f7761449d28d95a",
+    "semantic_hash": ""
+  },
+  "frontend/src/services/media-upload.service.ts": {
+    "mtime": 1791071478.4210582,
+    "seen": 1791071995.339654,
+    "ast_hash": "b36bfdea4693a66a2329b128368d200d",
+    "semantic_hash": ""
+  },
+  "backend/uploads/resumes/hry_resume_1791070262.pdf": {
+    "mtime": 1791070262.8839521,
+    "seen": 1791070415.988888,
+    "ast_hash": "9ecdfddf7fb3fd67dbdcd0cd42d9ce76",
+    "semantic_hash": ""
+  },
+  "backend/uploads/avatars/hry_1791070260.jpg": {
+    "mtime": 1791070260.202548,
+    "seen": 1791070415.988888,
+    "ast_hash": "1b022d8538e8d249ab669885b6b91b31",
+    "semantic_hash": ""
+  },
+  "qc/screenshot_hry_interactive.png": {
+    "mtime": 1791070402.90096,
+    "seen": 1791070415.989959,
+    "ast_hash": "4cb438c8dbac8a73b759ccc5f91fdef1",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791070206.webm": {
+    "mtime": 1791070206.0950718,
+    "seen": 1791070415.989959,
+    "ast_hash": "99e178e32ef7a5e35e0d188aa495c8b8",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791070236.webm": {
+    "mtime": 1791070236.1855252,
+    "seen": 1791070415.989959,
+    "ast_hash": "99e178e32ef7a5e35e0d188aa495c8b8",
+    "semantic_hash": ""
+  },
+  "qc/scripts/capture-evidence.ts": {
+    "mtime": 1791071944.7054691,
+    "seen": 1791071995.339711,
+    "ast_hash": "991fef1dc66f3ddb9b97a6dda65d26cf",
+    "semantic_hash": ""
+  },
+  "backend/uploads/avatars/hry_1791070970.png": {
+    "mtime": 1791070970.3215284,
+    "seen": 1791071995.340679,
+    "ast_hash": "761e8e09e9f26e0218f96c30387e9f47",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_poster_1791071068.jpg": {
+    "mtime": 1791071461.0182207,
+    "seen": 1791071995.340687,
+    "ast_hash": "7344c15606dab539e41eaddaee0afe28",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071657.webm": {
+    "mtime": 1791071657.2633688,
+    "seen": 1791071995.342714,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071658.webm": {
+    "mtime": 1791071658.3269365,
+    "seen": 1791071995.3427148,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071713.webm": {
+    "mtime": 1791071713.3544872,
+    "seen": 1791071995.3427148,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071715.webm": {
+    "mtime": 1791071715.7515922,
+    "seen": 1791071995.342716,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071783.webm": {
+    "mtime": 1791071783.5887282,
+    "seen": 1791071995.342717,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071785.webm": {
+    "mtime": 1791071785.5005047,
+    "seen": 1791071995.342717,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071786.webm": {
+    "mtime": 1791071786.869367,
+    "seen": 1791071995.342718,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071787.webm": {
+    "mtime": 1791071787.9851367,
+    "seen": 1791071995.342719,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071797.webm": {
+    "mtime": 1791071797.9182618,
+    "seen": 1791071995.342719,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071802.webm": {
+    "mtime": 1791071802.737754,
+    "seen": 1791071995.34272,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071806.webm": {
+    "mtime": 1791071806.6889007,
+    "seen": 1791071995.342721,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071810.webm": {
+    "mtime": 1791071810.4584014,
+    "seen": 1791071995.342721,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071859.webm": {
+    "mtime": 1791071859.664118,
+    "seen": 1791071995.342721,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071864.webm": {
+    "mtime": 1791071864.1179633,
+    "seen": 1791071995.342722,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071868.webm": {
+    "mtime": 1791071868.4291713,
+    "seen": 1791071995.342722,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791071871.webm": {
+    "mtime": 1791071871.1989112,
+    "seen": 1791071995.3427231,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791071068.webm": {
+    "mtime": 1791071068.8001752,
+    "seen": 1791071995.342759,
+    "ast_hash": "6d4301004fa79d2be45986c21d5dd2ef",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072177.webm": {
+    "mtime": 1791072177.73364,
+    "seen": 1791072342.3804228,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072179.webm": {
+    "mtime": 1791072179.9123423,
+    "seen": 1791072342.3804228,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072181.webm": {
+    "mtime": 1791072181.9656363,
+    "seen": 1791072342.380424,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072183.webm": {
+    "mtime": 1791072183.391665,
+    "seen": 1791072342.380425,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072241.webm": {
+    "mtime": 1791072241.7011561,
+    "seen": 1791072342.380425,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072245.webm": {
+    "mtime": 1791072245.053108,
+    "seen": 1791072342.380426,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072247.webm": {
+    "mtime": 1791072247.6384985,
+    "seen": 1791072342.3804271,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072250.webm": {
+    "mtime": 1791072250.2071683,
+    "seen": 1791072342.3804271,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072259.webm": {
+    "mtime": 1791072259.6393468,
+    "seen": 1791072342.380428,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072266.webm": {
+    "mtime": 1791072266.7141786,
+    "seen": 1791072342.380428,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072271.webm": {
+    "mtime": 1791072271.9303274,
+    "seen": 1791072342.380429,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072275.webm": {
+    "mtime": 1791072275.6926315,
+    "seen": 1791072342.38043,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072523.webm": {
+    "mtime": 1791072523.7358115,
+    "seen": 1791072636.4775271,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072528.webm": {
+    "mtime": 1791072528.4378932,
+    "seen": 1791072636.477528,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072530.webm": {
+    "mtime": 1791072530.6183045,
+    "seen": 1791072636.477529,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072540.webm": {
+    "mtime": 1791072540.8145332,
+    "seen": 1791072636.477529,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072546.webm": {
+    "mtime": 1791072546.2292988,
+    "seen": 1791072636.477529,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072551.webm": {
+    "mtime": 1791072551.0967586,
+    "seen": 1791072636.47753,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791072555.webm": {
+    "mtime": 1791072555.2323701,
+    "seen": 1791072636.47753,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_poster_1791072930.jpg": {
+    "mtime": 1791072930.6043081,
+    "seen": 1791073335.681319,
+    "ast_hash": "0f406647a80067c70e17bd4b4f89bc9b",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073265.webm": {
+    "mtime": 1791073265.9501736,
+    "seen": 1791073335.683131,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073270.webm": {
+    "mtime": 1791073270.8176665,
+    "seen": 1791073335.683132,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073272.webm": {
+    "mtime": 1791073272.685544,
+    "seen": 1791073335.683132,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073276.webm": {
+    "mtime": 1791073276.1754456,
+    "seen": 1791073335.683133,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073287.webm": {
+    "mtime": 1791073287.7067692,
+    "seen": 1791073335.683133,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073293.webm": {
+    "mtime": 1791073293.6828716,
+    "seen": 1791073335.683133,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073298.webm": {
+    "mtime": 1791073298.939717,
+    "seen": 1791073335.6831338,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073303.webm": {
+    "mtime": 1791073303.6083777,
+    "seen": 1791073335.6831338,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791072930.webm": {
+    "mtime": 1791072930.507445,
+    "seen": 1791073335.683176,
+    "ast_hash": "0076a84965f2471300d3a0324ab647dc",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073864.webm": {
+    "mtime": 1791073864.9532745,
+    "seen": 1791074845.0984588,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073871.webm": {
+    "mtime": 1791073871.177098,
+    "seen": 1791074845.0984588,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073877.webm": {
+    "mtime": 1791073877.293361,
+    "seen": 1791074845.09846,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073881.webm": {
+    "mtime": 1791073881.5610194,
+    "seen": 1791074845.098461,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073902.webm": {
+    "mtime": 1791073902.0502493,
+    "seen": 1791074845.098461,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791073920.webm": {
+    "mtime": 1791073920.432045,
+    "seen": 1791074845.0984619,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074010.webm": {
+    "mtime": 1791074010.4727175,
+    "seen": 1791074845.0984619,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074017.webm": {
+    "mtime": 1791074017.5108547,
+    "seen": 1791074845.098463,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074024.webm": {
+    "mtime": 1791074024.7479453,
+    "seen": 1791074845.098463,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074030.webm": {
+    "mtime": 1791074030.4341393,
+    "seen": 1791074845.098463,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074097.webm": {
+    "mtime": 1791074097.7629569,
+    "seen": 1791074845.098464,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074104.webm": {
+    "mtime": 1791074104.6105914,
+    "seen": 1791074845.098464,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074112.webm": {
+    "mtime": 1791074112.6390915,
+    "seen": 1791074845.098465,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074118.webm": {
+    "mtime": 1791074118.07236,
+    "seen": 1791074845.098465,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074179.webm": {
+    "mtime": 1791074179.425978,
+    "seen": 1791074845.0984662,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074187.webm": {
+    "mtime": 1791074187.3093154,
+    "seen": 1791074845.0984662,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074193.webm": {
+    "mtime": 1791074193.3198493,
+    "seen": 1791074845.0984662,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074197.webm": {
+    "mtime": 1791074197.2899103,
+    "seen": 1791074845.098467,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074228.webm": {
+    "mtime": 1791074228.5929592,
+    "seen": 1791074845.098467,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074235.webm": {
+    "mtime": 1791074235.1610985,
+    "seen": 1791074845.098468,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074240.webm": {
+    "mtime": 1791074240.9092019,
+    "seen": 1791074845.098468,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074245.webm": {
+    "mtime": 1791074245.069592,
+    "seen": 1791074845.098468,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074258.webm": {
+    "mtime": 1791074258.5507896,
+    "seen": 1791074845.098469,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074266.webm": {
+    "mtime": 1791074266.4179091,
+    "seen": 1791074845.098469,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074271.webm": {
+    "mtime": 1791074271.8780308,
+    "seen": 1791074845.09847,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074276.webm": {
+    "mtime": 1791074276.5556097,
+    "seen": 1791074845.09847,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074321.webm": {
+    "mtime": 1791074321.8867373,
+    "seen": 1791074845.09847,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074328.webm": {
+    "mtime": 1791074328.4126744,
+    "seen": 1791074845.098471,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074334.webm": {
+    "mtime": 1791074334.837016,
+    "seen": 1791074845.098471,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074339.webm": {
+    "mtime": 1791074339.2302215,
+    "seen": 1791074845.0984719,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074374.webm": {
+    "mtime": 1791074374.7918708,
+    "seen": 1791074845.0984719,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074381.webm": {
+    "mtime": 1791074381.4228642,
+    "seen": 1791074845.0984719,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074386.webm": {
+    "mtime": 1791074386.9227397,
+    "seen": 1791074845.098473,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074391.webm": {
+    "mtime": 1791074391.3210714,
+    "seen": 1791074845.098473,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074404.webm": {
+    "mtime": 1791074404.1864305,
+    "seen": 1791074845.098474,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074411.webm": {
+    "mtime": 1791074411.9509628,
+    "seen": 1791074845.098474,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074418.webm": {
+    "mtime": 1791074418.1872275,
+    "seen": 1791074845.098474,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074423.webm": {
+    "mtime": 1791074423.0903773,
+    "seen": 1791074845.098475,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074489.webm": {
+    "mtime": 1791074489.9188967,
+    "seen": 1791074845.098475,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074496.webm": {
+    "mtime": 1791074496.6342776,
+    "seen": 1791074845.098476,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074503.webm": {
+    "mtime": 1791074503.8767133,
+    "seen": 1791074845.098476,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074508.webm": {
+    "mtime": 1791074508.5685418,
+    "seen": 1791074845.098476,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074538.webm": {
+    "mtime": 1791074538.9489725,
+    "seen": 1791074845.0984771,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074592.webm": {
+    "mtime": 1791074592.0086896,
+    "seen": 1791074845.0984771,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074600.webm": {
+    "mtime": 1791074600.622497,
+    "seen": 1791074845.098478,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074606.webm": {
+    "mtime": 1791074606.7739286,
+    "seen": 1791074845.098478,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074613.webm": {
+    "mtime": 1791074613.128902,
+    "seen": 1791074845.098479,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074617.webm": {
+    "mtime": 1791074617.3185978,
+    "seen": 1791074845.098479,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074686.webm": {
+    "mtime": 1791074686.1476235,
+    "seen": 1791074845.098479,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074692.webm": {
+    "mtime": 1791074692.746097,
+    "seen": 1791074845.0984802,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074697.webm": {
+    "mtime": 1791074697.9913113,
+    "seen": 1791074845.0984802,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074703.webm": {
+    "mtime": 1791074703.1554928,
+    "seen": 1791074845.098481,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074724.webm": {
+    "mtime": 1791074724.7581568,
+    "seen": 1791074845.098481,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074728.webm": {
+    "mtime": 1791074728.360041,
+    "seen": 1791074845.098482,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074731.webm": {
+    "mtime": 1791074731.4944155,
+    "seen": 1791074845.098482,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074735.webm": {
+    "mtime": 1791074735.706798,
+    "seen": 1791074845.0984828,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074783.webm": {
+    "mtime": 1791074783.4424868,
+    "seen": 1791074845.0984828,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074789.webm": {
+    "mtime": 1791074789.4579818,
+    "seen": 1791074845.098484,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074795.webm": {
+    "mtime": 1791074795.544637,
+    "seen": 1791074845.098485,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791074799.webm": {
+    "mtime": 1791074799.4413214,
+    "seen": 1791074845.098485,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_poster_1791094596.jpg": {
+    "mtime": 1791094597.0418172,
+    "seen": 1791095570.139168,
+    "ast_hash": "603666d9865f2ce419a0f6221a931a37",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095511.webm": {
+    "mtime": 1791095511.1785018,
+    "seen": 1791095570.141981,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095518.webm": {
+    "mtime": 1791095518.5702415,
+    "seen": 1791095570.1419818,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095524.webm": {
+    "mtime": 1791095524.1029406,
+    "seen": 1791095570.1419818,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095529.webm": {
+    "mtime": 1791095529.1759877,
+    "seen": 1791095570.141983,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095543.webm": {
+    "mtime": 1791095543.6861217,
+    "seen": 1791095570.141983,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095549.webm": {
+    "mtime": 1791095549.196922,
+    "seen": 1791095570.141984,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095552.webm": {
+    "mtime": 1791095552.4399533,
+    "seen": 1791095570.141984,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/alexnguyen_pitch_1791095556.webm": {
+    "mtime": 1791095556.4600353,
+    "seen": 1791095570.141985,
+    "ast_hash": "4a4106197bfac7e63b7d37a3a2363770",
+    "semantic_hash": ""
+  },
+  "backend/uploads/videos/hry_pitch_1791094596.webm": {
+    "mtime": 1791094596.91281,
+    "seen": 1791095570.142051,
+    "ast_hash": "4b56cbdc5538cf0f7e05c1f09cfe8076",
+    "semantic_hash": ""
+  }
+}

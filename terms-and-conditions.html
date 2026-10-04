@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms and Conditions — Belooga</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="home-scene">
+  <!-- ============================================== -->
+  <!-- MOCKUP CONTROL BAR (HARNESS ACTIVE)            -->
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 10B</span>
+      <strong>Legacy Mockup: <code>/terms-and-conditions</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" class="harness-route-select" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569; font-weight: 600;">
+        <option value="index.html" >Route 01: / (Public Home)</option>
+        <option value="login.html" >Route 02: /login (Login)</option>
+        <option value="register.html" >Route 03: /register (Register)</option>
+        <option value="forgot-password.html" >Route 04: /forgot-password (Recovery)</option>
+        <option value="user.html" >Route 05: /user/:username (Candidate Profile)</option>
+        <option value="update-profile.html" >Route 06: /user/:username/update-profile (Edit Profile)</option>
+        <option value="account-setting.html" >Route 07: /user/:username/account-setting (Account Settings)</option>
+        <option value="search.html" >Route 08: /user/search (Search Results)</option>
+        <option value="public-profile.html" >Route 09: /public/:username (Public Profile)</option>
+        <option value="privacy-policy.html" >Route 10A: /privacy-policy (Privacy Policy)</option>
+        <option value="terms-and-conditions.html" selected>Route 10B: /terms-and-conditions (Terms)</option>
+        <option value="contact-us.html" >Route 11: /contact-us (Contact Us)</option>
+        <option value="help.html" >Route 12: /help (Help Center)</option>
+        <option value="careers.html" >Route 13: /careers (Careers)</option>
+        <option value="blog.html" >Route 14: /blog (Blog)</option>
+        <option value="404.html" >Route 16: /404-not-found (404 Page)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+  <header class="navbar-wrapper">
+    <nav class="navbar container">
+      <div class="nav-brand-container">
+        <a href="index.html" class="nav-link nav-link-logo">
+          <img src="/images/logo-big.png" class="header-logo" alt="Belooga Logo">
+        </a>
+      </div>
+      <div class="nav-links-right">
+        <a href="login.html" class="nav-auth-link">Login</a>
+        <a href="register.html" class="nav-btn-register">Register</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container" style="padding: 50px 20px; max-width: 850px;">
+    <div style="background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; padding: 40px; box-shadow: var(--box-shadow-card);">
+      <h1 style="font-size: 26px; font-weight: 800; color: #1e293b; margin-bottom: 20px;">Terms and Conditions of Use</h1>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Effective Date: October 2026</p>
+      
+      <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-top: 24px; margin-bottom: 10px;">1. User Obligations</h3>
+      <p style="font-size: 13px; line-height: 1.7; color: #475569;">By creating an account, candidates agree that all educational, employment, and video content uploaded represents authentic, truthful information.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container-custom">
+      <div class="footer-row">
+        <div class="footer-left">
+          <span class="type--fine-print copyright-text">
+            © <span class="update-year">2026</span> Belooga Beta — All Rights Reserved
+          </span>
+        </div>
+        <div class="footer-center">
+          <ul class="footer-nav-list">
+            <li><a href="privacy-policy.html" class="type--fine-print">Privacy Policy</a></li>
+            <li><a href="terms-and-conditions.html" class="type--fine-print">Terms and Conditions</a></li>
+            <li><a href="help.html" class="type--fine-print">Help</a></li>
+            <li><a href="contact-us.html" class="type--fine-print">Contact us</a></li>
+            <li><a href="careers.html" class="type--fine-print">Careers</a></li>
+            <li><a href="blog.html" class="type--fine-print">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-right">
+          <div class="social-icons-group">
+            <a href="#twitter" class="social-icon-circle"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#facebook" class="social-icon-circle"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#instagram" class="social-icon-circle"><i class="fa-brands fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

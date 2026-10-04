@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ava Morgan — Profile Workspace | Belooga</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="home-scene">
+  <!-- ============================================== -->
+  <!-- MOCKUP CONTROL BAR (HARNESS ACTIVE)            -->
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 05</span>
+      <strong>Legacy Mockup: <code>/user/:username</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" class="harness-route-select" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569; font-weight: 600;">
+        <option value="index.html" >Route 01: / (Public Home)</option>
+        <option value="login.html" >Route 02: /login (Login)</option>
+        <option value="register.html" >Route 03: /register (Register)</option>
+        <option value="forgot-password.html" >Route 04: /forgot-password (Recovery)</option>
+        <option value="user.html" selected>Route 05: /user/:username (Candidate Profile)</option>
+        <option value="update-profile.html" >Route 06: /user/:username/update-profile (Edit Profile)</option>
+        <option value="account-setting.html" >Route 07: /user/:username/account-setting (Account Settings)</option>
+        <option value="search.html" >Route 08: /user/search (Search Results)</option>
+        <option value="public-profile.html" >Route 09: /public/:username (Public Profile)</option>
+        <option value="privacy-policy.html" >Route 10A: /privacy-policy (Privacy Policy)</option>
+        <option value="terms-and-conditions.html" >Route 10B: /terms-and-conditions (Terms)</option>
+        <option value="contact-us.html" >Route 11: /contact-us (Contact Us)</option>
+        <option value="help.html" >Route 12: /help (Help Center)</option>
+        <option value="careers.html" >Route 13: /careers (Careers)</option>
+        <option value="blog.html" >Route 14: /blog (Blog)</option>
+        <option value="404.html" >Route 16: /404-not-found (404 Page)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+  <header class="navbar-wrapper authenticated-header">
+    <nav class="navbar container">
+      <div class="nav-brand-container">
+        <a href="index.html" class="nav-link nav-link-logo">
+          <img src="/images/logo-big.png" class="header-logo" alt="Belooga Logo">
+        </a>
+      </div>
+      <div class="nav-search-bar" style="flex: 1; max-width: 400px; margin: 0 30px; position: relative;">
+        <input type="text" placeholder="Search user by name, location, ..." style="width: 100%; padding: 8px 16px 8px 36px; border-radius: 20px; border: 1px solid #cbd5e1; font-size: 13px; background: #f8fafc;" onkeydown="if(event.key==='Enter') window.location.href='search.html?key='+this.value">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+      </div>
+      <div class="nav-links-right" style="display: flex; align-items: center; gap: 20px;">
+        <a href="user.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #334155; font-weight: 600; font-size: 13px;">
+          <img src="/images/avatar.jpg" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1;" alt="Ava Morgan">
+          <span>Ava Morgan</span>
+        </a>
+        <a href="update-profile.html" title="Edit Profile" style="color: #64748b; font-size: 14px;"><i class="fa-solid fa-pen-to-square"></i></a>
+        <a href="account-setting.html" title="Settings" style="color: #64748b; font-size: 14px;"><i class="fa-solid fa-gear"></i></a>
+        <a href="login.html" title="Logout" style="color: #ef4444; font-size: 14px;"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- PROFILE WORKSPACE (profile.scene.tsx) -->
+  <main class="profile-page-container container" style="padding: 40px 20px; max-width: 1200px;">
+    
+    <!-- Top Actions Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 800; color: #1e293b; margin: 0;">Candidate Profile Workspace</h1>
+        <span style="font-size: 13px; color: #64748b;">Public Link: <a href="public-profile.html" style="color: var(--main-color); font-weight: 600;">belooga.com/public/avamorgan</a></span>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <a href="update-profile.html" class="btn" style="background: #fff; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; text-decoration: none; color: #334155;"><i class="fa-solid fa-pen-to-square"></i> Edit Profile</a>
+        <button class="btn" style="background: var(--main-color); color: #fff; border: none; padding: 8px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer;" onclick="alert('Exporting PDF Resume...')"><i class="fa-solid fa-file-pdf"></i> Export Profile to PDF</button>
+      </div>
+    </div>
+
+    <div class="row" style="display: grid; grid-template-columns: 320px 1fr; gap: 30px;">
+      
+      <!-- LEFT SIDEBAR: user-sidebar.tsx -->
+      <aside class="user-sidebar-container" style="background: #fff; border-radius: 6px; box-shadow: var(--box-shadow-card); padding: 30px; border: 1px solid #e2e8f0; height: fit-content;">
+        
+        <!-- Avatar & Header Box -->
+        <div style="background: linear-gradient(135deg, #3fc6b7, #5bbbae); border-radius: 6px; padding: 30px 20px; text-align: center; color: #fff; margin-bottom: 24px;">
+          <img src="/images/avatar.jpg" style="width: 96px; height: 96px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); object-fit: cover; margin-bottom: 12px;" alt="Ava Morgan">
+          <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #fff;">Ava Morgan</h2>
+          <p style="font-size: 13px; opacity: 0.95; margin-bottom: 6px;">Digital Strategist</p>
+          <span style="font-size: 12px; opacity: 0.9;"><i class="fa-solid fa-location-dot"></i> Chicago, Illinois, United States</span>
+        </div>
+
+        <!-- Contact Info -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 12px;">See Contact Info</h4>
+          <div style="display: flex; gap: 12px; font-size: 16px;">
+            <a href="#linkedin" style="color: #0077b5;"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="#facebook" style="color: #3b5998;"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#twitter" style="color: #00aced;"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#instagram" style="color: #e4405f;"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#website" style="color: #64748b;"><i class="fa-solid fa-globe"></i></a>
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+
+        <!-- About -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 8px;">About</h4>
+          <p style="font-size: 13px; line-height: 1.6; color: #475569;">
+            I'm a 25 year old digital strategist living in Chicago. I am currently completing my graduate degree at Northwestern and working for a tech startup.
+          </p>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+
+        <!-- Skills -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 12px;">Skills</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <span style="background: #f1f5f9; color: #334155; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">SEO & SEM</span>
+            <span style="background: #f1f5f9; color: #334155; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">Content Marketing</span>
+            <span style="background: #f1f5f9; color: #334155; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">Analytics</span>
+            <span style="background: #f1f5f9; color: #334155; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">Brand Strategy</span>
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+
+        <!-- Languages & Interests -->
+        <div>
+          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 8px;">Languages</h4>
+          <p style="font-size: 13px; color: #475569; margin-bottom: 16px;">English (Native), Spanish (Professional)</p>
+          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 8px;">Interests</h4>
+          <p style="font-size: 13px; color: #475569;">Photography, Traveling, Design Systems</p>
+        </div>
+
+      </aside>
+
+      <!-- RIGHT MAIN CONTENT: profile.scene.tsx -->
+      <section class="user-content-area" style="display: flex; flex-direction: column; gap: 30px;">
+        
+        <!-- Video Resume Pitch Card -->
+        <div class="block-component" style="background: #fff; border-radius: 6px; box-shadow: var(--box-shadow-card); border: 1px solid #e2e8f0; overflow: hidden;">
+          <div style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1e293b; margin: 0;"><i class="fa-solid fa-video" style="color: var(--main-color); margin-right: 8px;"></i> Video Resume Pitch</h3>
+            <button class="btn" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;" onclick="alert('Record or re-upload video pitch')"><i class="fa-solid fa-camera"></i> Change Video</button>
+          </div>
+          <div style="position: relative; background: #000; height: 380px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="alert('Playing Ava Video Resume Pitch')">
+            <img src="/images/home/matt-poster.png" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;" alt="Video Pitch">
+            <div class="modal-start" style="display: block; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+              <div class="video-play-icon" data-modal-index="0"></div>
+            </div>
+            <span style="position: absolute; bottom: 16px; left: 24px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;"><i class="fa-solid fa-clock"></i> 0:30 Elevator Pitch</span>
+          </div>
+        </div>
+
+        <!-- Experience Timeline -->
+        <div class="block-component" style="background: #fff; border-radius: 6px; box-shadow: var(--box-shadow-card); border: 1px solid #e2e8f0; padding: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="font-size: 16px; font-weight: 800; text-transform: uppercase; color: #1e293b; margin: 0;"><i class="fa-solid fa-briefcase" style="color: var(--main-color); margin-right: 8px;"></i> Experience</h3>
+            <a href="update-profile.html" style="font-size: 12px; font-weight: 700; color: var(--main-color); text-decoration: none;">+ Add Position</a>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Position 1 -->
+            <div style="display: flex; gap: 20px;">
+              <div style="width: 48px; height: 48px; background: #e0f2fe; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #0284c7; flex-shrink: 0;">
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Senior Digital Strategist</h4>
+                  <span style="font-size: 12px; color: #64748b; font-weight: 600;">Jan 2022 — Present</span>
+                </div>
+                <span style="font-size: 13px; color: var(--main-color); font-weight: 600;">BlueFountain Media • Full-time</span>
+                <p style="font-size: 13px; line-height: 1.6; color: #475569; margin-top: 8px;">
+                  Lead client digital strategy roadmaps across SaaS and e-commerce portfolios. Partner with UX/UI design teams to drive a 40% improvement in funnel conversion rates.
+                </p>
+              </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #f1f5f9;">
+
+            <!-- Position 2 -->
+            <div style="display: flex; gap: 20px;">
+              <div style="width: 48px; height: 48px; background: #fef3c7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #d97706; flex-shrink: 0;">
+                <i class="fa-solid fa-bullhorn"></i>
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Content Marketing Specialist</h4>
+                  <span style="font-size: 12px; color: #64748b; font-weight: 600;">Aug 2019 — Dec 2021</span>
+                </div>
+                <span style="font-size: 13px; color: var(--main-color); font-weight: 600;">Ogilvy Chicago • Full-time</span>
+                <p style="font-size: 13px; line-height: 1.6; color: #475569; margin-top: 8px;">
+                  Authored multi-channel editorial calendars and orchestrated video content campaigns reaching over 500k monthly views.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Education -->
+        <div class="block-component" style="background: #fff; border-radius: 6px; box-shadow: var(--box-shadow-card); border: 1px solid #e2e8f0; padding: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="font-size: 16px; font-weight: 800; text-transform: uppercase; color: #1e293b; margin: 0;"><i class="fa-solid fa-graduation-cap" style="color: var(--main-color); margin-right: 8px;"></i> Education</h3>
+            <a href="update-profile.html" style="font-size: 12px; font-weight: 700; color: var(--main-color); text-decoration: none;">+ Add Education</a>
+          </div>
+
+          <div style="display: flex; gap: 20px;">
+            <div style="width: 48px; height: 48px; background: #ede9fe; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #7c3aed; flex-shrink: 0;">
+              <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between;">
+                <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Northwestern University</h4>
+                <span style="font-size: 12px; color: #64748b; font-weight: 600;">2018 — 2022</span>
+              </div>
+              <span style="font-size: 13px; color: var(--main-color); font-weight: 600;">B.S. in Integrated Marketing Communications</span>
+              <p style="font-size: 13px; color: #475569; margin-top: 6px;">Graduated Magna Cum Laude. President of the Digital Strategy Association.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resume Attachment -->
+        <div class="block-component" style="background: #fff; border-radius: 6px; box-shadow: var(--box-shadow-card); border: 1px solid #e2e8f0; padding: 30px;">
+          <h3 style="font-size: 16px; font-weight: 800; text-transform: uppercase; color: #1e293b; margin-bottom: 16px;"><i class="fa-solid fa-paperclip" style="color: var(--main-color); margin-right: 8px;"></i> PDF Resume Attachment</h3>
+          <div style="border: 2px dashed #cbd5e1; border-radius: 6px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer;" onclick="alert('Open file selector for PDF resume')">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 36px; color: var(--main-color); margin-bottom: 12px;"></i>
+            <p style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 4px;">Drag and drop .pdf file here or browse</p>
+            <span style="font-size: 12px; color: #94a3b8;">Ava_Morgan_Digital_Strategist_Resume.pdf (Uploaded, 1.2 MB)</span>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container-custom">
+      <div class="footer-row">
+        <div class="footer-left">
+          <span class="type--fine-print copyright-text">
+            © <span class="update-year">2026</span> Belooga Beta — All Rights Reserved
+          </span>
+        </div>
+        <div class="footer-center">
+          <ul class="footer-nav-list">
+            <li><a href="privacy-policy.html" class="type--fine-print">Privacy Policy</a></li>
+            <li><a href="terms-and-conditions.html" class="type--fine-print">Terms and Conditions</a></li>
+            <li><a href="help.html" class="type--fine-print">Help</a></li>
+            <li><a href="contact-us.html" class="type--fine-print">Contact us</a></li>
+            <li><a href="careers.html" class="type--fine-print">Careers</a></li>
+            <li><a href="blog.html" class="type--fine-print">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-right">
+          <div class="social-icons-group">
+            <a href="#twitter" class="social-icon-circle"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#facebook" class="social-icon-circle"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#instagram" class="social-icon-circle"><i class="fa-brands fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

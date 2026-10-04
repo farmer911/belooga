@@ -1,0 +1,126 @@
+{
+  "communities": {
+    "0": [
+      "build_all_pages_build_account_setting_scene",
+      "build_all_pages_build_blog_scene",
+      "build_all_pages_build_careers_scene",
+      "build_all_pages_build_contact_us_scene",
+      "build_all_pages_build_legal_scenes",
+      "build_all_pages_build_not_found_scene",
+      "build_all_pages_build_public_profile_scene",
+      "build_all_pages_build_search_scene",
+      "build_all_pages_build_update_profile_scene",
+      "build_all_pages_build_user_scene",
+      "build_all_pages_get_footer",
+      "build_all_pages_get_harness_banner",
+      "build_all_pages_get_header",
+      "build_all_pages_main"
+    ],
+    "1": [
+      "app",
+      "app_closevideomodal",
+      "app_initsearchautocomplete",
+      "app_initsmoothscroll",
+      "app_openvideomodal",
+      "app_triggersearch"
+    ],
+    "2": [
+      "build_all_pages",
+      "build_all_pages_build_help_scene",
+      "concurrent_futures",
+      "os"
+    ]
+  },
+  "cohesion": {
+    "0": 0.43956043956043955,
+    "1": 0.4,
+    "2": 0.5
+  },
+  "gods": [
+    {
+      "id": "build_all_pages_get_footer",
+      "label": "get_footer()",
+      "degree": 12
+    },
+    {
+      "id": "build_all_pages_get_harness_banner",
+      "label": "get_harness_banner()",
+      "degree": 12
+    },
+    {
+      "id": "build_all_pages_get_header",
+      "label": "get_header()",
+      "degree": 12
+    },
+    {
+      "id": "build_all_pages_main",
+      "label": "main()",
+      "degree": 12
+    },
+    {
+      "id": "build_all_pages_build_account_setting_scene",
+      "label": "build_account_setting_scene()",
+      "degree": 5
+    },
+    {
+      "id": "build_all_pages_build_blog_scene",
+      "label": "build_blog_scene()",
+      "degree": 5
+    },
+    {
+      "id": "build_all_pages_build_careers_scene",
+      "label": "build_careers_scene()",
+      "degree": 5
+    },
+    {
+      "id": "build_all_pages_build_contact_us_scene",
+      "label": "build_contact_us_scene()",
+      "degree": 5
+    },
+    {
+      "id": "build_all_pages_build_legal_scenes",
+      "label": "build_legal_scenes()",
+      "degree": 5
+    },
+    {
+      "id": "build_all_pages_build_not_found_scene",
+      "label": "build_not_found_scene()",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "main()",
+      "target": "build_help_scene()",
+      "source_files": [
+        "build_all_pages.py",
+        "build_all_pages.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "indirect_call",
+      "note": "Bridges community 0 → community 2"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `get_footer()` connect `get_footer` to `build_all_pages.py`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `get_harness_banner()` connect `get_footer` to `build_all_pages.py`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `get_header()` connect `get_footer` to `build_all_pages.py`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 11 inferred relationships involving `main()` (e.g. with `build_account_setting_scene()` and `build_blog_scene()`) actually correct?",
+      "why": "`main()` has 11 INFERRED edges - model-reasoned connections that need verification."
+    }
+  ]
+}

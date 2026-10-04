@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8f9fa;
+  --foreground: #252525;
+  
+  /* Belooga Brand Tokens */
+  --brand-primary: #5bbbae;
+  --brand-hover: #497d76;
+  --brand-accent: #3fc6b7;
+  --brand-dark: #21655e;
+  --brand-blue: #39a0e8;
+  --brand-overlay: #d7ecea;
+  
+  /* Belooga Surface Tokens */
+  --surface-page: #f8f9fa;
+  --surface-card: #ffffff;
+  --surface-border: #d1d6da;
+  --surface-divider: #f0f2f5;
+  --surface-subtle: #fafafa;
+  
+  /* Belooga Typography Tokens */
+  --typography-main: #252525;
+  --typography-heading: #515151;
+  --typography-body: #666666;
+  --typography-muted: #737475;
+}
+
+@theme inline {
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-overlay: var(--brand-overlay);
+  
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-border: var(--surface-border);
+  --color-surface-divider: var(--surface-divider);
+  --color-surface-subtle: var(--surface-subtle);
+
+  --color-typography-main: var(--typography-main);
+  --color-typography-heading: var(--typography-heading);
+  --color-typography-body: var(--typography-body);
+  --color-typography-muted: var(--typography-muted);
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--typography-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   STRICT ANTI-HALLUCINATION GEOMETRY RULES
+   ========================================================================== */
+
+/* 54px Video Elevator Pitch Play Button */
+.start-content-video {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+/* Play Overlay - Hidden by default, ONLY reveals on :hover */
+.start-content-video .modal-start {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.start-content-video:hover .modal-start {
+  display: flex;
+}
+
+/* 54px White Circle */
+.video-play-icon {
+  width: 54px;
+  height: 54px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.start-content-video:hover .video-play-icon {
+  transform: scale(1.08);
+}
+
+/* Pure CSS Play Triangle (:before border trick) */
+.video-play-icon:before {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 9px 13px;
+  border-color: transparent transparent transparent #5bbbae;
+  margin-left: 3px;
+}

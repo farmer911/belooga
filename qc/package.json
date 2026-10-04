@@ -1,0 +1,17 @@
+{
+  "name": "belooga-qc-playwright",
+  "version": "1.0.0",
+  "description": "Playwright Automation & Visual Regression Test Suite for Belooga",
+  "scripts": {
+    "test": "playwright test",
+    "test:visual": "playwright test tests/visual",
+    "test:e2e": "playwright test tests/e2e",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}

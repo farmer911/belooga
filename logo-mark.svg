@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 70" width="70" height="70">
+  <rect x="0" y="0" width="70" height="70" rx="17" fill="#3fc6b7"/>
+  <!-- Top Triangle -->
+  <path d="M 33.2 15.6 C 34.1 14.1 35.9 14.1 36.8 15.6 L 45.4 30.6 C 46.3 32.2 45.1 34.2 43.3 34.2 L 26.7 34.2 C 24.9 34.2 23.7 32.2 24.6 30.6 Z" fill="#ffffff"/>
+  <!-- Bottom Left Circle -->
+  <circle cx="27" cy="48" r="8" fill="#ffffff"/>
+  <!-- Bottom Right Rounded Square -->
+  <rect x="38" y="40" width="16" height="16" rx="4.5" fill="#ffffff"/>
+</svg>

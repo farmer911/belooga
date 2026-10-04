@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candidate Search Results — Belooga</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="home-scene">
+  <!-- ============================================== -->
+  <!-- MOCKUP CONTROL BAR (HARNESS ACTIVE)            -->
+  <!-- ============================================== -->
+  <div class="legacy-mockup-banner">
+    <div class="banner-left">
+      <span class="route-badge">ROUTE 08</span>
+      <strong>Legacy Mockup: <code>/user/search/?key=&page=</code></strong>
+      <span class="status-verified"><i class="fa-solid fa-shield-check"></i> HARNESS ACTIVE</span>
+      <select onchange="window.location.href=this.value" class="harness-route-select" style="margin-left: 15px; padding: 3px 10px; border-radius: 4px; font-size: 11px; background: #1e293b; color: #fff; border: 1px solid #475569; font-weight: 600;">
+        <option value="index.html" >Route 01: / (Public Home)</option>
+        <option value="login.html" >Route 02: /login (Login)</option>
+        <option value="register.html" >Route 03: /register (Register)</option>
+        <option value="forgot-password.html" >Route 04: /forgot-password (Recovery)</option>
+        <option value="user.html" >Route 05: /user/:username (Candidate Profile)</option>
+        <option value="update-profile.html" >Route 06: /user/:username/update-profile (Edit Profile)</option>
+        <option value="account-setting.html" >Route 07: /user/:username/account-setting (Account Settings)</option>
+        <option value="search.html" selected>Route 08: /user/search (Search Results)</option>
+        <option value="public-profile.html" >Route 09: /public/:username (Public Profile)</option>
+        <option value="privacy-policy.html" >Route 10A: /privacy-policy (Privacy Policy)</option>
+        <option value="terms-and-conditions.html" >Route 10B: /terms-and-conditions (Terms)</option>
+        <option value="contact-us.html" >Route 11: /contact-us (Contact Us)</option>
+        <option value="help.html" >Route 12: /help (Help Center)</option>
+        <option value="careers.html" >Route 13: /careers (Careers)</option>
+        <option value="blog.html" >Route 14: /blog (Blog)</option>
+        <option value="404.html" >Route 16: /404-not-found (404 Page)</option>
+      </select>
+    </div>
+    <div class="banner-right">
+      <a href="VIOLATIONS_REGISTER.md" class="violations-link"><i class="fa-solid fa-clipboard-list"></i> VIOLATIONS_REGISTER.md</a>
+    </div>
+  </div>
+  <header class="navbar-wrapper authenticated-header">
+    <nav class="navbar container">
+      <div class="nav-brand-container">
+        <a href="index.html" class="nav-link nav-link-logo">
+          <img src="/images/logo-big.png" class="header-logo" alt="Belooga Logo">
+        </a>
+      </div>
+      <div class="nav-search-bar" style="flex: 1; max-width: 400px; margin: 0 30px; position: relative;">
+        <input type="text" placeholder="Search user by name, location, ..." style="width: 100%; padding: 8px 16px 8px 36px; border-radius: 20px; border: 1px solid #cbd5e1; font-size: 13px; background: #f8fafc;" onkeydown="if(event.key==='Enter') window.location.href='search.html?key='+this.value">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+      </div>
+      <div class="nav-links-right" style="display: flex; align-items: center; gap: 20px;">
+        <a href="user.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #334155; font-weight: 600; font-size: 13px;">
+          <img src="/images/avatar.jpg" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1;" alt="Ava Morgan">
+          <span>Ava Morgan</span>
+        </a>
+        <a href="update-profile.html" title="Edit Profile" style="color: #64748b; font-size: 14px;"><i class="fa-solid fa-pen-to-square"></i></a>
+        <a href="account-setting.html" title="Settings" style="color: #64748b; font-size: 14px;"><i class="fa-solid fa-gear"></i></a>
+        <a href="login.html" title="Logout" style="color: #ef4444; font-size: 14px;"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container" style="padding: 40px 20px; max-width: 1140px;">
+    
+    <!-- Search Bar Section -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 12px;">Discover Top Candidates</h1>
+      <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">Browse candidates with 30-second video introductions.</p>
+      
+      <div style="max-width: 600px; margin: 0 auto; display: flex; gap: 10px;">
+        <input type="text" id="search-input" value="Strategist" placeholder="Search by role, skill, or location..." style="flex: 1; padding: 12px 18px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px;">
+        <button class="btn" style="background: var(--main-color); color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer;">Search</button>
+      </div>
+    </div>
+
+    <!-- Search Count Banner -->
+    <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 14px; font-weight: 700; color: #475569;">Showing 3 verified candidates</span>
+      <span style="font-size: 12px; color: #94a3b8;">Sorted by Relevance</span>
+    </div>
+
+    <!-- Results Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-bottom: 40px;">
+      
+      <!-- Candidate Card 1 -->
+      <div style="background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: var(--box-shadow-card); overflow: hidden; display: flex; flex-direction: column;">
+        <div style="height: 160px; position: relative; background: #000;">
+          <img src="/images/home/matt-poster.png" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;" alt="Ava Morgan Video">
+          <span style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;"><i class="fa-solid fa-play"></i> 0:30 Video</span>
+        </div>
+        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+          <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+            <img src="/images/avatar.jpg" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" alt="Ava">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; color: #1e293b; margin: 0;"><a href="public-profile.html" style="color: inherit; text-decoration: none;">Ava Morgan</a></h3>
+              <span style="font-size: 12px; color: var(--main-color); font-weight: 600;">Digital Strategist</span>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 14px;">Graduate degree from Northwestern. 4+ years leading digital advertising campaigns.</p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+            <span style="font-size: 11px; color: #94a3b8;"><i class="fa-solid fa-location-dot"></i> Chicago, IL</span>
+            <a href="public-profile.html" class="btn" style="background: var(--main-color); color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-decoration: none;">View Profile</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Candidate Card 2 -->
+      <div style="background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: var(--box-shadow-card); overflow: hidden; display: flex; flex-direction: column;">
+        <div style="height: 160px; position: relative; background: #000;">
+          <img src="/images/home/Jeremy-1.jpg" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;" alt="Jeremy">
+          <span style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;"><i class="fa-solid fa-play"></i> 0:30 Video</span>
+        </div>
+        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+          <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+            <img src="/images/home/Jeremy-1.jpg" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" alt="Jeremy">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; color: #1e293b; margin: 0;">Jeremy Vance</h3>
+              <span style="font-size: 12px; color: var(--main-color); font-weight: 600;">Product Manager</span>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 14px;">Specialized in technical B2B platforms, user onboarding flows, and growth experiments.</p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+            <span style="font-size: 11px; color: #94a3b8;"><i class="fa-solid fa-location-dot"></i> San Francisco, CA</span>
+            <a href="public-profile.html" class="btn" style="background: var(--main-color); color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-decoration: none;">View Profile</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Candidate Card 3 -->
+      <div style="background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: var(--box-shadow-card); overflow: hidden; display: flex; flex-direction: column;">
+        <div style="height: 160px; position: relative; background: #000;">
+          <img src="/images/home/Jazmin-1.jpg" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;" alt="Jazmin">
+          <span style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;"><i class="fa-solid fa-play"></i> 0:30 Video</span>
+        </div>
+        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+          <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+            <img src="/images/home/Jazmin-1.jpg" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" alt="Jazmin">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; color: #1e293b; margin: 0;">Jazmin Cole</h3>
+              <span style="font-size: 12px; color: var(--main-color); font-weight: 600;">Creative Director</span>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 14px;">Award-winning visual storyteller with 7+ years directing international brand campaigns.</p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+            <span style="font-size: 11px; color: #94a3b8;"><i class="fa-solid fa-location-dot"></i> New York, NY</span>
+            <a href="public-profile.html" class="btn" style="background: var(--main-color); color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-decoration: none;">View Profile</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pagination -->
+    <div style="display: flex; justify-content: center; gap: 8px;">
+      <button class="btn" style="background: var(--main-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 4px; font-weight: 700;">1</button>
+      <button class="btn" style="background: #fff; border: 1px solid #cbd5e1; color: #334155; width: 36px; height: 36px; border-radius: 4px; font-weight: 600;">2</button>
+      <button class="btn" style="background: #fff; border: 1px solid #cbd5e1; color: #334155; width: 36px; height: 36px; border-radius: 4px; font-weight: 600;"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container-custom">
+      <div class="footer-row">
+        <div class="footer-left">
+          <span class="type--fine-print copyright-text">
+            © <span class="update-year">2026</span> Belooga Beta — All Rights Reserved
+          </span>
+        </div>
+        <div class="footer-center">
+          <ul class="footer-nav-list">
+            <li><a href="privacy-policy.html" class="type--fine-print">Privacy Policy</a></li>
+            <li><a href="terms-and-conditions.html" class="type--fine-print">Terms and Conditions</a></li>
+            <li><a href="help.html" class="type--fine-print">Help</a></li>
+            <li><a href="contact-us.html" class="type--fine-print">Contact us</a></li>
+            <li><a href="careers.html" class="type--fine-print">Careers</a></li>
+            <li><a href="blog.html" class="type--fine-print">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-right">
+          <div class="social-icons-group">
+            <a href="#twitter" class="social-icon-circle"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#facebook" class="social-icon-circle"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#instagram" class="social-icon-circle"><i class="fa-brands fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

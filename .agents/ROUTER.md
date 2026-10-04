@@ -1,0 +1,154 @@
+# 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
+
+> **Version:** 2.0.0 — Enterprise Multi-Department Standard  
+> **Status:** MANDATORY & ENFORCED FOR ALL AGENTS & SUB-AGENTS  
+> **Authority:** Principal Full-Stack Architect  
+
+---
+
+## 1. PURPOSE & ORGANIZATIONAL OPERATING MODEL
+
+This document establishes the **Organizational Operating System** for the Belooga software engineering organization. The repository is structured like an elite technology enterprise where:
+1. **Pages and Services are specialized Departments (Phòng Ban):** Each department maintains exclusive ownership of its domain, technical specifications, and standards.
+2. **Skills are Institutional Knowledge Assets:** Agents are not generic laborers; they act as Senior Specialists equipped with deep, accumulated institutional memory.
+3. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
+4. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
+
+---
+
+## 2. THE MANDATORY 5-STEP EXECUTION PIPELINE
+
+```
+[USER TASK / FEATURE REQUEST / BUG REPORT]
+                │
+                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🧠 STEP 0: THE PRE-WALK (CHIEF ARCHITECT - PRO / HIGH-REASONING MODEL)      │
+│ • Survey Cross-Department Impact Matrix (Section 4).                        │
+│ • Inspect blast radius, target files, and historical violation registers.    │
+│ • Formulate the PRE-WALK SPEC: Target files, frozen DTOs, and test IDs.     │
+│ • Assign the exact Department Skill to the executing Worker.                │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                  Handoff Spec ────────┼────────── Handoff Spec
+                  & Department Skill   │           & Department Skill
+                  │                    │           │
+                  ▼                    ▼           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 👨‍💻 STEP 1: DISPATCH & SCOPED SKILL INGESTION (SPECIALIST WORKER)            │
+│ • Worker consults Intent Matrix (Section 3) to load department skill.       │
+│ • Concurrently load: `engineering-integrity-and-evidence`.                  │
+│ • IF ANY SPEC IS UNCLEAR: Halt and ask immediately. Never assume!           │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🔨 STEP 2: SCOPED CODING & ARCHITECTURAL IMPLEMENTATION                     │
+│ • Implement code strictly within assigned department boundaries.            │
+│ • Frontend: Atomic Design, leaf-node state isolation for 60fps telemetry.  │
+│ • Backend: Clean 4-Layer (Thin Router ➔ DTO ➔ Service ➔ Repo ➔ ORM Model).   │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🧪 STEP 3: MANDATORY AUTOMATED QC GATE (PLAYWRIGHT & BUILD)                 │
+│ • Run Playwright suite: `cd qc && bun run test`                              │
+│ • Run typecheck & build: `cd frontend && bun run build`                      │
+│ • IF FAILS: Self-debug. NEVER delete tests or suppress compiler errors!     │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                         [Test Pass 100%?] ─── NO ───► Loop back to Step 2
+                                       │ YES
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📚 STEP 4: POST-FEATURE LEARNING & EVIDENCE SIGN-OFF                         │
+│ • Update Department Skill: Document any new contracts or props.             │
+│ • If a bug occurred, log root cause in VIOLATIONS_REGISTER.md.              │
+│ • Emit Empirical Proof Block (Exit Code: 0, test logs, browser check).      │
+│ • Run AST sync: `graphify update .`                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. INTENT-BASED SKILL ROUTING MATRIX
+
+Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
+
+| Department / Intent | Target File Scope | MANDATORY Department Skill | Concurrently Loaded |
+| :--- | :--- | :--- | :--- |
+| **Integrity & Evidence** | All tasks across repository | `engineering-integrity-and-evidence` | Assigned department skill |
+| **Homepage & Showcase** | `frontend/src/app/page.tsx`, `src/components/organisms/home/` | `fe-page-home` | `engineering-integrity-and-evidence` |
+| **Talent Search & Discovery** | `frontend/src/app/search/`, `src/components/organisms/search/` | `fe-page-search` | `engineering-integrity-and-evidence` |
+| **Public Candidate Profile** | `frontend/src/app/public/[username]/` | `fe-page-public-profile` | `fe-section-workspace-pitch-player` |
+| **Candidate Workspace Hub** | `frontend/src/app/user/[username]/page.tsx` | `fe-page-workspace` | `engineering-integrity-and-evidence` |
+| **Workspace: Header & Bio** | `src/components/organisms/workspace/profile-header-*` | `fe-section-workspace-header` | `fe-page-workspace` |
+| **Workspace: 30s Pitch Player**| `src/components/organisms/workspace/video-pitch-*` | `fe-section-workspace-pitch-player`| `fe-page-workspace` |
+| **Workspace: WebRTC Studio** | `src/components/organisms/workspace/video-studio-*` | `fe-section-workspace-studio` | `fe-page-workspace` |
+| **Workspace: Timeline CRUD** | `src/components/organisms/workspace/timeline-*` | `fe-section-workspace-timeline` | `fe-page-workspace` |
+| **Workspace: Skills Badges** | `src/components/organisms/workspace/skills-*` | `fe-section-workspace-skills` | `fe-page-workspace` |
+| **Identity & Authentication**| `frontend/src/app/(auth)/...` | `fe-page-auth` | `engineering-integrity-and-evidence` |
+| **User Settings & Update** | `frontend/src/app/user/[username]/settings/`, `update/` | `fe-page-user-management` | `engineering-integrity-and-evidence` |
+| **Public Content & Legal** | `frontend/src/app/(public)/...` (Blog, Careers, Help) | `fe-page-cms-public` | `engineering-integrity-and-evidence` |
+| **Backend: Auth & Vault** | `backend/app/api/v1/endpoints/auth.py`, `models/identity.py` | `be-service-auth` | `engineering-integrity-and-evidence` |
+| **Backend: Candidate Profile**| `backend/app/api/v1/endpoints/profile.py`, `models/profile.py`| `be-service-profile` | `engineering-integrity-and-evidence` |
+| **Backend: Timeline CRUD** | `backend/app/api/v1/endpoints/timeline.py`, `models/timeline.py`| `be-service-timeline` | `engineering-integrity-and-evidence` |
+| **Backend: Media & Video** | `backend/app/api/v1/endpoints/media.py`, `services/media_*.py` | `be-service-media` | `engineering-integrity-and-evidence` |
+| **Backend: Trigram Search** | `backend/app/api/v1/endpoints/search.py`, `repositories/search*`| `be-service-search` | `engineering-integrity-and-evidence` |
+| **Backend: Master Catalogs**| `backend/app/api/v1/endpoints/catalogs.py` | `be-service-catalogs` | `engineering-integrity-and-evidence` |
+| **Backend: CMS & Trust** | `backend/app/api/v1/endpoints/cms.py` | `be-service-cms` | `engineering-integrity-and-evidence` |
+| **QC & Playwright Testing** | `qc/tests/`, `qc/pages/` | `belooga-qc-engineering` | `engineering-integrity-and-evidence` |
+
+---
+
+## 4. CROSS-DEPARTMENTAL IMPACT MATRIX
+
+When modifying a department, the agent must check and verify all downstream dependents:
+
+```
+┌───────────────────────────┐      Mutates Video Chunks / WebM Format
+│     be-service-media      │────────────────────────────────────────────┐
+└─────────────┬─────────────┘                                            │
+              │ Ingests Resume PDF                                       │
+              ▼                                                          ▼
+┌───────────────────────────┐                              ┌───────────────────────────┐
+│ fe-section-workspace-header│                             │fe-section-workspace-studio │
+└───────────────────────────┘                              └─────────────┬─────────────┘
+                                                                         │ Emits new pitch URL
+                                                                         ▼
+                                                           ┌───────────────────────────┐
+                                                           │fe-section-pitch-player    │
+                                                           │fe-page-public-profile     │
+                                                           └───────────────────────────┘
+```
+
+* **Modifying `be-service-media`:** You MUST test `fe-section-workspace-studio` (chunk upload) and `fe-section-workspace-pitch-player` (playback).
+* **Modifying `be-service-timeline`:** You MUST test `fe-section-workspace-timeline` (DnD reorder) and `be-service-media` (PDF resume generation).
+* **Modifying `be-service-profile`:** You MUST test `fe-page-search` (TSVECTOR search vector update) and `fe-page-workspace` (profile data sync).
+
+---
+
+## 5. POST-FEATURE LEARNING & ANTI-REGRESSION PROTOCOL
+
+1. **Self-Updating Knowledge Rule:**
+   - After successfully implementing a new feature, the agent MUST inspect the relevant department skill in `.agents/skills/` and update any newly introduced contracts, parameters, or behaviors.
+2. **Mistake Freezing (Zero Repeated Errors):**
+   - If a bug is caught during the QC Gate or reported by the user:
+     - The root cause MUST be permanently logged in `VIOLATIONS_REGISTER.md`.
+     - The corresponding department skill MUST be updated with an explicit **"Known Pitfall / Anti-Regression Rule"**.
+     - No agent may repeat a violation that has already been documented in the register.
+
+---
+
+## 6. MANDATORY PROOF BLOCK SPECIFICATION
+
+Before closing any ticket, the agent must emit verified proof:
+
+```markdown
+### 🧾 Empirical Proof of Work
+1. **Command:** `cd qc && bun run test <spec-file>`
+2. **Exit Code:** `0`
+3. **Log Proof:** `[Verified unedited output displaying test suite pass]`
+4. **Compiler Proof:** `cd frontend && bun x tsc --noEmit` ➔ `Exit Code: 0`
+5. **Department Skill Updated:** `[Updated file path with brief summary of new knowledge]`
+```

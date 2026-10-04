@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Belooga Migration Mindmap — Legacy CRA to Next.js 14+</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #121417;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: #f1f5f9;
+    }
+    #header-bar {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      z-index: 100;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 18px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    #header-bar h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #3fc6b7;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #header-bar p {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 8px;
+    }
+    .btn-ctrl {
+      background: rgba(30, 41, 59, 0.9);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ctrl:hover {
+      background: #5bbbae;
+      color: #121417;
+      font-weight: 600;
+    }
+    svg#mindmap {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+    /* Markmap custom node styling */
+    .markmap-node text {
+      fill: #e2e8f0 !important;
+      font-family: inherit;
+    }
+    .markmap-link {
+      stroke-width: 2px !important;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.15.4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15.4/dist/browser/index.js"></script>
+</head>
+<body>
+  <div id="header-bar">
+    <h1>🐋 BELOOGA — Master Migration Mindmap</h1>
+    <p>CRA/Redux Legacy ➔ Next.js 14+ App Router | 16 Pages • 72 APIs • 8 Domains</p>
+  </div>
+
+  <div id="controls">
+    <button class="btn-ctrl" onclick="window.markmapInstance.fit()">⛶ Fit View</button>
+    <button class="btn-ctrl" onclick="toggleExpandAll()">⇄ Expand/Collapse</button>
+  </div>
+
+  <svg id="mindmap"></svg>
+
+  <script>
+    const markdownContent = `
+# 🐋 BELOOGA MIGRATION (CRA ➔ Next.js 14+)
+
+## 🗺️ 16 Page Families (Routes)
+- **Public & Marketing (Batch 1)**
+  - \`Route 01: Home ('/' & '/home')\`
+    - Hero headline & Dual CTA ("Find Talent" / "Create Profile")
+    - 2 Video walkthrough modals (Ava & Inspire)
+    - 3 Pitch cards with 54px play icon hover
+    - 4-step hiring process layout
+  - \`Route 14: Blog ('/blog', '/blog/:slug')\`
+    - Featured hero banner (\`banner-blog.png\`)
+    - 3-column article cards grid (\`blog-1.jpg\`)
+    - Article detail with author, read time & tags
+  - \`Route 13: Careers ('/careers', '/careers/:id')\`
+    - Company mission statement & team culture
+    - Open roles by department (Engineering, Product)
+    - Job detail modal & "Apply Now" form
+  - \`Route 12: Help Center ('/help', '/help-faqs')\`
+    - Search knowledge base bar
+    - Categories: General FAQs & Video Tutorials
+    - Accordion toggles for question answers
+  - \`Route 11: Contact Us ('/contact-us')\`
+    - Contact form inside \`boxed boxed--border\`
+    - Fields: Name, Email, Subject, Message
+    - Support channels & office headquarters
+  - \`Route 10: Legal Pages\`
+    - \`10A: Privacy Policy ('/privacy-policy')\`
+    - \`10B: Terms & Conditions ('/terms-and-conditions')\`
+- **Authentication & Onboarding (Batch 2)**
+  - \`Route 02: Login ('/login')\`
+    - Split-screen layout with \`#d7ecea\` overlay
+    - Social OAuth buttons (Facebook, Google, LinkedIn)
+    - Username/Email & Password form
+    - "Forgot Password" & "Sign Up" links
+  - \`Route 03: Register ('/register')\`
+    - Fast social registration triggers
+    - Username availability real-time check
+    - Email, First Name, Last Name, Password
+    - Legal Terms & Privacy acceptance checkbox
+  - \`Route 04: Forgot & Reset Password\`
+    - \`/forgot-password\`: Recovery email form
+    - \`/reset-password/:uid/:token/:timestamp\`: Token verification & new password input
+  - \`Route 15: OAuth Handshake ('/callback')\`
+    - Popup window receiver
+    - Provider exchange -> Session issuance
+  - \`Account Activation ('/activate-account/:key')\`
+    - Email token activation gateway
+- **Candidate Workspace Core (Batch 3)**
+  - \`Route 05: Workspace Profile ('/user/:username')\`
+    - 320px Sticky Sidebar: Avatar, Full Name, Title, Contact, Skills, Languages, Interests
+    - Main Area: 0:30 Video Pitch Player with poster
+    - Experience chronological timeline (Roles, Company, Dates)
+    - Education chronological history (School, Degree, Dates)
+    - Download PDF Resume trigger
+  - \`Route 06: Profile Editor ('/user/:username/update-profile')\`
+    - Avatar upload & crop modal
+    - Personal info editor (Name, Headline, Location, Bio)
+    - Social links editor (LinkedIn, GitHub, Website)
+    - Catalog selectors (School, Company, Location)
+  - \`Route 07: Account Settings ('/user/:username/account-setting')\`
+    - Primary email change request
+    - Password rotation form (Old, New, Confirm)
+    - Opportunity status toggles
+    - Danger Zone: Irreversible delete account modal
+  - \`Route 09: Public Candidate View ('/public/:username')\`
+    - Read-only recruiter-facing CV
+    - Action bar: "Export PDF Resume", "Report User"
+    - 0:30 Video Elevator Pitch embed
+- **Talent Discovery & Utility (Batch 4)**
+  - \`Route 08: Search Talent ('/user/search/?key=&page=')\`
+    - Search input with debounce 300ms
+    - Instant autocomplete suggestion dropdown
+    - Results count header ("Found X candidates")
+    - Candidate card grid with "0:30 Pitch" badge
+    - Numeric pagination controls (\`« 1 2 3 »\`)
+  - \`Route 16: Not Found ('/404-not-found')\`
+    - Dark branded screen (\`#1e293b\`)
+    - Error code 404 & Return Home button
+
+## ⚡ Backend API Matrix (72 APIs / 8 Domains)
+- **1. Identity & Session Service (10 APIs)**
+  - \`POST /v1/auth/login/\` (Username/Password -> JWT)
+  - \`POST /v1/auth/social-login/\` (OAuth Token exchange)
+  - \`POST /v1/users/register/\` (Candidate registration)
+  - \`GET /v1/users/exists/email/?email=\` (Uniqueness check)
+  - \`GET /v1/users/exists/username/?username=\` (Uniqueness check)
+  - \`POST /v1/auth/registration/verify-email/\` (Key verification)
+  - \`POST /v1/users/verify-resend/\` (Resend email activation)
+  - \`POST /v1/auth/password/reset/\` (Send recovery email)
+  - \`POST /v1/auth/password/reset/confirm/\` (Confirm new password)
+  - \`POST /v1/auth/logout/\` (Session revocation)
+- **2. Candidate Profile Service (7 APIs)**
+  - \`GET /v1/profile/me/\` (Full candidate details)
+  - \`PATCH /v1/profile/me/\` (Headline, Bio, Phone, Skills)
+  - \`PATCH /v1/profile/hidden/\` (Toggle private/public)
+  - \`PATCH /v1/users/fresh/\` (Onboarding flag)
+  - \`POST /v1/users/email/change/\` (Request email change)
+  - \`POST /v1/auth/password/change/\` (Rotate password)
+  - \`DELETE /v1/users/\` (Account deletion)
+- **3. Profile Sections Timeline CRUD (15 APIs)**
+  - *Job Experiences (5 APIs)*
+    - \`GET /v1/profile/job-experiences/?page=1&limit=100\`
+    - \`POST /v1/profile/job-experiences/\` (Create)
+    - \`PUT/PATCH /v1/profile/job-experiences/{id}/\` (Update)
+    - \`DELETE /v1/profile/job-experiences/{id}/\` (Remove)
+    - \`POST /v1/profile/job-experiences/order/\` (Drag-drop reorder)
+  - *Education History (5 APIs)*
+    - \`GET /v1/profile/education-experiences/?page=1&limit=100\`
+    - \`POST /v1/profile/education-experiences/\` (Create)
+    - \`PUT/PATCH /v1/profile/education-experiences/{id}/\` (Update)
+    - \`DELETE /v1/profile/education-experiences/{id}/\` (Remove)
+    - \`POST /v1/profile/education-experiences/order/\` (Drag-drop reorder)
+  - *Awards & Certifications (5 APIs)*
+    - \`GET /v1/profile/award-certifications/?page=1&limit=100\`
+    - \`POST /v1/profile/award-certifications/\` (Create)
+    - \`PUT/PATCH /v1/profile/award-certifications/{id}/\` (Update)
+    - \`DELETE /v1/profile/award-certifications/{id}/\` (Remove)
+    - \`POST /v1/profile/award-certifications/order/\` (Drag-drop reorder)
+- **4. Media & Video Pitch Uploads (13 APIs)**
+  - \`PATCH /v1/profile/avatar/\` (Avatar image upload)
+  - \`PATCH /v1/profile/resume/\` (PDF resume upload)
+  - \`DELETE /v1/profile/resume/\` (Remove PDF)
+  - \`PATCH /v1/profile/cover-video/\` (0:30 Video Pitch upload)
+  - \`DELETE /v1/profile/cover-video/\` (Remove Video Pitch)
+  - \`PATCH /v1/profile/cover-video/image/\` (Video poster image)
+  - \`PATCH /v1/profile/job-video/\` & \`image/\` (Job video media)
+  - \`DELETE /v1/profile/job-video/\`
+  - \`PATCH /v1/profile/education-video/\` & \`image/\` (Education video)
+  - \`DELETE /v1/profile/education-video/\`
+  - \`PATCH /v1/profile/{section}/{id}/logo/\` (Company/School logos)
+  - \`GET /v1/profile/video-status/\` (Transcoding status polling)
+- **5. Video Recording WebRTC (OpenTok) (6 APIs)**
+  - \`GET /v1/profile/opentok/session/\` (Create WebRTC room)
+  - \`POST /v1/profile/opentok/start-archive/\` (Start recording)
+  - \`POST /v1/profile/opentok/stop-archive/\` (Stop recording)
+  - \`GET /v1/profile/opentok/get-archive/?archive_id=\` (Fetch preview)
+  - \`POST /v1/profile/opentok/save-archive/\` (Bind to profile)
+  - \`POST /v1/profile/opentok/confirm-archive/\` (Keep or discard)
+- **6. Talent Discovery & Search (2 APIs)**
+  - \`GET /v1/profile/search/?key=&page=&limit=\` (Full-text query)
+  - \`GET /v1/profile/search/suggest/?key=\` (Top 5 autocomplete)
+- **7. Reference Catalogs & Master Data (11 APIs)**
+  - \`GET /v1/profile/company/?page=1&limit=100\` (Company suggestions)
+  - \`GET /v1/profile/school/?page=1&limit=100\` (School suggestions)
+  - \`GET /v1/interest/interests/?page=1&limit=100\` (Interest tags)
+  - \`GET /v1/location/countries/\`
+  - \`GET /v1/location/states/?country_id=\`
+  - \`GET /v1/location/cities/?country_id=&state_id=\`
+  - \`GET /v1/location/swap-cities/?keyword=\`
+  - \`GET /v1/location/swap-city/{id}/\`
+  - \`GET /v1/location/swap-states/?keyword=\`
+  - \`GET /v1/location/swap-state/{id}/\`
+  - \`GET /v1/location/swap-countries/?keyword=\`
+- **8. Public CMS, Legal & Support (8 APIs)**
+  - \`GET /v1/profile/{username}\` (Public candidate profile)
+  - \`GET /v1/profile/{user_id}/export/\` (PDF resume stream)
+  - \`GET /v1/profile/reason-report/\` (Report categories list)
+  - \`POST /v1/profile/{user_id}/report/\` (Submit user report)
+  - \`POST /v1/contact/\` (Support inquiries message)
+  - \`GET /v1/career/jobs/\` & \`POST .../applicant/{job_id}/\`
+  - \`GET /v1/faqs\` & \`GET /v1/setting/video-helper/\`
+  - \`GET /v1/setting/privacy_policy/\` & \`terms_conditions/\`
+
+## 🏗️ Next.js 14+ API-First Architecture
+- **Rendering Strategy**
+  - \`React Server Components (RSC)\`: Pre-render Profile, Home, Blog, Help on Server
+  - \`Parallel Streaming\`: Promise.allSettled for Experience, Education, Awards
+  - \`Client Components ('use client')\`: Video recorder modal, drag-drop lists, search bar
+- **Data Mutation & Security**
+  - \`Next.js Server Actions\`: Handle Login, Register, Password changes
+  - \`HttpOnly Cookie Store\`: Eliminates localStorage token theft vulnerability
+  - \`Route Handlers (BFF)\`: Proxy multipart video/PDF uploads and OpenTok webhooks
+- **UI Design System Parity**
+  - \`Color Palette\`: Seafoam Teal (\`#5bbbae\`), Dark Contrast (\`#21655e\`), Tint (\`#d7ecea\`)
+  - \`54px Play Button\`: White circle with pure CSS triangle (:before border trick)
+  - \`Hover Reveal\`: .modal-start hidden by default, visible only on card :hover
+
+## 🛡️ Anti-Hallucination & Quality Protocol
+- **Zero Synthetic Assets**
+  - All logos, avatars, icons extracted strictly from verified \`/images/\`
+  - No generated SVG logos or Unsplash placeholder photos
+- **No Global CSS Pollution**
+  - Keep generic behavioral classes (\`.modal-trigger\`) clean of dimensions
+- **Browser Subagent Verification Gate**
+  - Visual check across Desktop (1440px), Tablet (768px), Mobile (375px)
+  - Mandatory hover & modal interaction verification
+`;
+
+    // Render Markmap
+    const { Transformer, Markmap } = window.markmap;
+    const transformer = new Transformer();
+    const { root } = transformer.transform(markdownContent);
+    const svg = document.getElementById('mindmap');
+    window.markmapInstance = Markmap.create(svg, {
+      duration: 300,
+      autoFit: true,
+      color: (node) => {
+        const depth = node.depth;
+        const colors = ['#3fc6b7', '#38bdf8', '#818cf8', '#f472b6', '#fb923c', '#4ade80'];
+        return colors[depth % colors.length];
+      },
+      paddingX: 20,
+      spacingHorizontal: 80,
+      spacingVertical: 10
+    }, root);
+
+    let isExpanded = true;
+    function toggleExpandAll() {
+      function setFold(node, fold) {
+        if (node.children) {
+          node.payload = { ...(node.payload || {}), fold: fold ? 1 : 0 };
+          node.children.forEach(c => setFold(c, fold));
+        }
+      }
+      isExpanded = !isExpanded;
+      setFold(root, !isExpanded);
+      window.markmapInstance.setData(root);
+      window.markmapInstance.fit();
+    }
+  </script>
+</body>
+</html>
