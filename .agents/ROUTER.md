@@ -89,9 +89,12 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | Department / Intent | Target File Scope | MANDATORY Department Skill | Concurrently Loaded |
 | :--- | :--- | :--- | :--- |
 | **Integrity & Evidence** | All tasks across repository | `engineering-integrity-and-evidence` | Assigned department skill |
-| **Enterprise Design Patterns** | All coding tasks (FE, BE, QC, Arch) | `enterprise-design-patterns` | `engineering-integrity-and-evidence` |
-| **Frontend Code Review** | All frontend PRs / modifications | `fe-reviewer-guidelines` | `enterprise-design-patterns` |
-| **Backend Code Review** | All backend PRs / modifications | `be-reviewer-guidelines` | `enterprise-design-patterns` |
+| **Architect Standards** | All system architecture & designs | `architect-patterns-and-practices` | `enterprise-design-patterns` |
+| **Senior FE Standards** | All frontend components & hooks | `fe-patterns-and-practices` | `fe-reviewer-guidelines` |
+| **Senior BE Standards** | All backend models, repos, services | `be-patterns-and-practices` | `be-reviewer-guidelines` |
+| **Senior QC Standards** | All test suites, fixtures & POMs | `qc-patterns-and-practices` | `belooga-qc-engineering` |
+| **Frontend Code Review** | All frontend PRs / modifications | `fe-reviewer-guidelines` | `fe-patterns-and-practices` |
+| **Backend Code Review** | All backend PRs / modifications | `be-reviewer-guidelines` | `be-patterns-and-practices` |
 | **Homepage & Showcase** | `frontend/src/app/page.tsx`, `src/components/organisms/home/` | `fe-page-home` | `engineering-integrity-and-evidence` |
 | **Talent Search & Discovery** | `frontend/src/app/search/`, `src/components/organisms/search/` | `fe-page-search` | `engineering-integrity-and-evidence` |
 | **Public Candidate Profile** | `frontend/src/app/public/[username]/` | `fe-page-public-profile` | `fe-section-workspace-pitch-player` |
