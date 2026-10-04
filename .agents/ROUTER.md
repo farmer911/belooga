@@ -1,6 +1,6 @@
 # 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
 
-> **Version:** 2.1.0 — Enterprise Multi-Department Standard with Dual-Key Reviewers  
+> **Version:** 2.3.0 — Enterprise Multi-Department Standard with 7-Tier Definition of Done (DoD)  
 > **Status:** MANDATORY & ENFORCED FOR ALL AGENTS & SUB-AGENTS  
 > **Authority:** Principal Full-Stack Architect  
 
@@ -12,8 +12,9 @@ This document establishes the **Organizational Operating System** for the Beloog
 1. **Pages and Services are specialized Departments (Phòng Ban):** Each department maintains exclusive ownership of its domain, technical specifications, and standards.
 2. **Skills are Institutional Knowledge Assets:** Agents are not generic laborers; they act as Senior Specialists equipped with deep, accumulated institutional memory.
 3. **Zero Blind Trust (50% Agent Confidence Cap):** Coder Agents are trusted at at most 50%. The remaining 50% of verification is enforced by **Independent Reviewer Agents** (Senior Frontend Lead Reviewer and Principal Backend Lead Reviewer).
-4. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
-5. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
+4. **Strict Definition of Done (DoD):** No work is complete without satisfying the binary 7-tier DoD quality contract (`definition-of-done` skill).
+5. **Cross-Departmental Impacts are strictly mapped:** No department changes code without verifying upstream and downstream dependencies.
+6. **Continuous Learning is Enforced:** After every feature or bug fix, departments **must self-update** their knowledge base. Historical mistakes are logged so they are **never repeated**.
 
 ---
 
@@ -72,7 +73,8 @@ This document establishes the **Organizational Operating System** for the Beloog
                                        │ YES
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📚 STEP 5: POST-FEATURE LEARNING & EVIDENCE SIGN-OFF                         │
+│ 📚 STEP 5: DEFINITION OF DONE (DoD) & EVIDENCE SIGN-OFF                     │
+│ • Enforce 7-Tier DoD Contract (`definition-of-done` skill).                 │
 │ • Update Department Skill: Document any new contracts or props.             │
 │ • If a bug occurred, log root cause in VIOLATIONS_REGISTER.md.              │
 │ • Emit Empirical Proof Block (Exit Code: 0, test logs, browser check).      │
@@ -89,6 +91,7 @@ Every agent **MUST CONSULT THIS DIRECTORY** before commencing work:
 | Department / Intent | Target File Scope | MANDATORY Department Skill | Concurrently Loaded |
 | :--- | :--- | :--- | :--- |
 | **Integrity & Evidence** | All tasks across repository | `engineering-integrity-and-evidence` | Assigned department skill |
+| **Definition of Done (DoD)**| All task completions / sign-offs | `definition-of-done` | `engineering-integrity-and-evidence` |
 | **Architect Standards** | All system architecture & designs | `architect-patterns-and-practices` | `enterprise-design-patterns` |
 | **Senior FE Standards** | All frontend components & hooks | `fe-patterns-and-practices` | `fe-reviewer-guidelines` |
 | **Senior BE Standards** | All backend models, repos, services | `be-patterns-and-practices` | `be-reviewer-guidelines` |
