@@ -43,6 +43,21 @@ async def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def ensure_test_database_seeded():
+    """Hermetic test fixture: ensures test database has required seed data."""
+    import importlib.util
+    from pathlib import Path
+
+    seed_script = Path(__file__).resolve().parent.parent.parent / "scripts" / "seed-data.py"
+    if seed_script.exists():
+        spec = importlib.util.spec_from_file_location("seed_data_script", str(seed_script))
+        seed_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(seed_mod)
+        await seed_mod.seed(TEST_DATABASE_URL)
+
+
+
 @pytest_asyncio.fixture
 async def db_session():
     async with test_session_maker() as session:

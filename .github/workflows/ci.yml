@@ -68,6 +68,7 @@ jobs:
           PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_db -c "CREATE DATABASE belooga_test;"
           PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_test -f backend/initdb.sql
           backend/.venv/bin/python scripts/seed-data.py
+          DATABASE_URL="postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_test" backend/.venv/bin/python scripts/seed-data.py
 
       - name: Run Master SSOT Truth Auditor
         env:
