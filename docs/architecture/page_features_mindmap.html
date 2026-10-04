@@ -17,11 +17,22 @@
     #header {
       position: absolute; top: 16px; left: 20px; z-index: 100;
       background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.12); padding: 12px 20px; border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12); padding: 14px 22px; border-radius: 10px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
-    #header h1 { font-size: 17px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    #header h1 { font-size: 18px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
     #header p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    #legend {
+      display: flex; gap: 10px; margin-top: 8px; font-size: 11px;
+    }
+    .badge-done {
+      background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35);
+      padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .badge-todo {
+      background: rgba(234, 179, 8, 0.18); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.35);
+      padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+    }
     #instructions {
       position: absolute; bottom: 16px; left: 20px; z-index: 100;
       background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(8px);
@@ -36,135 +47,142 @@
 
   <div id="header">
     <h1>🐋 Belooga — Page Features & Architecture Mindmap</h1>
-    <p>Ground-Truth Feature Map across 16 Page Families (Next.js 16.3.8 App Router + FastAPI 8 Domains)</p>
+    <p>Live Ground-Truth Status across 16 Page Families (Next.js 16.3.8 App Router + FastAPI 8 Domains)</p>
+    <div id="legend">
+      <span class="badge-done">✅ COMPLETE (Active in Runtime & Tested)</span>
+      <span class="badge-todo">⏳ PLANNED (Backlog Feature)</span>
+    </div>
   </div>
 
   <div id="instructions">
-    💡 <b>Tip:</b> Click circles to expand/collapse • Click & drag to pan • Scroll to zoom
+    💡 <b>Tip:</b> Click node circles to expand/collapse • Click & drag to pan • Scroll to zoom in/out
   </div>
 
   <div class="markmap">
     <script type="text/template">
-# 🐋 Belooga Platform Architecture
+# 🐋 Belooga Platform Status Mindmap
 
 ## 1. Candidate Workspace & Video Studio
-- **Candidate Workspace (`/user/[username]`)**
-  - **Sticky Bio Sidebar (`fe-page-workspace`)**
-    - Avatar, Full Name, Title, Contact Info
-    - Seeking Status (`Actively Looking`, `Full-Time`)
-    - Download PDF Resume trigger (`GET /v1/profile/{username}/pdf/`)
-  - **30s Video Elevator Pitch Player**
-    - Custom HTML5 Video Player with branded poster
-    - Video playback controls, volume, fullscreen
-    - Storage path: `/uploads/videos/[username]_pitch.webm`
-  - **WebRTC Pitch Recording Studio Modal**
-    - Camera / Mic live stream capture (`navigator.mediaDevices`)
-    - 3-2-1 Countdown & 30-second hard limit recording timer
-    - Interactive Teleprompter with scroll speed control & silence detection
-    - Chunked video upload engine (`POST /v1/media/upload/chunk` + `complete`)
-  - **Career Experience Timeline (Drag & Drop)**
-    - Chronological job cards (Company, Role, Dates, Responsibilities)
-    - Reorder lock with optimistic drag-and-drop (`POST /v1/timeline/job-experiences/reorder`)
-    - Inline CRUD modal (Create, Edit, Delete job experience)
-  - **Academic Education Timeline**
-    - Degree, University, GPA, Graduation Year
-    - Drag-and-drop order persistence (`POST /v1/timeline/education/reorder`)
-  - **Skills, Languages & Personal Interests Badges**
-    - Interactive skill tag additions (`POST /v1/profile/skills/`)
-    - Master taxonomy catalog lookup (`GET /v1/catalogs/skills`)
-    - Native/Fluent spoken languages badges (`profile_languages`)
-    - Personal interests & hobbies tags (`profile_interests`)
+- **✅ Candidate Workspace (`/user/[username]`)**
+  - **✅ Sticky Bio Sidebar (`fe-page-workspace`)**
+    - ✅ Avatar, Full Name, Title, Contact Info
+    - ✅ Seeking Status (`Actively Looking`, `Full-Time`)
+    - ✅ Download PDF Resume trigger (`GET /v1/profile/{username}/pdf/`)
+  - **✅ 30s Video Elevator Pitch Player**
+    - ✅ Custom HTML5 Video Player with branded poster
+    - ✅ Video playback controls, volume, fullscreen
+    - ✅ Storage path: `/uploads/videos/[username]_pitch.webm`
+  - **✅ WebRTC Pitch Recording Studio Modal**
+    - ✅ Camera / Mic live stream capture (`navigator.mediaDevices`)
+    - ✅ 3-2-1 Countdown & 30-second hard limit recording timer
+    - ✅ Interactive Teleprompter with scroll speed control & silence detection
+    - ✅ Chunked video upload engine (`POST /v1/media/upload/chunk` + `complete`)
+  - **✅ Career Experience Timeline (Drag & Drop)**
+    - ✅ Chronological job cards (Company, Role, Dates, Responsibilities)
+    - ✅ Reorder lock with optimistic drag-and-drop (`POST /v1/profile/{username}/job-experiences/order/`)
+    - ✅ Inline CRUD modal (`GET`, `POST`, `DELETE /v1/profile/{username}/job-experiences/`)
+  - **✅ Academic Education Timeline**
+    - ✅ Degree, University, GPA, Graduation Year
+    - ✅ Drag-and-drop order persistence (`POST /v1/profile/{username}/education/order/`)
+    - ✅ Inline CRUD (`GET`, `POST`, `DELETE /v1/profile/{username}/education/`)
+  - **✅ Skills, Languages & Personal Interests Badges**
+    - ✅ Interactive skill tag additions (`POST`, `DELETE /v1/profile/{username}/skills/`)
+    - ✅ Master taxonomy catalog lookup (`GET /v1/profile/skills/`)
+    - ✅ Native/Fluent spoken languages badges (`profile_languages`)
+    - ✅ Personal interests & hobbies tags (`profile_interests`)
 
-- **Profile Editor (`/user/[username]/update`)**
-  - **Avatar Upload & Interactive Cropper**
-    - Circular crop modal (`react-easy-crop`)
-    - Secure upload to `/uploads/avatars/` (`POST /v1/media/avatar/`)
-  - **Biographical Data Form**
-    - First Name, Last Name, Headline, Location, Bio
-    - Mutations guarded by ownership (`PUT /v1/profile/`)
-  - **Catalog Selectors**
-    - Standardized companies dropdown (`GET /v1/catalogs/companies`)
-    - Accredited universities dropdown (`GET /v1/catalogs/schools`)
-    - Standardized cities dropdown (`GET /v1/catalogs/locations`)
+- **✅ Profile Editor (`/user/[username]/update`)**
+  - **✅ Avatar Upload & Interactive Cropper**
+    - ✅ Circular crop modal (`react-easy-crop`)
+    - ✅ Secure upload to `/uploads/avatars/` (`PATCH /v1/profile/{username}/avatar/`)
+  - **✅ Biographical Data Form**
+    - ✅ First Name, Last Name, Headline, Location, Bio
+    - ✅ Mutations guarded by ownership (`PATCH /v1/profile/{username}`)
+  - **✅ Catalog Selectors**
+    - ✅ Standardized companies dropdown (`GET /v1/profile/company/`)
+    - ✅ Accredited universities dropdown (`GET /v1/profile/school/`)
+    - ✅ Standardized cities dropdown (`GET /v1/profile/location/`)
 
-- **Account Settings & Security (`/user/[username]/settings`)**
-  - **Credential Management**
-    - Primary email change request flow (`POST /v1/auth/email/change/`)
-    - Argon2id password rotation (`POST /v1/auth/password/change/`)
-  - **Privacy & Stealth Controls**
-    - Profile visibility toggle (`is_hidden` boolean: `PATCH /v1/profile/visibility/`)
-    - Hidden profile hides candidates from `/search` and denies anonymous `/public` views
-  - **Session Vault & Refresh Token Rotation**
-    - Family-based token replay detection vault (`refresh_sessions` table)
-    - Active sessions revocation & logout (`POST /v1/auth/logout/`)
-  - **Danger Zone**
-    - Irreversible account deletion modal (`DELETE /v1/profile/`)
+- **✅ Account Settings & Security (`/user/[username]/settings`)**
+  - **✅ Credential Management**
+    - ✅ Primary email change request flow (`POST /v1/users/email/change/`)
+    - ✅ Argon2id password rotation (`POST /v1/auth/password/change/`)
+  - **✅ Privacy & Stealth Controls**
+    - ✅ Profile visibility toggle (`is_hidden` boolean: `PATCH /v1/profile/hidden/`)
+    - ✅ Hidden profile hides candidates from `/search` and denies anonymous `/public` views
+  - **✅ Session Vault & Refresh Token Rotation**
+    - ✅ Family-based token replay detection vault (`refresh_sessions` table)
+    - ✅ Active sessions revocation & logout (`POST /v1/auth/logout/`)
+  - **✅ Danger Zone**
+    - ✅ Irreversible account deletion modal (`DELETE /v1/users/`)
 
 ## 2. Talent Discovery & Public Showcases
-- **Talent Discovery & Search (`/search`)**
-  - **Instant Search Input**
-    - 300ms debounced input
-    - Real-time autocomplete suggestions (`GET /v1/search/suggestions/?q=`)
-    - Strict GIN `search_vector` TSVECTOR execution (Zero `OR ILIKE` fallback, ADR-005)
-  - **Candidate Result Cards**
-    - 30s Video Elevator Pitch thumbnail badge
-    - Headline, location, and verified top skills badges
-    - Direct recruiter navigation to public profile
-  - **Pagination & Filters**
-    - Numeric pagination (`« 1 2 3 »`) (`GET /v1/search/?q=&page=&limit=12`)
-    - Role, skill, and seeking status facet filters
+- **✅ Talent Discovery & Search (`/search`)**
+  - **✅ Instant Search Input**
+    - ✅ 300ms debounced input
+    - ✅ Real-time autocomplete suggestions (`GET /v1/profile/search/suggest/`)
+    - ✅ Strict GIN `search_vector` TSVECTOR execution (`GET /v1/profile/search/` - Zero `OR ILIKE` fallback, ADR-005)
+  - **✅ Candidate Result Cards**
+    - ✅ 30s Video Elevator Pitch thumbnail badge
+    - ✅ Headline, location, and verified top skills badges
+    - ✅ Direct recruiter navigation to public profile
+  - **✅ Pagination & Filters**
+    - ✅ Numeric pagination (`« 1 2 3 »`) (`GET /v1/profile/search/?page=&limit=12`)
+    - ✅ Role, skill, and seeking status facet filters
+  - **⏳ Candidate Bookmarks Toggle**
+    - ⏳ Recruiter bookmark icon on candidate card (Planned Feature)
 
-- **Public Candidate View (`/public/[username]`)**
-  - **Recruiter Read-Only Showcase**
-    - Candidate bio header and verified skills
-    - 30s Video Elevator Pitch embed
-    - Full career and education chronology
-  - **Action Toolbar**
-    - Export & download ReportLab PDF resume (`GET /v1/profile/{username}/pdf/`)
-    - PII protection guard (Hides phone/email from anonymous visitors)
-  - **Moderation & Safety**
-    - "Report Candidate" modal with abuse reason categories (`POST /v1/cms/report-profile/`)
+- **✅ Public Candidate View (`/public/[username]`)**
+  - **✅ Recruiter Read-Only Showcase**
+    - ✅ Candidate bio header and verified skills
+    - ✅ 30s Video Elevator Pitch embed
+    - ✅ Full career and education chronology
+  - **✅ Action Toolbar**
+    - ✅ Export & download ReportLab PDF resume (`GET /v1/profile/{username}/pdf/`)
+    - ✅ PII protection guard (Masks phone/email for anonymous visitors)
+  - **✅ Moderation & Safety**
+    - ✅ "Report Candidate" modal with abuse categories (`POST /v1/profile/{user_id}/report/`)
 
-- **Homepage & Public Showcase (`/`)**
-  - **Hero Section & Dynamic CTA**
-    - Catchy headline & value proposition
-    - Primary action buttons: "Find Talent" (`/search`) & "Create Pitch" (`/register`)
-  - **Walkthrough Video Modal**
-    - Interactive product demonstration video player
-  - **Featured Talent Grid**
-    - Real candidate profile cards preview
-  - **3-Step Process Guide**
-    - 1. Record 30s Pitch • 2. Build Interactive Timeline • 3. Get Hired
+- **✅ Homepage & Public Showcase (`/`)**
+  - **✅ Hero Section & Dynamic CTA**
+    - ✅ Catchy headline & value proposition
+    - ✅ Primary action buttons: "Find Talent" (`/search`) & "Create Pitch" (`/register`)
+  - **✅ Walkthrough Video Modal**
+    - ✅ Interactive product demonstration video player
+  - **✅ Featured Talent Grid**
+    - ✅ Real candidate profile cards preview
+  - **✅ 3-Step Process Guide**
+    - ✅ 1. Record 30s Pitch • 2. Build Interactive Timeline • 3. Get Hired
 
 ## 3. Authentication & Onboarding
-- **Candidate Login (`/(auth)/login`)**
-  - Split-screen branded layout with `#d7ecea` overlay
-  - Social OAuth triggers (Google, LinkedIn, Facebook)
-  - Email / Password form (`POST /v1/auth/login`)
-  - Issues secure HTTP-only refresh cookie + JWT access token
-- **Candidate Registration (`/(auth)/register`)**
-  - Instant username availability probe (`GET /v1/auth/check-username?u=`)
-  - Email uniqueness check & password strength meter
-  - Legal terms acceptance & registration execution (`POST /v1/auth/register`)
-- **Password Recovery (`/(auth)/forgot-password`)**
-  - Time-limited password reset token issuance (`POST /v1/auth/forgot-password`)
-- **Password Reset Gateway (`/(auth)/reset-password`)**
-  - Token validity verification & new password input (`POST /v1/auth/reset-password`)
+- **✅ Candidate Login (`/(auth)/login`)**
+  - ✅ Split-screen branded layout with `#d7ecea` overlay
+  - ✅ Social OAuth triggers (Google, LinkedIn, Facebook)
+  - ✅ Email / Password form (`POST /v1/auth/login/`)
+  - ✅ Issues secure HTTP-only refresh cookie + JWT access token
+- **✅ Candidate Registration (`/(auth)/register`)**
+  - ✅ Instant username availability probe (`GET /v1/users/exists/username/`)
+  - ✅ Email uniqueness check (`GET /v1/users/exists/email/`)
+  - ✅ Password strength meter & registration (`POST /v1/users/register/`)
+  - ✅ Legal terms acceptance checkbox
+- **✅ Password Recovery (`/(auth)/forgot-password`)**
+  - ✅ Password reset request email dispatch
+- **✅ Password Reset Gateway (`/(auth)/reset-password`)**
+  - ✅ Token validity verification & new password input
 
 ## 4. Public CMS & Platform Legal
-- **Editorial Blog (`/(public)/blog`)**
-  - Curated career advice articles & hiring trends
-- **Careers Page (`/(public)/careers`)**
-  - Belooga open positions listing (`GET /v1/cms/careers`)
-  - Job application modal with resume upload (`POST /v1/cms/apply`)
-- **Contact Us (`/(public)/contact-us`)**
-  - Public inquiry form (`POST /v1/cms/contact`)
-  - Stored in PostgreSQL `contact_inquiries` table
-- **Help Center & FAQs (`/(public)/help`)**
-  - Categorized accordion FAQs for Candidates & Recruiters
-- **Legal & Compliance**
-  - Privacy Policy (`/(public)/privacy-policy`)
-  - Terms of Service (`/(public)/terms-and-conditions`)
+- **✅ Editorial Blog (`/(public)/blog`)**
+  - ✅ Curated career advice articles & hiring trends
+- **✅ Careers Page (`/(public)/careers`)**
+  - ✅ Belooga open positions listing (`GET /v1/career/jobs/`)
+  - ✅ Job application modal with resume upload
+- **✅ Contact Us (`/(public)/contact-us`)**
+  - ✅ Public inquiry submission form (`POST /v1/contact/`)
+- **✅ Help Center & FAQs (`/(public)/help`)**
+  - ✅ Categorized accordion FAQs (`GET /v1/faqs`)
+- **✅ Legal & Compliance (`/(public)/privacy-policy & terms`)**
+  - ✅ Privacy Policy page (`/(public)/privacy-policy`)
+  - ✅ Terms and Conditions page (`/(public)/terms-and-conditions`)
     </script>
   </div>
 
