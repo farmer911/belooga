@@ -28,5 +28,6 @@ Always-on project instruction for Gemini / Antigravity agent.
 - **Backend API / DB:** Skill `belooga-backend-engineering` (routes to specific `be-service-*` domain skills), test with `backend/.venv/bin/pytest backend/tests/`.
 - **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to specific `fe-page-*` domain skills), test with `cd frontend && bun x tsc --noEmit`.
 - **E2E / Visual QC:** Skill `belooga-qc-engineering`, run `cd qc && bun run test:e2e`.
+- **Agile Planning & PR Delivery:** Skill `belooga-senior-agile-workflow`, task breakdown with standalone engine at `../beloga-agent-kanban` (CLI: `bun run agent`).
 - **Quality Gate / PR:** Workflow `.agents/workflows/definition-of-done.md`.
 - **Before claiming done:** Always run `python3 scripts/lint-skills.py --quiet`.
