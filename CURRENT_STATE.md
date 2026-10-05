@@ -7,7 +7,7 @@
 
 ## 1. Database Schema Truth (`backend/initdb.sql`)
 
-**Total Tables: 24** (Verified directly from PostgreSQL table creation statements)
+**Total Tables: 28** (Verified directly from PostgreSQL table creation statements)
 
 | # | Table Name | Purpose / Category |
 |---|---|---|
@@ -35,12 +35,16 @@
 | 22 | `profile_reports` | Domain 8: Candidate Moderation & Flagged Reports |
 | 23 | `career_postings` | Domain 8: Internal Belooga Career Job Listings |
 | 24 | `career_applications` | Domain 8: Candidate Job Applications & Resume Attachments |
+| 25 | `expert_profiles` | General Storage |
+| 26 | `cv_review_packages` | General Storage |
+| 27 | `cv_review_orders` | General Storage |
+| 28 | `cv_review_feedbacks` | General Storage |
 
 ---
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 38 (36 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 44 (42 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -53,9 +57,15 @@
 | `POST` | `/v1/auth/refresh/` | `refresh_tokens` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/experts/` | `list_experts` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Root |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `POST` | `/v1/media/upload/complete` | `complete_chunked_video_upload` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
+| `POST` | `/v1/orders/` | `create_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
+| `GET` | `/v1/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
+| `POST` | `/v1/orders/{order_id}/checkout/` | `checkout_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
+| `GET` | `/v1/orders/{order_id}/feedback/` | `get_order_feedback` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
+| `GET` | `/v1/packages/` | `list_packages` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Root |
 | `GET` | `/v1/profile/company/` | `suggest_companies` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/location/` | `suggest_locations` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/school/` | `suggest_schools` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
@@ -88,7 +98,7 @@
 
 ## 3. Frontend Routes Inventory (`frontend/src/app`)
 
-**Total Pages/Boundaries: 18** (Next.js App Router)
+**Total Pages/Boundaries: 19** (Next.js App Router)
 
 | Route URL | File Path | Route Type |
 |---|---|---|
@@ -99,6 +109,7 @@
 | `/callback` | `frontend/src/app/(auth)/callback/page.tsx` | Page |
 | `/careers` | `frontend/src/app/(public)/careers/page.tsx` | Page |
 | `/contact-us` | `frontend/src/app/(public)/contact-us/page.tsx` | Page |
+| `/expert-review` | `frontend/src/app/(public)/expert-review/page.tsx` | Page |
 | `/forgot-password` | `frontend/src/app/(auth)/forgot-password/page.tsx` | Page |
 | `/help` | `frontend/src/app/(public)/help/page.tsx` | Page |
 | `/login` | `frontend/src/app/(auth)/login/page.tsx` | Page |

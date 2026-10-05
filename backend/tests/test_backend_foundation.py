@@ -33,14 +33,15 @@ EXPECTED_TABLES = {
     "languages", "profile_languages", "interests", "profile_interests",
     "catalog_companies", "catalog_schools", "catalog_locations", "video_archives",
     "contact_inquiries", "profile_reports", "career_postings", "career_applications",
+    "expert_profiles", "cv_review_packages", "cv_review_orders", "cv_review_feedbacks",
 }
 
 
 def test_models_metadata_completeness():
-    """Verify all 24 database tables are declared and registered on Base.metadata."""
+    """Verify all database tables are declared and registered on Base.metadata."""
     registered_tables = set(Base.metadata.tables.keys())
     assert registered_tables == EXPECTED_TABLES
-    assert len(registered_tables) == 24
+    assert len(registered_tables) == 28
 
 
 def test_models_match_initdb_sql():

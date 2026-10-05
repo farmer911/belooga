@@ -9,6 +9,7 @@ from app.api.v1.endpoints.search import router as search_router
 from app.api.v1.endpoints.catalogs import router as catalogs_router
 from app.api.v1.endpoints.cms import router as cms_router
 from app.api.v1.endpoints.media import router as media_router
+from app.api.v1.endpoints.expert_review import router as expert_review_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,6 +50,7 @@ app.include_router(search_router, prefix="/v1")
 app.include_router(catalogs_router, prefix="/v1")
 app.include_router(cms_router, prefix="/v1")
 app.include_router(media_router, prefix="/v1")
+app.include_router(expert_review_router, prefix="/v1")
 
 @app.get("/health", tags=["Health Probe"])
 async def health_check():

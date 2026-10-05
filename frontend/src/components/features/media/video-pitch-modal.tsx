@@ -77,7 +77,7 @@ export function VideoPitchModal({
           <button
             data-testid="close-pitch-modal-btn"
             onClick={handleClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors"
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors relative z-10 shrink-0 flex items-center justify-center min-w-[32px] min-h-[32px]"
             aria-label="Close video player"
           >
             <X className="w-5 h-5 lucide-x" />

@@ -22,6 +22,14 @@ from app.schemas.cms import (
     ReportProfileRequest,
     ReportProfileResponse,
 )
+from app.schemas.expert_review import (
+    CVReviewFeedbackResponse,
+    CVReviewOrderCreateRequest,
+    CVReviewOrderResponse,
+    CVReviewPackageResponse,
+    ExpertProfileResponse,
+    OrderCheckoutRequest,
+)
 from app.schemas.media import (
     ChunkUploadRequest,
     ChunkUploadResponse,
@@ -83,4 +91,10 @@ __all__ = [
     "ReportProfileResponse",
     "CareerPostingResponse",
     "JobApplicantRequest",
+    "ExpertProfileResponse",
+    "CVReviewPackageResponse",
+    "CVReviewOrderCreateRequest",
+    "OrderCheckoutRequest",
+    "CVReviewFeedbackResponse",
+    "CVReviewOrderResponse",
 ]

@@ -40,6 +40,12 @@ from app.models.cms import (
     ContactInquiry,
     ProfileReport,
 )
+from app.models.expert_review import (
+    CVReviewFeedback,
+    CVReviewOrder,
+    CVReviewPackage,
+    ExpertProfile,
+)
 
 __all__ = [
     "Base",
@@ -68,4 +74,8 @@ __all__ = [
     "ProfileReport",
     "CareerPosting",
     "CareerApplication",
+    "ExpertProfile",
+    "CVReviewPackage",
+    "CVReviewOrder",
+    "CVReviewFeedback",
 ]

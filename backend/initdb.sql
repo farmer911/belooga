@@ -271,3 +271,69 @@ CREATE TABLE IF NOT EXISTS career_applications (
     resume_url TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 20. Domain 9: Expert CV Review & Monetization
+CREATE TABLE IF NOT EXISTS expert_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    full_name VARCHAR(255) NOT NULL,
+    headline VARCHAR(255) NOT NULL,
+    bio TEXT NOT NULL,
+    avatar_url VARCHAR(512),
+    company VARCHAR(255) NOT NULL,
+    role_category VARCHAR(100) NOT NULL,
+    years_of_experience INTEGER NOT NULL DEFAULT 5,
+    rating NUMERIC(3, 2) NOT NULL DEFAULT 5.0,
+    total_reviews_count INTEGER NOT NULL DEFAULT 0,
+    turn_around_days INTEGER NOT NULL DEFAULT 2,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cv_review_packages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT NOT NULL,
+    price_cents INTEGER NOT NULL,
+    features JSONB NOT NULL DEFAULT '[]'::jsonb,
+    turn_around_hours INTEGER NOT NULL DEFAULT 48,
+    is_popular BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cv_review_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    candidate_identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    expert_id UUID REFERENCES expert_profiles(id) ON DELETE SET NULL,
+    package_id UUID NOT NULL REFERENCES cv_review_packages(id) ON DELETE RESTRICT,
+    resume_url VARCHAR(512) NOT NULL,
+    target_role VARCHAR(255) NOT NULL,
+    target_companies VARCHAR(255),
+    candidate_notes TEXT,
+    order_status VARCHAR(50) NOT NULL DEFAULT 'pending_payment',
+    amount_paid_cents INTEGER NOT NULL,
+    payment_reference VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cv_review_feedbacks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID UNIQUE NOT NULL REFERENCES cv_review_orders(id) ON DELETE CASCADE,
+    expert_id UUID NOT NULL REFERENCES expert_profiles(id) ON DELETE CASCADE,
+    score_overall INTEGER NOT NULL,
+    score_ats_compatibility INTEGER NOT NULL,
+    score_impact_action_verbs INTEGER NOT NULL,
+    score_structure_formatting INTEGER NOT NULL,
+    summary_verdict TEXT NOT NULL,
+    strengths JSONB NOT NULL DEFAULT '[]'::jsonb,
+    improvements JSONB NOT NULL DEFAULT '[]'::jsonb,
+    annotated_cv_url VARCHAR(512),
+    video_feedback_url VARCHAR(512),
+    submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

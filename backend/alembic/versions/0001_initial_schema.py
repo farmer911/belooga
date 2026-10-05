@@ -46,13 +46,23 @@ TABLES_IN_REVERSE_ORDER = [
 ]
 
 
+NEW_TABLES_0002 = {"expert_profiles", "cv_review_packages", "cv_review_orders", "cv_review_feedbacks"}
+
+
 def upgrade() -> None:
-    """Execute baseline initial schema DDL for all 24 tables."""
+    """Execute baseline initial schema DDL for all 24 baseline tables."""
     if not INITDB_PATH.exists():
         raise FileNotFoundError(f"Initial schema file not found at {INITDB_PATH}")
 
     sql_statements = INITDB_PATH.read_text(encoding="utf-8")
-    op.execute(sa.text(sql_statements))
+    for statement in sql_statements.split(";"):
+        cleaned = statement.strip()
+        if not cleaned:
+            continue
+        # Delegate 0002 tables to revision 0002
+        if any(f"CREATE TABLE IF NOT EXISTS {t}" in cleaned or f"CREATE TABLE {t}" in cleaned for t in NEW_TABLES_0002):
+            continue
+        op.execute(sa.text(cleaned))
 
 
 def downgrade() -> None:

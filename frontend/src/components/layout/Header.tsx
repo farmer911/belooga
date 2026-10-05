@@ -12,16 +12,16 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-[#d1d6da] bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo - Strict literal image */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
           <img
             src="/images/logo-big.png"
             alt="Belooga"
-            className="h-[38px] w-auto object-contain"
+            className="h-[38px] w-auto object-contain shrink-0"
           />
         </Link>
 
         {/* Navigation & Actions */}
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-3 sm:gap-6">
           <Link
             href="/search"
             className="text-sm font-medium text-[#515151] hover:text-[#5bbbae] transition-colors"
@@ -29,14 +29,20 @@ export function Header() {
             Find Talent
           </Link>
           <Link
+            href="/expert-review"
+            className="hidden md:block text-sm font-medium text-[#515151] hover:text-[#5bbbae] transition-colors"
+          >
+            Expert Review
+          </Link>
+          <Link
             href="/careers"
-            className="text-sm font-medium text-[#515151] hover:text-[#5bbbae] transition-colors"
+            className="hidden sm:block text-sm font-medium text-[#515151] hover:text-[#5bbbae] transition-colors"
           >
             Careers
           </Link>
           <Link
             href="/blog"
-            className="text-sm font-medium text-[#515151] hover:text-[#5bbbae] transition-colors"
+            className="hidden sm:block text-sm font-medium text-[#515151] hover:text-[#5bbbae] transition-colors"
           >
             Blog
           </Link>

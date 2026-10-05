@@ -90,15 +90,15 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/auth.py": {
-    "mtime": 1791135041.6003094,
-    "seen": 1791135179.083211,
-    "ast_hash": "195f78dd5c622de188a70053802485cf",
+    "mtime": 1791135199.4562635,
+    "seen": 1791135223.811724,
+    "ast_hash": "d00d63c2335531a34b26769ead86689e",
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/profile.py": {
-    "mtime": 1791135046.350328,
-    "seen": 1791135179.083213,
-    "ast_hash": "3d8ac8d3e23e38de9d48134ba9416a1a",
+    "mtime": 1791135214.5022016,
+    "seen": 1791135223.811761,
+    "ast_hash": "8f149fabd8782b23e142fba477dc78c3",
     "semantic_hash": ""
   },
   "backend/app/core/database.py": {
@@ -576,9 +576,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/media.py": {
-    "mtime": 1791135143.9018652,
-    "seen": 1791135179.083213,
-    "ast_hash": "73ae69b3d3d2fe86919612931bed2192",
+    "mtime": 1791135202.9130278,
+    "seen": 1791135223.811761,
+    "ast_hash": "1c968d55b92242f38e9abf13f49d826e",
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/search.py": {
@@ -588,9 +588,9 @@
     "semantic_hash": ""
   },
   "backend/app/api/v1/endpoints/timeline.py": {
-    "mtime": 1791135052.1032922,
-    "seen": 1791135179.083214,
-    "ast_hash": "e1a5ae42e6fc26a10df3aa2cdc88b9ce",
+    "mtime": 1791135228.5253804,
+    "seen": 1791135273.73189,
+    "ast_hash": "880092999a584e9fd6942bf4746fde29",
     "semantic_hash": ""
   },
   "frontend/src/app/(auth)/callback/page.tsx": {
@@ -654,9 +654,9 @@
     "semantic_hash": ""
   },
   "frontend/src/app/public/[username]/page.tsx": {
-    "mtime": 1791113126.2090168,
-    "seen": 1791114440.5164359,
-    "ast_hash": "63c80891cfe9fafe6a8cb841ba39b630",
+    "mtime": 1791135185.0566866,
+    "seen": 1791135223.8126101,
+    "ast_hash": "f054d7384d39fe591ed8e2253114e818",
     "semantic_hash": ""
   },
   "frontend/src/app/search/page.tsx": {
@@ -876,9 +876,9 @@
     "semantic_hash": ""
   },
   "CURRENT_STATE.md": {
-    "mtime": 1791135171.3930125,
-    "seen": 1791135179.08547,
-    "ast_hash": "99d70976b32af6b8c5520b86528e1547",
+    "mtime": 1791135307.4642284,
+    "seen": 1791135375.811263,
+    "ast_hash": "e6d5b8a169ad0324506d42c10f121f3b",
     "semantic_hash": ""
   },
   "backend/tests/test_profile_privacy_and_pii.py": {
@@ -1953,24 +1953,6 @@
     "mtime": 1791134947.9389362,
     "seen": 1791135179.0842109,
     "ast_hash": "e7e774b9854ac97b5de2deca40cc1339",
-    "semantic_hash": ""
-  },
-  "uploads/videos/alexnguyen_pitch_1791135148.webm": {
-    "mtime": 1791135148.5586412,
-    "seen": 1791135179.087105,
-    "ast_hash": "d9742d36c2f066709862f0e5da875de2",
-    "semantic_hash": ""
-  },
-  "uploads/videos/alexnguyen_pitch_1791135167.webm": {
-    "mtime": 1791135167.4293203,
-    "seen": 1791135179.087106,
-    "ast_hash": "d9742d36c2f066709862f0e5da875de2",
-    "semantic_hash": ""
-  },
-  "uploads/videos/alexnguyen_pitch_1791135173.webm": {
-    "mtime": 1791135173.0986998,
-    "seen": 1791135179.087106,
-    "ast_hash": "d9742d36c2f066709862f0e5da875de2",
     "semantic_hash": ""
   }
 }

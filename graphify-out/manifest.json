@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "backend/app/main.py": {
-    "mtime": 1791109576.5655253,
-    "seen": 1791110424.778343,
-    "ast_hash": "43b9f40c8595ba22796d660e04e7d498",
+    "mtime": 1791171353.7207985,
+    "seen": 1791171912.6365492,
+    "ast_hash": "38f3affe287a13a5c3478611567f9fdf",
     "semantic_hash": ""
   },
   "backend/app/schemas/auth.py": {
@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/layout/Header.tsx": {
-    "mtime": 1791066430.9227524,
-    "seen": 1791067105.6968708,
-    "ast_hash": "931f7492038acf709e040a0458b25abb",
+    "mtime": 1791171838.7885706,
+    "seen": 1791171912.637844,
+    "ast_hash": "e2883e554aedf8abfb7802cffbddb7a4",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/button.tsx": {
@@ -876,9 +876,9 @@
     "semantic_hash": ""
   },
   "CURRENT_STATE.md": {
-    "mtime": 1791135307.4642284,
-    "seen": 1791135375.811263,
-    "ast_hash": "e6d5b8a169ad0324506d42c10f121f3b",
+    "mtime": 1791171906.0598252,
+    "seen": 1791171912.639349,
+    "ast_hash": "65823c8a6f237c0fe607730438e3369a",
     "semantic_hash": ""
   },
   "backend/tests/test_profile_privacy_and_pii.py": {
@@ -1512,15 +1512,15 @@
     "semantic_hash": ""
   },
   "backend/alembic/versions/0001_initial_schema.py": {
-    "mtime": 1791134475.976159,
-    "seen": 1791134665.171617,
-    "ast_hash": "e5ae6506eaccf22fc2a9d253b7bfaca6",
+    "mtime": 1791171268.0701814,
+    "seen": 1791171912.636385,
+    "ast_hash": "dc95e5e131c176718217d9468614de1d",
     "semantic_hash": ""
   },
   "backend/app/models/__init__.py": {
-    "mtime": 1791134438.3887775,
-    "seen": 1791134665.171825,
-    "ast_hash": "ff29e78474743f5c4ff448fe1cb0d5e2",
+    "mtime": 1791171300.541822,
+    "seen": 1791171912.63655,
+    "ast_hash": "b8b41640916ccc42e60f616d7238320b",
     "semantic_hash": ""
   },
   "backend/app/models/base.py": {
@@ -1566,9 +1566,9 @@
     "semantic_hash": ""
   },
   "backend/app/schemas/__init__.py": {
-    "mtime": 1791134523.188314,
-    "seen": 1791134665.17183,
-    "ast_hash": "debf161346596cb3c426126ce53c8b7a",
+    "mtime": 1791171316.6153975,
+    "seen": 1791171912.636737,
+    "ast_hash": "590634f6c239a41241ffa203974f0672",
     "semantic_hash": ""
   },
   "backend/app/schemas/catalogs.py": {
@@ -1602,9 +1602,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_backend_foundation.py": {
-    "mtime": 1791134620.5894313,
-    "seen": 1791134665.1718788,
-    "ast_hash": "1dffb6ccebe3805d75259041c797f6ae",
+    "mtime": 1791171437.7753153,
+    "seen": 1791171912.636985,
+    "ast_hash": "c60c6f68dbf155061eeef0299248d7b4",
     "semantic_hash": ""
   },
   "frontend/src/components/common/audio-visualizer-meter.tsx": {
@@ -1806,9 +1806,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/features/media/video-pitch-modal.tsx": {
-    "mtime": 1791135021.5240815,
-    "seen": 1791135179.084022,
-    "ast_hash": "0f9bd2d63413169b9fc5d6a2158b5908",
+    "mtime": 1791171767.2683494,
+    "seen": 1791171912.6375759,
+    "ast_hash": "bd2c1719681fcd5670b0aea39760c4a4",
     "semantic_hash": ""
   },
   "frontend/src/components/features/profile/languages-interests-card.tsx": {
@@ -1953,6 +1953,114 @@
     "mtime": 1791134947.9389362,
     "seen": 1791135179.0842109,
     "ast_hash": "e7e774b9854ac97b5de2deca40cc1339",
+    "semantic_hash": ""
+  },
+  "backend/alembic/versions/0002_expert_cv_review.py": {
+    "mtime": 1791171217.0519853,
+    "seen": 1791171912.6363862,
+    "ast_hash": "1e60e1d3f048e5f75aa9adaf815a5745",
+    "semantic_hash": ""
+  },
+  "backend/app/api/v1/endpoints/expert_review.py": {
+    "mtime": 1791171406.4728456,
+    "seen": 1791171912.63645,
+    "ast_hash": "8fffd3d96934183e1f61e2b380066fad",
+    "semantic_hash": ""
+  },
+  "backend/app/models/expert_review.py": {
+    "mtime": 1791171290.0146043,
+    "seen": 1791171912.6365912,
+    "ast_hash": "73a8c5cabf78b9bde0ff7f685aeea8ec",
+    "semantic_hash": ""
+  },
+  "backend/app/repositories/expert_review_repo.py": {
+    "mtime": 1791171322.4883842,
+    "seen": 1791171912.6366851,
+    "ast_hash": "b0d848bd348d0ef2191f1b77cd2b3ae5",
+    "semantic_hash": ""
+  },
+  "backend/app/schemas/expert_review.py": {
+    "mtime": 1791171306.1700094,
+    "seen": 1791171912.636777,
+    "ast_hash": "eb097c70710b6940cb0575a29f4bdcbf",
+    "semantic_hash": ""
+  },
+  "backend/app/services/expert_review_service.py": {
+    "mtime": 1791171332.1314123,
+    "seen": 1791171912.636877,
+    "ast_hash": "9ab84d6f4fd4af0133e874fd062333a5",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_expert_review.py": {
+    "mtime": 1791171388.8459175,
+    "seen": 1791171912.636986,
+    "ast_hash": "40259550654a39c8175d59a3253304b9",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/(public)/expert-review/page.tsx": {
+    "mtime": 1791171536.9615037,
+    "seen": 1791171912.6372669,
+    "ast_hash": "8b8db44dadcbecdfac71c3575a740985",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/candidate-orders-list.tsx": {
+    "mtime": 1791171564.407379,
+    "seen": 1791171912.637537,
+    "ast_hash": "82645fa9ef13a1db80f071b9d71571d0",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/expert-card.tsx": {
+    "mtime": 1791171568.124482,
+    "seen": 1791171912.637538,
+    "ast_hash": "f793b29e5d550a972042f60a4dd3beac",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/expert-directory.tsx": {
+    "mtime": 1791171574.9660337,
+    "seen": 1791171912.637538,
+    "ast_hash": "099b8c805054f8b8a0bb0742866e085b",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/expert-hero.tsx": {
+    "mtime": 1791171484.478862,
+    "seen": 1791171912.6375391,
+    "ast_hash": "edbf9149c84275631417320974e59ce6",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/pricing-tiers.tsx": {
+    "mtime": 1791171489.651799,
+    "seen": 1791171912.6375391,
+    "ast_hash": "bb84ba792901bf3d5655024978945991",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/review-booking-dialog.tsx": {
+    "mtime": 1791171592.3247943,
+    "seen": 1791171912.6375391,
+    "ast_hash": "8b39131f60055bf11966059f7daa6efd",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/features/expert-review/sample-feedback-report.tsx": {
+    "mtime": 1791171513.5032473,
+    "seen": 1791171912.63754,
+    "ast_hash": "ce187f63b0972947c93a544ade70ecb3",
+    "semantic_hash": ""
+  },
+  "frontend/src/hooks/use-expert-review.ts": {
+    "mtime": 1791171477.9969623,
+    "seen": 1791171912.6380181,
+    "ast_hash": "88fefcd033178870fefc29ec540cb2b7",
+    "semantic_hash": ""
+  },
+  "qc/tests/e2e/expert-review.spec.ts": {
+    "mtime": 1791171621.3878045,
+    "seen": 1791171912.638289,
+    "ast_hash": "c3911065903dd60f6de04f2ebfc5164b",
+    "semantic_hash": ""
+  },
+  "docs/plans/expert-cv-review-plan.md": {
+    "mtime": 1791171188.7355266,
+    "seen": 1791171912.639559,
+    "ast_hash": "32a0b09a30c308fccebca96084754ffa",
     "semantic_hash": ""
   }
 }
