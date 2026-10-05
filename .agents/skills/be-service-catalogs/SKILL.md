@@ -14,11 +14,12 @@ description: Master taxonomies for skills, company names, schools, and locations
 | `GET` | `/v1/profile/company/` | `suggest_companies` | public |
 | `GET` | `/v1/profile/school/` | `suggest_schools` | public |
 | `GET` | `/v1/profile/location/` | `suggest_locations` | public |
+| `GET` | `/v1/catalogs/salary-benchmark` | `get_salary_benchmark` | public |
 
 - Router: `backend/app/api/v1/endpoints/catalogs.py`
 - Service: `backend/app/services/catalogs_service.py`
 - Repository: `backend/app/repositories/catalogs_repo.py`
-- Tests: _none — add one_
+- Tests: `backend/tests/test_catalogs_salary.py`
 <!-- AUTO:END -->
 
 Flow: router (`app/api/v1/endpoints/catalogs.py`) -> `CatalogsService` -> `CatalogsRepository` -> PostgreSQL catalog tables.

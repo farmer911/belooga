@@ -16,7 +16,7 @@ description: Candidate full-text search, ts_rank scoring, and autocomplete sugge
 - Router: `backend/app/api/v1/endpoints/search.py`
 - Service: `backend/app/services/catalogs_service.py`
 - Repository: `backend/app/repositories/catalogs_repo.py`
-- Tests: `backend/tests/test_profile_privacy_and_pii.py`
+- Tests: `backend/tests/test_catalogs_salary.py`, `backend/tests/test_profile_privacy_and_pii.py`
 <!-- AUTO:END -->
 
 Flow: router (`app/api/v1/endpoints/search.py`) -> `CatalogsService` (`services/catalogs_service.py`) -> `CatalogsRepository` (`repositories/catalogs_repo.py`).

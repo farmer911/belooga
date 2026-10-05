@@ -46,6 +46,13 @@ from app.models.expert_review import (
     CVReviewPackage,
     ExpertProfile,
 )
+from app.models.ats_matching import (
+    JobDescription,
+    ResumeJDMatch,
+)
+from app.models.job_tracker import (
+    CandidateJobApplicationTracker,
+)
 
 __all__ = [
     "Base",
@@ -78,4 +85,7 @@ __all__ = [
     "CVReviewPackage",
     "CVReviewOrder",
     "CVReviewFeedback",
+    "JobDescription",
+    "ResumeJDMatch",
+    "CandidateJobApplicationTracker",
 ]

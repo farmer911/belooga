@@ -20,3 +20,24 @@ class SuggestionResponse(BaseModel):
 
     query: Optional[str] = None
     items: List[CatalogItemResponse] = []
+
+
+class SalarySkillItem(BaseModel):
+    name: str
+    salary_premium: str
+    popularity_pct: int
+
+
+class SalaryBenchmarkResponse(BaseModel):
+    role: str
+    tech_stack: str
+    level: str
+    location: str
+    p25_salary_vnd: int
+    p50_salary_vnd: int
+    p75_salary_vnd: int
+    sample_size_jds: int
+    top_paid_skills: List[SalarySkillItem]
+    market_demand: str
+    growth_rate_yoy: str
+

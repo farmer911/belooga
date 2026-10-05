@@ -337,3 +337,42 @@ CREATE TABLE IF NOT EXISTS cv_review_feedbacks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 21. Domain 10: ATS Diagnostics & JD Matching Engine
+CREATE TABLE IF NOT EXISTS job_descriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_name VARCHAR(255),
+    job_title VARCHAR(255) NOT NULL,
+    raw_text TEXT NOT NULL,
+    skills_extracted JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS resume_jd_matches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    candidate_identity_id UUID REFERENCES identities(id) ON DELETE CASCADE,
+    job_description_id UUID NOT NULL REFERENCES job_descriptions(id) ON DELETE CASCADE,
+    ats_score INTEGER NOT NULL,
+    matched_skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+    missing_skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+    star_analysis JSONB NOT NULL DEFAULT '[]'::jsonb,
+    parse_warnings JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 22. Domain 11: Candidate Job Applications Tracker (Kanban Board)
+CREATE TABLE IF NOT EXISTS candidate_job_applications_tracker (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    candidate_identity_id UUID REFERENCES identities(id) ON DELETE CASCADE,
+    company_name VARCHAR(255) NOT NULL,
+    position_title VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'TARGETING',
+    expected_salary VARCHAR(100),
+    match_score INTEGER DEFAULT 0,
+    interview_date TIMESTAMPTZ,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

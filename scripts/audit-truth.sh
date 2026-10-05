@@ -116,7 +116,8 @@ import ast, glob
 
 PUBLIC_MUTATIONS_WHITELIST = {
     'login', 'logout', 'refresh_tokens', 'register_user',
-    'submit_contact_inquiry', 'report_candidate_profile'
+    'submit_contact_inquiry', 'report_candidate_profile',
+    'create_momo_payment_qr', 'momo_ipn_webhook'
 }
 
 violations = []

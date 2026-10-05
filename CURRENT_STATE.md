@@ -7,7 +7,7 @@
 
 ## 1. Database Schema Truth (`backend/initdb.sql`)
 
-**Total Tables: 28** (Verified directly from PostgreSQL table creation statements)
+**Total Tables: 31** (Verified directly from PostgreSQL table creation statements)
 
 | # | Table Name | Purpose / Category |
 |---|---|---|
@@ -39,28 +39,41 @@
 | 26 | `cv_review_packages` | General Storage |
 | 27 | `cv_review_orders` | General Storage |
 | 28 | `cv_review_feedbacks` | General Storage |
+| 29 | `job_descriptions` | General Storage |
+| 30 | `resume_jd_matches` | General Storage |
+| 31 | `candidate_job_applications_tracker` | General Storage |
 
 ---
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 44 (42 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 54 (52 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
 |---|---|---|---|---|---|
 | `GET` | `/health` | `health_check` | Public | `backend/app/main.py` | Health Probe |
 | `GET` | `/v1` | `api_root` | Public | `backend/app/main.py` | Root |
+| `POST` | `/v1/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Root |
 | `POST` | `/v1/auth/login/` | `login` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/logout/` | `logout` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/auth/me/` | `get_current_session_user` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/refresh/` | `refresh_tokens` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/catalogs/salary-benchmark` | `get_salary_benchmark` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/create-qr` | `create_momo_payment_qr` | Public | `backend/app/api/v1/endpoints/payments.py` | Root |
+| `GET` | `/v1/dashboard` | `get_executive_analytics_dashboard` | Public | `backend/app/api/v1/endpoints/analytics.py` | Root |
 | `GET` | `/v1/experts/` | `list_experts` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Root |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/ipn` | `momo_ipn_webhook` | Public | `backend/app/api/v1/endpoints/payments.py` | Root |
+| `GET` | `/v1/jobs/` | `list_tracked_jobs` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
+| `POST` | `/v1/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
+| `DELETE` | `/v1/jobs/{job_id}` | `delete_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
+| `PATCH` | `/v1/jobs/{job_id}/status` | `update_job_status` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `POST` | `/v1/media/upload/complete` | `complete_chunked_video_upload` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
+| `GET` | `/v1/order-status/{order_id}` | `check_order_status` | Public | `backend/app/api/v1/endpoints/payments.py` | Root |
 | `POST` | `/v1/orders/` | `create_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
 | `GET` | `/v1/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
 | `POST` | `/v1/orders/{order_id}/checkout/` | `checkout_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
@@ -98,17 +111,21 @@
 
 ## 3. Frontend Routes Inventory (`frontend/src/app`)
 
-**Total Pages/Boundaries: 19** (Next.js App Router)
+**Total Pages/Boundaries: 25** (Next.js App Router)
 
 | Route URL | File Path | Route Type |
 |---|---|---|
 | `/` | `frontend/src/app/page.tsx` | Page |
 | `/404 (Not Found Boundary)` | `frontend/src/app/not-found.tsx` | Error Boundary |
+| `/admin/analytics` | `frontend/src/app/admin/analytics/page.tsx` | Page |
+| `/admin/tickets` | `frontend/src/app/admin/tickets/page.tsx` | Page |
+| `/ats-diagnostics` | `frontend/src/app/ats-diagnostics/page.tsx` | Page |
 | `/blog` | `frontend/src/app/(public)/blog/page.tsx` | Page |
 | `/blog/[slug]` | `frontend/src/app/(public)/blog/[slug]/page.tsx` | Page |
 | `/callback` | `frontend/src/app/(auth)/callback/page.tsx` | Page |
 | `/careers` | `frontend/src/app/(public)/careers/page.tsx` | Page |
 | `/contact-us` | `frontend/src/app/(public)/contact-us/page.tsx` | Page |
+| `/cv-studio` | `frontend/src/app/cv-studio/page.tsx` | Page |
 | `/expert-review` | `frontend/src/app/(public)/expert-review/page.tsx` | Page |
 | `/forgot-password` | `frontend/src/app/(auth)/forgot-password/page.tsx` | Page |
 | `/help` | `frontend/src/app/(public)/help/page.tsx` | Page |
@@ -116,11 +133,13 @@
 | `/privacy-policy` | `frontend/src/app/(public)/privacy-policy/page.tsx` | Page |
 | `/public/[username]` | `frontend/src/app/public/[username]/page.tsx` | Page |
 | `/register` | `frontend/src/app/(auth)/register/page.tsx` | Page |
+| `/salary-benchmark` | `frontend/src/app/salary-benchmark/page.tsx` | Page |
 | `/search` | `frontend/src/app/search/page.tsx` | Page |
 | `/terms-and-conditions` | `frontend/src/app/(public)/terms-and-conditions/page.tsx` | Page |
 | `/user/[username]` | `frontend/src/app/user/[username]/page.tsx` | Page |
 | `/user/[username]/settings` | `frontend/src/app/user/[username]/settings/page.tsx` | Page |
 | `/user/[username]/update` | `frontend/src/app/user/[username]/update/page.tsx` | Page |
+| `/workspace/jobs` | `frontend/src/app/workspace/jobs/page.tsx` | Page |
 
 ---
 
