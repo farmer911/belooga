@@ -31,20 +31,20 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
   const prev = PREV_STATUS[job.status];
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-md p-3 space-y-2 hover:border-slate-700 transition shadow-sm group">
+    <div className="bg-white border border-surface-border rounded-lg p-3 space-y-2 hover:border-brand-primary hover:shadow-xs transition shadow-xs group">
       <div className="flex items-start justify-between gap-1">
         <div>
-          <h4 className="font-semibold text-slate-200 text-xs line-clamp-1">{job.position_title}</h4>
-          <p className="text-[11px] text-cyan-400 font-medium">{job.company_name}</p>
+          <h4 className="font-semibold text-typography-main text-xs line-clamp-1">{job.position_title}</h4>
+          <p className="text-[11px] text-brand-primary font-medium">{job.company_name}</p>
         </div>
         <Badge
           variant="outline"
           className={`text-[10px] px-1.5 py-0 font-bold ${
             job.match_score >= 80
-              ? "text-emerald-400 border-emerald-800 bg-emerald-950/40"
+              ? "text-emerald-700 border-emerald-300 bg-emerald-50"
               : job.match_score >= 60
-              ? "text-amber-400 border-amber-800 bg-amber-950/40"
-              : "text-slate-400 border-slate-800"
+              ? "text-amber-700 border-amber-300 bg-amber-50"
+              : "text-typography-muted border-surface-border bg-surface-page"
           }`}
         >
           {job.match_score}% Match
@@ -52,22 +52,22 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
       </div>
 
       {job.expected_salary && (
-        <div className="text-[10px] text-slate-400 flex items-center gap-1">
+        <div className="text-[10px] text-typography-heading flex items-center gap-1 font-medium">
           <span>💰</span> {job.expected_salary}
         </div>
       )}
 
       {job.notes && (
-        <p className="text-[10px] text-slate-400 bg-slate-950/60 p-1.5 rounded border border-slate-800/80 line-clamp-2">
+        <p className="text-[10px] text-typography-body bg-surface-page p-1.5 rounded-md border border-surface-divider line-clamp-2">
           {job.notes}
         </p>
       )}
 
       {/* Action Footer */}
-      <div className="pt-1 flex items-center justify-between border-t border-slate-800/60 text-[10px]">
+      <div className="pt-1.5 flex items-center justify-between border-t border-surface-divider text-[10px]">
         <button
           onClick={() => onDelete(job.id)}
-          className="text-slate-500 hover:text-rose-400 transition"
+          className="text-typography-muted hover:text-rose-600 transition cursor-pointer"
           title="Xóa công việc"
         >
           ✕
@@ -77,7 +77,7 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
           {prev && (
             <button
               onClick={() => onMove(job.id, prev)}
-              className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[10px]"
+              className="px-2 py-0.5 bg-surface-page hover:bg-surface-divider text-typography-heading rounded border border-surface-border text-[10px] cursor-pointer"
               title="Lùi cột"
             >
               ←
@@ -86,7 +86,7 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
           {next && (
             <button
               onClick={() => onMove(job.id, next)}
-              className="px-2 py-0.5 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 rounded border border-cyan-800 text-[10px] font-semibold"
+              className="px-2 py-0.5 bg-teal-50/50 hover:bg-brand-overlay text-brand-dark rounded border border-teal-200 text-[10px] font-semibold cursor-pointer"
               title="Tiến cột tiếp theo"
             >
               Tiếp →

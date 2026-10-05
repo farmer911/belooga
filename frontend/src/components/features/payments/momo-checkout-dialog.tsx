@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 interface MomoCheckoutDialogProps {
   isOpen: boolean;
@@ -95,38 +94,41 @@ export function MomoCheckoutDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="bg-slate-950 border border-slate-800 rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl relative text-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
+      <div className="bg-white border border-surface-border rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl relative text-xs">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center justify-between border-b border-surface-divider pb-3">
           <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-pink-600 flex items-center justify-center text-white font-bold text-[10px]">
+            <span className="w-5 h-5 rounded-full bg-pink-700 flex items-center justify-center text-white font-bold text-[10px]">
               M
             </span>
-            <h3 className="font-bold text-slate-100 uppercase tracking-wider text-xs">
+            <h3 className="font-bold text-typography-main uppercase tracking-wider text-xs">
               Thanh Toán MoMo QR Realtime
             </h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            className="text-typography-muted hover:text-typography-main text-base font-bold leading-none cursor-pointer"
+          >
             ✕
           </button>
         </div>
 
         {isPaid ? (
           <div className="py-6 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500 text-emerald-400 text-2xl flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 text-2xl flex items-center justify-center mx-auto">
               ✓
             </div>
-            <div className="text-sm font-bold text-slate-100">Thanh Toán Thành Công!</div>
-            <div className="text-slate-400 text-[11px]">
-              Mã giao dịch: <span className="font-mono text-cyan-400">{orderId}</span>
+            <div className="text-sm font-bold text-typography-main">Thanh Toán Thành Công!</div>
+            <div className="text-typography-muted text-[11px]">
+              Mã giao dịch: <span className="font-mono text-brand-primary font-semibold">{orderId}</span>
             </div>
-            <p className="text-[10px] text-emerald-400">
+            <p className="text-[10px] text-emerald-700">
               Đã mở khóa tính năng tự động tối ưu form STAR và xuất bản PDF chuẩn A4.
             </p>
             <Button
               onClick={onClose}
-              className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs w-full h-8"
+              className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs w-full h-8 rounded-lg shadow-xs"
             >
               Tiếp Tục Sử Dụng
             </Button>
@@ -134,14 +136,14 @@ export function MomoCheckoutDialog({
         ) : (
           <div className="space-y-3 text-center">
             <div>
-              <div className="text-[11px] text-slate-400">{orderInfo}</div>
-              <div className="text-2xl font-bold font-mono text-cyan-400 mt-0.5">
+              <div className="text-[11px] text-typography-muted">{orderInfo}</div>
+              <div className="text-2xl font-bold font-mono text-pink-700 mt-0.5">
                 {amount.toLocaleString("vi-VN")} đ
               </div>
             </div>
 
             {/* QR Code Container */}
-            <div className="p-3 bg-white rounded-lg inline-block mx-auto shadow-inner border border-slate-700">
+            <div className="p-3 bg-white rounded-xl inline-block mx-auto shadow-sm border border-surface-border">
               {qrUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -151,32 +153,32 @@ export function MomoCheckoutDialog({
                   data-testid="momo-qr-image"
                 />
               ) : (
-                <div className="w-44 h-44 flex items-center justify-center text-slate-500">
+                <div className="w-44 h-44 flex items-center justify-center text-typography-muted">
                   Đang sinh mã QR...
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-typography-muted">
               <span>Hết hạn trong:</span>
-              <span className="font-mono font-bold text-amber-400">{formatTimer(countdown)}</span>
+              <span className="font-mono font-bold text-amber-700">{formatTimer(countdown)}</span>
             </div>
 
-            <p className="text-[10px] text-slate-500 leading-tight">
+            <p className="text-[10px] text-typography-muted leading-tight">
               Mở ứng dụng MoMo trên điện thoại và quét mã QR ở trên để hoàn tất thanh toán.
             </p>
 
-            <div className="pt-2 space-y-1.5">
+            <div className="pt-2 space-y-2">
               <Button
                 data-testid="btn-simulate-momo-pay"
                 onClick={handleSimulatePayment}
-                className="w-full bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs h-7"
+                className="w-full bg-pink-700 hover:bg-pink-800 text-white font-semibold text-xs h-8 rounded-lg shadow-xs transition-colors"
               >
                 ⚡ Giả Lập Quét MoMo Thành Công
               </Button>
               <Button
                 onClick={onClose}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800 text-xs h-7"
+                className="w-full bg-white hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs h-8 rounded-lg shadow-xs transition-colors"
               >
                 Hủy Giao Dịch
               </Button>

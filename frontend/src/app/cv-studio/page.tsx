@@ -63,19 +63,19 @@ export default function CVStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       <Header />
 
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-cyan-400">Belooga Studio</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-300 font-medium">Pro CV Studio (Dynamic UI Adjuster)</span>
-          <Badge variant="outline" className="text-[10px] text-cyan-300 border-cyan-800">
+          <span className="font-semibold text-brand-primary">Belooga Studio</span>
+          <span className="text-surface-border">/</span>
+          <span className="text-typography-heading font-medium">Pro CV Studio (Dynamic UI Adjuster)</span>
+          <Badge variant="outline" className="text-[10px] text-brand-dark border-brand-primary/40 bg-teal-50/50">
             Zero Dead-Space
           </Badge>
-          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-800">
+          <Badge variant="outline" className="text-[10px] text-emerald-700 border-emerald-300 bg-emerald-50">
             100% ATS Safe
           </Badge>
         </div>
@@ -84,19 +84,19 @@ export default function CVStudioPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleResetSample}
-            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition text-[11px]"
+            className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading rounded-md border border-surface-border transition-colors text-[11px] cursor-pointer"
           >
             ↺ Nạp Mẫu Chuẩn
           </button>
           <button
             onClick={handleAutoFit}
-            className="px-2.5 py-1 bg-cyan-950/60 hover:bg-cyan-900 text-cyan-300 rounded border border-cyan-800 transition text-[11px]"
+            className="px-2.5 py-1 bg-teal-50/50 hover:bg-brand-overlay text-brand-dark rounded-md border border-teal-200 transition-colors text-[11px] font-semibold cursor-pointer"
           >
             ⚡ Tự Động Tối Ưu Lề
           </button>
           <Link href="/ats-diagnostics">
             <Button
-              className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-3 h-7 flex items-center gap-1"
+              className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs flex items-center gap-1"
             >
               <span>🎯</span> Sang Quét ATS
             </Button>
@@ -135,11 +135,11 @@ export default function CVStudioPage() {
       </main>
 
       {/* Terminal Status Bar */}
-      <footer className="border-t border-slate-800 bg-slate-950 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center">
-        <div>Hệ điều hành soạn thảo CV: <strong>Belooga Pro CV Engine</strong> (Chuẩn Vector A4)</div>
+      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
+        <div>Hệ điều hành soạn thảo CV: <strong className="text-typography-main">Belooga Pro CV Engine</strong> (Chuẩn Vector A4)</div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-emerald-400">Trạng thái: Sẵn sàng xuất bản chuẩn ATS</span>
+          <span className="text-emerald-700 font-medium">Trạng thái: Sẵn sàng xuất bản chuẩn ATS</span>
         </div>
       </footer>
     </div>

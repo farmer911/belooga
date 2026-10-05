@@ -27,16 +27,16 @@ export default function JobTrackerKanbanPage() {
   const offerCount = jobs.filter((j) => j.status === "OFFER").length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       <Header />
 
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-cyan-400">Belooga Workspace</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-300 font-medium">Job Application Tracker (Kanban)</span>
-          <Badge variant="outline" className="text-[10px] uppercase text-cyan-300 border-cyan-800">
+          <span className="font-semibold text-brand-primary">Belooga Workspace</span>
+          <span className="text-surface-border">/</span>
+          <span className="text-typography-heading font-medium">Job Application Tracker (Kanban)</span>
+          <Badge variant="outline" className="text-[10px] uppercase text-brand-dark border-brand-primary/40 bg-teal-50/50">
             {jobs.length} Cơ hội đang theo dõi
           </Badge>
         </div>
@@ -48,21 +48,21 @@ export default function JobTrackerKanbanPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Lọc công ty hoặc vị trí..."
-            className="bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 w-48"
+            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary w-48"
           />
 
           <div className="hidden sm:flex items-center gap-2 text-[11px]">
-            <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
+            <span className="px-2.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-medium">
               💼 {interviewCount} Phỏng vấn
             </span>
-            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+            <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
               🏆 {offerCount} Offer
             </span>
           </div>
 
           <Button
             onClick={() => setIsAddOpen(true)}
-            className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-3 h-8 flex items-center gap-1"
+            className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3.5 h-8 rounded-lg shadow-xs flex items-center gap-1"
           >
             <span>➕</span> Thêm Công Việc
           </Button>
@@ -70,10 +70,10 @@ export default function JobTrackerKanbanPage() {
       </div>
 
       {/* Main Kanban Board (Horizontal Scroll Zero Dead-Space) */}
-      <main className="flex-1 p-4 overflow-x-auto flex gap-3 min-h-[calc(100vh-140px)]">
+      <main className="flex-1 p-4 overflow-x-auto flex gap-3.5 min-h-[calc(100vh-140px)]">
         {isLoading && jobs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
-            <Spinner className="w-8 h-8 text-cyan-500" />
+            <Spinner className="w-8 h-8 text-brand-primary" />
           </div>
         ) : (
           <>
@@ -81,7 +81,7 @@ export default function JobTrackerKanbanPage() {
               id="TARGETING"
               title="Nhắm Mục Tiêu"
               icon="🎯"
-              badgeColor="border-t-2 border-t-cyan-500"
+              badgeColor="border-t-2 border-t-brand-primary"
               jobs={getJobsByStatus("TARGETING")}
               onMove={moveStatus}
               onDelete={deleteJob}
@@ -91,7 +91,7 @@ export default function JobTrackerKanbanPage() {
               id="TAILORED"
               title="Đã Tối Ưu CV"
               icon="⚡"
-              badgeColor="border-t-2 border-t-blue-500"
+              badgeColor="border-t-2 border-t-brand-blue"
               jobs={getJobsByStatus("TAILORED")}
               onMove={moveStatus}
               onDelete={deleteJob}
@@ -138,11 +138,11 @@ export default function JobTrackerKanbanPage() {
       />
 
       {/* Terminal Status Bar */}
-      <footer className="border-t border-slate-800 bg-slate-950 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center">
-        <div>Hệ điều hành theo dõi ứng tuyển: <strong>Belooga Kanban OS</strong></div>
+      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
+        <div>Hệ điều hành theo dõi ứng tuyển: <strong className="text-typography-main">Belooga Kanban OS</strong></div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-emerald-400">Đồng bộ đám mây thời gian thực</span>
+          <span className="text-emerald-700 font-medium">Đồng bộ đám mây thời gian thực</span>
         </div>
       </footer>
     </div>

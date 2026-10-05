@@ -52,32 +52,32 @@ export default function ATSDiagnosticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       <Header />
 
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-cyan-400">Belooga Studio</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-400">ATS Diagnostics & JD Matcher</span>
-          <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-cyan-300 border-cyan-800">
+          <span className="font-semibold text-brand-primary">Belooga Studio</span>
+          <span className="text-surface-border">/</span>
+          <span className="text-typography-heading font-medium">ATS Diagnostics & JD Matcher</span>
+          <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-brand-dark border-brand-primary/40 bg-teal-50/50">
             Zero Dead-Space
           </Badge>
         </div>
 
         {/* Quick Presets */}
         <div className="flex items-center gap-2">
-          <span className="text-slate-500">Mẫu kiểm tra nhanh:</span>
+          <span className="text-typography-muted font-medium">Mẫu kiểm tra nhanh:</span>
           <button
             onClick={() => applyPreset(PRESET_VNG)}
-            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition"
+            className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading hover:text-typography-main rounded-md border border-surface-border transition-colors text-xs font-medium"
           >
             Senior Go @ VNG
           </button>
           <button
             onClick={() => applyPreset(PRESET_SHOPEE)}
-            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition"
+            className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading hover:text-typography-main rounded-md border border-surface-border transition-colors text-xs font-medium"
           >
             Frontend Lead @ Shopee
           </button>
@@ -87,14 +87,14 @@ export default function ATSDiagnosticsPage() {
           <button
             onClick={() => setIsShareModalOpen(true)}
             data-testid="btn-open-flex-card"
-            className="px-2.5 py-1 bg-purple-950/60 hover:bg-purple-900 text-purple-300 rounded border border-purple-700 transition text-[11px] flex items-center gap-1 font-semibold"
+            className="px-2.5 py-1.5 bg-teal-50/50 hover:bg-brand-overlay text-brand-dark rounded-lg border border-teal-200 transition-colors text-[11px] flex items-center gap-1 font-semibold shadow-xs"
           >
             <span>🧲</span> Flex Thẻ Bài Điểm ATS
           </button>
           <Button
             onClick={handleScan}
             disabled={isLoading}
-            className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-4 h-8"
+            className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-4 h-8 rounded-lg shadow-xs"
           >
             {isLoading ? <Spinner className="w-4 h-4 mr-2" /> : "⚡ "}
             {isLoading ? "Đang quét đa tác nhân..." : "Quét Điểm ATS Ngay"}
@@ -105,64 +105,64 @@ export default function ATSDiagnosticsPage() {
       {/* Main Workspace (Split-Pane Resizable Grid) */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
         {/* LEFT PANE: Input & Interactive Diagnostics (45% -> 5 cols) */}
-        <section className="lg:col-span-5 border-r border-slate-800 flex flex-col bg-slate-950/80 overflow-y-auto p-4 space-y-4">
+        <section className="lg:col-span-5 border-r border-surface-border flex flex-col bg-white overflow-y-auto p-4 space-y-4">
           {/* Target Position Form */}
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1 font-medium">Vị trí mục tiêu</label>
+              <label className="block text-typography-heading mb-1 font-medium">Vị trí mục tiêu</label>
               <input
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
                 placeholder="vd: Senior Golang Backend"
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1 font-medium">Công ty tuyển dụng</label>
+              <label className="block text-typography-heading mb-1 font-medium">Công ty tuyển dụng</label>
               <input
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
                 placeholder="vd: VNG Corporation"
               />
             </div>
           </div>
 
           {/* JD & CV Input Expanders */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div>
               <div className="flex justify-between items-center mb-1 text-xs">
-                <span className="text-slate-400 font-medium">Mô tả công việc (JD)</span>
-                <span className="text-[10px] text-slate-500">{jdText.length} ký tự</span>
+                <span className="text-typography-heading font-medium">Mô tả công việc (JD)</span>
+                <span className="text-[10px] text-typography-muted">{jdText.length} ký tự</span>
               </div>
               <textarea
                 rows={4}
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
-                className="w-full bg-slate-900/90 border border-slate-800 rounded p-2 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-500 resize-y"
+                className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary resize-y"
                 placeholder="Dán nội dung JD tuyển dụng tại đây..."
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1 text-xs">
-                <span className="text-slate-400 font-medium">Nội dung CV của bạn</span>
-                <span className="text-[10px] text-slate-500">{cvText.length} ký tự</span>
+                <span className="text-typography-heading font-medium">Nội dung CV của bạn</span>
+                <span className="text-[10px] text-typography-muted">{cvText.length} ký tự</span>
               </div>
               <textarea
                 rows={5}
                 value={cvText}
                 onChange={(e) => setCvText(e.target.value)}
-                className="w-full bg-slate-900/90 border border-slate-800 rounded p-2 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-500 resize-y"
+                className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary resize-y"
                 placeholder="Dán văn bản CV của bạn tại đây..."
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded text-xs text-rose-400">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
               ⚠️ {error}
             </div>
           )}
@@ -176,7 +176,7 @@ export default function ATSDiagnosticsPage() {
               onPayClick={() => setIsMomoOpen(true)}
             />
           ) : (
-            <div className="p-8 border border-dashed border-slate-800 rounded-lg text-center text-slate-500 text-xs space-y-2">
+            <div className="p-8 border border-dashed border-surface-border rounded-xl text-center text-typography-muted text-xs space-y-2 bg-surface-page/50">
               <div className="text-2xl">⚡</div>
               <div>Bấm nút <strong>"Quét Điểm ATS Ngay"</strong> ở thanh trên để bắt đầu phân tích đa tác nhân.</div>
             </div>
@@ -209,17 +209,17 @@ export default function ATSDiagnosticsPage() {
       />
 
       {/* Terminal Status Bar (Zero Dead-Space Standard) */}
-      <footer className="border-t border-slate-800 bg-slate-950 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center">
+      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div className="flex items-center gap-3">
-          <span>Khung máy: <strong>Belooga High-Density Studio</strong></span>
-          <span className="text-slate-700">|</span>
+          <span>Khung máy: <strong className="text-typography-main">Belooga High-Density Studio</strong></span>
+          <span className="text-surface-border">|</span>
           <span>Độ phân giải: 100vh Fill</span>
-          <span className="text-slate-700">|</span>
+          <span className="text-surface-border">|</span>
           <span>Thuật toán: Hybrid Regex + Gemini Flash Cascade</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-emerald-400">Hệ thống sẵn sàng</span>
+          <span className="text-emerald-700 font-medium">Hệ thống sẵn sàng</span>
         </div>
       </footer>
     </div>

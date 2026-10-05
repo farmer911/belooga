@@ -14,26 +14,26 @@ export function TicketCard({ ticket, onClick }: TicketCardProps) {
   const getPriorityBadge = (p: string) => {
     switch (p) {
       case "P0":
-        return <Badge className="bg-rose-500/20 text-rose-400 border-rose-800 text-[10px]">P0 Blocker</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200 text-[10px] font-semibold">P0 Blocker</Badge>;
       case "P1":
-        return <Badge className="bg-amber-500/20 text-amber-300 border-amber-800 text-[10px]">P1 High</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold">P1 High</Badge>;
       default:
-        return <Badge className="bg-blue-500/20 text-blue-300 border-blue-800 text-[10px]">P2 Normal</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] font-semibold">P2 Normal</Badge>;
     }
   };
 
   const getAssigneeColor = (a: string) => {
     switch (a) {
       case "@be-senior":
-        return "bg-cyan-950 text-cyan-300 border-cyan-800";
+        return "bg-teal-50 text-brand-dark border-teal-200";
       case "@fe-lead":
-        return "bg-purple-950 text-purple-300 border-purple-800";
+        return "bg-purple-50 text-purple-700 border-purple-200";
       case "@qc-lead":
-        return "bg-emerald-950 text-emerald-300 border-emerald-800";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
       case "@des-lead":
-        return "bg-pink-950 text-pink-300 border-pink-800";
+        return "bg-pink-50 text-pink-700 border-pink-200";
       default:
-        return "bg-amber-950 text-amber-300 border-amber-800";
+        return "bg-amber-50 text-amber-700 border-amber-200";
     }
   };
 
@@ -41,27 +41,27 @@ export function TicketCard({ ticket, onClick }: TicketCardProps) {
     <div
       onClick={() => onClick(ticket)}
       data-testid={`ticket-card-${ticket.id}`}
-      className="p-3 rounded bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition cursor-pointer space-y-2.5 shadow-sm group"
+      className="p-3 rounded-lg bg-white border border-surface-border hover:border-brand-primary hover:shadow-xs transition cursor-pointer space-y-2 shadow-xs group"
     >
       <div className="flex items-center justify-between">
-        <span className="text-cyan-400 font-mono font-bold text-xs group-hover:underline">
+        <span className="text-brand-primary font-mono font-bold text-xs group-hover:underline">
           {ticket.id}
         </span>
         <div className="flex items-center gap-1.5">
           {getPriorityBadge(ticket.priority)}
-          <span className="text-[10px] text-slate-500 font-mono">{ticket.points} pts</span>
+          <span className="text-[10px] text-typography-muted font-mono">{ticket.points} pts</span>
         </div>
       </div>
 
-      <div className="text-xs font-semibold text-slate-200 line-clamp-2 group-hover:text-cyan-300 transition">
+      <div className="text-xs font-semibold text-typography-main line-clamp-2 group-hover:text-brand-hover transition-colors">
         {ticket.title}
       </div>
 
-      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+      <p className="text-[11px] text-typography-body line-clamp-2 leading-relaxed">
         {ticket.description}
       </p>
 
-      <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+      <div className="flex items-center justify-between pt-2 border-t border-surface-divider">
         <span
           className={`text-[10px] font-mono px-2 py-0.5 rounded border ${getAssigneeColor(
             ticket.assignee
@@ -74,7 +74,7 @@ export function TicketCard({ ticket, onClick }: TicketCardProps) {
           <Link
             href={ticket.liveUrl}
             onClick={(e) => e.stopPropagation()}
-            className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-0.5"
+            className="text-[10px] text-brand-primary hover:text-brand-hover font-medium flex items-center gap-0.5"
           >
             <span>🔗 Live</span>
           </Link>

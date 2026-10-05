@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/components/ui/button";
 
 export interface CVData {
   fullName: string;
@@ -37,71 +36,71 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
   };
 
   return (
-    <section className="lg:col-span-4 border-r border-slate-800 bg-slate-950/80 p-4 space-y-4 overflow-y-auto text-xs">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h4 className="font-bold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+    <section className="lg:col-span-4 border-r border-surface-border bg-white p-4 space-y-4 overflow-y-auto text-xs">
+      <div className="flex items-center justify-between border-b border-surface-divider pb-3">
+        <h4 className="font-bold text-typography-main uppercase tracking-wider text-[11px] flex items-center gap-1.5">
           <span>✍️</span> Biên Tập Form STAR Định Lượng
         </h4>
-        <span className="text-[10px] text-cyan-400">Tự động lưu nháp</span>
+        <span className="text-[10px] text-brand-primary font-medium">Tự động lưu nháp</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         <div>
-          <label className="block text-slate-400 mb-1 font-medium">Họ và tên</label>
+          <label className="block text-typography-heading mb-1 font-medium">Họ và tên</label>
           <input
             type="text"
             value={cvData.fullName}
             onChange={(e) => onChange({ ...cvData, fullName: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
-            <label className="block text-slate-400 mb-1 font-medium">Email</label>
+            <label className="block text-typography-heading mb-1 font-medium">Email</label>
             <input
               type="text"
               value={cvData.email}
               onChange={(e) => onChange({ ...cvData, email: e.target.value })}
-              className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1 font-medium">Số điện thoại</label>
+            <label className="block text-typography-heading mb-1 font-medium">Số điện thoại</label>
             <input
               type="text"
               value={cvData.phone}
               onChange={(e) => onChange({ ...cvData, phone: e.target.value })}
-              className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-medium">Tiêu đề nghề nghiệp</label>
+          <label className="block text-typography-heading mb-1 font-medium">Tiêu đề nghề nghiệp</label>
           <input
             type="text"
             value={cvData.headline}
             onChange={(e) => onChange({ ...cvData, headline: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
           />
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-medium">Tóm tắt sự nghiệp (Summary)</label>
+          <label className="block text-typography-heading mb-1 font-medium">Tóm tắt sự nghiệp (Summary)</label>
           <textarea
             rows={3}
             value={cvData.summary}
             onChange={(e) => onChange({ ...cvData, summary: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500 resize-none"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary resize-none"
           />
         </div>
 
         {/* Work Experience Blocks */}
-        <div className="border-t border-slate-800 pt-3 space-y-3">
-          <div className="font-bold text-slate-300 text-[11px]">Kinh nghiệm làm việc</div>
+        <div className="border-t border-surface-divider pt-3.5 space-y-3">
+          <div className="font-bold text-typography-main text-[11px]">Kinh nghiệm làm việc</div>
           {cvData.experience.map((exp, expIdx) => (
-            <div key={expIdx} className="p-3 bg-slate-900/60 rounded border border-slate-800 space-y-2">
+            <div key={expIdx} className="p-3.5 bg-surface-page rounded-xl border border-surface-border space-y-2.5">
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="text"
@@ -111,7 +110,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
                     nextExp[expIdx].company = e.target.value;
                     onChange({ ...cvData, experience: nextExp });
                   }}
-                  className="bg-slate-950 border border-slate-800 rounded p-1.5 text-slate-200 text-xs font-semibold"
+                  className="bg-white border border-surface-border rounded-lg p-2 text-typography-main text-xs font-semibold focus:outline-none focus:border-brand-primary"
                   placeholder="Công ty"
                 />
                 <input
@@ -122,28 +121,28 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
                     nextExp[expIdx].role = e.target.value;
                     onChange({ ...cvData, experience: nextExp });
                   }}
-                  className="bg-slate-950 border border-slate-800 rounded p-1.5 text-slate-200 text-xs font-semibold"
+                  className="bg-white border border-surface-border rounded-lg p-2 text-typography-main text-xs font-semibold focus:outline-none focus:border-brand-primary"
                   placeholder="Vị trí"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-[10px] text-slate-500">Các thành tựu định lượng STAR:</label>
+                <label className="block text-[10px] text-typography-muted font-medium">Các thành tựu định lượng STAR:</label>
                 {exp.bullets.map((bullet, bIdx) => (
-                  <div key={bIdx} className="flex gap-1.5 items-start">
-                    <span className="text-cyan-500 font-bold mt-1">•</span>
+                  <div key={bIdx} className="flex gap-2 items-start">
+                    <span className="text-brand-primary font-bold mt-1">•</span>
                     <textarea
                       rows={2}
                       value={bullet}
                       onChange={(e) => handleBulletChange(expIdx, bIdx, e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded p-1.5 text-slate-200 text-[11px] focus:outline-none focus:border-cyan-500 resize-none"
+                      className="flex-1 bg-white border border-surface-border rounded-lg p-2 text-typography-main text-[11px] focus:outline-none focus:border-brand-primary resize-none"
                     />
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={() => addBullet(expIdx)}
-                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium"
+                  className="text-[11px] text-brand-primary hover:text-brand-hover font-semibold cursor-pointer"
                 >
                   + Thêm thành tựu
                 </button>
@@ -153,12 +152,12 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-medium">Danh mục kỹ năng</label>
+          <label className="block text-typography-heading mb-1 font-medium">Danh mục kỹ năng</label>
           <input
             type="text"
             value={cvData.skills}
             onChange={(e) => onChange({ ...cvData, skills: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
           />
         </div>
       </div>

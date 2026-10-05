@@ -63,26 +63,26 @@ export default function SalaryBenchmarkPage() {
   }, [techStack, level, location]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       <Header />
 
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-cyan-400">Belooga Market Radar</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-300 font-medium">Báo Cáo Tra Cứu Lương IT & Kỹ Năng Giá Trị Cao</span>
-          <Badge variant="outline" className="text-[10px] text-cyan-300 border-cyan-800">
+          <span className="font-semibold text-brand-primary">Belooga Market Radar</span>
+          <span className="text-surface-border">/</span>
+          <span className="text-typography-heading font-medium">Báo Cáo Tra Cứu Lương IT & Kỹ Năng Giá Trị Cao</span>
+          <Badge variant="outline" className="text-[10px] text-brand-dark border-brand-primary/40 bg-teal-50/50">
             Programmatic SEO
           </Badge>
-          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-800">
+          <Badge variant="outline" className="text-[10px] text-emerald-700 border-emerald-300 bg-emerald-50">
             Realtime 2026
           </Badge>
         </div>
 
         <div className="flex items-center gap-2">
           <Link href="/ats-diagnostics">
-            <Button className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-3 h-7 flex items-center gap-1">
+            <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3.5 h-8 rounded-lg shadow-xs flex items-center gap-1.5">
               <span>🎯</span> So Khớp Với JD Ngay
             </Button>
           </Link>
@@ -92,19 +92,19 @@ export default function SalaryBenchmarkPage() {
       {/* Main Container */}
       <main className="flex-1 p-4 space-y-4 max-w-[1400px] w-full mx-auto overflow-y-auto">
         {/* Dynamic Filters Bar */}
-        <div className="p-3.5 rounded bg-slate-900/90 border border-slate-800 space-y-3">
+        <div className="p-4 rounded-xl bg-white border border-surface-border space-y-3 shadow-xs">
           {/* Tech Stack Selection */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 w-28">Ngôn ngữ / Stack:</span>
+            <span className="text-xs font-semibold text-typography-heading w-28">Ngôn ngữ / Stack:</span>
             <div className="flex flex-wrap gap-1.5">
               {STACKS.map((s) => (
                 <button
                   key={s}
                   onClick={() => setTechStack(s)}
-                  className={`px-2.5 py-1 rounded text-xs transition font-mono ${
+                  className={`px-3 py-1 rounded-md text-xs transition-colors font-mono cursor-pointer ${
                     techStack === s
-                      ? "bg-cyan-500 text-black font-bold shadow-lg shadow-cyan-500/20"
-                      : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-slate-700"
+                      ? "bg-brand-primary text-white font-bold shadow-xs"
+                      : "bg-surface-page border border-surface-border text-typography-heading hover:bg-surface-divider"
                   }`}
                 >
                   {s}
@@ -115,16 +115,16 @@ export default function SalaryBenchmarkPage() {
 
           {/* Level Selection */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 w-28">Cấp bậc / Level:</span>
+            <span className="text-xs font-semibold text-typography-heading w-28">Cấp bậc / Level:</span>
             <div className="flex flex-wrap gap-1.5">
               {LEVELS.map((l) => (
                 <button
                   key={l}
                   onClick={() => setLevel(l)}
-                  className={`px-2.5 py-1 rounded text-xs transition ${
+                  className={`px-3 py-1 rounded-md text-xs transition-colors cursor-pointer ${
                     level === l
-                      ? "bg-emerald-500 text-black font-bold"
-                      : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-slate-700"
+                      ? "bg-brand-dark text-white font-bold shadow-xs"
+                      : "bg-surface-page border border-surface-border text-typography-heading hover:bg-surface-divider"
                   }`}
                 >
                   {l}
@@ -135,16 +135,16 @@ export default function SalaryBenchmarkPage() {
 
           {/* Location Selection */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 w-28">Địa điểm làm việc:</span>
+            <span className="text-xs font-semibold text-typography-heading w-28">Địa điểm làm việc:</span>
             <div className="flex flex-wrap gap-1.5">
               {LOCATIONS.map((loc) => (
                 <button
                   key={loc}
                   onClick={() => setLocation(loc)}
-                  className={`px-2.5 py-0.5 rounded text-xs transition ${
+                  className={`px-2.5 py-1 rounded-md text-xs transition-colors cursor-pointer ${
                     location === loc
-                      ? "bg-slate-700 text-cyan-300 font-semibold border border-cyan-500"
-                      : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
+                      ? "bg-brand-overlay text-brand-dark font-semibold border border-teal-200"
+                      : "bg-surface-page border border-surface-border text-typography-muted hover:text-typography-main"
                   }`}
                 >
                   📍 {loc}
@@ -177,11 +177,11 @@ export default function SalaryBenchmarkPage() {
       </main>
 
       {/* Terminal Status Bar */}
-      <footer className="border-t border-slate-800 bg-slate-950 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center">
-        <div>Hệ thống đối soát mức lương IT: <strong>Belooga Market Intelligence</strong> (Dữ liệu cào định kỳ)</div>
+      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
+        <div>Hệ thống đối soát mức lương IT: <strong className="text-typography-main">Belooga Market Intelligence</strong> (Dữ liệu cào định kỳ)</div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-emerald-400">Đã chuẩn hóa 3,000+ tin tuyển dụng IT</span>
+          <span className="text-emerald-700 font-medium">Đã chuẩn hóa 3,000+ tin tuyển dụng IT</span>
         </div>
       </footer>
     </div>
