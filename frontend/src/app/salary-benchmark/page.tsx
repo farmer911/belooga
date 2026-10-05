@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalaryPercentileCard } from "@/components/features/salary-benchmark/salary-percentile-card";
@@ -63,11 +62,9 @@ export default function SalaryBenchmarkPage() {
   }, [techStack, level, location]);
 
   return (
-    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
-      <Header />
-
+    <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
+      <div className="border-b border-surface-border bg-surface-card px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-brand-primary">Belooga Market Radar</span>
           <span className="text-surface-border">/</span>
@@ -92,7 +89,7 @@ export default function SalaryBenchmarkPage() {
       {/* Main Container */}
       <main className="flex-1 p-4 space-y-4 max-w-[1400px] w-full mx-auto overflow-y-auto">
         {/* Dynamic Filters Bar */}
-        <div className="p-4 rounded-xl bg-white border border-surface-border space-y-3 shadow-xs">
+        <div className="p-4 rounded-xl bg-surface-card border border-surface-border space-y-3 shadow-xs">
           {/* Tech Stack Selection */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-typography-heading w-28">Ngôn ngữ / Stack:</span>
@@ -177,7 +174,7 @@ export default function SalaryBenchmarkPage() {
       </main>
 
       {/* Terminal Status Bar */}
-      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
+      <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div>Hệ thống đối soát mức lương IT: <strong className="text-typography-main">Belooga Market Intelligence</strong> (Dữ liệu cào định kỳ)</div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #f8f9fa;
@@ -24,6 +25,32 @@
   --typography-heading: #515151;
   --typography-body: #666666;
   --typography-muted: #737475;
+}
+
+.dark {
+  --background: #0b0f19;
+  --foreground: #f8fafc;
+  
+  /* Belooga Brand Tokens */
+  --brand-primary: #5bbbae;
+  --brand-hover: #6bc4b8;
+  --brand-accent: #3fc6b7;
+  --brand-dark: #2dd4bf;
+  --brand-blue: #60a5fa;
+  --brand-overlay: #132e2b;
+  
+  /* Belooga Surface Tokens */
+  --surface-page: #0b0f19;
+  --surface-card: #131b2e;
+  --surface-border: #1e293b;
+  --surface-divider: #1e293b;
+  --surface-subtle: #162035;
+  
+  /* Belooga Typography Tokens */
+  --typography-main: #f8fafc;
+  --typography-heading: #e2e8f0;
+  --typography-body: #cbd5e1;
+  --typography-muted: #94a3b8;
 }
 
 @theme inline {

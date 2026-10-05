@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,7 +10,6 @@ import { ATSScorecard } from "@/components/features/ats-diagnostics/ats-scorecar
 import { ATSPreviewCanvas } from "@/components/features/ats-diagnostics/ats-preview-canvas";
 import { ATSShareCardModal } from "@/components/features/ats-diagnostics/ats-share-card-modal";
 import { MomoCheckoutDialog } from "@/components/features/payments/momo-checkout-dialog";
-
 export default function ATSDiagnosticsPage() {
   const [jobTitle, setJobTitle] = useState(PRESET_VNG.job_title);
   const [companyName, setCompanyName] = useState(PRESET_VNG.company_name || "");
@@ -52,11 +50,9 @@ export default function ATSDiagnosticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
-      <Header />
-
+    <div className="flex-1 flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
+      <div className="border-b border-surface-border bg-surface-card px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-brand-primary">Belooga Studio</span>
           <span className="text-surface-border">/</span>
@@ -105,7 +101,7 @@ export default function ATSDiagnosticsPage() {
       {/* Main Workspace (Split-Pane Resizable Grid) */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
         {/* LEFT PANE: Input & Interactive Diagnostics (45% -> 5 cols) */}
-        <section className="lg:col-span-5 border-r border-surface-border flex flex-col bg-white overflow-y-auto p-4 space-y-4">
+        <section className="lg:col-span-5 border-r border-surface-border flex flex-col bg-surface-card overflow-y-auto p-4 space-y-4">
           {/* Target Position Form */}
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
@@ -114,7 +110,7 @@ export default function ATSDiagnosticsPage() {
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+                className="w-full bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
                 placeholder="vd: Senior Golang Backend"
               />
             </div>
@@ -124,7 +120,7 @@ export default function ATSDiagnosticsPage() {
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+                className="w-full bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
                 placeholder="vd: VNG Corporation"
               />
             </div>
@@ -141,7 +137,7 @@ export default function ATSDiagnosticsPage() {
                 rows={4}
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
-                className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary resize-y"
+                className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary resize-y"
                 placeholder="Dán nội dung JD tuyển dụng tại đây..."
               />
             </div>
@@ -155,7 +151,7 @@ export default function ATSDiagnosticsPage() {
                 rows={5}
                 value={cvText}
                 onChange={(e) => setCvText(e.target.value)}
-                className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary resize-y"
+                className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary resize-y"
                 placeholder="Dán văn bản CV của bạn tại đây..."
               />
             </div>
@@ -209,7 +205,7 @@ export default function ATSDiagnosticsPage() {
       />
 
       {/* Terminal Status Bar (Zero Dead-Space Standard) */}
-      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
+      <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div className="flex items-center gap-3">
           <span>Khung máy: <strong className="text-typography-main">Belooga High-Density Studio</strong></span>
           <span className="text-surface-border">|</span>

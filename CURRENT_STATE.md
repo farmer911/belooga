@@ -111,14 +111,13 @@
 
 ## 3. Frontend Routes Inventory (`frontend/src/app`)
 
-**Total Pages/Boundaries: 25** (Next.js App Router)
+**Total Pages/Boundaries: 24** (Next.js App Router)
 
 | Route URL | File Path | Route Type |
 |---|---|---|
 | `/` | `frontend/src/app/page.tsx` | Page |
 | `/404 (Not Found Boundary)` | `frontend/src/app/not-found.tsx` | Error Boundary |
 | `/admin/analytics` | `frontend/src/app/admin/analytics/page.tsx` | Page |
-| `/admin/tickets` | `frontend/src/app/admin/tickets/page.tsx` | Page |
 | `/ats-diagnostics` | `frontend/src/app/ats-diagnostics/page.tsx` | Page |
 | `/blog` | `frontend/src/app/(public)/blog/page.tsx` | Page |
 | `/blog/[slug]` | `frontend/src/app/(public)/blog/[slug]/page.tsx` | Page |

@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -17,11 +16,9 @@ export default function AnalyticsDashboardPage() {
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "ALL">("7D");
 
   return (
-    <div className="min-h-screen bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
-      <Header />
-
+    <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
       {/* Action Sub-Header / Tool Bar */}
-      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
+      <div className="border-b border-surface-border bg-surface-card px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-brand-primary">Belooga Executive</span>
           <span className="text-surface-border">/</span>
@@ -64,7 +61,7 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           <Link href="/workspace/jobs">
-            <Button className="bg-white hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs px-2.5 h-7 rounded-lg shadow-xs">
+            <Button className="bg-surface-card hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs px-2.5 h-7 rounded-lg shadow-xs">
               💼 Kanban Jobs
             </Button>
           </Link>
@@ -104,7 +101,7 @@ export default function AnalyticsDashboardPage() {
       </main>
 
       {/* Terminal Status Bar */}
-      <footer className="border-t border-surface-border bg-white px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
+      <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div>Hệ thống đo lường tài chính: <strong className="text-typography-main">Belooga Executive Terminal</strong> (MoMo & Escrow Float Engine)</div>
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
