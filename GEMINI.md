@@ -5,9 +5,9 @@ Always-on project instruction for Gemini / Antigravity agent.
 ## 1. Verified Tech Stack (Ground Truth)
 - **Frontend:** Next.js 16.3.8, React 19 (App Router), Bun runtime, Tailwind CSS v4, Zustand.
 - **Backend:** FastAPI, Python 3.12+, SQLAlchemy 2.0 Async (`asyncpg`), Pydantic v2, ReportLab, AnyIO.
-- **Database:** PostgreSQL 16 (`initdb.sql` with 24 tables, GIN `TSVECTOR`, `pg_trgm`), Redis 7.
+- **Database:** PostgreSQL 16 (See `CURRENT_STATE.md` §1; GIN `TSVECTOR`, `pg_trgm`), Redis 7.
 - **QC:** Playwright (TypeScript/Bun) in `qc/` (`bun run test:e2e`), Pytest in `backend/tests/`.
-- **Legacy Source:** Located locally at `/Users/phucnguyen/Dev/Beloga-CV` (`../Beloga-CV`).
+- **Legacy Source:** Located locally at `$LEGACY_DIR` (default: `../Beloga-CV`).
 
 ## 2. Precedence of Truth
 1. `Running Source Code` (`backend/`, `frontend/`, `qc/`)
@@ -25,7 +25,8 @@ Always-on project instruction for Gemini / Antigravity agent.
 5. **No completion without proof:** Never claim a task or bug fix is done without running verified tests and providing command output (`No Proof = Not Done`).
 
 ## 4. Task Routing
-- **Backend API / DB:** Skill `belooga-backend-services`, test with `backend/.venv/bin/pytest backend/tests/`.
-- **Frontend App Router / UI:** Skill `belooga-frontend-engineering`, test with `cd frontend && bun x tsc --noEmit`.
+- **Backend API / DB:** Skill `belooga-backend-engineering` (routes to specific `be-service-*` domain skills), test with `backend/.venv/bin/pytest backend/tests/`.
+- **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to specific `fe-page-*` domain skills), test with `cd frontend && bun x tsc --noEmit`.
 - **E2E / Visual QC:** Skill `belooga-qc-engineering`, run `cd qc && bun run test:e2e`.
 - **Quality Gate / PR:** Workflow `.agents/workflows/definition-of-done.md`.
+- **Before claiming done:** Always run `python3 scripts/lint-skills.py --quiet`.

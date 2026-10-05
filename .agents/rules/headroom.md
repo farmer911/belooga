@@ -1,11 +1,11 @@
 ---
-trigger: always_on
-description: Headroom context and token optimization guidelines.
+trigger: model_decision
+description: Headroom context and token optimization guidelines when Headroom MCP tools are available.
 ---
 
 # Headroom Context Optimization Guidelines
 
-Headroom MCP server is active with tools `headroom_compress`, `headroom_retrieve`, `headroom_stats`, and `headroom_read`.
+When the Headroom MCP server is active with tools `headroom_compress`, `headroom_retrieve`, `headroom_stats`, and `headroom_read`:
 
 1. **Large Output & File Optimization:**
    - When inspecting large command outputs, lengthy logs, large data/JSON dumps, or files (> 250 lines), use `headroom_compress` or `headroom_read` to compress repetitive context before reasoning over it.

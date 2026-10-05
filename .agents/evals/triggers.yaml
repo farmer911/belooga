@@ -1,0 +1,234 @@
+# Belooga Skill Trigger Evaluation Dataset
+# 3 prompts per skill: 2 positive (should_trigger), 1 confusion negative (should_not_trigger)
+
+- skill: be-service-auth
+  should_trigger:
+    - "Sửa logic refresh token family rotation khi hết hạn cookie"
+    - "Hash mật khẩu đăng ký ứng viên bằng Argon2 hoặc bcrypt"
+  should_not_trigger:
+    - prompt: "Chỉnh sửa họ tên và bio trong profile ứng viên"
+      expected: be-service-profile
+
+- skill: be-service-profile
+  should_trigger:
+    - "Cập nhật bio và headline của ứng viên qua API profile"
+    - "Ẩn hồ sơ ứng viên is_hidden và chặn truy cập public"
+  should_not_trigger:
+    - prompt: "Sửa endpoint thêm công việc trong lịch sử làm việc"
+      expected: be-service-timeline
+
+- skill: be-service-timeline
+  should_trigger:
+    - "Thêm API sửa một mục kinh nghiệm làm việc"
+    - "Reorder education đang bị lost update khi kéo thả nhanh"
+  should_not_trigger:
+    - prompt: "Kéo thả timeline trên UI bị giật"
+      expected: fe-page-workspace
+
+- skill: be-service-search
+  should_trigger:
+    - "Kết quả tìm ứng viên xếp hạng sai"
+    - "Autocomplete gợi ý cả ứng viên đã ẩn"
+  should_not_trigger:
+    - prompt: "Thêm danh sách trường đại học vào gợi ý"
+      expected: be-service-catalogs
+
+- skill: be-service-catalogs
+  should_trigger:
+    - "Bổ sung danh mục kỹ năng skills taxonomy vào cơ sở dữ liệu"
+    - "Lookup danh sách trường học và công ty trong catalog"
+  should_not_trigger:
+    - prompt: "Tìm kiếm ứng viên theo từ khóa Python trên thanh search"
+      expected: be-service-search
+
+- skill: be-service-cms
+  should_trigger:
+    - "Thêm API gửi liên hệ contact inquiry từ khách hàng"
+    - "Endpoint báo cáo tài khoản vi phạm report profile"
+  should_not_trigger:
+    - prompt: "Chỉnh sửa trang liên hệ contact us trên giao diện"
+      expected: fe-page-cms-public
+
+- skill: be-service-media
+  should_trigger:
+    - "Xử lý tải lên video chunk upload và ghép file video pitch"
+    - "Xuất file PDF hồ sơ ứng viên bằng ReportLab"
+  should_not_trigger:
+    - prompt: "Sửa component video player trên giao diện workspace"
+      expected: fe-page-workspace
+
+- skill: be-service-expert-review
+  should_trigger:
+    - "Tạo đơn hàng đặt lịch review CV với chuyên gia"
+    - "Lưu đánh giá feedback và điểm số ATS cho đơn review CV"
+  should_not_trigger:
+    - prompt: "Sửa giao diện bảng giá dịch vụ review CV"
+      expected: fe-page-expert-review
+
+- skill: fe-page-home
+  should_trigger:
+    - "Sửa màu nút play video giới thiệu trên trang chủ"
+    - "Thêm mục các ứng viên nổi bật trên homepage"
+  should_not_trigger:
+    - prompt: "Chỉnh sửa bộ lọc địa điểm trên trang tìm kiếm talent"
+      expected: fe-page-search
+
+- skill: fe-page-search
+  should_trigger:
+    - "Sửa component hiển thị kết quả tìm kiếm ứng viên"
+    - "Bộ lọc kỹ năng và kinh nghiệm trên trang tìm kiếm talent"
+  should_not_trigger:
+    - prompt: "Cải thiện tốc độ câu query ts_rank trên backend search"
+      expected: be-service-search
+
+- skill: fe-page-public-profile
+  should_trigger:
+    - "Sửa giao diện xem hồ sơ công khai của ứng viên cho recruiter"
+    - "Nút tải file PDF resume trên trang public profile"
+  should_not_trigger:
+    - prompt: "Sửa form chỉnh sửa bio của chính ứng viên đăng nhập"
+      expected: fe-page-workspace
+
+- skill: fe-page-workspace
+  should_trigger:
+    - "Nút ghi hình pitch không tắt camera khi đóng modal"
+    - "Thêm card ngôn ngữ vào trang workspace"
+  should_not_trigger:
+    - prompt: "Trang hồ sơ public không hiện video"
+      expected: fe-page-public-profile
+
+- skill: fe-page-user-management
+  should_trigger:
+    - "Sửa form cập nhật thông tin cá nhân tại /user/[username]/update"
+    - "Đổi mật khẩu và cài đặt tài khoản tại /user/[username]/settings"
+  should_not_trigger:
+    - prompt: "Sửa form đăng ký tài khoản mới tại /register"
+      expected: fe-page-auth
+
+- skill: fe-page-auth
+  should_trigger:
+    - "Sửa form đăng nhập và xử lý lưu access token vào client state"
+    - "Giao diện khôi phục mật khẩu forgot-password"
+  should_not_trigger:
+    - prompt: "Kiểm tra xác thực JWT token trong backend FastAPI"
+      expected: be-service-auth
+
+- skill: fe-page-cms-public
+  should_trigger:
+    - "Sửa nội dung accordion câu hỏi thường gặp FAQ trên trang public"
+    - "Cập nhật trang điều khoản sử dụng và chính sách bảo mật"
+  should_not_trigger:
+    - prompt: "Thêm API lưu tin nhắn contact inquiry trong backend"
+      expected: be-service-cms
+
+- skill: fe-page-expert-review
+  should_trigger:
+    - "Sửa giao diện bảng giá và danh sách chuyên gia tại /expert-review"
+    - "Modal đặt lịch đánh giá CV và thanh toán dịch vụ review"
+  should_not_trigger:
+    - prompt: "Thêm bảng cv_review_orders trong cơ sở dữ liệu backend"
+      expected: be-service-expert-review
+
+- skill: belooga-backend-engineering
+  should_trigger:
+    - "Thiết kế cấu trúc service và repository mới cho backend FastAPI"
+    - "Quy chuẩn xử lý transaction và database connection pool asyncpg"
+  should_not_trigger:
+    - prompt: "Viết test pytest kiểm tra IDOR guard cho endpoint"
+      expected: tdd-workflow
+
+- skill: belooga-frontend-engineering
+  should_trigger:
+    - "Tổ chức atomic components và custom hook trong frontend Next.js"
+    - "Cấu hình Tailwind CSS v4 tokens và theme hệ thống"
+  should_not_trigger:
+    - prompt: "Viết test visual regression cho nút bấm play"
+      expected: belooga-qc-engineering
+
+- skill: belooga-qc-engineering
+  should_trigger:
+    - "Viết kịch bản Playwright E2E test cho luồng đăng ký ứng viên"
+    - "Cấu hình visual regression threshold trong playwright config"
+  should_not_trigger:
+    - prompt: "Kiểm tra kiểu dữ liệu TypeScript không dùng any"
+      expected: fe-code-review
+
+- skill: engineering-integrity-and-evidence
+  should_trigger:
+    - "Tuân thủ nguyên tắc zero-hallucination và bằng chứng test chạy thật"
+    - "Đối chiếu asset CSS và layout với repo legacy Beloga-CV"
+  should_not_trigger:
+    - prompt: "Viết test case Playwright E2E mới"
+      expected: belooga-qc-engineering
+
+- skill: tdd-workflow
+  should_trigger:
+    - "Áp dụng chu trình Red-Green-Refactor khi sửa lỗi backend"
+    - "Tạo test case thất bại trước khi viết code logic xử lý"
+  should_not_trigger:
+    - prompt: "Đánh giá chất lượng code backend trước khi merge PR"
+      expected: be-code-review
+
+- skill: definition-of-done
+  should_trigger:
+    - "Kiểm tra tiêu chí DoD trước khi hoàn tất tính năng mới"
+    - "Kiểm tra ngưỡng ratchet và zero schema drift cho PR"
+  should_not_trigger:
+    - prompt: "Ghi lại bài học kinh nghiệm sau sự cố vào sổ vi phạm"
+      expected: belooga-self-learn
+
+- skill: belooga-self-learn
+  should_trigger:
+    - "Ghi nhận bài học kinh nghiệm và cập nhật docs/VIOLATIONS_REGISTER.md"
+    - "Phân tích nguyên nhân gốc rễ và thêm quy tắc phòng ngừa lỗi lặp lại"
+  should_not_trigger:
+    - prompt: "Kiểm tra tiêu chuẩn Definition of Done của PR"
+      expected: definition-of-done
+
+- skill: be-code-review
+  should_trigger:
+    - "Review code backend FastAPI: kiểm tra IDOR, SQL injection, async loop"
+    - "Đánh giá việc phân chia Controller - Service - Repository trong backend"
+  should_not_trigger:
+    - prompt: "Review component React: hook dependencies và memoization"
+      expected: fe-code-review
+
+- skill: fe-code-review
+  should_trigger:
+    - "Review code frontend Next.js: kiểm tra memory leak hook và any type"
+    - "Kiểm tra độ dài component page.tsx không vượt quá giới hạn ratchet"
+  should_not_trigger:
+    - prompt: "Review endpoint FastAPI và SQLAlchemy repository"
+      expected: be-code-review
+
+- skill: ponytail
+  should_trigger:
+    - "Đơn giản hóa giải pháp tối đa theo nguyên tắc YAGNI và stdlib"
+    - "User yêu cầu làm theo phong cách lazy senior dev ngắn nhất"
+  should_not_trigger:
+    - prompt: "Quét toàn bộ codebase tìm code thừa và over-engineering"
+      expected: ponytail-audit
+
+- skill: ponytail-review
+  should_trigger:
+    - "Review diff để loại bỏ abstraction thừa và boilerplate không cần thiết"
+    - "Kiểm tra PR xem có thể thay thế thư viện bằng standard library"
+  should_not_trigger:
+    - prompt: "Kiểm tra bảo mật IDOR và async I/O trong backend"
+      expected: be-code-review
+
+- skill: ponytail-audit
+  should_trigger:
+    - "Audit toàn bộ repository tìm code bloat và thư viện không cần thiết"
+    - "Lập danh sách các phần code có thể xóa bỏ để tối ưu repo"
+  should_not_trigger:
+    - prompt: "Liệt kê danh sách các ghi chú ponytail debt trong code"
+      expected: ponytail-debt
+
+- skill: ponytail-debt
+  should_trigger:
+    - "Thu thập và thống kê tất cả các comment ponytail debt trong codebase"
+    - "Báo cáo nợ kỹ thuật từ các shortcut đã đánh dấu ponytail:"
+  should_not_trigger:
+    - prompt: "Ghi nhận vi phạm quy chuẩn vào sổ vi phạm"
+      expected: belooga-self-learn

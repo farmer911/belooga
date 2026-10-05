@@ -1,41 +1,44 @@
 ---
 name: schema-change
-description: Safe, disciplined procedure for modifying PostgreSQL schemas in Belooga.
+description: Safe, version-controlled procedure for modifying PostgreSQL schemas via Alembic in Belooga.
 ---
 
 # Workflow: Database Schema Change
 
-Follow these steps whenever a database table, column, index, or constraint needs to change.
+Follow this procedure whenever a database table, column, index, or constraint is added or modified.
 
-## 1. Edit Schema Definition
-- Modify `backend/initdb.sql` directly.
-- Add appropriate constraints (e.g. `NOT NULL`, `DEFAULT`, `REFERENCES`).
-- If adding search fields to `candidate_profiles`, ensure `search_vector` generated column definition is updated.
+> [!WARNING]
+> `docker compose restart postgres` does NOT apply schema changes. Postgres only executes scripts in `initdb.d/` when the storage volume is completely empty. Direct SQL edits to `initdb.sql` without migrations cause schema drift.
 
-## 2. Update Seed Data
-- Modify `scripts/seed-data.py` to ensure all seeded entities populate the new column/table.
+## Step 1: Update ORM Models
+- Modify or add models in `backend/app/models/`.
+- Ensure appropriate column types, nullability, foreign keys, and indexes.
 
-## 3. Reset Local & Test Database
+## Step 2: Generate Alembic Revision
 ```bash
-# Restart postgres container to reload initdb.sql
-docker compose restart postgres
+cd backend && ../backend/.venv/bin/alembic revision --autogenerate -m "describe_change"
+```
+Review the generated revision script in `backend/alembic/versions/`. Hand-correct any custom GIN indexes, trigram indexes, or generated columns that autogenerate misses.
 
-# Re-seed database
-python3 scripts/seed-data.py
+## Step 3: Test Two-Way Migration
+```bash
+# Upgrade, test downgrade, then re-upgrade
+../backend/.venv/bin/alembic upgrade head
+../backend/.venv/bin/alembic downgrade -1
+../backend/.venv/bin/alembic upgrade head
+cd ..
 ```
 
-## 4. Run Pytest Suite
+## Step 4: Seed & Run Integration Tests
 ```bash
+backend/.venv/bin/python scripts/seed-data.py
 backend/.venv/bin/pytest backend/tests/ -v
 ```
 
-## 5. Regenerate SSOT
+## Step 5: Update SSOT & Facts
 ```bash
 python3 scripts/generate-current-state.py --allow-dirty
-```
-
-## 6. Run SSOT Audit
-```bash
+python3 scripts/render-skill-facts.py
 bash scripts/audit-truth.sh
 ```
-Gate 1 verifies that all tables in `initdb.sql` match `CURRENT_STATE.md` exactly.
+All verification gates must report green.

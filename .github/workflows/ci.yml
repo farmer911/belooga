@@ -76,6 +76,12 @@ jobs:
         run: |
           bash scripts/audit-truth.sh
 
+      - name: Skill lint, AUTO facts, ratchet
+        run: |
+          python3 scripts/lint-skills.py --quiet
+          python3 scripts/render-skill-facts.py --check
+          python3 scripts/ratchet.py
+
       - name: Verify Zero State Drift (Generator must match repo)
         run: |
           python3 scripts/generate-current-state.py

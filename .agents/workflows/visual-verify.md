@@ -6,8 +6,8 @@ description: Visual and behavioral verification procedure against legacy source.
 # Workflow: Visual Verification
 
 ## 1. Locate Legacy Source
-- Local repository: `/Users/phucnguyen/Dev/Beloga-CV`
-- Check original components in `/Users/phucnguyen/Dev/Beloga-CV/src/` or `/legacy/`
+- Local repository: `$LEGACY_DIR` (default: `../Beloga-CV`)
+- Check original components in `$LEGACY_DIR/src/` or `legacy/`
 
 ## 2. Check CSS Scoping
 - Ensure new or modified styles do not attach width, height, or background to generic trigger classes (`.modal-trigger`, `.modal-start`).

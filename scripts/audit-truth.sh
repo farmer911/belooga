@@ -97,98 +97,14 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 3. CROSS-REFERENCE SKILLS AUDIT (AST Validation across all .agents/**/*.md)
+# 3. CROSS-REFERENCE SKILLS AUDIT (Skill Lint, AUTO Facts & Quality Ratchet)
 # ------------------------------------------------------------------------------
 echo -e "\n${YELLOW}[3/8] Cross-Referencing Skill Files (.agents/**/*.md) against Code...${NC}"
 
-SKILL_CHECK_OUTPUT=$($PYTHON_BIN << 'EOF'
-import re, glob, ast, sys
-from pathlib import Path
+$PYTHON_BIN scripts/lint-skills.py --quiet || ERRORS=$((ERRORS + 1))
+$PYTHON_BIN scripts/render-skill-facts.py --check || ERRORS=$((ERRORS + 1))
+$PYTHON_BIN scripts/ratchet.py || ERRORS=$((ERRORS + 1))
 
-docs = sorted(glob.glob(".agents/**/*.md", recursive=True))
-skills = sorted(glob.glob(".agents/skills/*/SKILL.md"))
-fe = "".join(Path(f).read_text(errors="ignore") for f in glob.glob("frontend/src/**/*.ts*", recursive=True))
-
-routes = set()
-for f in glob.glob("backend/app/api/v1/endpoints/*.py"):
-    for n in ast.walk(ast.parse(Path(f).read_text())):
-        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            for d in n.decorator_list:
-                if isinstance(d, ast.Call) and getattr(d.func, "attr", "") in ("get","post","put","patch","delete"):
-                    routes.add(re.sub(r"\{[^}]+\}", "{}", ("/v1" + d.args[0].value).rstrip("/")))
-
-norm = lambda p: re.sub(r"\{[^}]+\}", "{}", p.rstrip("/"))
-
-broken_count = 0
-over_300_count = 0
-
-# Check skill frontmatter, TO-BE ban, and length
-for s in skills:
-    p = Path(s)
-    t = p.read_text(encoding="utf-8")
-    dirname = p.parent.name
-
-    if "TARGET ARCHITECTURE" in t or "TO-BE" in t:
-        broken_count += 1
-        print(f"TO_BE_VIOLATION: {s} contains prohibited TARGET ARCHITECTURE or TO-BE content.")
-
-    if not t.startswith("---"):
-        broken_count += 1
-        print(f"MALFORMED_FRONTMATTER: {s} missing frontmatter delimiter.")
-    else:
-        parts = t.split("---", 2)
-        if len(parts) >= 3:
-            fm = parts[1]
-            m_name = re.search(r"^name:\s*(.+)$", fm, re.M)
-            m_desc = re.search(r"description:\s*(.*?)(?=\n[a-z0-9_-]+:|$)", fm, re.DOTALL)
-            if not m_name or m_name.group(1).strip() != dirname:
-                broken_count += 1
-                print(f"FRONTMATTER_NAME_MISMATCH: {s} name does not match dirname {dirname}.")
-            if not m_desc or len(" ".join(m_desc.group(1).split())) > 1024:
-                broken_count += 1
-                print(f"FRONTMATTER_DESC_ERROR: {s} description missing or > 1024 chars.")
-
-    if len(t.splitlines()) > 300:
-        over_300_count += 1
-
-# Check rule character size (<= 12000 chars)
-for r in glob.glob(".agents/rules/*.md"):
-    if len(Path(r).read_text(encoding="utf-8")) > 12000:
-        broken_count += 1
-        print(f"RULE_TOO_LARGE: {r} exceeds 12000 chars limit.")
-
-# Check broken references
-for d in docs:
-    t = Path(d).read_text(errors="ignore")
-    bad_tid = [x for x in set(re.findall(r'data-testid="([^"]+)"', t)) if f'"{x}"' not in fe]
-    bad_api = [x for x in set(re.findall(r"(/v1/[\w\-/{}]+)", t)) if norm(x) not in routes and "/endpoints" not in x]
-    bad_fp  = [x for x in set(re.findall(r"`((?:frontend|backend|qc)/[\w\-/\[\]().]+\.(?:tsx?|py|sql))`", t)) if not Path(x).exists()]
-    
-    if bad_tid or bad_api or bad_fp:
-        broken_count += 1
-        print(f"BROKEN_REF: {d} | bad_tid: {bad_tid} | bad_api: {bad_api} | bad_files: {bad_fp}")
-
-if over_300_count > 0:
-    print(f"NOTICE: {over_300_count} skill files exceed 300 lines (consider splitting references).")
-
-if broken_count > 0:
-    print(f"FAILED: Found {broken_count} skill/rule compliance errors.")
-    sys.exit(1)
-else:
-    print(f"OK: All {len(skills)} skill files passed zero-hallucination verification.")
-EOF
-)
-
-if [[ "$SKILL_CHECK_OUTPUT" =~ "FAILED" ]]; then
-    echo -e "  ${RED}CRITICAL SKILL HALLUCINATIONS DETECTED:${NC}"
-    echo "  $SKILL_CHECK_OUTPUT"
-    ERRORS=$((ERRORS + 1))
-else
-    echo -e "  ${GREEN}✓ All skill files passed zero-hallucination verification (0 TO-BE, valid frontmatter, 0 broken refs).${NC}"
-    if [[ "$SKILL_CHECK_OUTPUT" =~ "NOTICE" ]]; then
-        echo -e "  ${YELLOW}$(echo "$SKILL_CHECK_OUTPUT" | grep NOTICE)${NC}"
-    fi
-fi
 
 # ------------------------------------------------------------------------------
 # 4. DYNAMIC AST MUTATION IDOR AUDIT

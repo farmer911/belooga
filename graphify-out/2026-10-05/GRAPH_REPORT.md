@@ -1,17 +1,17 @@
 # Graph Report - Beloga  (2026-10-05)
 
 ## Corpus Check
-- 219 files · ~932,170 words
+- 237 files · ~939,744 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 19 file(s) not represented in the graph (top: (none) 11, .lock 2, .css 2)
+- Unclassified: 16 file(s) not represented in the graph (top: (none) 8, .lock 2, .css 2)
 
 ## Summary
-- 1611 nodes · 3000 edges · 123 communities (96 shown, 27 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 141 edges (avg confidence: 0.94)
+- 1716 nodes · 3424 edges · 124 communities (97 shown, 27 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 172 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a47bd71b`
+- Built from commit: `ee0b4c87`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -36,7 +36,7 @@
 - ponytail.md
 - workflows/graphify.md
 - webrtc-studio-modal.tsx
-- Button
+- react
 - frontend/package.json
 - @playwright/test
 - Belooga Frontend Engineering Guide
@@ -55,12 +55,12 @@
 - 3. Phase-by-Phase Implementation Checklist
 - endpoints/media.py
 - 2. 8 Service Domains & Verified API Catalog (36 Active Endpoints)
-- ProfileInterest
+- sqlalchemy_ext_asyncio
 - 🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS
 - Belooga Platform
 - 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist
 - 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
-- security.py
+- auth_service.py
 - 🧠 Belooga Self-Learn & Engineering Retrospective
 - Workflow: Definition of Done (DoD)
 - Workflow: Database Schema Change
@@ -69,7 +69,7 @@
 - ai-code-reviewer.py
 - Workflow: Visual Verification
 - 🏁 ENTERPRISE DEFINITION OF DONE (DoD) QUALITY CONTRACT
-- cn
+- test_profile_privacy_and_pii.py
 - 3. Quickstart Setup (Step-by-Step)
 - 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
 - app.js
@@ -87,7 +87,7 @@
 - archive/README.md
 - 1. The Non-Negotiable 3-Phase Cycle
 - conftest.py
-- Belooga Codebase Ground Truth (CURRENT_STATE.md)
+- endpoints/expert_review.py
 - 🛡️ Mandatory Core Engineering Integrity & Evidence Protocol
 - test_reorder_education_experiences_success
 - Identity & Authentication Vault (Domain 1)
@@ -107,54 +107,55 @@
 - AsyncClient
 - endpoints/cms.py
 - TimelineService
-- env.py
+- Button
 - CatalogsService
-- typing
-- next.config.ts
-- experience-timeline.tsx
+- schemas/profile.py
+- create_access_token
+- cn
 - schemas/timeline.py
 - AuthenticatedUser
+- ExpertReviewRepository
 - 2. Backend Clean Architecture (FastAPI + SQLAlchemy + Alembic)
 - use-candidate-profile.ts
-- CandidateProfile
-- models/__init__.py
-- ai-pm-manager.py
+- cms_repo.py
+- useAuthStore
 - IdentityRepository
 - BaseModel
 - schemas/__init__.py
-- generate-current-state.py
+- security.py
 - ProfileRepository
-- media_repo.py
-- pathlib
-- agent-dispatch.py
-- generate-api-matrix.py
+- .upload_video_chunk
+- TimestampMixin
+- test_list_experts_and_packages
+- test_media_chunk_upload_path_traversal_rejection
+- Plan Triển Khai: Dịch Vụ Expert CV Review & Monetization
 - media_service.py
 - use-webrtc-studio.ts
+- Phase 2: Page Object Models (POMs) Development (`qc/pages/`)
 - TimelineRepository
 - user/[username]/page.tsx
-- main.py
+- FastAPI
 - pdf_generator.py
-- pydantic
 
 ## God Nodes (most connected - your core abstractions)
-1. `Button` - 57 edges
-2. `react` - 52 edges
-3. `AuthenticatedUser` - 49 edges
-4. `lucide-react` - 41 edges
+1. `Button` - 67 edges
+2. `react` - 56 edges
+3. `AuthenticatedUser` - 54 edges
+4. `lucide-react` - 48 edges
 5. `cn()` - 39 edges
 6. `ProfileRepository` - 30 edges
 7. `AuthService` - 26 edges
-8. `TimelineService` - 25 edges
-9. `MediaService` - 23 edges
-10. `next` - 22 edges
+8. `ExpertReviewService` - 26 edges
+9. `TimelineService` - 25 edges
+10. `MediaService` - 23 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `F-04 · Mâu thuẫn auth ở public profile / PDF` --references--> `get_current_user()`  [INFERRED]
   BELOOGA_SKILL_REVIEW.md → backend/app/core/security.py
 - `5. Security & Concurrency Verification Summary` --references--> `verify_profile_owner()`  [INFERRED]
   CURRENT_STATE.md → backend/app/core/security.py
-- `Phase 4: Domain 3 — Timeline Sections CRUD & Concurrency Reordering (15 APIs)` --references--> `AwardCertification`  [INFERRED]
-  docs/archive/PLAN_BACKEND.md → backend/app/models/timeline.py
+- `3.1. Atomic Design System Hierarchy` --references--> `FormField()`  [INFERRED]
+  .agents/skills/belooga-frontend-engineering/references/design-patterns.md → frontend/src/components/common/form-field.tsx
 - `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `check_email_exists()`  [INFERRED]
   CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
 - `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `check_username_exists()`  [INFERRED]
@@ -163,7 +164,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (123 total, 27 thin omitted)
+## Communities (124 total, 27 thin omitted)
 
 ### Community 0 - "build_all_pages.py"
 Cohesion: 0.44
@@ -194,8 +195,8 @@ Cohesion: 0.25
 Nodes (7): Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
 
 ### Community 7 - "🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint"
-Cohesion: 0.08
-Nodes (26): 1.1 Project Identity & Core Value Proposition, 1.2 The Conversion Mandate, 3.1 CSS Design Tokens, 3.2 Exact Video Play Button Specification, 4.1 Recommended Modern Stack, 4.2 Modern Directory Structure, 🛡️ Anti-Hallucination Engineering Harness (Lessons Learned & Violations Register), 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint (+18 more)
+Cohesion: 0.12
+Nodes (15): 1.1 Project Identity & Core Value Proposition, 1.2 The Conversion Mandate, 3.1 CSS Design Tokens, 3.2 Exact Video Play Button Specification, 4.1 Recommended Modern Stack, 4.2 Modern Directory Structure, 🛡️ Anti-Hallucination Engineering Harness (Lessons Learned & Violations Register), 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint (+7 more)
 
 ### Community 8 - "🧠 Markmap Architect Skill"
 Cohesion: 0.29
@@ -222,12 +223,12 @@ Cohesion: 0.50
 Nodes (3): Boundaries, Output, Scan
 
 ### Community 19 - "webrtc-studio-modal.tsx"
-Cohesion: 0.36
-Nodes (5): TeleprompterEditorDialog(), TeleprompterEditorDialogProps, TeleprompterOverlay(), TeleprompterOverlayProps, WebRTCStudioModalProps
+Cohesion: 0.31
+Nodes (7): StudioToolbar(), TeleprompterEditorDialog(), TeleprompterEditorDialogProps, TeleprompterOverlay(), TeleprompterOverlayProps, WebRTCStudioModal(), WebRTCStudioModalProps
 
-### Community 20 - "Button"
-Cohesion: 0.10
-Nodes (32): Phase 2: Page Object Models (POMs) Development (`qc/pages/`), ForgotPasswordPage(), LoginPage(), RegisterPage(), NotFound(), HomePage(), CareersPage(), ContactUsPage() (+24 more)
+### Community 20 - "react"
+Cohesion: 0.16
+Nodes (11): nextConfig, EmptyStateAction, EmptyStateProps, ExpertHeroProps, PublicContactModalProps, ReportProfileModalProps, ButtonProps, apiClient (+3 more)
 
 ### Community 21 - "frontend/package.json"
 Cohesion: 0.09
@@ -286,15 +287,15 @@ Cohesion: 0.18
 Nodes (10): 1. Sub-Agent Mission & Quality Gates, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), 🛡️ Belooga QC & Automation Testing Sub-Agent Execution Plan, Phase 1: Test Harness & Environment Setup, Phase 3: Suite 1 — Anti-Hallucination & Visual Regression Gate, Phase 4: Suite 2 — Authentication & Security E2E (`tests/e2e/auth-flow.spec.ts`) (+2 more)
 
 ### Community 38 - "endpoints/media.py"
-Cohesion: 0.19
-Nodes (9): complete_chunked_video_upload(), delete_resume(), generate_candidate_pdf(), get_video_transcoding_status(), upload_avatar(), upload_resume(), upload_video_chunk(), get_current_user() (+1 more)
+Cohesion: 0.17
+Nodes (11): complete_chunked_video_upload(), delete_resume(), generate_candidate_pdf(), get_video_transcoding_status(), upload_avatar(), upload_resume(), upload_video_chunk(), get_current_user() (+3 more)
 
 ### Community 41 - "2. 8 Service Domains & Verified API Catalog (36 Active Endpoints)"
 Cohesion: 0.13
 Nodes (14): 1. 16-Route Frontend Page Inventory, 2. 8 Service Domains & Verified API Catalog (36 Active Endpoints), 3. Database Schema Mapping (24 Tables in `backend/initdb.sql`), 4. QC Automation & Testing Matrix, 🧠 Belooga Master Knowledge Vault & API / Page Catalog, Domain 1: Identity & Authentication Vault — 7 Endpoints, Domain 2: Candidate Profiles — 4 Endpoints, Domain 3: Career Timeline & Reordering — 8 Endpoints (+6 more)
 
-### Community 42 - "ProfileInterest"
-Cohesion: 0.29
+### Community 42 - "sqlalchemy_ext_asyncio"
+Cohesion: 0.19
 Nodes (3): ProfileInterest, ProfileLanguage, ProfileSkill
 
 ### Community 43 - "🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS"
@@ -313,9 +314,9 @@ Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejecti
 Cohesion: 0.25
 Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejection Checklist (The "Kill-Switch" Criteria), 3. The 3-Step Frontend Review SOP (Standard Operating Procedure), 4. Formal Reviewer Decision Templates, 🟢 Approval Template (Emit only when all 3 steps pass 100%):, 🔴 Rejection Template (Emit when code fails any check):, 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
 
-### Community 47 - "security.py"
-Cohesion: 0.06
-Nodes (32): check_email_exists(), check_username_exists(), get_current_session_user(), login(), logout(), refresh_tokens(), register_user(), create_access_token() (+24 more)
+### Community 47 - "auth_service.py"
+Cohesion: 0.18
+Nodes (13): check_email_exists(), check_username_exists(), get_current_session_user(), login(), logout(), refresh_tokens(), register_user(), CheckAvailabilityResponse (+5 more)
 
 ### Community 48 - "🧠 Belooga Self-Learn & Engineering Retrospective"
 Cohesion: 0.33
@@ -338,8 +339,8 @@ Cohesion: 0.25
 Nodes (6): CLAUDE.md (Redirect to GEMINI.md), 1. Verified Tech Stack (Ground Truth), 2. Precedence of Truth, 3. Top 5 Absolute Prohibitions, 4. Task Routing, Belooga Engineering System (GEMINI.md)
 
 ### Community 53 - "ai-code-reviewer.py"
-Cohesion: 0.19
-Nodes (7): call_gemini_api(), discover_gemini_models(), get_git_diff(), main(), post_github_comment(), read_project_rules(), write_step_summary()
+Cohesion: 0.05
+Nodes (26): downgrade(), upgrade(), main(), slugify(), call_gemini_api(), discover_gemini_models(), get_git_diff(), main() (+18 more)
 
 ### Community 54 - "Workflow: Visual Verification"
 Cohesion: 0.33
@@ -349,9 +350,9 @@ Nodes (5): 1. Locate Legacy Source, 2. Check CSS Scoping, 3. Live Browser Inspec
 Cohesion: 0.20
 Nodes (9): 1. THE DEFINITION OF DONE MANDATE, 2. LAYER 1: ARCHITECTURAL PURITY & DESIGN PATTERNS, 3. LAYER 2: COMPUTATIONAL COMPLEXITY & PERFORMANCE BUDGETS, 4. LAYER 3: CLIENT RESILIENCE, SECURITY & ERROR BOUNDARIES, 5. LAYER 4: DATABASE MIGRATION & ZERO-DOWNTIME EVOLUTION, 6. LAYER 5: TESTING PYRAMID & ZERO-FLAKINESS INVARIANTS, 7. LAYER 6: OBSERVABILITY, AUDIT & HEALTH PROBES, 8. LAYER 7: DUAL-KEY REVIEWER APPROVAL & PROOF BLOCK (+1 more)
 
-### Community 56 - "cn"
-Cohesion: 0.11
-Nodes (24): AudioVisualizerMeterProps, EmptyState(), EmptyStateAction, EmptyStateProps, FormField(), FormFieldProps, SkillBadge(), SkillBadgeProps (+16 more)
+### Community 56 - "test_profile_privacy_and_pii.py"
+Cohesion: 0.13
+Nodes (8): test_anonymous_profile_view_does_not_leak_pii(), test_cross_user_upload_completion_rejection(), test_happy_path_chunked_upload_and_complete(), test_hidden_profile_blocks_anonymous_and_other_users(), test_hidden_profile_pdf_blocks_unauthorized_access(), test_owner_profile_view_includes_pii(), test_profile_has_zero_hardcoded_mock_fallbacks(), test_search_suggest_filters_hidden_profiles()
 
 ### Community 57 - "3. Quickstart Setup (Step-by-Step)"
 Cohesion: 0.09
@@ -397,9 +398,9 @@ Nodes (7): 1. The Non-Negotiable 3-Phase Cycle, 2. Prohibited Anti-Patterns, 3. 
 Cohesion: 0.20
 Nodes (5): client(), db_session(), ensure_test_database_seeded(), test_candidate_a(), test_candidate_b()
 
-### Community 74 - "Belooga Codebase Ground Truth (CURRENT_STATE.md)"
-Cohesion: 0.22
-Nodes (8): 1. Database Schema Truth (`backend/initdb.sql`), 3. Frontend Routes Inventory (`frontend/src/app`), 4.1 Backend (`backend/requirements.txt`), 4.2 Frontend (`frontend/package.json`), 4. Package & Dependency Ground Truth, 5. Security & Concurrency Verification Summary, 6. Known Architecture Gaps & Stub Registry (AS-IS vs TO-BE), Belooga Codebase Ground Truth (CURRENT_STATE.md)
+### Community 74 - "endpoints/expert_review.py"
+Cohesion: 0.10
+Nodes (24): checkout_review_order(), create_review_order(), get_order_feedback(), list_candidate_orders(), list_experts(), list_packages(), api_root(), health_check() (+16 more)
 
 ### Community 75 - "🛡️ Mandatory Core Engineering Integrity & Evidence Protocol"
 Cohesion: 0.29
@@ -442,8 +443,8 @@ Cohesion: 0.29
 Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public Content, CMS & Compliance (`/(public)/...`), Self-Verification
 
 ### Community 87 - "test_backend_foundation.py"
-Cohesion: 0.12
-Nodes (13): CatalogCompany, CatalogLocation, CatalogSchool, Interest, Language, Skill, CareerApplication, test_alembic_revision_file_validity() (+5 more)
+Cohesion: 0.14
+Nodes (13): CatalogCompany, CatalogLocation, CatalogSchool, Interest, Language, Skill, CareerApplication, CareerPosting (+5 more)
 
 ### Community 88 - "scripts"
 Cohesion: 0.40
@@ -458,28 +459,32 @@ Cohesion: 0.27
 Nodes (4): test_idor_cross_user_media_upload_forbidden(), test_idor_cross_user_profile_mutation_forbidden(), test_idor_cross_user_timeline_mutation_forbidden(), test_unauthenticated_mutations_rejected()
 
 ### Community 92 - "endpoints/cms.py"
-Cohesion: 0.16
+Cohesion: 0.13
 Nodes (7): get_faqs(), list_career_jobs(), report_candidate_profile(), submit_contact_inquiry(), ContactInquiryRequest, ReportProfileRequest, CmsService
 
 ### Community 93 - "TimelineService"
 Cohesion: 0.17
 Nodes (9): create_education(), create_job_experience(), delete_education(), delete_job_experience(), list_education_experiences(), list_job_experiences(), reorder_education_experiences(), reorder_job_experiences() (+1 more)
 
-### Community 94 - "env.py"
-Cohesion: 0.12
-Nodes (6): do_run_migrations(), get_database_url(), run_async_migrations(), run_migrations_offline(), run_migrations_online(), seed()
+### Community 94 - "Button"
+Cohesion: 0.13
+Nodes (17): ForgotPasswordPage(), NotFound(), CareersPage(), ContactUsPage(), HelpPage(), PublicCandidatePage(), AccountSettingsPage(), UpdateProfilePage() (+9 more)
 
 ### Community 95 - "CatalogsService"
-Cohesion: 0.09
-Nodes (8): list_skills(), suggest_companies(), suggest_locations(), suggest_schools(), search_candidates(), search_suggestions(), CatalogsRepository, CatalogsService
+Cohesion: 0.06
+Nodes (14): do_run_migrations(), get_database_url(), run_async_migrations(), run_migrations_offline(), run_migrations_online(), list_skills(), suggest_companies(), suggest_locations() (+6 more)
 
-### Community 96 - "typing"
-Cohesion: 0.09
-Nodes (9): add_candidate_skill(), get_candidate_public_profile(), remove_candidate_skill(), update_candidate_profile(), get_db(), ProfileLanguageItem, ProfileUpdate, SkillAdd (+1 more)
+### Community 96 - "schemas/profile.py"
+Cohesion: 0.20
+Nodes (6): ProfileLanguageItem, ProfileResponse, ProfileUpdate, SkillAdd, SkillResponse, test_pydantic_v2_schemas_contracts()
 
-### Community 98 - "experience-timeline.tsx"
-Cohesion: 0.17
-Nodes (29): ConfirmDialog(), ConfirmDialogProps, SkillsCard(), SkillsCardProps, SUGGESTIONS, EducationTimeline(), ExperienceTimeline(), Dialog() (+21 more)
+### Community 97 - "create_access_token"
+Cohesion: 0.18
+Nodes (8): create_access_token(), generate_refresh_token(), hash_token(), _build_user_dto(), _set_refresh_cookie(), test_refresh_token_grace_window_allows_concurrent_tabs(), test_refresh_token_replay_attack_revokes_entire_family(), test_refresh_token_rotation_success()
+
+### Community 98 - "cn"
+Cohesion: 0.07
+Nodes (72): ExpertReviewPage(), ConfirmDialog(), ConfirmDialogProps, EmptyState(), FormField(), FormFieldProps, SkillBadge(), SkillBadgeProps (+64 more)
 
 ### Community 99 - "schemas/timeline.py"
 Cohesion: 0.14
@@ -487,30 +492,30 @@ Nodes (9): AwardCertificationCreate, AwardCertificationResponse, EducationCreate
 
 ### Community 100 - "AuthenticatedUser"
 Cohesion: 0.13
-Nodes (6): Backend Rules (FastAPI + SQLAlchemy 2.0 Async), AuthenticatedUser, verify_profile_owner(), MediaService, write_bytes_async(), ProfileService
+Nodes (8): Backend Rules (FastAPI + SQLAlchemy 2.0 Async), add_candidate_skill(), get_candidate_public_profile(), remove_candidate_skill(), update_candidate_profile(), AuthenticatedUser, verify_profile_owner(), ProfileService
+
+### Community 101 - "ExpertReviewRepository"
+Cohesion: 0.21
+Nodes (6): CVReviewFeedback, CVReviewOrder, CVReviewPackage, ExpertProfile, ExpertReviewRepository, 3. Kiến Trúc Backend (FastAPI Clean Architecture)
 
 ### Community 102 - "2. Backend Clean Architecture (FastAPI + SQLAlchemy + Alembic)"
 Cohesion: 0.12
 Nodes (16): 1. Architectural Mandates, 2. Backend Clean Architecture (FastAPI + SQLAlchemy + Alembic), 3. Frontend Architecture (Next.js 16 + React 19 + Atomic Design), 4. Verification & Quality Gates, A. Atoms - components/ui/, A. Router Layer (Thin Controllers) - app/api/v1/endpoints/, B. Molecules - components/common/, B. Service Layer (Business Domain) - app/services/ (+8 more)
 
 ### Community 103 - "use-candidate-profile.ts"
-Cohesion: 0.23
-Nodes (11): ProfileHeaderCardProps, EducationTimelineProps, ExperienceTimelineProps, CandidateProfile, EducationExperience, JobExperience, useCandidateProfile(), ChunkUploadProgress (+3 more)
+Cohesion: 0.38
+Nodes (7): ProfileHeaderCardProps, CandidateProfile, useCandidateProfile(), ChunkUploadProgress, downloadCandidatePdf(), uploadAvatar(), uploadResume()
 
-### Community 104 - "CandidateProfile"
-Cohesion: 0.14
-Nodes (5): CareerPosting, ContactInquiry, ProfileReport, CandidateProfile, CmsRepository
+### Community 104 - "cms_repo.py"
+Cohesion: 0.16
+Nodes (3): ContactInquiry, ProfileReport, CmsRepository
 
-### Community 105 - "models/__init__.py"
-Cohesion: 0.21
-Nodes (4): TimestampMixin, AwardCertification, EducationExperience, JobExperience
-
-### Community 106 - "ai-pm-manager.py"
-Cohesion: 0.18
-Nodes (6): call_gemini_api(), create_github_task_issue(), discover_gemini_models(), get_issue_details(), main(), post_issue_comment()
+### Community 106 - "useAuthStore"
+Cohesion: 0.13
+Nodes (16): Phase 1: Foundation & Asset Ingestion, Phase 2: Application Shell (Header & Footer), Phase 3: Public Marketing Pages (Routes 01, 11, 12, 13, 14), Phase 4: Authentication Flow (Routes 02, 03, 04, 15), Phase 5: Candidate Core Workspace (Routes 05, 06, 07, 09), Phase 6: Talent Discovery & Search (Route 08), 🚀 Step-by-Step Conversion Execution Template, LoginPage() (+8 more)
 
 ### Community 107 - "IdentityRepository"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (7): EmailVerificationToken, Identity, PasswordResetToken, RefreshSession, SocialAccount, IdentityRepository, Phase 2: Domain 1 — Identity & Authentication Service (10 APIs)
 
 ### Community 108 - "BaseModel"
@@ -518,55 +523,55 @@ Cohesion: 0.22
 Nodes (4): CareerPostingResponse, ContactInquiryResponse, JobApplicantRequest, ReportProfileResponse
 
 ### Community 109 - "schemas/__init__.py"
-Cohesion: 0.20
-Nodes (6): ChunkUploadRequest, ChunkUploadResponse, CompleteUploadRequest, MediaResponse, ProfileResponse, test_pydantic_v2_schemas_contracts()
+Cohesion: 0.18
+Nodes (5): CatalogItemResponse, SuggestionResponse, ChunkUploadRequest, ChunkUploadResponse, MediaResponse
 
-### Community 110 - "generate-current-state.py"
-Cohesion: 0.36
-Nodes (6): extract_backend_routes(), extract_database_tables(), extract_dependencies(), extract_frontend_routes(), get_git_info(), main()
-
-### Community 113 - "media_repo.py"
+### Community 110 - "security.py"
 Cohesion: 0.20
-Nodes (7): ProfileMedia, VideoArchive, 3. Phase-by-Phase Implementation Checklist, Phase 1: Environment & Database Infrastructure, Phase 3: Domain 2 & 4 — Candidate Profile & Media Storage (20 APIs), Phase 4: Domain 3 — Timeline Sections CRUD & Concurrency Reordering (15 APIs), Phase 5: Domain 5 & 6 — WebRTC Studio & Talent Search (8 APIs)
+Nodes (3): get_password_hash(), verify_identity_owner(), verify_password()
+
+### Community 113 - "TimestampMixin"
+Cohesion: 0.11
+Nodes (13): TimestampMixin, ProfileMedia, VideoArchive, CandidateProfile, AwardCertification, EducationExperience, JobExperience, test_orm_identity_and_profile_crud_cycle() (+5 more)
+
+### Community 116 - "Plan Triển Khai: Dịch Vụ Expert CV Review & Monetization"
+Cohesion: 0.33
+Nodes (5): 1. Tổng Quan & Trải Nghiệm Người Dùng (UX Flow), 2. Thiết Kế Cơ Sở Dữ Liệu (PostgreSQL & Alembic), 4. Kiến Trúc Frontend (Next.js 16 + Atomic Design), 5. Quy Chuẩn & Kiểm Thử (DoD), Plan Triển Khai: Dịch Vụ Expert CV Review & Monetization
 
 ### Community 117 - "media_service.py"
-Cohesion: 0.15
-Nodes (9): assemble_chunks_async(), _assemble_chunks_sync(), extract_poster_thumbnail(), get_validated_upload_dir(), probe_video_duration(), run_cmd_async(), _run_cmd_sync(), transcode_to_streaming_mp4() (+1 more)
+Cohesion: 0.16
+Nodes (8): assemble_chunks_async(), _assemble_chunks_sync(), extract_poster_thumbnail(), get_validated_upload_dir(), probe_video_duration(), run_cmd_async(), _run_cmd_sync(), transcode_to_streaming_mp4()
 
 ### Community 118 - "use-webrtc-studio.ts"
-Cohesion: 0.20
-Nodes (18): AudioVisualizerMeter(), StudioToolbar(), StudioToolbarProps, StudioViewfinder(), StudioViewfinderProps, WebRTCStudioModal(), useAudioMeter(), useTeleprompter() (+10 more)
+Cohesion: 0.19
+Nodes (17): AudioVisualizerMeter(), AudioVisualizerMeterProps, StudioToolbarProps, StudioViewfinder(), StudioViewfinderProps, useAudioMeter(), useTeleprompter(), useWebRTCStudio() (+9 more)
+
+### Community 119 - "Phase 2: Page Object Models (POMs) Development (`qc/pages/`)"
+Cohesion: 0.50
+Nodes (4): Phase 2: Page Object Models (POMs) Development (`qc/pages/`), HomePage(), SearchContent(), SearchPage()
 
 ### Community 121 - "user/[username]/page.tsx"
 Cohesion: 0.18
 Nodes (13): WebRTCStudioModal, WorkspacePage(), ResumeAttachmentCard(), ResumeAttachmentCardProps, VideoPitchModal(), VideoPitchModalProps, LanguagesInterestsCard(), LanguagesInterestsCardProps (+5 more)
 
-### Community 122 - "main.py"
-Cohesion: 0.27
-Nodes (4): api_root(), health_check(), lifespan(), 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
-
-### Community 123 - "pdf_generator.py"
-Cohesion: 0.14
-Nodes (4): _build_pdf_sync(), generate_pdf_resume_async(), test_media_chunk_upload_path_traversal_rejection(), test_media_complete_upload_path_traversal_rejection()
-
 ## Knowledge Gaps
-- **534 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+529 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 834 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **540 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+535 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 854 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **27 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AuthenticatedUser` connect `AuthenticatedUser` to `typing`, `endpoints/media.py`, `security.py`, `media_service.py`, `TimelineService`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **Why does `get_current_user()` connect `endpoints/media.py` to `typing`, `BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)`, `AuthenticatedUser`, `security.py`, `main.py`, `TimelineService`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `F-04 · Mâu thuẫn auth ở public profile / PDF` connect `BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)` to `endpoints/media.py`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Are the 20 inferred relationships involving `AuthenticatedUser` (e.g. with `get_current_session_user()` and `complete_chunked_video_upload()`) actually correct?**
-  _`AuthenticatedUser` has 20 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `get_current_user()` connect `endpoints/media.py` to `BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)`, `AuthenticatedUser`, `endpoints/expert_review.py`, `security.py`, `auth_service.py`, `TimelineService`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `AuthenticatedUser` connect `AuthenticatedUser` to `endpoints/media.py`, `endpoints/expert_review.py`, `sqlalchemy_ext_asyncio`, `security.py`, `auth_service.py`, `.upload_video_chunk`, `media_service.py`, `pdf_generator.py`, `TimelineService`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Why does `Button` connect `Button` to `cn`, `useAuthStore`, `webrtc-studio-modal.tsx`, `react`, `Phase 2: Page Object Models (POMs) Development (`qc/pages/`)`, `user/[username]/page.tsx`?**
+  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Are the 24 inferred relationships involving `AuthenticatedUser` (e.g. with `get_current_session_user()` and `checkout_review_order()`) actually correct?**
+  _`AuthenticatedUser` has 24 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _534 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _540 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)` be split into smaller, more focused modules?**
   _Cohesion score 0.06451612903225806 - nodes in this community are weakly interconnected._
 - **Should `2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)` be split into smaller, more focused modules?**

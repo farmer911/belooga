@@ -5,7 +5,7 @@ description: Mandatory 6-step quality gate required before committing or reporti
 
 # Workflow: Definition of Done (DoD)
 
-Execute this workflow before declaring any feature or bug fix complete.
+Execute this workflow before declaring any feature or bug fix complete. Detailed contract: `.agents/skills/definition-of-done/SKILL.md`.
 
 ## Step 1: Regenerate Single Source of Truth
 ```bash
@@ -17,7 +17,7 @@ Ensure `CURRENT_STATE.md` reflects all endpoint and route changes.
 ```bash
 bash scripts/audit-truth.sh
 ```
-All 8 verification gates must report green.
+All verification gates must report green.
 
 ## Step 3: Run Backend Tests
 ```bash
@@ -33,7 +33,7 @@ Must report 0 TypeScript errors.
 
 ## Step 5: Visual Verification (If UI was modified)
 - Inspect the affected route in browser.
-- Verify against legacy source at `/Users/phucnguyen/Dev/Beloga-CV`.
+- Verify against legacy source at `$LEGACY_DIR` (default: `../Beloga-CV`).
 - Ensure zero class collision or global CSS pollution.
 
 ## Step 6: Git Status Review

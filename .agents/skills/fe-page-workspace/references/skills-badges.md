@@ -1,50 +1,28 @@
-# 🏷️ Section Skill: Candidate Skills & Catalog Management
+# Section Reference: Skills & Profile Badges
 
-> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
-> **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Skills Section)  
-> **Target Modular Path:** frontend/src/components/organisms/workspace/skills-section.tsx (planned target)  
-> **Master Skill:** `fe-page-workspace`  
-> **Backend Domain:** Domain 2 (Candidate Profile) & Domain 7 (Master Catalogs)  
+- **Components:** `frontend/src/components/features/profile/skills-card.tsx`, `frontend/src/components/features/profile/languages-interests-card.tsx`
+- **Hook:** `frontend/src/hooks/use-candidate-profile.ts`
+- **Master Skill:** `fe-page-workspace`
+- **Backend Domain:** Domain 2 (Candidate Profile) & Domain 6 (Master Catalogs)
 
 ---
 
 ## 1. Scope Boundary
-
 This section maintains responsibility for:
-1. Candidate technical and domain skill badge visualization.
-2. Skill addition modal dialog trigger.
-3. Master Skills Catalog debounced autocomplete integration (`/v1/profile/skills/`).
-4. Instant skill removal from candidate credentials.
+1. Displaying candidate skill badges, proficiency levels, and verified badges.
+2. Inline skill addition and deletion modal / chip list.
+3. Rendering secondary taxonomy attributes: spoken languages and career interests.
 
 ---
 
-## 2. API Contracts & Autocomplete Flow
-
-### 2.1. Master Catalog Autocomplete
-* **Endpoint:** `GET /v1/profile/skills/`
-* **Response:** Array of standardized skill names:
-  ```json
-  ["React", "TypeScript", "Python", "FastAPI", "PostgreSQL", "Docker", "Next.js"]
-  ```
-
-### 2.2. Add Candidate Skill
-* **Endpoint:** `POST /v1/profile/{username}/skills/`
-* **Payload:** `{ "name": "Kubernetes" }`
-* **Response:** `{ "status": "success", "skill": "Kubernetes" }`
-
-### 2.3. Delete Candidate Skill
-* **Endpoint:** `DELETE /v1/profile/{username}/skills/{skill_name}`
-* **Response:** `204 No Content` or `{ "status": "deleted" }`
-* Cache Sync: Dispatch `queryClient.invalidateQueries({ queryKey: ["candidate-profile", username] })`.
+## 2. API Contracts & Mutations
+- **Add Skill:** `POST /v1/profile/{username}/skills/`
+- **Remove Skill:** `DELETE /v1/profile/{username}/skills/{skill_id}/`
+- **Taxonomy Suggestions:** `GET /v1/catalogs/skills/?q={query}`
 
 ---
 
-## 3. QC Anti-Regression Selectors (Mandatory Preservation)
-
-Playwright E2E tests target these exact skills selectors:
-* `[data-testid="skills-container"]`: Main wrapper enclosing skill badges.
-* `[data-testid="skill-badge"]`: Individual rendered badge pill.
-* `[data-testid="add-skill-btn"]`: Modal opener for adding skills.
-* `[data-testid="skill-autocomplete-input"]`: Text input for searching master catalog.
-* `[data-testid="skill-suggestion-item"]`: Dropdown recommendation item.
-* `[data-testid="remove-skill-btn"]`: Dismiss icon (x) removing the badge.
+## 3. QC Anti-Regression Selectors
+- `[data-testid="skills-card"]`: Outer card container for skills.
+- `[data-testid="skill-badge"]`: Individual skill pill/tag element.
+- `[data-testid="add-skill-btn"]`: Trigger button for skill autocomplete dialog.

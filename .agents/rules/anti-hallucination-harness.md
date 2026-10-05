@@ -6,9 +6,9 @@ description: Core anti-hallucination and ground-truth invariants for Belooga.
 # Legacy System Ground-Truth & Anti-Hallucination Harness Rules
 
 1. **Zero Hallucination Policy:** NEVER hallucinate, approximate, or draw SVG/UI assets when working with legacy codebases.
-2. **Literal Asset Provenance:** ALWAYS extract exact assets, class names, and layout styles directly from the source repository `farmer911/beloga` (located locally at `/Users/phucnguyen/Dev/Beloga-CV` or `../Beloga-CV`).
-3. **Violations Register Consultation:** Check `docs/archive/VIOLATIONS_REGISTER.md` to prevent repeating past mistakes.
-4. **Zero Global CSS Pollution:** NEVER assign dimensions (`height`, `width`), layout, or background styles to generic behavior/trigger classes (such as `.modal-trigger`, `.modal-instance`, `.modal-start`). Scope all custom styles strictly to avoid class collision.
+2. **Literal Asset Provenance:** ALWAYS extract exact assets, class names, and layout styles directly from the source repository `farmer911/beloga` (located locally at `$LEGACY_DIR` or `../Beloga-CV`).
+3. **Violations Register Consultation:** Check `docs/VIOLATIONS_REGISTER.md` to prevent repeating past mistakes.
+4. **Zero Global CSS Pollution:** Scoped strictly per `.agents/skills/engineering-integrity-and-evidence/SKILL.md` §4. Never assign dimensions to generic trigger classes.
 5. **Mandatory Interactive & Visual Verification Gate:** Before declaring ANY UI fix or interactive feature (hover, click, modal, dropdown) as complete, the agent MUST inspect the live page in the browser. NEVER claim a fix is complete based only on code edits.
 6. **Author Alignment:** If an asset, style, or contract is unknown or ambiguous, ask the system author (user) directly. Never guess or fabricate.
 7. **Execution Integrity:** Follow `GEMINI.md` and abide by `.agents/skills/engineering-integrity-and-evidence/SKILL.md`. Adhere strictly to the "No Proof = Not Done" rule.

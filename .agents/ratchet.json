@@ -1,0 +1,10 @@
+{
+  "fe_arbitrary_hex": 812,
+  "fe_any": 26,
+  "fe_ts_ignore": 0,
+  "fe_max_page_lines": 371,
+  "fe_files_over_300_lines": 2,
+  "be_type_ignore": 1,
+  "be_sql_in_routers": 0,
+  "be_routes_without_response_model": 30
+}

@@ -1,141 +1,168 @@
 # Graph Report - Beloga  (2026-10-05)
 
 ## Corpus Check
-- 237 files · ~939,744 words
+- 245 files · ~945,336 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 16 file(s) not represented in the graph (top: (none) 8, .lock 2, .css 2)
 
 ## Summary
-- 1716 nodes · 3424 edges · 124 communities (97 shown, 27 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 172 edges (avg confidence: 0.94)
+- 1753 nodes · 3537 edges · 151 communities (117 shown, 34 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 239 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ee0b4c87`
+- Built from commit: `ffb4c145`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - build_all_pages.py
 - BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)
-- 2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)
-- 🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE
+- candidate-orders-list.tsx
+- sys
 - Ponytail
 - Belooga Design System & Tokens Guide
-- Ponytail Help
+- ai-pm-manager.py
 - 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint
-- 🧠 Markmap Architect Skill
-- Legacy Ground-Truth Enforcement & Anti-Hallucination Protocol
-- ponytail-audit/SKILL.md
-- Ponytail Gain
-- ponytail-review/SKILL.md
-- ponytail-debt/SKILL.md
+- BELOOGA — Skill Review & Upgrade Plan (mục tiêu: mọi skill ≥ 8.5)
+- BELOOGA — Skill Review & Upgrade Plan (mục tiêu: mọi skill ≥ 8.5)
+- Ponytail Repository Audit
+- CatalogsRepository
+- Ponytail Code Review
+- Ponytail Technical Debt Ledger
 - anti-hallucination-harness.md
 - rules/graphify.md
 - headroom.md
-- ponytail.md
+- Ponytail, lazy senior dev mode
 - workflows/graphify.md
 - webrtc-studio-modal.tsx
-- react
+- Button
 - frontend/package.json
 - @playwright/test
-- Belooga Frontend Engineering Guide
+- Belooga Frontend Engineering Architecture
 - compilerOptions
-- Belooga Backend Engineering Guide
+- Belooga Backend Engineering Architecture
 - 🐋 BELOOGA — Master Migration & Conversion Blueprint
 - dependencies
 - 3. Phase-by-Phase Implementation Checklist
 - ⚡ Belooga Backend Sub-Agent Execution Plan
 - 🤖 Parallel 3-Sub-Agent Orchestration Blueprint
 - compilerOptions
-- 3. Strict Quality Gates & Anti-Regression Assertions
+- Belooga QC & Automated Testing Engineering Guide
 - README.md
 - AGENTS.md
 - postcss.config.mjs
 - 3. Phase-by-Phase Implementation Checklist
-- endpoints/media.py
-- 2. 8 Service Domains & Verified API Catalog (36 Active Endpoints)
-- sqlalchemy_ext_asyncio
+- MediaService
+- CatalogsService
+- profile_repo.py
 - 🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS
 - Belooga Platform
 - 🧐 Principal Backend Lead Reviewer: Code Review SOP & Rejection Checklist
 - 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
 - auth_service.py
-- 🧠 Belooga Self-Learn & Engineering Retrospective
+- Belooga Continuous Learning Protocol
 - Workflow: Definition of Done (DoD)
 - Workflow: Database Schema Change
-- 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)
+- 4. Phát hiện hệ thống (có bằng chứng)
 - Belooga Engineering System (GEMINI.md)
 - ai-code-reviewer.py
 - Workflow: Visual Verification
-- 🏁 ENTERPRISE DEFINITION OF DONE (DoD) QUALITY CONTRACT
-- test_profile_privacy_and_pii.py
+- Enterprise Definition of Done (DoD) Quality Contract
+- AsyncClient
 - 3. Quickstart Setup (Step-by-Step)
-- 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
+- Agent Router & Execution Protocol
 - app.js
 - Homepage & Candidate Showcase (`/`)
-- fe-page-workspace/SKILL.md
+- Candidate Workspace (`/user/[username]`)
 - devDependencies
-- 🏛️ BELOOGA ARCHITECTURE DECISION RECORDS (ADR LOG)
+- 4. Phát hiện hệ thống (có bằng chứng)
 - frontend.md
-- Identity & Authentication (`/(auth)/...`)
+- Authentication & Onboarding (`/(auth)/*`)
 - Public Candidate Profile (`/public/[username]`)
-- Talent Discovery & Search (`/search`)
+- Talent Search & Discovery (`/search`)
 - legacy.md
 - qc.md
 - adr/README.md
 - archive/README.md
-- 1. The Non-Negotiable 3-Phase Cycle
+- 1. The Red -> Green -> Refactor Cycle
 - conftest.py
-- endpoints/expert_review.py
-- 🛡️ Mandatory Core Engineering Integrity & Evidence Protocol
+- ExpertReviewService
+- Mandatory Core Engineering Integrity & Evidence Protocol
 - test_reorder_education_experiences_success
-- Identity & Authentication Vault (Domain 1)
-- Candidate User Management & Settings (`/user/[username]/update`, `/settings`)
-- Master Catalogs & Taxonomies (Domain 7)
-- Public CMS & Moderation (Domain 8)
-- Media Processing & Document Generation (Domain 4)
-- Candidate Profile (Domain 2)
-- Talent Discovery & Search (Domain 6)
-- Career Timeline & Reordering (Domain 3)
-- Public Content, CMS & Compliance (`/(public)/...`)
+- Identity & Authentication (Domain 1)
+- Candidate Account Management & Settings (`/user/[username]/settings`, `/update`)
+- Master Catalogs (Domain 6)
+- endpoints/catalogs.py
+- .get_candidate_public_profile
+- Candidate Search (Domain 5)
+- Career Timeline (Domain 3)
+- Public Content & CMS Pages (`/(public)/*`)
 - legacy/README.md
 - test_backend_foundation.py
 - scripts
 - eslint.config.mjs
 - audit-truth.sh
 - AsyncClient
-- endpoints/cms.py
-- TimelineService
-- Button
-- CatalogsService
-- schemas/profile.py
+- CmsService
+- endpoints/timeline.py
+- public/[username]/page.tsx
+- env.py
+- 8.2 Frontend domain
 - create_access_token
 - cn
 - schemas/timeline.py
 - AuthenticatedUser
 - ExpertReviewRepository
-- 2. Backend Clean Architecture (FastAPI + SQLAlchemy + Alembic)
-- use-candidate-profile.ts
-- cms_repo.py
-- useAuthStore
+- 8.3 Skill xuyên suốt
+- 8.2 Frontend domain
+- CmsRepository
+- typing
+- 8.3 Skill xuyên suốt
 - IdentityRepository
-- BaseModel
+- 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)
 - schemas/__init__.py
 - security.py
 - ProfileRepository
-- .upload_video_chunk
-- TimestampMixin
+- generate-current-state.py
+- ProfileMedia
 - test_list_experts_and_packages
 - test_media_chunk_upload_path_traversal_rejection
 - Plan Triển Khai: Dịch Vụ Expert CV Review & Monetization
 - media_service.py
 - use-webrtc-studio.ts
-- Phase 2: Page Object Models (POMs) Development (`qc/pages/`)
+- lint-skills.py
 - TimelineRepository
 - user/[username]/page.tsx
-- FastAPI
-- pdf_generator.py
+- main.py
+- services/__init__.py
+- 7. Plan thực hiện theo phase
+- 8.1 Backend domain
+- 7. Plan thực hiện theo phase
+- 8.1 Backend domain
+- Expert CV Review Page (`/(public)/expert-review`)
+- pathlib
+- Backend Code Review Protocol
+- Frontend Code Review Protocol
+- Section Reference: Profile Header & Identity Management
+- Section Reference: Video Pitch Card & Player Modal
+- Section Reference: Skills & Profile Badges
+- Section Reference: Career Timeline & Drag-and-Drop Reordering
+- Section Reference: WebRTC Recording Studio & Teleprompter
+- search_candidates
+- 8. Thẻ update từng skill
+- 9. Sửa hạ tầng: ROUTER, GEMINI, rules, workflows
+- 8. Thẻ update từng skill
+- 9. Sửa hạ tầng: ROUTER, GEMINI, rules, workflows
+- json
+- agent-dispatch.py
+- 2. Rubric chấm điểm
+- 2. Rubric chấm điểm
+- backend.md
+- ADR-003-fastapi-modular-monolith.md
+- ADR-004-sqlalchemy-async-layered-architecture.md
+- ADR-006-reportlab-pdf-generation.md
+- ponytail-debt.md
 
 ## God Nodes (most connected - your core abstractions)
 1. `Button` - 67 edges
@@ -143,28 +170,28 @@
 3. `AuthenticatedUser` - 54 edges
 4. `lucide-react` - 48 edges
 5. `cn()` - 39 edges
-6. `ProfileRepository` - 30 edges
-7. `AuthService` - 26 edges
-8. `ExpertReviewService` - 26 edges
-9. `TimelineService` - 25 edges
-10. `MediaService` - 23 edges
+6. `ProfileRepository` - 32 edges
+7. `AuthService` - 28 edges
+8. `ExpertReviewService` - 28 edges
+9. `verify_profile_owner()` - 27 edges
+10. `TimelineService` - 27 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `1. Clean 4-Layer Backend Architecture` --references--> `get_current_user()`  [INFERRED]
+  .agents/skills/belooga-backend-engineering/SKILL.md → backend/app/core/security.py
 - `F-04 · Mâu thuẫn auth ở public profile / PDF` --references--> `get_current_user()`  [INFERRED]
   BELOOGA_SKILL_REVIEW.md → backend/app/core/security.py
-- `5. Security & Concurrency Verification Summary` --references--> `verify_profile_owner()`  [INFERRED]
-  CURRENT_STATE.md → backend/app/core/security.py
-- `3.1. Atomic Design System Hierarchy` --references--> `FormField()`  [INFERRED]
-  .agents/skills/belooga-frontend-engineering/references/design-patterns.md → frontend/src/components/common/form-field.tsx
-- `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `check_email_exists()`  [INFERRED]
-  CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
-- `2. Backend API Inventory (`backend/app/api/v1/endpoints/`)` --references--> `check_username_exists()`  [INFERRED]
-  CURRENT_STATE.md → backend/app/api/v1/endpoints/auth.py
+- `be-code-review — mới → 8.7` --references--> `get_current_user()`  [INFERRED]
+  BELOOGA_SKILL_UPGRADE_PLAN.md → backend/app/core/security.py
+- `be-code-review — mới → 8.7` --references--> `get_current_user()`  [INFERRED]
+  docs/BELOOGA_SKILL_UPGRADE_PLAN.md → backend/app/core/security.py
+- `F-02 — Gate 3 cho qua mọi thứ` --references--> `verify_profile_owner()`  [INFERRED]
+  BELOOGA_SKILL_UPGRADE_PLAN.md → backend/app/core/security.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (124 total, 27 thin omitted)
+## Communities (151 total, 34 thin omitted)
 
 ### Community 0 - "build_all_pages.py"
 Cohesion: 0.44
@@ -174,61 +201,57 @@ Nodes (15): build_account_setting_scene(), build_blog_scene(), build_careers_sce
 Cohesion: 0.06
 Nodes (30): 0. Phạm vi review, 1. Protocol phản biện (BẮT BUỘC), 2. Kết luận tổng, 3. Findings, 4. Skill context knowledge còn thiếu, 5. Kiến trúc tri thức mục tiêu, 6. Tiêu chí S-tier (kiểm chứng được), 7. Nâng cấp `scripts/audit-truth.sh` (bắt buộc chạy trong CI) (+22 more)
 
-### Community 2 - "2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)"
-Cohesion: 0.07
-Nodes (27): 1. CORE ARCHITECTURAL PHILOSOPHY, 2.1. Clean 4-Layer Architecture (Ports & Adapters), 2.2. Repository & Unit of Work (UoW) Pattern, 2.3. Pessimistic Concurrency Locking Pattern (`SELECT FOR UPDATE`), 2.4. CQRS (Command Query Responsibility Segregation) with GIN/Trigram Indexing, 2.5. Transactional Outbox Pattern, 2.6. Non-Blocking Event-Loop Offloading Pattern, 2.7. Circuit Breaker & Exponential Backoff with Full Jitter (+19 more)
-
-### Community 3 - "🧠 ADVANCED SYSTEMS ENGINEERING & COMPUTER SCIENCE KNOWLEDGE BASE"
-Cohesion: 0.07
-Nodes (26): 10. POSTGRESQL ADVISORY LOCKS FOR CONCURRENT ASYNC CHUNK WRITES, 11. CROSS-ORIGIN COOKIE TOPOLOGY & THE BFF (BACKEND-FOR-FRONTEND) PATTERN, 12. MASTER TECHNICAL KNOWLEDGE AUDIT CHECKLIST, 1. CORE ENGINEERING PHILOSOPHY, 2.1. PostgreSQL MVCC & Dead Tuple Bloat, 2.2. Transaction Anomalies & The Write Skew Trap, 2.3. Query Optimizer Join Algorithms, 2. DATABASE INTERNALS & CONCURRENCY ANOMALIES (+18 more)
+### Community 2 - "candidate-orders-list.tsx"
+Cohesion: 0.12
+Nodes (32): ExpertReviewPage(), EmptyState(), SkillBadge(), SkillBadgeProps, CandidateOrdersListProps, ExpertCard(), ExpertCardProps, CATEGORIES (+24 more)
 
 ### Community 4 - "Ponytail"
-Cohesion: 0.22
-Nodes (8): Boundaries, Intensity, Output, Persistence, Ponytail, Rules, The ladder, When NOT to be lazy
+Cohesion: 0.40
+Nodes (4): Ponytail, Project Overrides, Rules, The Ladder
 
 ### Community 5 - "Belooga Design System & Tokens Guide"
 Cohesion: 0.22
 Nodes (8): 🎨 1. Brand & Primary Colors (Màu chủ đạo & Điểm nhấn), 🖋 2. Text & Typography Colors (Màu văn bản), 📐 3. Surfaces, Borders & Elevation (Nền, Viền & Đổ bóng), 🔤 4. Typography System (Hệ thống Kiểu chữ), 💻 5. CSS / SCSS Variable Snippet (Sẵn sàng tái sử dụng), Belooga Design System & Tokens Guide, Cỡ chữ & Dòng (Scale), Font Families
 
-### Community 6 - "Ponytail Help"
-Cohesion: 0.25
-Nodes (7): Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
+### Community 6 - "ai-pm-manager.py"
+Cohesion: 0.20
+Nodes (6): call_gemini_api(), create_github_task_issue(), discover_gemini_models(), get_issue_details(), main(), post_issue_comment()
 
 ### Community 7 - "🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint"
-Cohesion: 0.12
-Nodes (15): 1.1 Project Identity & Core Value Proposition, 1.2 The Conversion Mandate, 3.1 CSS Design Tokens, 3.2 Exact Video Play Button Specification, 4.1 Recommended Modern Stack, 4.2 Modern Directory Structure, 🛡️ Anti-Hallucination Engineering Harness (Lessons Learned & Violations Register), 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint (+7 more)
+Cohesion: 0.07
+Nodes (25): 1.1 Project Identity & Core Value Proposition, 1.2 The Conversion Mandate, 3.1 CSS Design Tokens, 3.2 Exact Video Play Button Specification, 4.1 Recommended Modern Stack, 4.2 Modern Directory Structure, 🛡️ Anti-Hallucination Engineering Harness (Lessons Learned & Violations Register), 🐋 BELOOGA — Project Conversion Master Template & Migration Blueprint (+17 more)
 
-### Community 8 - "🧠 Markmap Architect Skill"
-Cohesion: 0.29
-Nodes (6): 1. When to Activate This Skill, 2. Core Mindmap Engines Supported, 3. Structural Rules for High-Density Technical Mindmaps, Engine A: Native Mermaid Mindmap (In-chat Markdown), Engine B: Interactive Standalone Markmap HTML/SVG (Recommended for Deep Reading), 🧠 Markmap Architect Skill
+### Community 8 - "BELOOGA — Skill Review & Upgrade Plan (mục tiêu: mọi skill ≥ 8.5)"
+Cohesion: 0.15
+Nodes (12): 0. Cách dùng file này, 10. Trigger eval, 11. Bảng nghiệm thu cuối (điền khi xong Phase 5), 1. Tóm tắt, 3. Bảng điểm hiện tại, 5. Lỗi code phát hiện kèm (phải ghi vào Known Traps cho tới khi sửa), 6. Cấu trúc skill đích, 7.1 Template domain skill (bắt buộc) (+4 more)
 
-### Community 9 - "Legacy Ground-Truth Enforcement & Anti-Hallucination Protocol"
+### Community 9 - "BELOOGA — Skill Review & Upgrade Plan (mục tiêu: mọi skill ≥ 8.5)"
+Cohesion: 0.15
+Nodes (12): 0. Cách dùng file này, 10. Trigger eval, 11. Bảng nghiệm thu cuối (điền khi xong Phase 5), 1. Tóm tắt, 3. Bảng điểm hiện tại, 5. Lỗi code phát hiện kèm (phải ghi vào Known Traps cho tới khi sửa), 6. Cấu trúc skill đích, 7.1 Template domain skill (bắt buộc) (+4 more)
+
+### Community 10 - "Ponytail Repository Audit"
+Cohesion: 0.40
+Nodes (4): Exclusions, Hunt Tags, Output, Ponytail Repository Audit
+
+### Community 12 - "Ponytail Code Review"
 Cohesion: 0.33
-Nodes (5): 1. Core Principles, 2. Asset & Iconography Extraction Workflow, 3. Mandatory Interactive & Visual Verification Gate, 4. Quality Checklist Before Response, Legacy Ground-Truth Enforcement & Anti-Hallucination Protocol
+Nodes (5): Belooga Examples, Boundaries, Format, Ponytail Code Review, Scoring
 
-### Community 10 - "ponytail-audit/SKILL.md"
-Cohesion: 0.40
-Nodes (4): Boundaries, Hunt, Output, Tags
-
-### Community 11 - "Ponytail Gain"
-Cohesion: 0.40
-Nodes (4): Boundaries, Honesty boundary, Ponytail Gain, Scoreboard
-
-### Community 12 - "ponytail-review/SKILL.md"
-Cohesion: 0.40
-Nodes (4): Boundaries, Examples, Format, Scoring
-
-### Community 13 - "ponytail-debt/SKILL.md"
+### Community 13 - "Ponytail Technical Debt Ledger"
 Cohesion: 0.50
-Nodes (3): Boundaries, Output, Scan
+Nodes (3): Output Destination, Ponytail Technical Debt Ledger, Scan Command
+
+### Community 17 - "Ponytail, lazy senior dev mode"
+Cohesion: 0.40
+Nodes (4): Ponytail, lazy senior dev mode, Project Overrides, Rules:, The Ponytail Ladder
 
 ### Community 19 - "webrtc-studio-modal.tsx"
 Cohesion: 0.31
 Nodes (7): StudioToolbar(), TeleprompterEditorDialog(), TeleprompterEditorDialogProps, TeleprompterOverlay(), TeleprompterOverlayProps, WebRTCStudioModal(), WebRTCStudioModalProps
 
-### Community 20 - "react"
-Cohesion: 0.16
-Nodes (11): nextConfig, EmptyStateAction, EmptyStateProps, ExpertHeroProps, PublicContactModalProps, ReportProfileModalProps, ButtonProps, apiClient (+3 more)
+### Community 20 - "Button"
+Cohesion: 0.10
+Nodes (29): Phase 2: Page Object Models (POMs) Development (`qc/pages/`), nextConfig, ForgotPasswordPage(), LoginPage(), RegisterPage(), NotFound(), HomePage(), CareersPage() (+21 more)
 
 ### Community 21 - "frontend/package.json"
 Cohesion: 0.09
@@ -238,17 +261,17 @@ Nodes (21): ignoreScripts, @types/node, typescript, name, packageManager, privat
 Cohesion: 0.07
 Nodes (17): description, devDependencies, @playwright/test, @types/node, typescript, @types/node, typescript, name (+9 more)
 
-### Community 23 - "Belooga Frontend Engineering Guide"
-Cohesion: 0.29
-Nodes (6): Architectural Invariants, Belooga Frontend Engineering Guide, Core Design Tokens (`src/app/globals.css`), Current Reality (AS-IS), Known Traps, Self-Verification
+### Community 23 - "Belooga Frontend Engineering Architecture"
+Cohesion: 0.33
+Nodes (5): 1. Directory Structure & Atomic Modularity, 2. State & Data Fetching Conventions, 3. Styling & Design Tokens (`src/app/globals.css`), 4. Self-Verification, Belooga Frontend Engineering Architecture
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
-### Community 25 - "Belooga Backend Engineering Guide"
-Cohesion: 0.33
-Nodes (5): Belooga Backend Engineering Guide, Core Architectural Invariants, Current Reality (AS-IS), Infrastructure Configuration, Self-Verification
+### Community 25 - "Belooga Backend Engineering Architecture"
+Cohesion: 0.40
+Nodes (4): 1. Clean 4-Layer Backend Architecture, 3. System-Wide Invariants, 4. Self-Verification, Belooga Backend Engineering Architecture
 
 ### Community 26 - "🐋 BELOOGA — Master Migration & Conversion Blueprint"
 Cohesion: 0.12
@@ -274,9 +297,9 @@ Nodes (11): 1. Sub-Agent Roster & Operational Boundaries, 2. Sub-Agent Profiles 
 Cohesion: 0.18
 Nodes (10): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, module, moduleResolution, noEmit, skipLibCheck, strict (+2 more)
 
-### Community 32 - "3. Strict Quality Gates & Anti-Regression Assertions"
-Cohesion: 0.20
-Nodes (9): 1. Technical Stack & Test Environment, 2. Test Architecture & Directory Layout, 3. Strict Quality Gates & Anti-Regression Assertions, 4. Playwright Configuration (`playwright.config.ts`), 🛡️ Belooga QC & Automation Testing Engineering Guide, Gate 1: TC-VIS-001 — 54px Play Button & Pure CSS Triangle, Gate 2: TC-VIS-002 — Literal Asset Resolution & Zero Synthetic SVGs, Gate 3: TC-AUTH-002 — Zero Token Leakage in Client Storage (+1 more)
+### Community 32 - "Belooga QC & Automated Testing Engineering Guide"
+Cohesion: 0.29
+Nodes (6): 1. Test Architecture & Directory Layout, 2. Browser & Viewport Matrix, 3. Seeded Test Credentials, 4. Test Authoring Rules, 5. Execution Commands, Belooga QC & Automated Testing Engineering Guide
 
 ### Community 33 - "README.md"
 Cohesion: 0.50
@@ -286,17 +309,17 @@ Nodes (3): Deploy on Vercel, Getting Started, Learn More
 Cohesion: 0.18
 Nodes (10): 1. Sub-Agent Mission & Quality Gates, 2. Parallel Synchronization Milestones, 3. Phase-by-Phase Implementation Checklist, 4. Definition of Done (DoD), 🛡️ Belooga QC & Automation Testing Sub-Agent Execution Plan, Phase 1: Test Harness & Environment Setup, Phase 3: Suite 1 — Anti-Hallucination & Visual Regression Gate, Phase 4: Suite 2 — Authentication & Security E2E (`tests/e2e/auth-flow.spec.ts`) (+2 more)
 
-### Community 38 - "endpoints/media.py"
+### Community 38 - "MediaService"
+Cohesion: 0.25
+Nodes (8): complete_chunked_video_upload(), delete_resume(), generate_candidate_pdf(), get_video_transcoding_status(), upload_avatar(), upload_resume(), upload_video_chunk(), MediaService
+
+### Community 41 - "CatalogsService"
+Cohesion: 0.22
+Nodes (3): CatalogsService, be-service-search — 5.7 → 8.8, be-service-search — 5.7 → 8.8
+
+### Community 42 - "profile_repo.py"
 Cohesion: 0.17
-Nodes (11): complete_chunked_video_upload(), delete_resume(), generate_candidate_pdf(), get_video_transcoding_status(), upload_avatar(), upload_resume(), upload_video_chunk(), get_current_user() (+3 more)
-
-### Community 41 - "2. 8 Service Domains & Verified API Catalog (36 Active Endpoints)"
-Cohesion: 0.13
-Nodes (14): 1. 16-Route Frontend Page Inventory, 2. 8 Service Domains & Verified API Catalog (36 Active Endpoints), 3. Database Schema Mapping (24 Tables in `backend/initdb.sql`), 4. QC Automation & Testing Matrix, 🧠 Belooga Master Knowledge Vault & API / Page Catalog, Domain 1: Identity & Authentication Vault — 7 Endpoints, Domain 2: Candidate Profiles — 4 Endpoints, Domain 3: Career Timeline & Reordering — 8 Endpoints (+6 more)
-
-### Community 42 - "sqlalchemy_ext_asyncio"
-Cohesion: 0.19
-Nodes (3): ProfileInterest, ProfileLanguage, ProfileSkill
+Nodes (4): CandidateProfile, ProfileInterest, ProfileLanguage, ProfileSkill
 
 ### Community 43 - "🧪 SENIOR QC & TEST AUTOMATION ENGINEER — PRODUCTION PATTERNS & STANDARDS"
 Cohesion: 0.20
@@ -315,136 +338,136 @@ Cohesion: 0.25
 Nodes (7): 1. Core Reviewer Philosophy & Governance, 2. Red-Line Instant Rejection Checklist (The "Kill-Switch" Criteria), 3. The 3-Step Frontend Review SOP (Standard Operating Procedure), 4. Formal Reviewer Decision Templates, 🟢 Approval Template (Emit only when all 3 steps pass 100%):, 🔴 Rejection Template (Emit when code fails any check):, 🧐 Senior Frontend Lead Reviewer: Code Review SOP & Rejection Checklist
 
 ### Community 47 - "auth_service.py"
-Cohesion: 0.18
-Nodes (13): check_email_exists(), check_username_exists(), get_current_session_user(), login(), logout(), refresh_tokens(), register_user(), CheckAvailabilityResponse (+5 more)
+Cohesion: 0.16
+Nodes (15): Current Reality, check_email_exists(), check_username_exists(), get_current_session_user(), login(), logout(), refresh_tokens(), register_user() (+7 more)
 
-### Community 48 - "🧠 Belooga Self-Learn & Engineering Retrospective"
+### Community 48 - "Belooga Continuous Learning Protocol"
 Cohesion: 0.33
-Nodes (5): 1. When to Trigger Self-Learn, 2. The 3-Step Lesson Formula, 3. Destination Routing Matrix, 4. Execution Protocol, 🧠 Belooga Self-Learn & Engineering Retrospective
+Nodes (5): 1. Trigger Conditions, 2. Standard Postmortem Structure, 3. Destination Routing Matrix, 4. Execution Protocol, Belooga Continuous Learning Protocol
 
 ### Community 49 - "Workflow: Definition of Done (DoD)"
 Cohesion: 0.25
 Nodes (7): Step 1: Regenerate Single Source of Truth, Step 2: Run SSOT Ground Truth Auditor, Step 3: Run Backend Tests, Step 4: Run Frontend Typecheck, Step 5: Visual Verification (If UI was modified), Step 6: Git Status Review, Workflow: Definition of Done (DoD)
 
 ### Community 50 - "Workflow: Database Schema Change"
-Cohesion: 0.25
-Nodes (7): 1. Edit Schema Definition, 2. Update Seed Data, 3. Reset Local & Test Database, 4. Run Pytest Suite, 5. Regenerate SSOT, 6. Run SSOT Audit, Workflow: Database Schema Change
+Cohesion: 0.29
+Nodes (6): Step 1: Update ORM Models, Step 2: Generate Alembic Revision, Step 3: Test Two-Way Migration, Step 4: Seed & Run Integration Tests, Step 5: Update SSOT & Facts, Workflow: Database Schema Change
 
-### Community 51 - "🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)"
-Cohesion: 0.25
-Nodes (7): Belooga Engineering Harness & Anti-Hallucination Violations Register, 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log), 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules), [VIOLATION-001] Tự ý vẽ SVG / Icon xấp xỉ thay vì dùng asset gốc, [VIOLATION-002] Hiển thị icon Play đè lên ảnh walkthrough sai lệch quy chuẩn SCSS gốc, [VIOLATION-003] Dùng icon font / background teal cho nút play walkthrough thay vì Stack Theme pure CSS, [VIOLATION-004] Hallucinate style cho `.modal-trigger` gây xung đột biến nút play thành hình Elip đen khổng lồ & Báo cáo hoàn thành khi chưa test hover
+### Community 51 - "4. Phát hiện hệ thống (có bằng chứng)"
+Cohesion: 0.20
+Nodes (10): 4. Phát hiện hệ thống (có bằng chứng), F-01 — Skill mô tả code đã không còn tồn tại, F-02 — Gate 3 cho qua mọi thứ, F-03 — Test khóa cứng một giá trị sai, F-04 — Các tiêu chuẩn không thể đạt cùng lúc, F-05 — Workflow `schema-change` hỏng, F-06 — Domain mới không có skill nào, F-07 — Sổ vi phạm nằm trong vùng "không được trích dẫn" (+2 more)
 
 ### Community 52 - "Belooga Engineering System (GEMINI.md)"
 Cohesion: 0.25
 Nodes (6): CLAUDE.md (Redirect to GEMINI.md), 1. Verified Tech Stack (Ground Truth), 2. Precedence of Truth, 3. Top 5 Absolute Prohibitions, 4. Task Routing, Belooga Engineering System (GEMINI.md)
 
 ### Community 53 - "ai-code-reviewer.py"
-Cohesion: 0.05
-Nodes (26): downgrade(), upgrade(), main(), slugify(), call_gemini_api(), discover_gemini_models(), get_git_diff(), main() (+18 more)
+Cohesion: 0.17
+Nodes (7): call_gemini_api(), discover_gemini_models(), get_git_diff(), main(), post_github_comment(), read_project_rules(), write_step_summary()
 
 ### Community 54 - "Workflow: Visual Verification"
 Cohesion: 0.33
 Nodes (5): 1. Locate Legacy Source, 2. Check CSS Scoping, 3. Live Browser Inspection, 4. Run Playwright Visual Tests, Workflow: Visual Verification
 
-### Community 55 - "🏁 ENTERPRISE DEFINITION OF DONE (DoD) QUALITY CONTRACT"
-Cohesion: 0.20
-Nodes (9): 1. THE DEFINITION OF DONE MANDATE, 2. LAYER 1: ARCHITECTURAL PURITY & DESIGN PATTERNS, 3. LAYER 2: COMPUTATIONAL COMPLEXITY & PERFORMANCE BUDGETS, 4. LAYER 3: CLIENT RESILIENCE, SECURITY & ERROR BOUNDARIES, 5. LAYER 4: DATABASE MIGRATION & ZERO-DOWNTIME EVOLUTION, 6. LAYER 5: TESTING PYRAMID & ZERO-FLAKINESS INVARIANTS, 7. LAYER 6: OBSERVABILITY, AUDIT & HEALTH PROBES, 8. LAYER 7: DUAL-KEY REVIEWER APPROVAL & PROOF BLOCK (+1 more)
+### Community 55 - "Enterprise Definition of Done (DoD) Quality Contract"
+Cohesion: 0.33
+Nodes (5): 1. Architectural & Modularity Invariants, 2. The Verification Gates, 3. Ratchet Tightening Rule, 4. Empirical Proof of Work, Enterprise Definition of Done (DoD) Quality Contract
 
-### Community 56 - "test_profile_privacy_and_pii.py"
-Cohesion: 0.13
+### Community 56 - "AsyncClient"
+Cohesion: 0.16
 Nodes (8): test_anonymous_profile_view_does_not_leak_pii(), test_cross_user_upload_completion_rejection(), test_happy_path_chunked_upload_and_complete(), test_hidden_profile_blocks_anonymous_and_other_users(), test_hidden_profile_pdf_blocks_unauthorized_access(), test_owner_profile_view_includes_pii(), test_profile_has_zero_hardcoded_mock_fallbacks(), test_search_suggest_filters_hidden_profiles()
 
 ### Community 57 - "3. Quickstart Setup (Step-by-Step)"
 Cohesion: 0.09
 Nodes (22): 1. System Architecture & Tech Stack, 2. Infrastructure Port Allocation Matrix, 3. Quickstart Setup (Step-by-Step), 4. Pre-seeded Test Accounts & Personas, 5. Architectural Ground Truth & Known Gap Registry, 6.1: Run Full Truth Audit, 6.2: Run Backend Integration Test Suite, 6.3: Run Frontend TypeScript Typecheck (+14 more)
 
-### Community 58 - "🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL"
-Cohesion: 0.22
-Nodes (8): 1. PURPOSE & ORGANIZATIONAL OPERATING MODEL, 2. THE MANDATORY 6-STEP EXECUTION PIPELINE, 3. INTENT-BASED SKILL ROUTING MATRIX, 4. CROSS-DEPARTMENTAL IMPACT MATRIX, 5. THE DUAL-KEY INDEPENDENT REVIEWER GATE, 6. POST-FEATURE LEARNING & ANTI-REGRESSION PROTOCOL, 7. MANDATORY PROOF BLOCK SPECIFICATION, 🚦 BELOOGA ENTERPRISE AGENT ROUTER & EXECUTION PROTOCOL
+### Community 58 - "Agent Router & Execution Protocol"
+Cohesion: 0.33
+Nodes (5): 1. Execution Pipeline, 2. Intent-Based Skill Routing Matrix, 3. Cross-Domain Impact Matrix, 4. Merge Conditions, Agent Router & Execution Protocol
 
 ### Community 60 - "Homepage & Candidate Showcase (`/`)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Homepage & Candidate Showcase (`/`), Known Traps, Project-Specific Rules, Self-Verification
+Cohesion: 0.33
+Nodes (5): Current Reality, Homepage & Candidate Showcase (`/`), Known Traps, Rules, Self-Verification
 
-### Community 61 - "fe-page-workspace/SKILL.md"
-Cohesion: 0.05
-Nodes (35): 1. Scope Boundary, 2.1. Avatar Upload, 2.2. Metadata Updates, 2.3. PDF Resume Download, 2. API Contracts & Network Mutations, 3. QC Anti-Regression Selectors (Mandatory Preservation), 👤 Section Skill: Profile Header & Identity Management, 1. Scope Boundary (+27 more)
+### Community 61 - "Candidate Workspace (`/user/[username]`)"
+Cohesion: 0.33
+Nodes (5): Candidate Workspace (`/user/[username]`), Current Reality, Known Traps, Rules, Self-Verification
 
 ### Community 62 - "devDependencies"
 Cohesion: 0.22
 Nodes (9): devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node, @types/react, @types/react-dom (+1 more)
 
-### Community 63 - "🏛️ BELOOGA ARCHITECTURE DECISION RECORDS (ADR LOG)"
-Cohesion: 0.25
-Nodes (7): ADR-001: Selection of Bun over Node.js for Frontend & QC Tooling, ADR-002: Next.js 14+ App Router & Server/Client Segregation, ADR-003: FastAPI & Python 3.12+ Async for Modular Monolith Backend, ADR-004: SQLAlchemy 2.0 Async Mapped Models & Unit of Work, ADR-005: PostgreSQL 16 TSVECTOR with GIN Index over External Search Engine, ADR-006: ReportLab Python Canvas over Headless Browser for PDF Resumes, 🏛️ BELOOGA ARCHITECTURE DECISION RECORDS (ADR LOG)
+### Community 63 - "4. Phát hiện hệ thống (có bằng chứng)"
+Cohesion: 0.20
+Nodes (10): 4. Phát hiện hệ thống (có bằng chứng), F-01 — Skill mô tả code đã không còn tồn tại, F-02 — Gate 3 cho qua mọi thứ, F-03 — Test khóa cứng một giá trị sai, F-04 — Các tiêu chuẩn không thể đạt cùng lúc, F-05 — Workflow `schema-change` hỏng, F-06 — Domain mới không có skill nào, F-07 — Sổ vi phạm nằm trong vùng "không được trích dẫn" (+2 more)
 
-### Community 65 - "Identity & Authentication (`/(auth)/...`)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Identity & Authentication (`/(auth)/...`), Known Traps, Project-Specific Rules, Self-Verification
+### Community 65 - "Authentication & Onboarding (`/(auth)/*`)"
+Cohesion: 0.33
+Nodes (5): Authentication & Onboarding (`/(auth)/*`), Current Reality, Known Traps, Rules, Self-Verification
 
 ### Community 66 - "Public Candidate Profile (`/public/[username]`)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public Candidate Profile (`/public/[username]`), Self-Verification
+Cohesion: 0.33
+Nodes (5): Current Reality, Known Traps, Public Candidate Profile (`/public/[username]`), Rules, Self-Verification
 
-### Community 67 - "Talent Discovery & Search (`/search`)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification, Talent Discovery & Search (`/search`)
+### Community 67 - "Talent Search & Discovery (`/search`)"
+Cohesion: 0.33
+Nodes (5): Current Reality, Known Traps, Rules, Self-Verification, Talent Search & Discovery (`/search`)
 
-### Community 72 - "1. The Non-Negotiable 3-Phase Cycle"
+### Community 70 - "adr/README.md"
 Cohesion: 0.25
-Nodes (7): 1. The Non-Negotiable 3-Phase Cycle, 2. Prohibited Anti-Patterns, 3. Standard Verification Commands, 🔴🟢 Mandatory TDD Workflow Standard Operating Procedure (SOP), Phase 1: RED (Test First & Prove the Defect), Phase 2: GREEN (Minimal Sane Fix), Phase 3: REFACTOR & Regression Verification
+Nodes (4): ADR-001: Selection of Bun over Node.js for Frontend & QC Tooling, ADR-002: Next.js 16 App Router & Server/Client Segregation, ADR-005: PostgreSQL 16 TSVECTOR with GIN Index over External Search Engine, Architecture Decision Records (ADR Index)
+
+### Community 72 - "1. The Red -> Green -> Refactor Cycle"
+Cohesion: 0.25
+Nodes (7): 1. The Red -> Green -> Refactor Cycle, 2. Visual / Static Styling Exception, 3. DoD Compliance, Phase 1: RED (Test First & Prove Defect), Phase 2: GREEN (Minimal Sane Fix), Phase 3: REFACTOR, Test-Driven Development (TDD) Standard Operating Procedure
 
 ### Community 73 - "conftest.py"
 Cohesion: 0.20
 Nodes (5): client(), db_session(), ensure_test_database_seeded(), test_candidate_a(), test_candidate_b()
 
-### Community 74 - "endpoints/expert_review.py"
-Cohesion: 0.10
-Nodes (24): checkout_review_order(), create_review_order(), get_order_feedback(), list_candidate_orders(), list_experts(), list_packages(), api_root(), health_check() (+16 more)
+### Community 74 - "ExpertReviewService"
+Cohesion: 0.09
+Nodes (27): Current Reality, Expert CV Review Service (Domain 9), Known Traps, Rules, Self-Verification, checkout_review_order(), create_review_order(), get_order_feedback() (+19 more)
 
-### Community 75 - "🛡️ Mandatory Core Engineering Integrity & Evidence Protocol"
+### Community 75 - "Mandatory Core Engineering Integrity & Evidence Protocol"
 Cohesion: 0.29
-Nodes (6): 1. Pillar 1: The "No Proof = Not Done" Iron Rule, 2. Pillar 2: Mandatory Inquiry Protocol (Uncertainty = Mandatory Question), 3. Pillar 3: Zero Full-Stack Hallucination, 4. Pillar 4: Blacklist of Deceptive Behaviors, 5. Pillar 5: Radical Transparency & Honest Reporting, 🛡️ Mandatory Core Engineering Integrity & Evidence Protocol
+Nodes (6): 1. Pillar 1: The "No Proof = Not Done" Iron Rule, 2. Pillar 2: Mandatory Inquiry Protocol (Uncertainty = Mandatory Question), 3. Pillar 3: Zero Full-Stack Hallucination & Blacklist, 4. Legacy Parity & Anti-Pollution (Sole Authoritative Source), 5. Radical Transparency & Incident Reporting, Mandatory Core Engineering Integrity & Evidence Protocol
 
-### Community 77 - "Identity & Authentication Vault (Domain 1)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Identity & Authentication Vault (Domain 1), Known Traps, Project-Specific Rules, Self-Verification
+### Community 77 - "Identity & Authentication (Domain 1)"
+Cohesion: 0.33
+Nodes (4): Identity & Authentication (Domain 1), Known Traps, Rules, Self-Verification
 
-### Community 78 - "Candidate User Management & Settings (`/user/[username]/update`, `/settings`)"
-Cohesion: 0.29
-Nodes (6): Candidate User Management & Settings (`/user/[username]/update`, `/settings`), Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification
+### Community 78 - "Candidate Account Management & Settings (`/user/[username]/settings`, `/update`)"
+Cohesion: 0.33
+Nodes (5): Candidate Account Management & Settings (`/user/[username]/settings`, `/update`), Current Reality, Known Traps, Rules, Self-Verification
 
-### Community 79 - "Master Catalogs & Taxonomies (Domain 7)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Master Catalogs & Taxonomies (Domain 7), Project-Specific Rules, Self-Verification
+### Community 79 - "Master Catalogs (Domain 6)"
+Cohesion: 0.33
+Nodes (5): Current Reality, Known Traps, Master Catalogs (Domain 6), Rules, Self-Verification
 
-### Community 80 - "Public CMS & Moderation (Domain 8)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public CMS & Moderation (Domain 8), Self-Verification
+### Community 81 - "endpoints/catalogs.py"
+Cohesion: 0.46
+Nodes (4): list_skills(), suggest_companies(), suggest_locations(), suggest_schools()
 
-### Community 81 - "Media Processing & Document Generation (Domain 4)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Media Processing & Document Generation (Domain 4), Project-Specific Rules, Self-Verification
+### Community 82 - ".get_candidate_public_profile"
+Cohesion: 0.20
+Nodes (7): Candidate Profile (Domain 2), Current Reality, Known Traps, Rules, Self-Verification, be-service-profile — 6.0 → 9.0, be-service-profile — 6.0 → 9.0
 
-### Community 82 - "Candidate Profile (Domain 2)"
-Cohesion: 0.29
-Nodes (6): Candidate Profile (Domain 2), Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification
+### Community 83 - "Candidate Search (Domain 5)"
+Cohesion: 0.33
+Nodes (5): Candidate Search (Domain 5), Current Reality, Known Traps, Rules, Self-Verification
 
-### Community 83 - "Talent Discovery & Search (Domain 6)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification, Talent Discovery & Search (Domain 6)
+### Community 84 - "Career Timeline (Domain 3)"
+Cohesion: 0.25
+Nodes (5): Career Timeline (Domain 3), Current Reality, Known Traps, Rules, Self-Verification
 
-### Community 84 - "Career Timeline & Reordering (Domain 3)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Career Timeline & Reordering (Domain 3), Current Reality (AS-IS), Known Traps, Project-Specific Rules, Self-Verification
-
-### Community 85 - "Public Content, CMS & Compliance (`/(public)/...`)"
-Cohesion: 0.29
-Nodes (6): Canonical Example, Current Reality (AS-IS), Known Traps, Project-Specific Rules, Public Content, CMS & Compliance (`/(public)/...`), Self-Verification
+### Community 85 - "Public Content & CMS Pages (`/(public)/*`)"
+Cohesion: 0.33
+Nodes (5): Current Reality, Known Traps, Public Content & CMS Pages (`/(public)/*`), Rules, Self-Verification
 
 ### Community 87 - "test_backend_foundation.py"
-Cohesion: 0.14
-Nodes (13): CatalogCompany, CatalogLocation, CatalogSchool, Interest, Language, Skill, CareerApplication, CareerPosting (+5 more)
+Cohesion: 0.13
+Nodes (13): CatalogCompany, CatalogLocation, CatalogSchool, Interest, Language, Skill, CareerApplication, test_alembic_revision_file_validity() (+5 more)
 
 ### Community 88 - "scripts"
 Cohesion: 0.40
@@ -458,121 +481,205 @@ Nodes (3): eslintConfig, eslint, eslint-config-next
 Cohesion: 0.27
 Nodes (4): test_idor_cross_user_media_upload_forbidden(), test_idor_cross_user_profile_mutation_forbidden(), test_idor_cross_user_timeline_mutation_forbidden(), test_unauthenticated_mutations_rejected()
 
-### Community 92 - "endpoints/cms.py"
-Cohesion: 0.13
-Nodes (7): get_faqs(), list_career_jobs(), report_candidate_profile(), submit_contact_inquiry(), ContactInquiryRequest, ReportProfileRequest, CmsService
+### Community 92 - "CmsService"
+Cohesion: 0.08
+Nodes (16): CMS & Public Inquiries (Domain 7), Current Reality, Known Traps, Rules, Self-Verification, get_faqs(), list_career_jobs(), report_candidate_profile() (+8 more)
 
-### Community 93 - "TimelineService"
-Cohesion: 0.17
-Nodes (9): create_education(), create_job_experience(), delete_education(), delete_job_experience(), list_education_experiences(), list_job_experiences(), reorder_education_experiences(), reorder_job_experiences() (+1 more)
+### Community 93 - "endpoints/timeline.py"
+Cohesion: 0.23
+Nodes (8): create_education(), create_job_experience(), delete_education(), delete_job_experience(), list_education_experiences(), list_job_experiences(), reorder_education_experiences(), reorder_job_experiences()
 
-### Community 94 - "Button"
-Cohesion: 0.13
-Nodes (17): ForgotPasswordPage(), NotFound(), CareersPage(), ContactUsPage(), HelpPage(), PublicCandidatePage(), AccountSettingsPage(), UpdateProfilePage() (+9 more)
+### Community 94 - "public/[username]/page.tsx"
+Cohesion: 0.18
+Nodes (15): fe-page-public-profile — 6.0 → 8.8, fe-page-public-profile — 6.0 → 8.8, PublicCandidatePage(), VideoPitchCard(), VideoPitchCardProps, VideoPitchModal(), VideoPitchModalProps, PublicContactModal() (+7 more)
 
-### Community 95 - "CatalogsService"
-Cohesion: 0.06
-Nodes (14): do_run_migrations(), get_database_url(), run_async_migrations(), run_migrations_offline(), run_migrations_online(), list_skills(), suggest_companies(), suggest_locations() (+6 more)
+### Community 95 - "env.py"
+Cohesion: 0.19
+Nodes (5): do_run_migrations(), get_database_url(), run_async_migrations(), run_migrations_offline(), run_migrations_online()
 
-### Community 96 - "schemas/profile.py"
-Cohesion: 0.20
-Nodes (6): ProfileLanguageItem, ProfileResponse, ProfileUpdate, SkillAdd, SkillResponse, test_pydantic_v2_schemas_contracts()
+### Community 96 - "8.2 Frontend domain"
+Cohesion: 0.25
+Nodes (8): 8.2 Frontend domain, fe-page-auth — 7.0 → 9.0, fe-page-cms-public — 6.6 → 8.7, fe-page-expert-review (MỚI) — 0 → 8.7, fe-page-home — 6.8 → 9.0, fe-page-search — 6.6 → 8.8, fe-page-user-management — 6.6 → 8.7, fe-page-workspace — 3.5 → 8.8
 
 ### Community 97 - "create_access_token"
-Cohesion: 0.18
-Nodes (8): create_access_token(), generate_refresh_token(), hash_token(), _build_user_dto(), _set_refresh_cookie(), test_refresh_token_grace_window_allows_concurrent_tabs(), test_refresh_token_replay_attack_revokes_entire_family(), test_refresh_token_rotation_success()
+Cohesion: 0.16
+Nodes (10): create_access_token(), generate_refresh_token(), get_password_hash(), hash_token(), verify_password(), _set_refresh_cookie(), test_refresh_token_grace_window_allows_concurrent_tabs(), test_refresh_token_replay_attack_revokes_entire_family() (+2 more)
 
 ### Community 98 - "cn"
-Cohesion: 0.07
-Nodes (72): ExpertReviewPage(), ConfirmDialog(), ConfirmDialogProps, EmptyState(), FormField(), FormFieldProps, SkillBadge(), SkillBadgeProps (+64 more)
+Cohesion: 0.14
+Nodes (37): ConfirmDialog(), ConfirmDialogProps, FormField(), FormFieldProps, CandidateOrdersList(), ReviewBookingDialog(), SkillsCard(), SkillsCardProps (+29 more)
 
 ### Community 99 - "schemas/timeline.py"
-Cohesion: 0.14
-Nodes (9): AwardCertificationCreate, AwardCertificationResponse, EducationCreate, EducationResponse, JobExperienceCreate, JobExperienceResponse, JobExperienceUpdate, ReorderItem (+1 more)
+Cohesion: 0.17
+Nodes (7): AwardCertificationCreate, AwardCertificationResponse, EducationCreate, EducationResponse, JobExperienceResponse, JobExperienceUpdate, ReorderItem
 
 ### Community 100 - "AuthenticatedUser"
-Cohesion: 0.13
-Nodes (8): Backend Rules (FastAPI + SQLAlchemy 2.0 Async), add_candidate_skill(), get_candidate_public_profile(), remove_candidate_skill(), update_candidate_profile(), AuthenticatedUser, verify_profile_owner(), ProfileService
+Cohesion: 0.11
+Nodes (10): 2. Domain Services Map, add_candidate_skill(), get_candidate_public_profile(), remove_candidate_skill(), update_candidate_profile(), AuthenticatedUser, verify_profile_owner(), JobExperienceCreate (+2 more)
 
 ### Community 101 - "ExpertReviewRepository"
 Cohesion: 0.21
 Nodes (6): CVReviewFeedback, CVReviewOrder, CVReviewPackage, ExpertProfile, ExpertReviewRepository, 3. Kiến Trúc Backend (FastAPI Clean Architecture)
 
-### Community 102 - "2. Backend Clean Architecture (FastAPI + SQLAlchemy + Alembic)"
-Cohesion: 0.12
-Nodes (16): 1. Architectural Mandates, 2. Backend Clean Architecture (FastAPI + SQLAlchemy + Alembic), 3. Frontend Architecture (Next.js 16 + React 19 + Atomic Design), 4. Verification & Quality Gates, A. Atoms - components/ui/, A. Router Layer (Thin Controllers) - app/api/v1/endpoints/, B. Molecules - components/common/, B. Service Layer (Business Domain) - app/services/ (+8 more)
+### Community 102 - "8.3 Skill xuyên suốt"
+Cohesion: 0.25
+Nodes (8): 8.3 Skill xuyên suốt, belooga-backend-engineering — 4.0 → 8.8, belooga-frontend-engineering — 4.0 → 8.8, belooga-qc-engineering — 3.1 → 8.8, belooga-self-learn — 7.5 → 9.0, definition-of-done — 3.0 → 8.8, engineering-integrity-and-evidence — 6.4 → 9.0, tdd-workflow — 6.4 → 8.8
 
-### Community 103 - "use-candidate-profile.ts"
-Cohesion: 0.38
-Nodes (7): ProfileHeaderCardProps, CandidateProfile, useCandidateProfile(), ChunkUploadProgress, downloadCandidatePdf(), uploadAvatar(), uploadResume()
+### Community 103 - "8.2 Frontend domain"
+Cohesion: 0.25
+Nodes (8): 8.2 Frontend domain, fe-page-auth — 7.0 → 9.0, fe-page-cms-public — 6.6 → 8.7, fe-page-expert-review (MỚI) — 0 → 8.7, fe-page-home — 6.8 → 9.0, fe-page-search — 6.6 → 8.8, fe-page-user-management — 6.6 → 8.7, fe-page-workspace — 3.5 → 8.8
 
-### Community 104 - "cms_repo.py"
+### Community 104 - "CmsRepository"
 Cohesion: 0.16
-Nodes (3): ContactInquiry, ProfileReport, CmsRepository
+Nodes (4): CareerPosting, ContactInquiry, ProfileReport, CmsRepository
 
-### Community 106 - "useAuthStore"
-Cohesion: 0.13
-Nodes (16): Phase 1: Foundation & Asset Ingestion, Phase 2: Application Shell (Header & Footer), Phase 3: Public Marketing Pages (Routes 01, 11, 12, 13, 14), Phase 4: Authentication Flow (Routes 02, 03, 04, 15), Phase 5: Candidate Core Workspace (Routes 05, 06, 07, 09), Phase 6: Talent Discovery & Search (Route 08), 🚀 Step-by-Step Conversion Execution Template, LoginPage() (+8 more)
+### Community 106 - "8.3 Skill xuyên suốt"
+Cohesion: 0.25
+Nodes (8): 8.3 Skill xuyên suốt, belooga-backend-engineering — 4.0 → 8.8, belooga-frontend-engineering — 4.0 → 8.8, belooga-qc-engineering — 3.1 → 8.8, belooga-self-learn — 7.5 → 9.0, definition-of-done — 3.0 → 8.8, engineering-integrity-and-evidence — 6.4 → 9.0, tdd-workflow — 6.4 → 8.8
 
 ### Community 107 - "IdentityRepository"
-Cohesion: 0.10
+Cohesion: 0.12
 Nodes (7): EmailVerificationToken, Identity, PasswordResetToken, RefreshSession, SocialAccount, IdentityRepository, Phase 2: Domain 1 — Identity & Authentication Service (10 APIs)
 
-### Community 108 - "BaseModel"
-Cohesion: 0.22
-Nodes (4): CareerPostingResponse, ContactInquiryResponse, JobApplicantRequest, ReportProfileResponse
+### Community 108 - "🚫 Danh mục Vi phạm đã ghi nhận (Violations Log)"
+Cohesion: 0.25
+Nodes (7): Belooga Engineering Harness & Anti-Hallucination Violations Register, 🚫 Danh mục Vi phạm đã ghi nhận (Violations Log), 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules), [VIOLATION-001] Tự ý vẽ SVG / Icon xấp xỉ thay vì dùng asset gốc, [VIOLATION-002] Hiển thị icon Play đè lên ảnh walkthrough sai lệch quy chuẩn SCSS gốc, [VIOLATION-003] Dùng icon font / background teal cho nút play walkthrough thay vì Stack Theme pure CSS, [VIOLATION-004] Hallucinate style cho `.modal-trigger` gây xung đột biến nút play thành hình Elip đen khổng lồ & Báo cáo hoàn thành khi chưa test hover
 
 ### Community 109 - "schemas/__init__.py"
-Cohesion: 0.18
-Nodes (5): CatalogItemResponse, SuggestionResponse, ChunkUploadRequest, ChunkUploadResponse, MediaResponse
+Cohesion: 0.10
+Nodes (12): CatalogItemResponse, SuggestionResponse, ChunkUploadRequest, ChunkUploadResponse, CompleteUploadRequest, MediaResponse, ProfileLanguageItem, ProfileResponse (+4 more)
 
 ### Community 110 - "security.py"
-Cohesion: 0.20
-Nodes (3): get_password_hash(), verify_identity_owner(), verify_password()
+Cohesion: 0.12
+Nodes (6): get_db(), get_current_user(), get_current_user_optional(), verify_identity_owner(), lifespan(), ProfileUpdate
 
-### Community 113 - "TimestampMixin"
-Cohesion: 0.11
-Nodes (13): TimestampMixin, ProfileMedia, VideoArchive, CandidateProfile, AwardCertification, EducationExperience, JobExperience, test_orm_identity_and_profile_crud_cycle() (+5 more)
+### Community 111 - "ProfileRepository"
+Cohesion: 0.06
+Nodes (7): Current Reality, Known Traps, Media Storage & Transcoding (Domain 4), Rules, Self-Verification, MediaRepository, ProfileRepository
+
+### Community 112 - "generate-current-state.py"
+Cohesion: 0.43
+Nodes (6): extract_backend_routes(), extract_database_tables(), extract_dependencies(), extract_frontend_routes(), get_git_info(), main()
+
+### Community 113 - "ProfileMedia"
+Cohesion: 0.22
+Nodes (7): ProfileMedia, VideoArchive, 3. Phase-by-Phase Implementation Checklist, Phase 1: Environment & Database Infrastructure, Phase 3: Domain 2 & 4 — Candidate Profile & Media Storage (20 APIs), Phase 4: Domain 3 — Timeline Sections CRUD & Concurrency Reordering (15 APIs), Phase 5: Domain 5 & 6 — WebRTC Studio & Talent Search (8 APIs)
 
 ### Community 116 - "Plan Triển Khai: Dịch Vụ Expert CV Review & Monetization"
 Cohesion: 0.33
 Nodes (5): 1. Tổng Quan & Trải Nghiệm Người Dùng (UX Flow), 2. Thiết Kế Cơ Sở Dữ Liệu (PostgreSQL & Alembic), 4. Kiến Trúc Frontend (Next.js 16 + Atomic Design), 5. Quy Chuẩn & Kiểm Thử (DoD), Plan Triển Khai: Dịch Vụ Expert CV Review & Monetization
 
 ### Community 117 - "media_service.py"
-Cohesion: 0.16
-Nodes (8): assemble_chunks_async(), _assemble_chunks_sync(), extract_poster_thumbnail(), get_validated_upload_dir(), probe_video_duration(), run_cmd_async(), _run_cmd_sync(), transcode_to_streaming_mp4()
+Cohesion: 0.11
+Nodes (10): assemble_chunks_async(), _assemble_chunks_sync(), extract_poster_thumbnail(), get_validated_upload_dir(), probe_video_duration(), run_cmd_async(), _run_cmd_sync(), transcode_to_streaming_mp4() (+2 more)
 
 ### Community 118 - "use-webrtc-studio.ts"
 Cohesion: 0.19
 Nodes (17): AudioVisualizerMeter(), AudioVisualizerMeterProps, StudioToolbarProps, StudioViewfinder(), StudioViewfinderProps, useAudioMeter(), useTeleprompter(), useWebRTCStudio() (+9 more)
 
-### Community 119 - "Phase 2: Page Object Models (POMs) Development (`qc/pages/`)"
-Cohesion: 0.50
-Nodes (4): Phase 2: Page Object Models (POMs) Development (`qc/pages/`), HomePage(), SearchContent(), SearchPage()
+### Community 119 - "lint-skills.py"
+Cohesion: 0.39
+Nodes (5): add(), check_common(), check_reference(), check_skill(), resolve_path()
+
+### Community 120 - "TimelineRepository"
+Cohesion: 0.14
+Nodes (4): AwardCertification, EducationExperience, JobExperience, TimelineRepository
 
 ### Community 121 - "user/[username]/page.tsx"
-Cohesion: 0.18
-Nodes (13): WebRTCStudioModal, WorkspacePage(), ResumeAttachmentCard(), ResumeAttachmentCardProps, VideoPitchModal(), VideoPitchModalProps, LanguagesInterestsCard(), LanguagesInterestsCardProps (+5 more)
+Cohesion: 0.14
+Nodes (19): WebRTCStudioModal, WorkspacePage(), ResumeAttachmentCard(), ResumeAttachmentCardProps, LanguagesInterestsCard(), LanguagesInterestsCardProps, ProfileHeaderCard(), ProfileHeaderCardProps (+11 more)
+
+### Community 124 - "7. Plan thực hiện theo phase"
+Cohesion: 0.29
+Nodes (7): 7. Plan thực hiện theo phase, Phase 0 — Hạ tầng đo lường (làm trước mọi thứ, ~½ ngày), Phase 1 — Dọn dẹp và sửa hạ tầng (~½ ngày), Phase 2 — Viết lại 16 domain skill (~1.5 ngày), Phase 3 — Viết lại 7 skill xuyên suốt và 2 skill review (~1 ngày), Phase 4 — Sửa lỗi code đang làm skill phải ghi trap (song song, theo TDD), Phase 5 — Chấm lại và ký nghiệm thu
+
+### Community 125 - "8.1 Backend domain"
+Cohesion: 0.29
+Nodes (7): 8.1 Backend domain, be-service-auth — 6.0 → 9.0, be-service-catalogs — 5.0 → 8.8, be-service-cms — 5.2 → 8.7, be-service-expert-review (MỚI) — 0 → 8.7, be-service-media — 5.2 → 8.8, be-service-timeline — 6.0 → 9.0
+
+### Community 126 - "7. Plan thực hiện theo phase"
+Cohesion: 0.29
+Nodes (7): 7. Plan thực hiện theo phase, Phase 0 — Hạ tầng đo lường (làm trước mọi thứ, ~½ ngày), Phase 1 — Dọn dẹp và sửa hạ tầng (~½ ngày), Phase 2 — Viết lại 16 domain skill (~1.5 ngày), Phase 3 — Viết lại 7 skill xuyên suốt và 2 skill review (~1 ngày), Phase 4 — Sửa lỗi code đang làm skill phải ghi trap (song song, theo TDD), Phase 5 — Chấm lại và ký nghiệm thu
+
+### Community 127 - "8.1 Backend domain"
+Cohesion: 0.29
+Nodes (7): 8.1 Backend domain, be-service-auth — 6.0 → 9.0, be-service-catalogs — 5.0 → 8.8, be-service-cms — 5.2 → 8.7, be-service-expert-review (MỚI) — 0 → 8.7, be-service-media — 5.2 → 8.8, be-service-timeline — 6.0 → 9.0
+
+### Community 128 - "Expert CV Review Page (`/(public)/expert-review`)"
+Cohesion: 0.33
+Nodes (5): Current Reality, Expert CV Review Page (`/(public)/expert-review`), Known Traps, Rules, Self-Verification
+
+### Community 130 - "Backend Code Review Protocol"
+Cohesion: 0.40
+Nodes (4): Backend Code Review Protocol, Blocking Gates (Must REJECT if violated), Ratchet Gates (Metrics must not worsen), Review Sign-off Template
+
+### Community 131 - "Frontend Code Review Protocol"
+Cohesion: 0.40
+Nodes (4): Blocking Gates (Must REJECT if violated), Frontend Code Review Protocol, Ratchet Gates (Metrics must not worsen), Review Sign-off Template
+
+### Community 132 - "Section Reference: Profile Header & Identity Management"
+Cohesion: 0.40
+Nodes (4): 1. Scope Boundary, 2. API Contracts & Network Mutations, 3. QC Anti-Regression Selectors, Section Reference: Profile Header & Identity Management
+
+### Community 133 - "Section Reference: Video Pitch Card & Player Modal"
+Cohesion: 0.40
+Nodes (4): 1. Scope Boundary, 2. API Contracts & Media Streams, 3. QC Anti-Regression Selectors, Section Reference: Video Pitch Card & Player Modal
+
+### Community 134 - "Section Reference: Skills & Profile Badges"
+Cohesion: 0.40
+Nodes (4): 1. Scope Boundary, 2. API Contracts & Mutations, 3. QC Anti-Regression Selectors, Section Reference: Skills & Profile Badges
+
+### Community 135 - "Section Reference: Career Timeline & Drag-and-Drop Reordering"
+Cohesion: 0.40
+Nodes (4): 1. Scope Boundary, 2. API Contracts & Mutations, 3. QC Anti-Regression Selectors, Section Reference: Career Timeline & Drag-and-Drop Reordering
+
+### Community 136 - "Section Reference: WebRTC Recording Studio & Teleprompter"
+Cohesion: 0.40
+Nodes (4): 1. Scope Boundary, 2. API Contracts & Chunked Uploads, 3. QC Anti-Regression Selectors, Section Reference: WebRTC Recording Studio & Teleprompter
+
+### Community 138 - "8. Thẻ update từng skill"
+Cohesion: 0.40
+Nodes (5): 8.4 Skill review (mới, thay reviewer-checklist cũ), 8.5 Ponytail (giữ, chỉnh nhẹ), 8. Thẻ update từng skill, be-code-review — mới → 8.7, fe-code-review — mới → 8.7
+
+### Community 139 - "9. Sửa hạ tầng: ROUTER, GEMINI, rules, workflows"
+Cohesion: 0.40
+Nodes (5): 9.1 `GEMINI.md` (≤ 60 dòng), 9.2 `ROUTER.md` (viết lại, ≤ 120 dòng), 9.3 `workflows/schema-change.md` (viết lại toàn bộ), 9.4 Rules, 9. Sửa hạ tầng: ROUTER, GEMINI, rules, workflows
+
+### Community 140 - "8. Thẻ update từng skill"
+Cohesion: 0.40
+Nodes (5): 8.4 Skill review (mới, thay reviewer-checklist cũ), 8.5 Ponytail (giữ, chỉnh nhẹ), 8. Thẻ update từng skill, be-code-review — mới → 8.7, fe-code-review — mới → 8.7
+
+### Community 141 - "9. Sửa hạ tầng: ROUTER, GEMINI, rules, workflows"
+Cohesion: 0.40
+Nodes (5): 9.1 `GEMINI.md` (≤ 60 dòng), 9.2 `ROUTER.md` (viết lại, ≤ 120 dòng), 9.3 `workflows/schema-change.md` (viết lại toàn bộ), 9.4 Rules, 9. Sửa hạ tầng: ROUTER, GEMINI, rules, workflows
+
+### Community 144 - "2. Rubric chấm điểm"
+Cohesion: 0.50
+Nodes (4): 2.1 Năm tiêu chí, 2.2 Trần điểm (áp dụng sau khi tính), 2.3 Định nghĩa "đạt 8.5" (tier S), 2. Rubric chấm điểm
+
+### Community 145 - "2. Rubric chấm điểm"
+Cohesion: 0.50
+Nodes (4): 2.1 Năm tiêu chí, 2.2 Trần điểm (áp dụng sau khi tính), 2.3 Định nghĩa "đạt 8.5" (tier S), 2. Rubric chấm điểm
 
 ## Knowledge Gaps
-- **540 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+535 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 854 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **27 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **529 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+524 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 857 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_current_user()` connect `endpoints/media.py` to `BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)`, `AuthenticatedUser`, `endpoints/expert_review.py`, `security.py`, `auth_service.py`, `TimelineService`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `AuthenticatedUser` connect `AuthenticatedUser` to `endpoints/media.py`, `endpoints/expert_review.py`, `sqlalchemy_ext_asyncio`, `security.py`, `auth_service.py`, `.upload_video_chunk`, `media_service.py`, `pdf_generator.py`, `TimelineService`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `Button` connect `Button` to `cn`, `useAuthStore`, `webrtc-studio-modal.tsx`, `react`, `Phase 2: Page Object Models (POMs) Development (`qc/pages/`)`, `user/[username]/page.tsx`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Why does `Button` connect `Button` to `cn`, `candidate-orders-list.tsx`, `webrtc-studio-modal.tsx`, `user/[username]/page.tsx`, `public/[username]/page.tsx`?**
+  _High betweenness centrality (0.123) - this node is a cross-community bridge._
+- **Why does `8. Thẻ update từng skill` connect `8. Thẻ update từng skill` to `BELOOGA — Skill Review & Upgrade Plan (mục tiêu: mọi skill ≥ 8.5)`, `8.3 Skill xuyên suốt`, `8.2 Frontend domain`, `8.1 Backend domain`?**
+  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `8. Thẻ update từng skill` connect `8. Thẻ update từng skill` to `8.2 Frontend domain`, `BELOOGA — Skill Review & Upgrade Plan (mục tiêu: mọi skill ≥ 8.5)`, `8.1 Backend domain`, `8.3 Skill xuyên suốt`?**
+  _High betweenness centrality (0.111) - this node is a cross-community bridge._
 - **Are the 24 inferred relationships involving `AuthenticatedUser` (e.g. with `get_current_session_user()` and `checkout_review_order()`) actually correct?**
   _`AuthenticatedUser` has 24 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _540 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _529 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `BELOOGA — Agent Knowledge Layer Review (Target: S-tier Production)` be split into smaller, more focused modules?**
   _Cohesion score 0.06451612903225806 - nodes in this community are weakly interconnected._
-- **Should `2. BACKEND DESIGN PATTERNS (BE & DISTRIBUTED SYSTEMS)` be split into smaller, more focused modules?**
-  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
+- **Should `candidate-orders-list.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.12222222222222222 - nodes in this community are weakly interconnected._

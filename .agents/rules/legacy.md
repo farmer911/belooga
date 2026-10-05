@@ -10,4 +10,4 @@ description: Strict READ-ONLY protection for legacy artifacts.
    - Do not edit HTML, CSS, JS, or SVG assets in this directory.
 2. **Reference Purpose Only:**
    - Legacy files exist solely to verify original layouts, visual themes, colors, and behavior.
-   - The original upstream repository is at `/Users/phucnguyen/Dev/Beloga-CV` (`../Beloga-CV`).
+   - The original upstream repository is at `$LEGACY_DIR` (default: `../Beloga-CV`).

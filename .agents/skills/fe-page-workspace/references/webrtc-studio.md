@@ -1,91 +1,31 @@
-# 🎙️ Section Skill: WebRTC Video Studio & Recording Engine
+# Section Reference: WebRTC Recording Studio & Teleprompter
 
-> [!WARNING] TARGET REFACTORING PATTERN – CURRENTLY INLINED IN APP ROUTER
-> **Current Reality:** Inlined in `frontend/src/app/user/[username]/page.tsx` (Studio Recording Modal)  
-> **Target Modular Path:** frontend/src/components/organisms/workspace/video-studio-section.tsx (planned target)  
-> **Master Skill:** `fe-page-workspace`  
-> **Backend Domain:** Domain 4 (Media & Uploads) & Domain 5 (Video Studio)  
+- **Components:** `frontend/src/components/features/studio/webrtc-studio-modal.tsx`, `studio-viewfinder.tsx`, `studio-toolbar.tsx`, `teleprompter-overlay.tsx`, `teleprompter-editor-dialog.tsx`
+- **Hooks:** `frontend/src/hooks/use-webrtc-studio.ts`, `use-audio-meter.ts`, `use-teleprompter.ts`
+- **Master Skill:** `fe-page-workspace`
+- **Backend Domain:** Domain 4 (Media & Uploads)
 
 ---
 
 ## 1. Scope Boundary
-
-This section encompasses the integrated in-browser recording suite, consisting of five core subsystems:
-1. **WebRTC Hardware Control:** Device enumeration (`navigator.mediaDevices.enumerateDevices`), mic/camera selectors, resolution controls (720p/1080p), and aspect ratio toggles (16:9 landscape vs 9:16 portrait).
-2. **Audio Telemetry & Real-Time VU Meter (60Hz):** Real-time volume amplitude measurement via Web Audio API (`AudioContext`, `AnalyserNode`).
-3. **Voice Activity Detection (VAD):** Heuristic speech energy thresholding to determine when the user is speaking.
-4. **Speech-Following Teleprompter:** Script reader with Web Speech API integration (`webkitSpeechRecognition`), karaoke-style word highlighting, and auto-scrolling **strictly gated on detected voice**.
-5. **MediaRecorder & Chunked Upload:** 30-second bounded recording, binary blob slicing, and sequential multi-chunk upload to the backend API.
-
----
-
-## 2. 60fps Re-render Isolation Technique (Leaf-Node Architecture)
-
-### 🔴 Legacy Architectural Defect:
-Previously, the real-time audio amplitude (`audioLevel`) was committed to the parent workspace component's `useState`. Updating state 60 times per second caused the **entire 3,000-line DOM tree to continuously re-render**, degrading browser frame rates.
-
-### 🟢 Production Isolation Standard:
-Isolate the VU meter into an independent leaf component (`<AudioVUMeter />`) rendered directly via HTML5 `<canvas>` and `requestAnimationFrame`:
-
-```typescript
-// src/components/molecules/vu-meter.tsx
-export function AudioVUMeter({ analyserNode }: { analyserNode: AnalyserNode | null }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    if (!analyserNode || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
-    let animId: number;
-
-    const renderFrame = () => {
-      animId = requestAnimationFrame(renderFrame);
-      analyserNode.getByteFrequencyData(dataArray);
-      // Render audio telemetry bars directly on canvas...
-    };
-    renderFrame();
-
-    return () => cancelAnimationFrame(animId);
-  }, [analyserNode]);
-
-  return <canvas ref={canvasRef} width={120} height={12} className="rounded" />;
-}
-```
-👉 **Outcome:** 60fps telemetry visualization with **zero parent re-renders**.
+This section maintains responsibility for:
+1. WebRTC camera and microphone permission request and device selection.
+2. Live viewfinder preview with canvas-based audio volume meter (60fps requestAnimationFrame).
+3. Teleprompter script overlay with adjustable scroll speed, font size, and editor modal.
+4. MediaRecorder recording lifecycle (countdown -> record -> stop) and chunked video upload reassembly.
+5. Resource cleanup: Stopping all `MediaStreamTrack`s and closing `AudioContext` on modal dismissal.
 
 ---
 
-## 3. Chunked Upload Sequence
-
-Upon recording completion:
-1. `MediaRecorder.stop()` generates the final video `Blob` (`video/webm;codecs=vp8,opus`).
-2. Generate upload transaction ID: `upload_id = "rec_" + Date.now()`.
-3. Slice the Blob into 1MB chunks (`1024 * 1024` bytes).
-4. Sequentially transmit each chunk: `POST /v1/media/upload/chunk` (`upload_id`, `chunk_index`, `total_chunks`, `username`, binary file).
-5. Transmit the completion signal:
-   `POST /v1/media/upload/complete`
-   ```json
-   {
-     "upload_id": "upload_1712345678_valid",
-     "total_chunks": 4,
-     "username": "alexnguyen",
-     "filename": "pitch.webm"
-   }
-   ```
-6. Backend merges chunks on disk/S3 and returns the persistent `video_pitch_url`.
-7. Client updates the candidate profile state.
+## 2. API Contracts & Chunked Uploads
+- **Upload Chunk:** `POST /v1/media/upload/chunk/` (`multipart/form-data`)
+- **Complete Upload:** `POST /v1/media/upload/complete/` (`{ "filename": "...", "total_chunks": N }`)
 
 ---
 
-## 4. QC Anti-Regression Selectors (Mandatory Preservation)
-
-Playwright E2E tests target these exact studio selectors:
-* `[data-testid="record-pitch-studio-btn"]`: Studio dialog opener button.
-* `[data-testid="studio-live-cam"]`: Video element displaying active camera stream.
-* `[data-testid="studio-record-btn"]`: Button initiating video capture.
-* `[data-testid="studio-stop-btn"]`: Button completing capture.
-* `[data-testid="studio-retake-btn"]`: Button to retake recording.
-* `[data-testid="studio-save-btn"]`: Button to assemble chunks and publish pitch.
-* `[data-testid="script-textarea"]`: Textarea accepting speech script.
-* `[data-testid="mic-recognition-badge"]`: Microphone audio recognition status badge.
+## 3. QC Anti-Regression Selectors
+- `[data-testid="studio-modal"]`: Dialog containing the WebRTC recording studio.
+- `[data-testid="open-studio-btn"]`: Trigger button opening the studio modal.
+- `[data-testid="record-toggle-btn"]`: Start/stop recording button.
+- `[data-testid="studio-viewfinder"]`: Camera stream preview element.
+- `[data-testid="teleprompter-overlay"]`: Scrolling teleprompter text container.
