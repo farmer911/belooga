@@ -266,6 +266,39 @@ async def test_executive_unit_economics_and_cohort_retention(client: AsyncClient
     assert data["arr_run_rate_vnd"] > 0
 
 
+@pytest.mark.asyncio
+async def test_candidate_career_trajectory_and_promotion_readiness(client: AsyncClient, db_session):
+    """Verify GET /v1/profile/{username}/career-trajectory infers seniority level and promotion readiness."""
+    uid = uuid.uuid4()
+    pid = uuid.uuid4()
+    uname = f"traj_user_{uid.hex[:6]}"
+    await db_session.execute(
+        text("INSERT INTO identities (id, email, password_hash, role, status) VALUES (:u, :e, 'h', 'candidate', 'active')"),
+        {"u": uid, "e": f"{uname}@belooga.test"},
+    )
+
+    await db_session.execute(
+        text(
+            "INSERT INTO candidate_profiles "
+            "(id, identity_id, username, first_name, last_name, headline, bio, location, seeking_status, is_hidden) "
+            "VALUES (:p, :u, :un, 'Minh', 'Architect', 'Senior Distributed Systems Engineer', "
+            "'Led Golang and PostgreSQL scaling for 500k users.', 'Ho Chi Minh City', 'Open', FALSE)"
+        ),
+        {"p": pid, "u": uid, "un": uname},
+    )
+    await db_session.commit()
+
+    res = await client.get(f"/v1/profile/{uname}/career-trajectory")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["username"] == uname
+    assert data["current_inferred_level"] == "Senior"
+    assert data["next_target_level"] == "Staff / Principal"
+    assert 0 <= data["promotion_readiness_pct"] <= 100
+    assert len(data["key_promotion_gaps"]) >= 2
+
+
+
 
 
 

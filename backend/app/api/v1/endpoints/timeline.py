@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.schemas.timeline import (
+    CareerTrajectoryResponse,
     EducationExperienceCreate,
     EducationResponse,
     JobExperienceCreate,
@@ -21,6 +22,12 @@ from app.schemas.timeline import (
 from app.services.timeline_service import TimelineService
 
 router = APIRouter()
+
+
+@router.get("/profile/{username}/career-trajectory", response_model=CareerTrajectoryResponse, tags=["Domain 3: Timeline CRUD & Reordering"])
+async def get_candidate_career_trajectory(username: str, db: AsyncSession = Depends(get_db)):
+    """Compute candidate seniority level, trajectory velocity, and promotion readiness score."""
+    return await TimelineService(db).get_career_trajectory(username)
 
 
 # --- Job Experiences ---
@@ -95,3 +102,4 @@ async def reorder_education_experiences(
     db: AsyncSession = Depends(get_db),
 ):
     return await TimelineService(db).reorder_education_experiences(username, payload, current_user)
+

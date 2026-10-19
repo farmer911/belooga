@@ -140,3 +140,15 @@ class ReorderPayload(BaseModel):
 
 # Backward-compatible alias
 ReorderRequest = ReorderPayload
+
+
+class CareerTrajectoryResponse(BaseModel):
+    username: str
+    current_inferred_level: str
+    next_target_level: str
+    promotion_readiness_pct: int
+    total_experience_entries: int
+    estimated_tenure_years: float
+    trajectory_velocity: str
+    key_promotion_gaps: List[str]
+

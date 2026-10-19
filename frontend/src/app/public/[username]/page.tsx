@@ -27,6 +27,14 @@ interface TrustScoreResponse {
   next_boost_action: string;
 }
 
+interface CareerTrajectoryResponse {
+  username: string;
+  current_inferred_level: string;
+  next_target_level: string;
+  promotion_readiness_pct: number;
+  trajectory_velocity: string;
+}
+
 export default function PublicCandidatePage() {
   const params = useParams();
   const username = (params.username as string).toLowerCase().trim();
@@ -37,19 +45,19 @@ export default function PublicCandidatePage() {
 
   const { data: profile = null, isLoading } = useQuery<CandidateProfile | null>({
     queryKey: ["public-candidate-profile", username],
-    queryFn: async () => {
-      const res = await apiClient.get<CandidateProfile>(`/v1/profile/${username}`);
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<CandidateProfile>(`/v1/profile/${username}`)).data,
     enabled: Boolean(username),
   });
 
   const { data: trustData = null } = useQuery<TrustScoreResponse | null>({
     queryKey: ["public-candidate-trust-score", username],
-    queryFn: async () => {
-      const res = await apiClient.get<TrustScoreResponse>(`/v1/profile/${username}/trust-score`);
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<TrustScoreResponse>(`/v1/profile/${username}/trust-score`)).data,
+    enabled: Boolean(profile),
+  });
+
+  const { data: trajectory = null } = useQuery<CareerTrajectoryResponse | null>({
+    queryKey: ["public-candidate-trajectory", username],
+    queryFn: async () => (await apiClient.get<CareerTrajectoryResponse>(`/v1/profile/${username}/career-trajectory`)).data,
     enabled: Boolean(profile),
   });
 
@@ -66,9 +74,7 @@ export default function PublicCandidatePage() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <h2 className="text-2xl font-bold text-typography-main">Candidate Profile Not Found</h2>
         <p className="text-sm text-typography-muted">The profile @{username} does not exist or has been removed.</p>
-        <Link href="/search">
-          <Button variant="default">Browse Other Candidates</Button>
-        </Link>
+        <Link href="/search"><Button variant="default">Browse Other Candidates</Button></Link>
       </div>
     );
   }
@@ -95,16 +101,11 @@ export default function PublicCandidatePage() {
           {/* Left Column: Bio & Credentials (4 cols) */}
           <div className="lg:col-span-4 space-y-6">
             {trustData && (
-              <div
-                data-testid="profile-trust-score-card"
-                className="bg-surface-card rounded-xl border border-surface-border p-5 shadow-sm space-y-3"
-              >
+              <div data-testid="profile-trust-score-card" className="bg-surface-card rounded-xl border border-surface-border p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-typography-main">
-                      {trustData.readiness_tier}
-                    </h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-typography-main">{trustData.readiness_tier}</h3>
                   </div>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-extrabold border border-emerald-200">
                     {trustData.trust_score}/100 Trust
@@ -114,36 +115,21 @@ export default function PublicCandidatePage() {
                   {trustData.pillars.map((p) => (
                     <div key={p.pillar} className="bg-surface-page rounded-lg p-2 border border-surface-border">
                       <p className="text-[10px] font-semibold text-slate-500 truncate">{p.pillar}</p>
-                      <p className="text-xs font-bold text-slate-800">
-                        {p.score}/{p.max_score} · {p.status}
-                      </p>
+                      <p className="text-xs font-bold text-slate-800">{p.score}/{p.max_score} · {p.status}</p>
                     </div>
                   ))}
                 </div>
-                <p className="text-[11px] text-emerald-700 font-semibold">
-                  {trustData.recruiter_conversion_multiplier}x Shortlist Conversion Index
-                </p>
+                <p className="text-[11px] text-emerald-700 font-semibold">{trustData.recruiter_conversion_multiplier}x Shortlist Conversion Index</p>
               </div>
             )}
 
             <div className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-wider text-typography-main">Candidate Bio</h3>
               <p className="text-xs text-typography-body leading-relaxed">{profile.bio}</p>
-
               {(profile.email || profile.phone) && (
                 <div className="pt-4 border-t border-surface-divider space-y-2 text-xs text-typography-heading">
-                  {profile.email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-slate-400" />
-                      <span>{profile.email}</span>
-                    </div>
-                  )}
-                  {profile.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-slate-400" />
-                      <span>{profile.phone}</span>
-                    </div>
-                  )}
+                  {profile.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-slate-400" /><span>{profile.email}</span></div>}
+                  {profile.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /><span>{profile.phone}</span></div>}
                 </div>
               )}
             </div>
@@ -152,10 +138,7 @@ export default function PublicCandidatePage() {
               <h3 className="text-sm font-bold uppercase tracking-wider text-typography-main">Skills & Strengths</h3>
               <div className="flex flex-wrap gap-2">
                 {skills.map((s, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading"
-                  >
+                  <span key={idx} className="px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading">
                     {s}
                   </span>
                 ))}
@@ -177,9 +160,16 @@ export default function PublicCandidatePage() {
             />
 
             <div data-testid="public-timeline-section" className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-6">
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-brand-primary" />
-                <h2 className="text-lg font-bold text-typography-main">Work Experience</h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-brand-primary" />
+                  <h2 className="text-lg font-bold text-typography-main">Work Experience</h2>
+                </div>
+                {trajectory && (
+                  <span data-testid="career-trajectory-badge" className="px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[11px] font-bold text-teal-800">
+                    {trajectory.current_inferred_level} → {trajectory.next_target_level} ({trajectory.promotion_readiness_pct}% Ready)
+                  </span>
+                )}
               </div>
 
               {jobs.length === 0 ? (
@@ -187,6 +177,7 @@ export default function PublicCandidatePage() {
                   Candidate has not listed any prior work experience yet.
                 </div>
               ) : (
+
                 <div className="space-y-4">
                   {jobs.map((job, idx) => (
                     <TimelineItemCard

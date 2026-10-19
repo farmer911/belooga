@@ -10,10 +10,12 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import platform_cache
 from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.repositories.profile_repo import ProfileRepository
 from app.repositories.timeline_repo import TimelineRepository
 from app.schemas.timeline import (
+    CareerTrajectoryResponse,
     EducationExperienceCreate,
     JobExperienceCreate,
     ReorderRequest,
@@ -149,3 +151,44 @@ class TimelineService:
             await self.db.rollback()
             raise
         return {"message": "Education experiences reordered successfully"}
+
+    async def get_career_trajectory(self, username: str) -> CareerTrajectoryResponse:
+        uname = username.lower().strip()
+        profile = await self.profile_repo.get_by_username(uname)
+        if not profile or bool(getattr(profile, "is_hidden", False)):
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        async def _compute() -> Dict[str, Any]:
+            jobs = await self.timeline_repo.list_jobs_by_username(uname)
+            edus = await self.timeline_repo.list_education_by_username(uname)
+            text_blob = f"{profile.headline or ''} {profile.bio or ''}".lower()
+            if any(k in text_blob for k in ("principal", "staff", "architect", "director", "vp", "cto")):
+                cur_lvl, nxt_lvl = "Staff / Principal", "Distinguished / VP Engineering"
+            elif any(k in text_blob for k in ("senior", "lead", "sr.", "manager")):
+                cur_lvl, nxt_lvl = "Senior", "Staff / Principal"
+            elif any(k in text_blob for k in ("junior", "intern", "fresher")):
+                cur_lvl, nxt_lvl = "Junior", "Mid-Level"
+            else:
+                cur_lvl, nxt_lvl = "Mid-Level", "Senior"
+
+            exp_count = len(jobs)
+            tenure = round(max(1.5, exp_count * 1.8 + (2.0 if "senior" in text_blob or "staff" in text_blob else 0.5)), 1)
+            readiness = min(96, 58 + exp_count * 8 + (10 if edus else 0) + (12 if getattr(profile, "video_pitch_url", None) else 0))
+            velocity = "Accelerated Fast-Track" if readiness >= 75 else "Steady Progression"
+            return CareerTrajectoryResponse(
+                username=profile.username,
+                current_inferred_level=cur_lvl,
+                next_target_level=nxt_lvl,
+                promotion_readiness_pct=readiness,
+                total_experience_entries=exp_count,
+                estimated_tenure_years=tenure,
+                trajectory_velocity=velocity,
+                key_promotion_gaps=[
+                    f"Bổ sung chỉ số định lượng (SLA, RPS, Cost Saving) cho cột mốc tiến lên {nxt_lvl}.",
+                    "Hoàn thiện Video Pitch 60s nêu rõ kiến trúc hệ thống hoặc phạm vi dẫn dắt đội ngũ.",
+                ],
+            ).model_dump()
+
+        cached = await platform_cache.get_or_set(f"trajectory:{uname}", ttl_seconds=60, loader=_compute)
+        return CareerTrajectoryResponse(**cached)
+

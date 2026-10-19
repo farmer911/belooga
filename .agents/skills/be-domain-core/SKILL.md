@@ -22,6 +22,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `PATCH` | `/v1/profile/{username}` | `update_candidate_profile` | required |
 | `POST` | `/v1/profile/{username}/skills/` | `add_candidate_skill` | required |
 | `DELETE` | `/v1/profile/{username}/skills/{skill_name}/` | `remove_candidate_skill` | required |
+| `GET` | `/v1/profile/{username}/career-trajectory` | `get_candidate_career_trajectory` | public |
 | `GET` | `/v1/profile/{username}/job-experiences/` | `list_job_experiences` | public |
 | `POST` | `/v1/profile/{username}/job-experiences/` | `create_job_experience` | required |
 | `DELETE` | `/v1/profile/{username}/job-experiences/{item_id}/` | `delete_job_experience` | required |
@@ -47,9 +48,10 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 ## Rules
 1. **Auth & Atomic Token Rotation (`auth.py`):** Hash passwords via `PasswordHash.recommended()`. Lock refresh sessions with `with_for_update()` (15s grace window) and set `belooga_refresh_token` as `httponly=True, samesite="lax"`.
 2. **IDOR & PII Privacy (`profile.py`):** All user mutations must enforce `verify_profile_owner(current_user, target_username)`. Hidden profiles (`is_hidden = True`) return 404 (`NotFoundException`) to non-owners via optional auth `Depends(get_optional_current_user)` (`app.core.security`); redact PII (`email`, `phone`, `resume_url`) for public viewers. `ProfileRepository.get_by_username_with_details(username)` eager-loads `user`, `skills`, `job_experiences`, and `education_experiences`.
-3. **Timeline Locking (`timeline.py`):** Reorder endpoints must lock all candidate rows via `with_for_update()`, validate 1-to-1 ID set equality (400 on mismatch), and `await db.commit()`.
+3. **Timeline Locking & Career Trajectory (`timeline.py`):** Reorder endpoints must lock all candidate rows via `with_for_update()`, validate 1-to-1 ID set equality (400 on mismatch), and `await db.commit()`. `GET /v1/profile/{username}/career-trajectory` enforces `is_hidden` privacy (`404`) and caches promotion readiness telemetry via `platform_cache` (`trajectory:{username}`, 60s TTL).
 4. **Non-Blocking Media & Path Safety (`media.py`):** Run all disk I/O, chunk assembly, and ReportLab `doc.build()` inside `asyncio.to_thread`. Reject `..` path traversal in upload IDs with 400.
 5. **Candidate Trust & Recruiter Readiness Score (`GET /v1/profile/{username}/trust-score`):** Enforces `is_hidden` privacy guard (`404` for non-owners), caches 4-pillar readiness telemetry via `AsyncTieredCache` (`profile_cache`, 45s TTL), and invalidates `trust:{username}` on profile or skill mutations.
+
 
 ## Known Traps
 - **Hidden profile leakage (C-01/C-02):** Timeline list, trust-score, and video-status endpoints must respect `is_hidden` when tightening privacy rules.
