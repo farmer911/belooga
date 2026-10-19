@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 
 class MomoCreatePaymentRequest(BaseModel):
     package_type: str = Field(..., description="MICRO_PASS_29K, MICRO_PASS_59K, EXPERT_REVIEW")

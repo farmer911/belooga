@@ -1,5 +1,6 @@
 ---
-trigger: glob: frontend/**
+trigger: glob
+globs: frontend/**
 description: Invariants and standards for Belooga Next.js frontend.
 ---
 

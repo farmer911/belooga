@@ -3,13 +3,12 @@
 Data access layer for ProfileMedia, CandidateProfile media URLs, and VideoArchive entities.
 """
 
-from typing import Any, Dict, List, Optional
 import uuid
+from typing import Optional
 
-from sqlalchemy import select, text, update
+from sqlalchemy import text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.media import ProfileMedia, VideoArchive
 from app.models.profile import CandidateProfile
 
 
@@ -24,6 +23,14 @@ class MediaRepository:
             update(CandidateProfile)
             .where(CandidateProfile.id == profile_id)
             .values(avatar_url=avatar_url)
+        )
+        await self.db.execute(stmt)
+
+    async def update_resume_url(self, profile_id: uuid.UUID, resume_url: Optional[str]) -> None:
+        stmt = (
+            update(CandidateProfile)
+            .where(CandidateProfile.id == profile_id)
+            .values(resume_url=resume_url)
         )
         await self.db.execute(stmt)
 
@@ -45,9 +52,10 @@ class MediaRepository:
 
     async def get_video_status(self, username: str):
         query = text("""
-            SELECT video_pitch_url, video_pitch_poster
-            FROM candidate_profiles
-            WHERE username = :u
+            SELECT p.video_pitch_url, pm.file_url AS video_pitch_poster
+            FROM candidate_profiles p
+            LEFT JOIN profile_media pm ON pm.profile_id = p.id AND pm.category = 'pitch_poster'
+            WHERE p.username = :u
             LIMIT 1
         """)
         res = await self.db.execute(query, {"u": username.lower().strip()})
@@ -64,34 +72,3 @@ class MediaRepository:
         """)
         res = await self.db.execute(query, {"username": username.lower().strip()})
         return res.fetchone()
-
-    async def get_pdf_jobs(self, profile_id: uuid.UUID) -> List[Dict[str, Any]]:
-        query = text("""
-            SELECT title, company_name, from_date_year, to_date_year, currently_work_here, description
-            FROM job_experiences
-            WHERE profile_id = :pid
-            ORDER BY display_order ASC, from_date_year DESC NULLS LAST
-        """)
-        res = await self.db.execute(query, {"pid": profile_id})
-        return [dict(r._mapping) for r in res.fetchall()]
-
-    async def get_pdf_education(self, profile_id: uuid.UUID) -> List[Dict[str, Any]]:
-        query = text("""
-            SELECT school_name, degree_name, gpa, from_date_year, to_date_year
-            FROM education_experiences
-            WHERE profile_id = :pid
-            ORDER BY display_order ASC
-        """)
-        res = await self.db.execute(query, {"pid": profile_id})
-        return [dict(r._mapping) for r in res.fetchall()]
-
-    async def get_pdf_skills(self, profile_id: uuid.UUID) -> List[str]:
-        query = text("""
-            SELECT s.name
-            FROM skills s
-            JOIN profile_skills ps ON ps.skill_id = s.id
-            WHERE ps.profile_id = :pid
-            ORDER BY s.name ASC
-        """)
-        res = await self.db.execute(query, {"pid": profile_id})
-        return [r[0] for r in res.fetchall()]

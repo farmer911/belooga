@@ -231,3 +231,47 @@ async def test_cross_user_upload_completion_rejection(client: AsyncClient, db_se
         }
     )
     assert res_tamper.status_code == 403, "Cross-user completion must be rejected with 403 Forbidden"
+
+
+@pytest.mark.asyncio
+async def test_video_status_and_resume_persistence_and_name_update(client: AsyncClient, db_session):
+    """Verify video-status query joins profile_media, resume upload/delete persists to DB, and name updates work."""
+    from app.core.security import create_access_token
+
+    res_a = await db_session.execute(text("SELECT identity_id FROM candidate_profiles WHERE username = 'alexnguyen'"))
+    user_a_id = res_a.scalar()
+    token = create_access_token({"sub": str(user_a_id), "username": "alexnguyen", "role": "candidate"})
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. GET /v1/profile/alexnguyen/video-status/ must not fail with UndefinedColumnError
+    vs_res = await client.get("/v1/profile/alexnguyen/video-status/")
+    assert vs_res.status_code == 200
+    assert vs_res.json()["status"] == "ready"
+
+    # 2. PATCH /v1/profile/alexnguyen/resume/ must persist resume_url to candidate_profiles
+    up_res = await client.patch(
+        "/v1/profile/alexnguyen/resume/",
+        headers=headers,
+        files={"file": ("custom_cv.pdf", b"%PDF-1.4 dummy pdf", "application/pdf")},
+    )
+    assert up_res.status_code == 200
+    uploaded_url = up_res.json()["resume_url"]
+
+    prof_res = await client.get("/v1/profile/alexnguyen")
+    assert prof_res.status_code == 200
+    assert prof_res.json()["resume_url"] == uploaded_url
+
+    # 3. DELETE /v1/profile/alexnguyen/resume/ must clear custom resume_url back to default PDF generator URL
+    del_res = await client.delete("/v1/profile/alexnguyen/resume/", headers=headers)
+    assert del_res.status_code == 200
+    prof_after = await client.get("/v1/profile/alexnguyen")
+    assert prof_after.json()["resume_url"].endswith("/v1/profile/alexnguyen/pdf/")
+
+    # 4. PATCH /v1/profile/alexnguyen with first_name and last_name
+    patch_res = await client.patch(
+        "/v1/profile/alexnguyen",
+        headers=headers,
+        json={"first_name": "Alex", "last_name": "Nguyen"},
+    )
+    assert patch_res.status_code == 200
+

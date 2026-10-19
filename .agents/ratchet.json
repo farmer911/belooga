@@ -1,10 +1,12 @@
 {
-  "fe_arbitrary_hex": 796,
-  "fe_any": 26,
+  "fe_arbitrary_hex": 0,
+  "fe_structural_emoji": 0,
+  "fe_any": 0,
   "fe_ts_ignore": 0,
-  "fe_max_page_lines": 371,
-  "fe_files_over_300_lines": 2,
-  "be_type_ignore": 1,
+  "fe_max_page_lines": 245,
+  "fe_files_over_300_lines": 0,
+  "be_files_over_300_lines": 0,
+  "be_type_ignore": 0,
   "be_sql_in_routers": 0,
-  "be_routes_without_response_model": 30
+  "be_routes_without_response_model": 0
 }

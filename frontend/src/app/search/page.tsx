@@ -1,11 +1,36 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, MapPin, Play, Filter, Loader2, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, MapPin, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
+
+interface SearchCandidateItem {
+  id: string;
+  username: string;
+  full_name: string;
+  headline?: string;
+  location?: string;
+  seeking_status?: string;
+  avatar_url?: string;
+  video_pitch_poster?: string;
+}
+
+interface SearchSuggestionItem {
+  username: string;
+  full_name: string;
+  headline?: string;
+}
+
+interface SearchResponseData {
+  results: SearchCandidateItem[];
+  total: number;
+  page: number;
+  total_pages: number;
+}
 
 function SearchContent() {
   const router = useRouter();
@@ -14,61 +39,38 @@ function SearchContent() {
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
 
   const [query, setQuery] = useState(initialKey);
-  const [page, setPage] = useState(initialPage);
-  const [data, setData] = useState<{
-    results: any[];
-    total: number;
-    page: number;
-    total_pages: number;
-  }>({
-    results: [],
-    total: 0,
-    page: 1,
-    total_pages: 1,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialKey);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Fetch Candidates
-  const fetchCandidates = async (searchQuery: string, pageNum: number) => {
-    setIsLoading(true);
-    try {
-      const res = await apiClient.get("/v1/profile/search/", {
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const { data = { results: [], total: 0, page: 1, total_pages: 1 }, isLoading } = useQuery<SearchResponseData>({
+    queryKey: ["candidate-search", initialKey, initialPage],
+    queryFn: async () => {
+      const res = await apiClient.get<SearchResponseData>("/v1/profile/search/", {
         params: {
-          key: searchQuery.trim(),
-          page: pageNum,
+          key: initialKey.trim(),
+          page: initialPage,
           limit: 9,
         },
       });
-      setData(res.data);
-    } catch (err) {
-      console.error("Search failed", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    fetchCandidates(initialKey, initialPage);
-  }, [initialKey, initialPage]);
-
-  // Debounced Autocomplete
-  useEffect(() => {
-    if (!query || query.trim().length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await apiClient.get(`/v1/profile/search/suggest/?key=${encodeURIComponent(query.trim())}`);
-        setSuggestions(res.data);
-      } catch {
-        setSuggestions([]);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
+  const { data: suggestions = [] } = useQuery<SearchSuggestionItem[]>({
+    queryKey: ["candidate-suggest", debouncedQuery],
+    queryFn: async () => {
+      const res = await apiClient.get<SearchSuggestionItem[]>(
+        `/v1/profile/search/suggest/?key=${encodeURIComponent(debouncedQuery)}`
+      );
+      return res.data;
+    },
+    enabled: debouncedQuery.length >= 2,
+  });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,16 +79,12 @@ function SearchContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-10">
+    <div className="min-h-screen bg-surface-page py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
-        {/* Header & Search Input */}
-        <div className="bg-white rounded-xl p-8 border border-[#d1d6da] shadow-sm space-y-6">
+        <div className="bg-surface-card rounded-xl p-8 border border-surface-border shadow-sm space-y-6">
           <div className="max-w-3xl space-y-2">
-            <h1 className="text-3xl font-extrabold text-[#252525]">
-              Talent Discovery & Search
-            </h1>
-            <p className="text-sm text-[#737475]">
+            <h1 className="text-3xl font-extrabold text-typography-main">Talent Discovery & Search</h1>
+            <p className="text-sm text-typography-muted">
               Search through candidates across engineering, design, and product with verified 0:30 video elevator pitches.
             </p>
           </div>
@@ -107,17 +105,16 @@ function SearchContent() {
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   placeholder="Search by name, role, skill, or location..."
-                  className="w-full pl-11 pr-4 py-3 bg-[#f8f9fa] border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae] focus:bg-white transition-all"
+                  className="w-full pl-11 pr-4 py-3 bg-surface-page border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:bg-surface-card transition-all"
                 />
               </div>
-              <Button type="submit" size="lg" data-testid="search-submit-btn" className="bg-[#5bbbae] hover:bg-[#497d76] text-white px-8">
+              <Button type="submit" size="lg" data-testid="search-submit-btn" className="bg-brand-primary hover:bg-brand-hover text-white px-8">
                 Search
               </Button>
             </form>
 
-            {/* Autocomplete Suggestion Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-20 top-full mt-2 w-full bg-white border border-[#d1d6da] rounded-lg shadow-xl overflow-hidden divide-y divide-[#f0f2f5]">
+              <div className="absolute z-20 top-full mt-2 w-full bg-surface-card border border-surface-border rounded-lg shadow-xl overflow-hidden divide-y divide-surface-divider">
                 {suggestions.map((s, idx) => (
                   <button
                     key={idx}
@@ -127,12 +124,12 @@ function SearchContent() {
                       setShowSuggestions(false);
                       router.push(`/public/${s.username}`);
                     }}
-                    className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-[#f8f9fa] transition-colors"
+                    className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-page transition-colors"
                   >
                     <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     <div>
-                      <span className="text-sm font-semibold text-[#252525]">{s.full_name}</span>
-                      <span className="text-xs text-[#737475] ml-2">@{s.username} • {s.headline}</span>
+                      <span className="text-sm font-semibold text-typography-main">{s.full_name}</span>
+                      <span className="text-xs text-typography-muted ml-2">@{s.username} • {s.headline}</span>
                     </div>
                   </button>
                 ))}
@@ -141,21 +138,20 @@ function SearchContent() {
           </div>
         </div>
 
-        {/* Results Stream */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-[#737475]">
+          <div className="flex items-center justify-between text-xs text-typography-muted">
             <span>Showing {data.results.length} of {data.total} candidate results</span>
             <span>Sorted by relevance</span>
           </div>
 
           {isLoading ? (
             <div className="py-20 flex justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-[#5bbbae]" />
+              <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
             </div>
           ) : data.results.length === 0 ? (
-            <div data-testid="search-empty-state" className="bg-white rounded-xl p-12 text-center border border-[#d1d6da] space-y-3">
-              <p className="text-lg font-bold text-[#252525]">No candidates found</p>
-              <p className="text-sm text-[#737475]">Try adjusting your search keyword or clearing filters.</p>
+            <div data-testid="search-empty-state" className="bg-surface-card rounded-xl p-12 text-center border border-surface-border space-y-3">
+              <p className="text-lg font-bold text-typography-main">No candidates found</p>
+              <p className="text-sm text-typography-muted">Try adjusting your search keyword or clearing filters.</p>
               <Button variant="outline" size="sm" onClick={() => { setQuery(""); router.push("/search"); }}>
                 Reset Search
               </Button>
@@ -166,18 +162,12 @@ function SearchContent() {
                 <div
                   key={candidate.id}
                   data-testid="candidate-card"
-                  className="bg-white rounded-xl border border-[#d1d6da] overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col justify-between"
+                  className="bg-surface-card rounded-xl border border-surface-border overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col justify-between"
                 >
                   <Link href={`/public/${candidate.username}`}>
                     <div className="start-content-video cursor-pointer relative">
-                      <div className="modal-start">
-                        <div className="video-play-icon" />
-                      </div>
-                      <img
-                        src={candidate.video_pitch_poster || "/images/home/matt-poster.png"}
-                        alt={candidate.full_name}
-                        className="w-full h-48 object-cover"
-                      />
+                      <div className="modal-start"><div className="video-play-icon" /></div>
+                      <img src={candidate.video_pitch_poster || "/images/home/matt-poster.png"} alt={candidate.full_name} className="w-full h-48 object-cover" />
                       <div className="absolute bottom-2 right-2 bg-black/75 text-white px-2 py-0.5 rounded text-[11px] font-mono font-semibold">
                         0:30 Pitch
                       </div>
@@ -187,35 +177,29 @@ function SearchContent() {
                   <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={candidate.avatar_url || "/images/avatar.jpg"}
-                          alt={candidate.full_name}
-                          className="w-10 h-10 rounded-full object-cover border border-[#d1d6da]"
-                        />
+                        <img src={candidate.avatar_url || "/images/avatar.jpg"} alt={candidate.full_name} className="w-10 h-10 rounded-full object-cover border border-surface-border" />
                         <div>
                           <Link href={`/public/${candidate.username}`}>
-                            <h3 data-testid="candidate-card-name" className="text-base font-bold text-[#252525] group-hover:text-[#5bbbae] transition-colors">
+                            <h3 data-testid="candidate-card-name" className="text-base font-bold text-typography-main group-hover:text-brand-primary transition-colors">
                               {candidate.full_name}
                             </h3>
                           </Link>
-                          <p data-testid="candidate-card-headline" className="text-xs text-[#515151]">{candidate.headline}</p>
+                          <p data-testid="candidate-card-headline" className="text-xs text-typography-heading">{candidate.headline}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs text-[#737475] pt-2">
+                      <div className="flex items-center gap-1.5 text-xs text-typography-muted pt-2">
                         <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{candidate.location}</span>
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#f0f2f5] flex items-center justify-between">
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#5bbbae]/15 text-[#21655e]">
+                    <div className="pt-3 border-t border-surface-divider flex items-center justify-between">
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-primary/15 text-brand-dark">
                         {candidate.seeking_status}
                       </span>
                       <Link href={`/public/${candidate.username}`}>
-                        <Button size="sm" variant="outline" className="text-xs border-[#5bbbae] text-[#5bbbae]">
-                          View CV
-                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs border-brand-primary text-brand-primary">View CV</Button>
                       </Link>
                     </div>
                   </div>
@@ -224,7 +208,6 @@ function SearchContent() {
             </div>
           )}
 
-          {/* Numeric Pagination */}
           {data.total_pages > 1 && (
             <div data-testid="search-pagination" className="flex items-center justify-center gap-2 pt-8">
               {Array.from({ length: data.total_pages }, (_, i) => i + 1).map((p) => (
@@ -233,8 +216,8 @@ function SearchContent() {
                   onClick={() => router.push(`/search?key=${encodeURIComponent(query)}&page=${p}`)}
                   className={`w-9 h-9 rounded-lg text-xs font-semibold ${
                     p === data.page
-                      ? "bg-[#5bbbae] text-white"
-                      : "bg-white border border-[#d1d6da] text-[#515151] hover:bg-slate-50"
+                      ? "bg-brand-primary text-white"
+                      : "bg-surface-card border border-surface-border text-typography-heading hover:bg-slate-50"
                   }`}
                 >
                   {p}

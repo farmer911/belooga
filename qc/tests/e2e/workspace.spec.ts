@@ -320,11 +320,11 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     // Click on 5th word (index 4) to jump
     const fifthWord = page.locator('[data-word-idx="4"]');
     await fifthWord.click();
-    await expect(fifthWord).toHaveClass(/bg-\[#5bbbae\]/);
+    await expect(fifthWord).toHaveClass(/bg-brand-primary/);
 
     // Reset back to start
     await page.locator('[data-testid="prompter-reset-btn"]').click();
-    await expect(firstWord).toHaveClass(/bg-\[#5bbbae\]/);
+    await expect(firstWord).toHaveClass(/bg-brand-primary/);
 
     // 5. Test Script Edit & Custom Text Input
     await editBtn.click();
@@ -369,14 +369,14 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await expect(initialWord).toBeVisible();
     // Word 1 must NOT be highlighted as past word because silence prevents advancement
     const secondWord = page.locator('[data-word-idx="1"]');
-    await expect(secondWord).not.toHaveClass(/bg-\[#5bbbae\]/);
+    await expect(secondWord).not.toHaveClass(/bg-brand-primary/);
 
     // Simulate voice detection trigger
     const simulateVoiceBtn = page.locator('[data-testid="simulate-voice-btn"]');
     if (await simulateVoiceBtn.isVisible()) {
       await simulateVoiceBtn.click({ force: true });
       await expect(voiceStatus).toContainText('Voice Detected');
-      await expect(page.locator('[data-testid="teleprompter-text-container"] [class*="bg-[#5bbbae]"]')).toBeVisible();
+      await expect(page.locator('[data-testid="teleprompter-text-container"] [class*="bg-brand-primary"]')).toBeVisible();
     }
 
     // Stop recording and close

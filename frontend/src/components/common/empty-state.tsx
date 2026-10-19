@@ -46,7 +46,7 @@ export function EmptyState({
         onClick={onClick}
         className={cn(
           "font-medium",
-          variant === "default" && "bg-[#5bbbae] hover:bg-[#497d76] text-white"
+          variant === "default" && "bg-brand-primary hover:bg-brand-hover text-white"
         )}
       >
         {actionIcon && <span className="mr-2">{actionIcon}</span>}
@@ -68,19 +68,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-xl border border-dashed border-[#d1d6da] bg-white transition-all",
+        "flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-xl border border-dashed border-surface-border bg-surface-card transition-all",
         className
       )}
       {...props}
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d7ecea] text-[#21655e] mb-4 shadow-2xs">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-overlay text-brand-dark mb-4 shadow-2xs">
         {icon || <FolderOpen className="h-7 w-7" aria-hidden="true" />}
       </div>
 
-      <h3 className="text-base font-semibold text-[#252525]">{title}</h3>
+      <h3 className="text-base font-semibold text-typography-main">{title}</h3>
 
       {displayText && (
-        <p className="text-sm text-[#737475] max-w-sm mt-1 leading-relaxed">
+        <p className="text-sm text-typography-muted max-w-sm mt-1 leading-relaxed">
           {displayText}
         </p>
       )}

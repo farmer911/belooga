@@ -28,7 +28,11 @@ description: Technical architecture and engineering guide for Belooga Backend (F
 | **Talent Search** | `search.py`, `CatalogsService`, `CatalogsRepository` | `be-service-search` |
 | **Master Catalogs** | `catalogs.py`, `CatalogsService` | `be-service-catalogs` |
 | **Public CMS & Abuse**| `cms.py`, `CmsService`, `CmsRepository` | `be-service-cms` |
-| **Expert CV Review** | `expert_review.py`, `ExpertReviewService` | `be-service-expert-review` |
+| **Expert CV Review** | `expert_review.py`, `ExpertReviewService`, `ExpertReviewRepository` | `be-service-expert-review` |
+| **ATS Diagnostics** | `ats_matching.py`, `ATSMatchingService`, `ATSMatchingRepository` | `be-service-ats` |
+| **Job Tracker Kanban**| `job_tracker.py`, `JobTrackerService`, `JobTrackerRepository` | `be-service-jobs` |
+| **Executive Analytics**| `analytics.py`, `AnalyticsService`, `AnalyticsRepository` | `be-service-analytics` |
+| **MoMo Payments** | `payments.py`, `PaymentService` | `be-service-payments` |
 
 ---
 

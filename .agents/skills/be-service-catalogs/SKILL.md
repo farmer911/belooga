@@ -19,13 +19,13 @@ description: Master taxonomies for skills, company names, schools, and locations
 - Router: `backend/app/api/v1/endpoints/catalogs.py`
 - Service: `backend/app/services/catalogs_service.py`
 - Repository: `backend/app/repositories/catalogs_repo.py`
-- Tests: `backend/tests/test_catalogs_salary.py`
+- Tests: `backend/tests/test_backend_foundation.py`, `backend/tests/test_catalogs_salary.py`
 <!-- AUTO:END -->
 
 Flow: router (`app/api/v1/endpoints/catalogs.py`) -> `CatalogsService` -> `CatalogsRepository` -> PostgreSQL catalog tables.
 
 ## Rules
-1. **Catalog Integrity:** Lookups query cached or indexed taxonomy tables (`skills`, `company_names`, `schools`, `locations`).
+1. **Catalog Integrity:** Lookups query cached or indexed taxonomy tables (`skills`, `languages`, `interests`, `catalog_companies`, `catalog_schools`, `catalog_locations`).
 2. **Standardization:** Catalog queries normalize input strings (trimming whitespace and lowercasing) to ensure consistent token matches.
 
 ## Known Traps
@@ -33,6 +33,6 @@ Flow: router (`app/api/v1/endpoints/catalogs.py`) -> `CatalogsService` -> `Catal
 
 ## Self-Verification
 ```bash
-backend/.venv/bin/pytest backend/tests/test_backend_foundation.py -v
+backend/.venv/bin/pytest backend/tests/test_catalogs_salary.py backend/tests/test_backend_foundation.py -v
 python3 scripts/lint-skills.py --quiet
 ```

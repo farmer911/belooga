@@ -10,8 +10,7 @@ import uuid
 from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.profile import CandidateProfile
-from app.models.timeline import AwardCertification, EducationExperience, JobExperience
+from app.models.timeline import EducationExperience, JobExperience
 
 
 class TimelineRepository:

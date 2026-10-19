@@ -64,7 +64,7 @@ export function VideoPitchModal({
       >
         <div className="p-4 flex items-center justify-between border-b border-slate-800 bg-slate-900/90">
           <div className="flex items-center gap-2">
-            <Video className="w-4 h-4 text-[#5bbbae]" />
+            <Video className="w-4 h-4 text-brand-primary" aria-hidden="true" />
             <div>
               <h3 className="text-base font-semibold text-white">
                 0:30 Video Pitch — {candidateName}
@@ -109,7 +109,7 @@ export function VideoPitchModal({
           {/* Big Centered Play Button Overlay when paused */}
           {!isPlaying && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] transition-all hover:bg-black/30 pointer-events-none">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#5bbbae] text-slate-950 flex items-center justify-center shadow-[0_0_30px_rgba(91,187,174,0.6)] transform group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-primary text-slate-950 flex items-center justify-center shadow-[0_0_30px_rgba(91,187,174,0.6)] transform group-hover:scale-110 transition-transform">
                 <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-current" />
               </div>
               <span className="mt-3 text-xs sm:text-sm font-semibold text-white tracking-wide bg-slate-900/80 px-3 py-1 rounded-full border border-slate-700/60 shadow">
@@ -126,8 +126,8 @@ export function VideoPitchModal({
               onClick={toggleMute}
               className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-amber-500/90 hover:bg-amber-500 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-full shadow-lg transition-transform hover:scale-105 animate-bounce pointer-events-auto"
             >
-              <VolumeX className="w-4 h-4" />
-              <span>Click to Unmute Sound 🔊</span>
+              <VolumeX className="w-4 h-4" aria-hidden="true" />
+              <span>Click to Unmute Sound</span>
             </button>
           )}
         </div>
@@ -142,7 +142,7 @@ export function VideoPitchModal({
             <span className="text-emerald-400 font-medium">1080p HD Streaming</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[#5bbbae] font-medium hidden sm:inline">
+            <span className="text-brand-primary font-medium hidden sm:inline">
               Belooga Verified Authentic Media
             </span>
             <button

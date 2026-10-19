@@ -28,11 +28,11 @@ export function VideoPitchCard({
   const displayPoster = posterUrl || "/images/home/matt-poster.png";
 
   return (
-    <div className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-4">
+    <div className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#252525]">{title}</h2>
-          <p className="text-xs text-[#737475]">{subtitle}</p>
+          <h2 className="text-lg font-bold text-typography-main">{title}</h2>
+          <p className="text-xs text-typography-muted">{subtitle}</p>
         </div>
 
         {isEditable && onRecordClick ? (
@@ -40,13 +40,13 @@ export function VideoPitchCard({
             data-testid="record-pitch-studio-btn"
             variant="outline"
             size="sm"
-            className="gap-1.5 border-[#5bbbae] text-[#5bbbae] hover:bg-[#5bbbae]/10 cursor-pointer"
+            className="gap-1.5 border-brand-primary text-brand-primary hover:bg-brand-primary/10 cursor-pointer"
             onClick={onRecordClick}
           >
             <Video className="w-3.5 h-3.5" /> Re-record Pitch Studio
           </Button>
         ) : badgeText ? (
-          <span className="text-xs font-mono font-semibold text-[#5bbbae] bg-[#5bbbae]/10 px-2.5 py-1 rounded">
+          <span className="text-xs font-mono font-semibold text-brand-primary bg-brand-primary/10 px-2.5 py-1 rounded">
             {badgeText}
           </span>
         ) : null}

@@ -35,13 +35,13 @@
 | 22 | `profile_reports` | Domain 8: Candidate Moderation & Flagged Reports |
 | 23 | `career_postings` | Domain 8: Internal Belooga Career Job Listings |
 | 24 | `career_applications` | Domain 8: Candidate Job Applications & Resume Attachments |
-| 25 | `expert_profiles` | General Storage |
-| 26 | `cv_review_packages` | General Storage |
-| 27 | `cv_review_orders` | General Storage |
-| 28 | `cv_review_feedbacks` | General Storage |
-| 29 | `job_descriptions` | General Storage |
-| 30 | `resume_jd_matches` | General Storage |
-| 31 | `candidate_job_applications_tracker` | General Storage |
+| 25 | `expert_profiles` | Domain 9: Verified Senior Reviewer Profiles & Ratings |
+| 26 | `cv_review_packages` | Domain 9: Expert CV Review Service Tiers & Pricing |
+| 27 | `cv_review_orders` | Domain 9: Candidate Review Booking Orders & Status |
+| 28 | `cv_review_feedbacks` | Domain 9: Structured Expert Scorecards & Actionable Feedback |
+| 29 | `job_descriptions` | Domain 10: Target Job Descriptions & Extracted Keywords |
+| 30 | `resume_jd_matches` | Domain 10: ATS Compatibility Scores & Match Audits |
+| 31 | `candidate_job_applications_tracker` | Domain 11: Candidate Job Application Kanban Tracker |
 
 ---
 
@@ -54,7 +54,7 @@
 |---|---|---|---|---|---|
 | `GET` | `/health` | `health_check` | Public | `backend/app/main.py` | Health Probe |
 | `GET` | `/v1` | `api_root` | Public | `backend/app/main.py` | Root |
-| `POST` | `/v1/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Root |
+| `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
 | `POST` | `/v1/auth/login/` | `login` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/logout/` | `logout` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/auth/me/` | `get_current_session_user` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
@@ -62,23 +62,19 @@
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/catalogs/salary-benchmark` | `get_salary_benchmark` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
-| `POST` | `/v1/create-qr` | `create_momo_payment_qr` | Public | `backend/app/api/v1/endpoints/payments.py` | Root |
-| `GET` | `/v1/dashboard` | `get_executive_analytics_dashboard` | Public | `backend/app/api/v1/endpoints/analytics.py` | Root |
-| `GET` | `/v1/experts/` | `list_experts` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Root |
+| `GET` | `/v1/expert-review/experts/` | `list_experts` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `POST` | `/v1/expert-review/orders/` | `create_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `POST` | `/v1/expert-review/orders/{order_id}/checkout/` | `checkout_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `GET` | `/v1/expert-review/packages/` | `list_packages` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
-| `POST` | `/v1/ipn` | `momo_ipn_webhook` | Public | `backend/app/api/v1/endpoints/payments.py` | Root |
-| `GET` | `/v1/jobs/` | `list_tracked_jobs` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
-| `POST` | `/v1/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
-| `DELETE` | `/v1/jobs/{job_id}` | `delete_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
-| `PATCH` | `/v1/jobs/{job_id}/status` | `update_job_status` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Root |
+| `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `POST` | `/v1/media/upload/complete` | `complete_chunked_video_upload` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
-| `GET` | `/v1/order-status/{order_id}` | `check_order_status` | Public | `backend/app/api/v1/endpoints/payments.py` | Root |
-| `POST` | `/v1/orders/` | `create_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
-| `GET` | `/v1/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
-| `POST` | `/v1/orders/{order_id}/checkout/` | `checkout_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
-| `GET` | `/v1/orders/{order_id}/feedback/` | `get_order_feedback` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Root |
-| `GET` | `/v1/packages/` | `list_packages` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Root |
+| `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
+| `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
+| `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `GET` | `/v1/profile/company/` | `suggest_companies` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/location/` | `suggest_locations` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/school/` | `suggest_schools` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
@@ -103,6 +99,10 @@
 | `POST` | `/v1/profile/{username}/skills/` | `add_candidate_skill` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `DELETE` | `/v1/profile/{username}/skills/{skill_name}/` | `remove_candidate_skill` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | Public | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
+| `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/users/exists/email/` | `check_email_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/users/exists/username/` | `check_username_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/users/register/` | `register_user` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
@@ -150,16 +150,14 @@ fastapi>=0.111.0,<1.0.0
 uvicorn[standard]>=0.30.0,<1.0.0
 sqlalchemy[asyncio]>=2.0.30,<3.0.0
 asyncpg>=0.29.0,<1.0.0
-alembic>=1.13.0,<2.0.0
+alembic>=1.13.1,<2.0.0
 pydantic>=2.7.0,<3.0.0
-pydantic-settings>=2.3.0,<3.0.0
 pyjwt>=2.8.0,<3.0.0
 pwdlib[argon2]>=0.2.0,<1.0.0
 argon2-cffi>=23.1.0,<24.0.0
 python-multipart>=0.0.9,<1.0.0
 redis>=5.0.0,<6.0.0
 httpx>=0.27.0,<1.0.0
-boto3>=1.34.0,<2.0.0
 email-validator>=2.0.0
 reportlab>=4.2.0
 pytest>=8.0.0
@@ -170,17 +168,17 @@ pytest-asyncio>=0.23.0
 ```json
 {
   "dependencies": {
-    "@hookform/resolvers": "^5.9.1",
-    "@tanstack/react-query": "^5.104.1",
+    "@hookform/resolvers": "^6.0.0",
+    "@tanstack/react-query": "^5.66.0",
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.51.0",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-hook-form": "^7.89.0",
+    "react-hook-form": "^7.90.0",
     "tailwind-merge": "^3.7.0",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

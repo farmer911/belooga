@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { DollarSign } from "lucide-react";
 import { TrackedJob, KanbanStatus } from "@/hooks/use-job-tracker";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,7 +32,7 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
   const prev = PREV_STATUS[job.status];
 
   return (
-    <div className="bg-white border border-surface-border rounded-lg p-3 space-y-2 hover:border-brand-primary hover:shadow-xs transition shadow-xs group">
+    <div className="bg-surface-card border border-surface-border rounded-lg p-3 space-y-2 hover:border-brand-primary hover:shadow-xs transition shadow-xs group">
       <div className="flex items-start justify-between gap-1">
         <div>
           <h4 className="font-semibold text-typography-main text-xs line-clamp-1">{job.position_title}</h4>
@@ -53,7 +54,8 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
 
       {job.expected_salary && (
         <div className="text-[10px] text-typography-heading flex items-center gap-1 font-medium">
-          <span>💰</span> {job.expected_salary}
+          <DollarSign className="w-3 h-3 text-emerald-600 shrink-0" aria-hidden="true" />
+          <span>{job.expected_salary}</span>
         </div>
       )}
 

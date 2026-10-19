@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { BarChart3 } from "lucide-react";
 import { RevenueSeriesPoint } from "@/hooks/use-analytics-dashboard";
 
 interface AnalyticsRevenueChartProps {
@@ -15,11 +16,12 @@ export function AnalyticsRevenueChart({ data }: AnalyticsRevenueChartProps) {
   };
 
   return (
-    <div className="p-5 rounded-xl bg-white border border-surface-border space-y-3.5 shadow-xs">
+    <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-3.5 shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-divider pb-3">
         <div>
           <h4 className="font-bold text-typography-main text-xs flex items-center gap-1.5 uppercase tracking-wider">
-            <span>📊</span> Diễn Biến Doanh Thu 7 Ngày Gần Nhất
+            <BarChart3 className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+            <span>Diễn Biến Doanh Thu 7 Ngày Gần Nhất</span>
           </h4>
           <p className="text-[11px] text-typography-muted mt-0.5">
             Tách biệt dòng tiền Micro-Pass 29k/59k vs Phí sàn Expert 8%
@@ -60,7 +62,7 @@ export function AnalyticsRevenueChart({ data }: AnalyticsRevenueChartProps) {
                 ></div>
                 <div
                   style={{ height: `${microHeight}%` }}
-                  className="w-full bg-brand-primary hover:bg-brand-hover transition-all border-t border-white"
+                  className="w-full bg-brand-primary hover:bg-brand-hover transition-all border-t border-surface-card"
                   title={`Micro-pass: ${item.micro_pass_rev}đ`}
                 ></div>
               </div>

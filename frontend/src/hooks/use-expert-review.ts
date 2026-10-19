@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { apiClient } from "@/services/api-client";
+import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
 
 export interface ExpertProfile {
@@ -64,67 +65,55 @@ export interface ReviewOrder {
 
 export function useExpertReview() {
   const { isAuthenticated } = useAuthStore();
-  const [experts, setExperts] = useState<ExpertProfile[]>([]);
-  const [packages, setPackages] = useState<ReviewPackage[]>([]);
-  const [myOrders, setMyOrders] = useState<ReviewOrder[]>([]);
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Booking Modal State
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<ReviewPackage | null>(null);
   const [selectedExpert, setSelectedExpert] = useState<ExpertProfile | null>(null);
 
-  // Fetch initial packages and experts
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [pkgRes, expRes] = await Promise.all([
-        apiClient.get<ReviewPackage[]>("/v1/expert-review/packages/"),
-        apiClient.get<ExpertProfile[]>("/v1/expert-review/experts/"),
-      ]);
-      setPackages(pkgRes.data);
-      setExperts(expRes.data);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || "Failed to load expert review offerings");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const packagesQuery = useQuery<ReviewPackage[]>({
+    queryKey: ["expert-review-packages"],
+    queryFn: async () => {
+      const res = await apiClient.get<ReviewPackage[]>("/v1/expert-review/packages/");
+      return res.data;
+    },
+  });
 
-  // Fetch logged-in user orders
+  const expertsQuery = useQuery<ExpertProfile[]>({
+    queryKey: ["expert-review-experts", selectedCategory],
+    queryFn: async () => {
+      const url =
+        selectedCategory === "All"
+          ? "/v1/expert-review/experts/"
+          : `/v1/expert-review/experts/?category=${encodeURIComponent(selectedCategory)}`;
+      const res = await apiClient.get<ExpertProfile[]>(url);
+      return res.data;
+    },
+  });
+
+  const myOrdersQuery = useQuery<ReviewOrder[]>({
+    queryKey: ["expert-review-my-orders"],
+    queryFn: async () => {
+      const res = await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/my-orders/");
+      return res.data;
+    },
+    enabled: isAuthenticated,
+  });
+
+  const packages = packagesQuery.data ?? [];
+  const experts = expertsQuery.data ?? [];
+  const myOrders = myOrdersQuery.data ?? [];
+  const isLoading = packagesQuery.isLoading || expertsQuery.isLoading;
+  const rawError = packagesQuery.error || expertsQuery.error;
+  const error = rawError ? getApiErrorDetail(rawError, "Failed to load expert review offerings") : null;
+
   const fetchMyOrders = useCallback(async () => {
     if (!isAuthenticated) return;
-    try {
-      const res = await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/my-orders/");
-      setMyOrders(res.data);
-    } catch {
-      // Non-blocking for unauthenticated or first-time view
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    fetchData();
-    fetchMyOrders();
-  }, [fetchData, fetchMyOrders]);
+    await myOrdersQuery.refetch();
+  }, [isAuthenticated, myOrdersQuery]);
 
   const handleCategoryFilter = async (category: string) => {
     setSelectedCategory(category);
-    setIsLoading(true);
-    try {
-      const url =
-        category === "All"
-          ? "/v1/expert-review/experts/"
-          : `/v1/expert-review/experts/?category=${encodeURIComponent(category)}`;
-      const res = await apiClient.get<ExpertProfile[]>(url);
-      setExperts(res.data);
-    } catch (err: any) {
-      setError("Failed to filter experts");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const createOrder = async (payload: {
@@ -136,7 +125,7 @@ export function useExpertReview() {
     candidate_notes?: string;
   }) => {
     const res = await apiClient.post<ReviewOrder>("/v1/expert-review/orders/", payload);
-    await fetchMyOrders();
+    await queryClient.invalidateQueries({ queryKey: ["expert-review-my-orders"] });
     return res.data;
   };
 
@@ -145,7 +134,7 @@ export function useExpertReview() {
       `/v1/expert-review/orders/${orderId}/checkout/`,
       { payment_method: paymentMethod }
     );
-    await fetchMyOrders();
+    await queryClient.invalidateQueries({ queryKey: ["expert-review-my-orders"] });
     return res.data;
   };
 

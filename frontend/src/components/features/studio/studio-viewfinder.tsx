@@ -68,7 +68,7 @@ export function StudioViewfinder({
                 data-testid="studio-hud-quality"
                 className="bg-black/75 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-mono text-slate-200 border border-slate-700/60 shadow-lg flex items-center gap-1 shrink-0"
               >
-                <span className="text-[#5bbbae] font-bold">HD {selectedResolution}</span>
+                <span className="text-brand-primary font-bold">HD {selectedResolution}</span>
                 <span className="text-slate-500">•</span>
                 <span>{selectedRatio}</span>
                 {selectedRatio === "16:9" && (
@@ -108,7 +108,7 @@ export function StudioViewfinder({
                   <Zap className="w-3 h-3 text-cyan-400" /> GPU HW-Accel
                 </span>
                 <span className="text-slate-600 hidden sm:inline">|</span>
-                <span className="text-[#5bbbae] font-medium hidden sm:inline">Studio Pro v2.2</span>
+                <span className="text-brand-primary font-medium hidden sm:inline">Studio Pro v2.2</span>
               </div>
             </div>
           </div>

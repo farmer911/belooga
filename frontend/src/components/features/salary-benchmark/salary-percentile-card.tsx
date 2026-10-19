@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { DollarSign, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -33,12 +34,13 @@ export function SalaryPercentileCard({
   };
 
   return (
-    <div className="p-5 rounded-xl bg-white border border-surface-border space-y-4 shadow-xs">
+    <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-4 shadow-xs">
       {/* Title & Badge */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-divider pb-3.5">
         <div>
           <h3 className="text-base font-bold text-typography-main flex items-center gap-2">
-            <span>💵 Dải Lương Thị Trường:</span>
+            <DollarSign className="w-4 h-4 text-brand-primary" aria-hidden="true" />
+            <span>Dải Lương Thị Trường:</span>
             <span className="text-brand-primary font-mono">
               {techStack} — {level}
             </span>
@@ -107,8 +109,11 @@ export function SalaryPercentileCard({
 
       {/* CTA to match CV with this benchmark */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-surface-page border border-surface-border">
-        <div className="text-xs text-typography-heading">
-          🎯 <strong className="text-typography-main">Bạn có đang nhận mức lương xứng đáng?</strong> Quét thử CV xem bạn đủ tiêu chuẩn nhận mức lương P75 chưa.
+        <div className="text-xs text-typography-heading flex items-center gap-1.5">
+          <Target className="w-4 h-4 text-brand-primary shrink-0" aria-hidden="true" />
+          <span>
+            <strong className="text-typography-main">Bạn có đang nhận mức lương xứng đáng?</strong> Quét thử CV xem bạn đủ tiêu chuẩn nhận mức lương P75 chưa.
+          </span>
         </div>
         <Link href="/ats-diagnostics">
           <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3.5 h-8 rounded-lg shadow-xs">

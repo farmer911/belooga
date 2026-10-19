@@ -9,7 +9,7 @@ import uuid
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.cms import CareerPosting, ContactInquiry, ProfileReport
+from app.models.cms import ContactInquiry, ProfileReport
 from app.models.profile import CandidateProfile
 
 

@@ -46,7 +46,15 @@ TABLES_IN_REVERSE_ORDER = [
 ]
 
 
-NEW_TABLES_0002 = {"expert_profiles", "cv_review_packages", "cv_review_orders", "cv_review_feedbacks"}
+NEW_TABLES_0002 = {
+    "expert_profiles",
+    "cv_review_packages",
+    "cv_review_orders",
+    "cv_review_feedbacks",
+    "job_descriptions",
+    "resume_jd_matches",
+    "candidate_job_applications_tracker",
+}
 
 
 def upgrade() -> None:
@@ -59,7 +67,7 @@ def upgrade() -> None:
         cleaned = statement.strip()
         if not cleaned:
             continue
-        # Delegate 0002 tables to revision 0002
+        # Delegate 0002/0003 tables to later revisions
         if any(f"CREATE TABLE IF NOT EXISTS {t}" in cleaned or f"CREATE TABLE {t}" in cleaned for t in NEW_TABLES_0002):
             continue
         op.execute(sa.text(cleaned))

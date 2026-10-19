@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Receipt } from "lucide-react";
 import { TransactionRecord } from "@/hooks/use-analytics-dashboard";
 import { Badge } from "@/components/ui/badge";
 
@@ -27,10 +28,11 @@ export function AnalyticsTransactionsTable({ transactions }: AnalyticsTransactio
   };
 
   return (
-    <div className="p-5 rounded-xl bg-white border border-surface-border space-y-3.5 shadow-xs">
+    <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-3.5 shadow-xs">
       <div className="flex items-center justify-between border-b border-surface-divider pb-3">
         <h4 className="font-bold text-typography-main text-xs flex items-center gap-1.5 uppercase tracking-wider">
-          <span>🧾</span> Nhật Ký Giao Dịch MoMo & Escrow Thời Gian Thực
+          <Receipt className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+          <span>Nhật Ký Giao Dịch MoMo & Escrow Thời Gian Thực</span>
         </h4>
         <span className="text-[10px] text-typography-muted">Tự động đối soát chữ ký HMAC</span>
       </div>

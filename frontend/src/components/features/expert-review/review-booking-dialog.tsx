@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ShieldCheck, CreditCard, FileUp, Sparkles, Loader2 } from "lucide-react";
-import { ReviewPackage, ExpertProfile } from "@/hooks/use-expert-review";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CreditCard, Loader2 } from "lucide-react";
+import { ReviewPackage, ExpertProfile, ReviewOrder } from "@/hooks/use-expert-review";
+import { getApiErrorDetail } from "@/services/api-client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FormField } from "@/components/common/form-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth-store";
+import { reviewBookingSchema, ReviewBookingFormValues } from "@/lib/schemas";
 import Link from "next/link";
 
 interface ReviewBookingDialogProps {
@@ -26,8 +30,8 @@ interface ReviewBookingDialogProps {
     target_role: string;
     target_companies?: string;
     candidate_notes?: string;
-  }) => Promise<any>;
-  onCheckout: (orderId: string) => Promise<any>;
+  }) => Promise<ReviewOrder>;
+  onCheckout: (orderId: string) => Promise<unknown>;
 }
 
 export function ReviewBookingDialog({
@@ -39,23 +43,29 @@ export function ReviewBookingDialog({
   onSubmitOrder,
   onCheckout,
 }: ReviewBookingDialogProps) {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState<"details" | "payment">("details");
-  const [activePackageSlug, setActivePackageSlug] = useState<string>(
-    selectedPackage?.slug || (packages[0]?.slug ?? "pro")
-  );
-  const [targetRole, setTargetRole] = useState("Senior Fullstack Engineer");
-  const [targetCompanies, setTargetCompanies] = useState("Google, Stripe, Scale AI");
-  const [candidateNotes, setCandidateNotes] = useState("");
-  const [resumeUrl, setResumeUrl] = useState("/uploads/resumes/default_resume.pdf");
+  const activePackageSlug = selectedPackage?.slug || (packages[0]?.slug ?? "pro");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ReviewBookingFormValues>({
+    resolver: zodResolver(reviewBookingSchema),
+    defaultValues: {
+      targetRole: "Senior Fullstack Engineer",
+      targetCompanies: "Google, Stripe, Scale AI",
+      candidateNotes: "",
+    },
+  });
+
   const currentPkg = packages.find((p) => p.slug === activePackageSlug) || packages[0];
 
-  const handleNextToPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleNextToPayment = handleSubmit(async (values) => {
     if (!isAuthenticated) return;
     setIsSubmitting(true);
     setErrorMsg(null);
@@ -63,19 +73,19 @@ export function ReviewBookingDialog({
       const order = await onSubmitOrder({
         package_slug: activePackageSlug,
         expert_id: selectedExpert?.id,
-        resume_url: resumeUrl,
-        target_role: targetRole,
-        target_companies: targetCompanies,
-        candidate_notes: candidateNotes,
+        resume_url: "/uploads/resumes/default_resume.pdf",
+        target_role: values.targetRole,
+        target_companies: values.targetCompanies,
+        candidate_notes: values.candidateNotes,
       });
       setCreatedOrderId(order.id);
       setStep("payment");
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || "Failed to create review booking order");
+    } catch (err: unknown) {
+      setErrorMsg(getApiErrorDetail(err, "Failed to create review booking order"));
     } finally {
       setIsSubmitting(false);
     }
-  };
+  });
 
   const handleConfirmPayment = async () => {
     if (!createdOrderId) return;
@@ -86,8 +96,8 @@ export function ReviewBookingDialog({
       onOpenChange(false);
       setStep("details");
       setCreatedOrderId(null);
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || "Checkout payment failed");
+    } catch (err: unknown) {
+      setErrorMsg(getApiErrorDetail(err, "Checkout payment failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -102,7 +112,7 @@ export function ReviewBookingDialog({
               {step === "details" ? "Step 1 of 2: Information" : "Step 2 of 2: Checkout"}
             </Badge>
           </div>
-          <DialogTitle className="text-xl font-bold text-[#252525]">
+          <DialogTitle className="text-xl font-bold text-typography-main">
             {step === "details" ? "Book Expert CV Review" : "Confirm Payment"}
           </DialogTitle>
           <DialogDescription>
@@ -114,35 +124,34 @@ export function ReviewBookingDialog({
 
         {!isAuthenticated ? (
           <div className="py-8 text-center space-y-4">
-            <p className="text-sm text-[#555555]">
+            <p className="text-sm text-typography-heading">
               Please login or create a candidate account to order an expert CV review.
             </p>
             <div className="flex justify-center gap-3">
               <Link href="/login">
-                <Button variant="outline" className="border-[#5bbbae] text-[#5bbbae]">
+                <Button variant="outline" className="border-brand-primary text-brand-primary">
                   Login to Continue
                 </Button>
               </Link>
               <Link href="/register">
-                <Button className="bg-[#5bbbae] text-white">Register</Button>
+                <Button className="bg-brand-primary text-white">Register</Button>
               </Link>
             </div>
           </div>
         ) : step === "details" ? (
-          <form onSubmit={handleNextToPayment} className="space-y-4 py-2">
+          <form onSubmit={handleNextToPayment} noValidate className="space-y-4 py-2">
             {errorMsg && (
               <div className="p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
                 {errorMsg}
               </div>
             )}
 
-            {/* Selected Expert & Package Summary */}
-            <Card className="p-3.5 bg-[#f8fafb] border border-[#e5e9eb] flex items-center justify-between">
+            <Card className="p-3.5 bg-surface-page border border-surface-border flex items-center justify-between">
               <div>
-                <div className="text-xs text-[#777777]">Selected Review Package:</div>
-                <div className="text-sm font-bold text-[#252525]">{currentPkg?.name} (${(currentPkg?.price_cents ?? 0) / 100})</div>
+                <div className="text-xs text-typography-muted">Selected Review Package:</div>
+                <div className="text-sm font-bold text-typography-main">{currentPkg?.name} (${(currentPkg?.price_cents ?? 0) / 100})</div>
                 {selectedExpert && (
-                  <div className="text-xs text-[#5bbbae] mt-0.5">
+                  <div className="text-xs text-brand-primary mt-0.5">
                     Reviewer: {selectedExpert.full_name} ({selectedExpert.company})
                   </div>
                 )}
@@ -150,33 +159,29 @@ export function ReviewBookingDialog({
               <Badge variant="outline" className="text-xs">{currentPkg?.turn_around_hours}h Turnaround</Badge>
             </Card>
 
-            <FormField label="Target Role / Job Title" required>
+            <FormField label="Target Role / Job Title" required error={errors.targetRole?.message}>
               <Input
-                value={targetRole}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetRole(e.target.value)}
                 placeholder="e.g. Senior Backend Engineer"
-                required
+                {...register("targetRole")}
               />
             </FormField>
 
-            <FormField label="Target Companies or Industry">
+            <FormField label="Target Companies or Industry" error={errors.targetCompanies?.message}>
               <Input
-                value={targetCompanies}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetCompanies(e.target.value)}
                 placeholder="e.g. Stripe, OpenAI, FinTech startups"
+                {...register("targetCompanies")}
               />
             </FormField>
 
-            <FormField label="Specific Questions for the Reviewer">
+            <FormField label="Specific Questions for the Reviewer" error={errors.candidateNotes?.message}>
               <Textarea
-                value={candidateNotes}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCandidateNotes(e.target.value)}
                 placeholder="e.g. Is my work experience at my previous company described with enough quantitative impact? How is my layout passing ATS?"
+                {...register("candidateNotes")}
               />
             </FormField>
 
             <div className="pt-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-[#5bbbae] hover:bg-[#497d76] text-white">
+              <Button type="submit" disabled={isSubmitting} className="w-full bg-brand-primary hover:bg-brand-hover text-white">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Proceed to Payment (${((currentPkg?.price_cents || 0) / 100).toFixed(0)})
               </Button>
@@ -190,27 +195,27 @@ export function ReviewBookingDialog({
               </div>
             )}
 
-            <Card className="p-4 bg-[#f8fafb] border border-[#e5e9eb] space-y-2">
+            <Card className="p-4 bg-surface-page border border-surface-border space-y-2">
               <div className="flex justify-between text-sm font-medium">
-                <span className="text-[#666666]">{currentPkg?.name}</span>
-                <span className="text-[#252525] font-bold">${((currentPkg?.price_cents || 0) / 100).toFixed(2)}</span>
+                <span className="text-typography-body">{currentPkg?.name}</span>
+                <span className="text-typography-main font-bold">${((currentPkg?.price_cents || 0) / 100).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-xs text-[#777777]">
+              <div className="flex justify-between text-xs text-typography-muted">
                 <span>Platform Processing & Delivery Guarantee</span>
                 <span>Included</span>
               </div>
-              <div className="border-t border-[#e2e8f0] pt-2 flex justify-between text-base font-bold text-[#252525]">
+              <div className="border-t border-surface-border pt-2 flex justify-between text-base font-bold text-typography-main">
                 <span>Total Amount</span>
-                <span className="text-[#5bbbae]">${((currentPkg?.price_cents || 0) / 100).toFixed(2)}</span>
+                <span className="text-brand-primary">${((currentPkg?.price_cents || 0) / 100).toFixed(2)}</span>
               </div>
             </Card>
 
-            <div className="p-3.5 rounded-lg border border-[#d1d6da] bg-white space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#252525]">
-                <CreditCard className="h-4 w-4 text-[#5bbbae]" />
+            <div className="p-3.5 rounded-lg border border-surface-border bg-surface-card space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-typography-main">
+                <CreditCard className="h-4 w-4 text-brand-primary" />
                 <span>Simulated Secure Card Payment</span>
               </div>
-              <p className="text-[11px] text-[#777777]">
+              <p className="text-[11px] text-typography-muted">
                 Test card environment enabled. Click confirm to simulate a successful payment transaction.
               </p>
             </div>
@@ -219,14 +224,14 @@ export function ReviewBookingDialog({
               <Button
                 variant="outline"
                 onClick={() => setStep("details")}
-                className="w-1/3 border-[#d1d6da]"
+                className="w-1/3 border-surface-border"
               >
                 Back
               </Button>
               <Button
                 onClick={handleConfirmPayment}
                 disabled={isSubmitting}
-                className="w-2/3 bg-[#5bbbae] hover:bg-[#497d76] text-white"
+                className="w-2/3 bg-brand-primary hover:bg-brand-hover text-white"
               >
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Confirm Payment & Submit

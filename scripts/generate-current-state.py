@@ -93,17 +93,28 @@ def extract_backend_routes():
 
     for file_path, prefix in py_files:
         try:
-            tree = ast.parse(file_path.read_text(encoding="utf-8"), filename=str(file_path))
+            src_text = file_path.read_text(encoding="utf-8")
+            tree = ast.parse(src_text, filename=str(file_path))
         except Exception as e:
             print(f"Error parsing {file_path}: {e}")
             continue
 
+        router_prefix = ""
+        router_tags = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "APIRouter":
+                for kw in node.keywords:
+                    if kw.arg == "prefix" and isinstance(kw.value, ast.Constant):
+                        router_prefix = kw.value.value
+                    elif kw.arg == "tags" and isinstance(kw.value, ast.List):
+                        router_tags = [elt.value for elt in kw.value.elts if isinstance(elt, ast.Constant)]
+
+        full_prefix = f"{prefix}{router_prefix}"
+
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for decorator in node.decorator_list:
-                    call_node = None
-                    if isinstance(decorator, ast.Call):
-                        call_node = decorator
+                    call_node = decorator if isinstance(decorator, ast.Call) else None
                     if not call_node:
                         continue
 
@@ -111,27 +122,24 @@ def extract_backend_routes():
                     if isinstance(call_node.func, ast.Attribute):
                         method = call_node.func.attr.lower()
                         if method in http_methods:
-                            # Path is typically first arg
                             path = ""
                             if call_node.args and isinstance(call_node.args[0], ast.Constant):
                                 raw_path = call_node.args[0].value
-                                if prefix and not raw_path.startswith(prefix):
-                                    path = f"{prefix}{raw_path}"
+                                if full_prefix and not raw_path.startswith(full_prefix):
+                                    path = f"{full_prefix}{raw_path}"
                                 else:
                                     path = raw_path
-                            elif call_node.args and isinstance(call_node.args[0], ast.Str): # Py <3.8
-                                path = f"{prefix}{call_node.args[0].s}"
 
-                            # Extract tags
                             tags = []
                             for kw in call_node.keywords:
                                 if kw.arg == "tags" and isinstance(kw.value, ast.List):
                                     for elt in kw.value.elts:
                                         if isinstance(elt, ast.Constant):
                                             tags.append(elt.value)
+                            if not tags:
+                                tags = router_tags
 
-                            # Extract auth dependency
-                            source_segment = ast.get_source_segment(file_path.read_text(encoding="utf-8"), node) or ""
+                            source_segment = ast.get_source_segment(src_text, node) or ""
                             if "get_current_user_optional" in source_segment:
                                 auth_status = "Optional auth"
                             elif "get_current_user" in source_segment:
@@ -258,6 +266,13 @@ def main():
         "profile_reports": "Domain 8: Candidate Moderation & Flagged Reports",
         "career_postings": "Domain 8: Internal Belooga Career Job Listings",
         "career_applications": "Domain 8: Candidate Job Applications & Resume Attachments",
+        "expert_profiles": "Domain 9: Verified Senior Reviewer Profiles & Ratings",
+        "cv_review_packages": "Domain 9: Expert CV Review Service Tiers & Pricing",
+        "cv_review_orders": "Domain 9: Candidate Review Booking Orders & Status",
+        "cv_review_feedbacks": "Domain 9: Structured Expert Scorecards & Actionable Feedback",
+        "job_descriptions": "Domain 10: Target Job Descriptions & Extracted Keywords",
+        "resume_jd_matches": "Domain 10: ATS Compatibility Scores & Match Audits",
+        "candidate_job_applications_tracker": "Domain 11: Candidate Job Application Kanban Tracker",
     }
 
     for idx, t in enumerate(tables, 1):

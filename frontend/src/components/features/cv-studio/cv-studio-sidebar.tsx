@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ListOrdered, SlidersHorizontal } from "lucide-react";
 
 interface CVStudioSidebarProps {
   fontSize: number;
@@ -24,10 +25,11 @@ export function CVStudioSidebar({
   setSnapOnePage,
 }: CVStudioSidebarProps) {
   return (
-    <aside className="lg:col-span-3 border-r border-surface-border bg-white p-4 space-y-4 overflow-y-auto text-xs">
+    <aside className="lg:col-span-3 border-r border-surface-border bg-surface-card p-4 space-y-4 overflow-y-auto text-xs">
       <div>
         <h4 className="font-bold text-typography-main uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-          <span>☰</span> Cấu Trúc Các Mục
+          <ListOrdered className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+          <span>Cấu Trúc Các Mục</span>
         </h4>
         <div className="space-y-1">
           {["Thông tin liên hệ", "Tóm tắt sự nghiệp", "Kinh nghiệm làm việc", "Dự án tiêu biểu", "Kỹ năng chuyên môn", "Học vấn & Bằng cấp"].map(
@@ -46,7 +48,8 @@ export function CVStudioSidebar({
 
       <div className="border-t border-surface-divider pt-4 space-y-3.5">
         <h4 className="font-bold text-typography-main uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-          <span>⚙️</span> Tùy Biến Layout Realtime
+          <SlidersHorizontal className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+          <span>Tùy Biến Layout Realtime</span>
         </h4>
 
         <div>

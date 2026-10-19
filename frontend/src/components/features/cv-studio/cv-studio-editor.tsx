@@ -36,7 +36,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
   };
 
   return (
-    <section className="lg:col-span-4 border-r border-surface-border bg-white p-4 space-y-4 overflow-y-auto text-xs">
+    <section className="lg:col-span-4 border-r border-surface-border bg-surface-card p-4 space-y-4 overflow-y-auto text-xs">
       <div className="flex items-center justify-between border-b border-surface-divider pb-3">
         <h4 className="font-bold text-typography-main uppercase tracking-wider text-[11px] flex items-center gap-1.5">
           <span>✍️</span> Biên Tập Form STAR Định Lượng
@@ -51,7 +51,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
             type="text"
             value={cvData.fullName}
             onChange={(e) => onChange({ ...cvData, fullName: e.target.value })}
-            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
           />
         </div>
 
@@ -62,7 +62,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
               type="text"
               value={cvData.email}
               onChange={(e) => onChange({ ...cvData, email: e.target.value })}
-              className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+              className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
             />
           </div>
           <div>
@@ -71,7 +71,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
               type="text"
               value={cvData.phone}
               onChange={(e) => onChange({ ...cvData, phone: e.target.value })}
-              className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+              className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
             />
           </div>
         </div>
@@ -82,7 +82,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
             type="text"
             value={cvData.headline}
             onChange={(e) => onChange({ ...cvData, headline: e.target.value })}
-            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
           />
         </div>
 
@@ -92,7 +92,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
             rows={3}
             value={cvData.summary}
             onChange={(e) => onChange({ ...cvData, summary: e.target.value })}
-            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary resize-none"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary resize-none"
           />
         </div>
 
@@ -110,7 +110,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
                     nextExp[expIdx].company = e.target.value;
                     onChange({ ...cvData, experience: nextExp });
                   }}
-                  className="bg-white border border-surface-border rounded-lg p-2 text-typography-main text-xs font-semibold focus:outline-none focus:border-brand-primary"
+                  className="bg-surface-card border border-surface-border rounded-lg p-2 text-typography-main text-xs font-semibold focus:outline-none focus:border-brand-primary"
                   placeholder="Công ty"
                 />
                 <input
@@ -121,7 +121,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
                     nextExp[expIdx].role = e.target.value;
                     onChange({ ...cvData, experience: nextExp });
                   }}
-                  className="bg-white border border-surface-border rounded-lg p-2 text-typography-main text-xs font-semibold focus:outline-none focus:border-brand-primary"
+                  className="bg-surface-card border border-surface-border rounded-lg p-2 text-typography-main text-xs font-semibold focus:outline-none focus:border-brand-primary"
                   placeholder="Vị trí"
                 />
               </div>
@@ -135,7 +135,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
                       rows={2}
                       value={bullet}
                       onChange={(e) => handleBulletChange(expIdx, bIdx, e.target.value)}
-                      className="flex-1 bg-white border border-surface-border rounded-lg p-2 text-typography-main text-[11px] focus:outline-none focus:border-brand-primary resize-none"
+                      className="flex-1 bg-surface-card border border-surface-border rounded-lg p-2 text-typography-main text-[11px] focus:outline-none focus:border-brand-primary resize-none"
                     />
                   </div>
                 ))}
@@ -157,7 +157,7 @@ export function CVStudioEditor({ cvData, onChange }: CVStudioEditorProps) {
             type="text"
             value={cvData.skills}
             onChange={(e) => onChange({ ...cvData, skills: e.target.value })}
-            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-white focus:ring-1 focus:ring-brand-primary"
+            className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary"
           />
         </div>
       </div>

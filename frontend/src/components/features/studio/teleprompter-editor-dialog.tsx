@@ -27,7 +27,7 @@ export function TeleprompterEditorDialog({
     <div className="absolute inset-3 z-30 bg-slate-950/95 backdrop-blur-lg border border-slate-700 rounded-xl p-4 flex flex-col space-y-3 shadow-2xl animate-in zoom-in-95">
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
         <div className="flex items-center gap-2">
-          <Edit3 className="w-4 h-4 text-[#5bbbae]" />
+          <Edit3 className="w-4 h-4 text-brand-primary" />
           <h4 className="font-bold text-sm text-white">Edit Pitch Script</h4>
         </div>
         <button
@@ -45,7 +45,7 @@ export function TeleprompterEditorDialog({
         value={scriptText}
         onChange={(e) => onScriptChange(e.target.value)}
         rows={7}
-        className="w-full flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-[#5bbbae] font-sans resize-none"
+        className="w-full flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-brand-primary font-sans resize-none"
         placeholder="Paste your elevator pitch script here..."
       />
       <div className="flex items-center justify-between pt-1">
@@ -58,12 +58,12 @@ export function TeleprompterEditorDialog({
             onClick={onImportClick}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center gap-1.5 border border-slate-700 cursor-pointer"
           >
-            <Upload className="w-3.5 h-3.5 text-[#5bbbae]" /> Import File
+            <Upload className="w-3.5 h-3.5 text-brand-primary" /> Import File
           </button>
           <Button
             size="sm"
             onClick={onClose}
-            className="bg-[#5bbbae] hover:bg-[#497d76] text-white text-xs cursor-pointer"
+            className="bg-brand-primary hover:bg-brand-hover text-white text-xs cursor-pointer"
           >
             Save & Use Prompter
           </Button>

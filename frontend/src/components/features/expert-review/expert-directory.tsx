@@ -27,17 +27,17 @@ export function ExpertDirectory({
   onRequestReview,
 }: ExpertDirectoryProps) {
   return (
-    <section id="experts-section" className="py-16 bg-white border-b border-[#e5e9eb]">
+    <section id="experts-section" className="py-16 bg-surface-card border-b border-surface-border">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <Badge variant="teal" className="mb-2">
               Mentorship Network
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-[#252525]">
+            <h2 className="text-3xl font-bold tracking-tight text-typography-main">
               Meet Our Senior Reviewers
             </h2>
-            <p className="mt-1 text-sm text-[#666666]">
+            <p className="mt-1 text-sm text-typography-body">
               Every reviewer is vetted and currently working in senior or principal engineering roles.
             </p>
           </div>
@@ -52,8 +52,8 @@ export function ExpertDirectory({
                   onClick={() => onSelectCategory(cat)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                     active
-                      ? "bg-[#5bbbae] text-white shadow-xs"
-                      : "bg-[#f2f4f6] text-[#555555] hover:bg-[#e4e7ea]"
+                      ? "bg-brand-primary text-white shadow-xs"
+                      : "bg-surface-divider text-typography-heading hover:bg-surface-border"
                   }`}
                 >
                   {cat}
@@ -65,7 +65,7 @@ export function ExpertDirectory({
 
         {experts.length === 0 ? (
           <EmptyState
-            icon={<Search className="h-8 w-8 text-[#999999]" />}
+            icon={<Search className="h-8 w-8 text-typography-muted" />}
             title="No experts found"
             description="No active reviewers currently match this role category. Try selecting another domain."
             action={{

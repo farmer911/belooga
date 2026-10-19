@@ -54,7 +54,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       <div
         ref={ref}
         className={cn(
-          "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#d1d6da] bg-[#d7ecea] text-[#21655e] font-semibold select-none",
+          "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-surface-border bg-brand-overlay text-brand-dark font-semibold select-none",
           sizeStyles[size],
           className
         )}

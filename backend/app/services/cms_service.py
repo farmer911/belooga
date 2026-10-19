@@ -4,7 +4,7 @@ Business domain service handling contact inquiries, FAQ knowledge retrieval,
 career listings, and trust & safety candidate profile moderation reports.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import uuid
 
 from fastapi import HTTPException, status
@@ -68,9 +68,9 @@ DEFAULT_CAREER_JOBS = [
 class CmsService:
     """Service layer managing public content and moderation reporting."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Optional[AsyncSession] = None):
         self.db = db
-        self.cms_repo = CmsRepository(db)
+        self.cms_repo = CmsRepository(db) if db else None
 
     async def submit_contact_inquiry(self, payload: ContactInquiryRequest) -> Dict[str, str]:
         inquiry_id = await self.cms_repo.create_contact_inquiry(

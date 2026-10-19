@@ -3,7 +3,7 @@
 Data access layer for standardized taxonomies, autocomplete catalogs, and PostgreSQL GIN search.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +25,7 @@ class CatalogsRepository:
         if clean_key:
             query = text("""
                 SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.location,
-                       p.seeking_status, p.employment_status,
+                       p.seeking_status, p.employment_status, p.avatar_url, p.video_pitch_url,
                        ts_rank(p.search_vector, plainto_tsquery('english', :q)) AS rank
                 FROM candidate_profiles p
                 WHERE p.is_hidden = FALSE
@@ -37,7 +37,7 @@ class CatalogsRepository:
         else:
             query = text("""
                 SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.location,
-                       p.seeking_status, p.employment_status, 1.0 AS rank
+                       p.seeking_status, p.employment_status, p.avatar_url, p.video_pitch_url, 1.0 AS rank
                 FROM candidate_profiles p
                 WHERE p.is_hidden = FALSE
                 ORDER BY p.created_at DESC

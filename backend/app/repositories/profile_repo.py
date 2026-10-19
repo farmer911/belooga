@@ -6,11 +6,10 @@ Data access layer for candidate profiles, skills, languages, and interests.
 from typing import Any, Dict, List, Optional
 import uuid
 
-from sqlalchemy import delete, insert, select, text, update
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.catalogs import Interest, Language, Skill
-from app.models.profile import CandidateProfile, ProfileInterest, ProfileLanguage, ProfileSkill
+from app.models.profile import CandidateProfile
 
 
 class ProfileRepository:

@@ -30,16 +30,16 @@ export default function BlogListPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-16">
+    <div className="min-h-screen bg-surface-page py-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="text-center space-y-3">
-          <span className="text-xs uppercase tracking-wider font-semibold text-[#5bbbae] bg-[#5bbbae]/10 px-3 py-1 rounded-full">
+          <span className="text-xs uppercase tracking-wider font-semibold text-brand-primary bg-brand-primary/10 px-3 py-1 rounded-full">
             Insights & Guides
           </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#252525]">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-typography-main">
             Belooga Blog
           </h1>
-          <p className="text-sm text-[#737475] max-w-xl mx-auto">
+          <p className="text-sm text-typography-muted max-w-xl mx-auto">
             Practical strategies, career insights, and hiring trends from industry leaders.
           </p>
         </div>
@@ -49,7 +49,7 @@ export default function BlogListPage() {
           {posts.map((post) => (
             <div
               key={post.slug}
-              className="bg-white rounded-xl border border-[#d1d6da] overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+              className="bg-surface-card rounded-xl border border-surface-border overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
             >
               <img
                 src={post.image}
@@ -58,26 +58,26 @@ export default function BlogListPage() {
               />
               <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-[#737475]">
+                  <div className="flex items-center gap-2 text-xs text-typography-muted">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{post.date}</span>
                     <span>•</span>
                     <span>{post.author}</span>
                   </div>
-                  <h3 className="text-base font-bold text-[#252525] hover:text-[#5bbbae] transition-colors">
+                  <h3 className="text-base font-bold text-typography-main hover:text-brand-primary transition-colors">
                     <Link href={`/blog/${post.slug}`}>
                       {post.title}
                     </Link>
                   </h3>
-                  <p className="text-xs text-[#666666] leading-relaxed">
+                  <p className="text-xs text-typography-body leading-relaxed">
                     {post.excerpt}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-[#f0f2f5]">
+                <div className="pt-3 border-t border-surface-divider">
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5bbbae] hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:underline"
                   >
                     Read Article <ArrowRight className="w-3.5 h-3.5" />
                   </Link>

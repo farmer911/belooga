@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { Briefcase, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -32,7 +33,7 @@ export default function AnalyticsDashboardPage() {
         </div>
 
         {/* Time range switcher & shortcuts */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center bg-surface-page border border-surface-border rounded-lg p-0.5 text-[11px]">
             <button
               onClick={() => setTimeRange("7D")}
@@ -61,13 +62,15 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           <Link href="/workspace/jobs">
-            <Button className="bg-surface-card hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs px-2.5 h-7 rounded-lg shadow-xs">
-              💼 Kanban Jobs
+            <Button className="bg-surface-card hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs px-2.5 h-7 rounded-lg shadow-xs gap-1">
+              <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Kanban Jobs</span>
             </Button>
           </Link>
           <Link href="/ats-diagnostics">
-            <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs">
-              🎯 Quét ATS
+            <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs gap-1">
+              <Target className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Quét ATS</span>
             </Button>
           </Link>
         </div>

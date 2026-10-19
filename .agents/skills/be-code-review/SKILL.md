@@ -14,6 +14,11 @@ description: Adversarial review of backend diffs before merge. Use when asked to
 4. **No Unindexed Search Fallbacks:** Combining `search_vector @@` with `OR ILIKE` violates ADR-005.
 5. **No Fake Stubs / Mock Data:** Handlers must never return static hardcoded mock data to simulate persistence.
 
+## Adversarial Review Methodology (`no-mistakes` Protocol)
+1. **Independent Reviewer Session:** Author $\neq$ Reviewer $\neq$ Fixer. Review must execute in a fresh subagent context against `git diff` and stated Intent; a Reviewer never certifies its own fix without a fresh pass.
+2. **Fix by Invariant (Sibling-Site Sweep):** When reporting or fixing a defect, state the violated invariant in one sentence and enumerate every sibling endpoint, service method, or state transition (`file:line`) in the changed area where that invariant must also hold.
+3. **Simplification Pass:** Enumerate every newly introduced branch, fallback, helper, or config flag. If not strictly required by user intent, flag for removal rather than hardening.
+
 ## Ratchet Gates (Metrics must not worsen)
 - `be_routes_without_response_model` must not increase beyond recorded baseline.
 - `be_type_ignore` must not increase.
@@ -21,5 +26,5 @@ description: Adversarial review of backend diffs before merge. Use when asked to
 ## Review Sign-off Template
 APPROVE only when:
 - Backend test suite passes: `backend/.venv/bin/pytest backend/tests/ -v`
-- Ratchet check passes: `python3 scripts/ratchet.py`
+- Ratchet & Trust check passes: `python3 scripts/ratchet.py && python3 scripts/trust-benchmark.py`
 Output the literal test execution and ratchet output in the review sign-off.

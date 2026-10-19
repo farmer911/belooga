@@ -17,7 +17,7 @@ import { EducationExperience } from "@/hooks/use-candidate-profile";
 
 export interface EducationTimelineProps {
   education: EducationExperience[];
-  onAddEducation?: (payload: Omit<EducationExperience, "id">) => Promise<any>;
+  onAddEducation?: (payload: Omit<EducationExperience, "id">) => Promise<unknown>;
   onDeleteEducation?: (id: string) => Promise<void> | void;
   isEditable?: boolean;
 }
@@ -74,18 +74,18 @@ export function EducationTimeline({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-6">
+    <div className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GraduationCap className="w-5 h-5 text-[#5bbbae]" />
-          <h2 className="text-lg font-bold text-[#252525]">Education</h2>
+          <GraduationCap className="w-5 h-5 text-brand-primary" />
+          <h2 className="text-lg font-bold text-typography-main">Education</h2>
         </div>
         {isEditable && onAddEducation && (
           <Button
             size="sm"
             variant="outline"
             data-testid="add-education-btn"
-            className="gap-1.5 border-[#5bbbae] text-[#5bbbae] hover:bg-[#5bbbae]/10 cursor-pointer"
+            className="gap-1.5 border-brand-primary text-brand-primary hover:bg-brand-primary/10 cursor-pointer"
             onClick={() => setModalOpen(true)}
           >
             <Plus className="w-4 h-4" /> Add Education
@@ -94,17 +94,17 @@ export function EducationTimeline({
       </div>
 
       {education.length === 0 ? (
-        <div className="p-8 text-center border-2 border-dashed border-[#d1d6da] rounded-xl space-y-3 bg-[#fafafa]">
+        <div className="p-8 text-center border-2 border-dashed border-surface-border rounded-xl space-y-3 bg-surface-subtle">
           <GraduationCap className="w-10 h-10 text-slate-300 mx-auto" />
-          <p className="text-sm font-semibold text-[#515151]">No education credentials listed</p>
-          <p className="text-xs text-[#737475] max-w-sm mx-auto">
+          <p className="text-sm font-semibold text-typography-heading">No education credentials listed</p>
+          <p className="text-xs text-typography-muted max-w-sm mx-auto">
             Add your university, degrees, and academic honors.
           </p>
           {isEditable && onAddEducation && (
             <Button
               size="sm"
               variant="default"
-              className="bg-[#5bbbae] hover:bg-[#497d76] text-white gap-2 cursor-pointer"
+              className="bg-brand-primary hover:bg-brand-hover text-white gap-2 cursor-pointer"
               onClick={() => setModalOpen(true)}
             >
               <Plus className="w-4 h-4" /> Add Education
@@ -116,14 +116,14 @@ export function EducationTimeline({
           {education.map((edu) => (
             <div
               key={edu.id}
-              className="p-4 rounded-lg border border-[#d1d6da] bg-[#f8f9fa] flex items-start gap-4"
+              className="p-4 rounded-lg border border-surface-border bg-surface-page flex items-start gap-4"
             >
-              <div className="w-12 h-12 rounded-lg bg-emerald-50 border border-emerald-200 p-2 flex items-center justify-center flex-shrink-0 text-[#21655e]">
+              <div className="w-12 h-12 rounded-lg bg-emerald-50 border border-emerald-200 p-2 flex items-center justify-center flex-shrink-0 text-brand-dark">
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-[#252525]">{edu.school_name}</h3>
+                  <h3 className="text-base font-bold text-typography-main">{edu.school_name}</h3>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-400">
                       {edu.from_date_year || 2018} — {edu.to_date_year || 2022}
@@ -140,9 +140,9 @@ export function EducationTimeline({
                     )}
                   </div>
                 </div>
-                <p className="text-xs font-semibold text-[#5bbbae]">{edu.degree_name}</p>
+                <p className="text-xs font-semibold text-brand-primary">{edu.degree_name}</p>
                 {edu.gpa && (
-                  <p className="text-xs text-[#666666]">GPA: {edu.gpa}</p>
+                  <p className="text-xs text-typography-body">GPA: {edu.gpa}</p>
                 )}
               </div>
             </div>
@@ -156,14 +156,14 @@ export function EducationTimeline({
         <DialogContent className="max-w-lg w-full p-6 space-y-5">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-[#5bbbae]" />
-              <DialogTitle className="text-lg font-bold text-[#252525]">Add Education Credential</DialogTitle>
+              <GraduationCap className="w-5 h-5 text-brand-primary" />
+              <DialogTitle className="text-lg font-bold text-typography-main">Add Education Credential</DialogTitle>
             </div>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#515151]">School / University *</label>
+              <label className="text-xs font-semibold text-typography-heading">School / University *</label>
               <Input
                 required
                 placeholder="e.g. Stanford University, MIT"
@@ -173,7 +173,7 @@ export function EducationTimeline({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#515151]">Degree & Major *</label>
+              <label className="text-xs font-semibold text-typography-heading">Degree & Major *</label>
               <Input
                 required
                 placeholder="e.g. B.S. in Computer Science"
@@ -184,7 +184,7 @@ export function EducationTimeline({
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">GPA</label>
+                <label className="text-xs font-semibold text-typography-heading">GPA</label>
                 <Input
                   placeholder="3.8 / 4.0"
                   value={gpa}
@@ -192,7 +192,7 @@ export function EducationTimeline({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">Start Year</label>
+                <label className="text-xs font-semibold text-typography-heading">Start Year</label>
                 <Input
                   type="number"
                   min={1990}
@@ -202,7 +202,7 @@ export function EducationTimeline({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">Grad Year</label>
+                <label className="text-xs font-semibold text-typography-heading">Grad Year</label>
                 <Input
                   type="number"
                   min={1990}
@@ -221,7 +221,7 @@ export function EducationTimeline({
                 type="submit"
                 disabled={isSubmitting}
                 data-testid="education-modal-submit"
-                className="bg-[#5bbbae] hover:bg-[#497d76] text-white"
+                className="bg-brand-primary hover:bg-brand-hover text-white"
               >
                 Save Education to DB
               </Button>

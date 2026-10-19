@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { DollarSign, TrendingUp, Lock, Zap, Gem, Target } from "lucide-react";
 import { OverviewMetrics } from "@/hooks/use-analytics-dashboard";
 
 interface AnalyticsKpiCardsProps {
@@ -13,12 +14,12 @@ export function AnalyticsKpiCards({ overview }: AnalyticsKpiCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {/* Total GMV */}
-      <div className="p-3.5 rounded-xl bg-white border border-surface-border flex flex-col justify-between shadow-xs">
+      <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div className="text-[10px] text-typography-muted uppercase font-semibold tracking-wider flex items-center justify-between">
           <span>Tổng GMV Giao Dịch</span>
-          <span>💵</span>
+          <DollarSign className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
         </div>
         <div data-testid="kpi-gmv" className="text-base font-bold text-typography-main font-mono mt-1">
           {formatVND(overview.total_gmv)}
@@ -27,10 +28,10 @@ export function AnalyticsKpiCards({ overview }: AnalyticsKpiCardsProps) {
       </div>
 
       {/* Net Platform Revenue */}
-      <div className="p-3.5 rounded-xl bg-white border border-surface-border flex flex-col justify-between shadow-xs">
+      <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div className="text-[10px] text-typography-muted uppercase font-semibold tracking-wider flex items-center justify-between">
           <span>Doanh Thu Ròng Sàn</span>
-          <span>📈</span>
+          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
         </div>
         <div data-testid="kpi-net-rev" className="text-base font-bold text-emerald-700 font-mono mt-1">
           {formatVND(overview.platform_net_revenue)}
@@ -39,10 +40,10 @@ export function AnalyticsKpiCards({ overview }: AnalyticsKpiCardsProps) {
       </div>
 
       {/* Escrow Float */}
-      <div className="p-3.5 rounded-xl bg-white border border-surface-border flex flex-col justify-between shadow-xs">
+      <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div className="text-[10px] text-typography-muted uppercase font-semibold tracking-wider flex items-center justify-between">
           <span>Quỹ Tạm Giữ Escrow</span>
-          <span>🔒</span>
+          <Lock className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
         </div>
         <div data-testid="kpi-escrow" className="text-base font-bold text-amber-700 font-mono mt-1">
           {formatVND(overview.escrow_float)}
@@ -51,10 +52,10 @@ export function AnalyticsKpiCards({ overview }: AnalyticsKpiCardsProps) {
       </div>
 
       {/* Monthly Infra Burn */}
-      <div className="p-3.5 rounded-xl bg-white border border-surface-border flex flex-col justify-between shadow-xs">
+      <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div className="text-[10px] text-typography-muted uppercase font-semibold tracking-wider flex items-center justify-between">
           <span>Chi Phí Hạ Tầng (COGS)</span>
-          <span>⚡</span>
+          <Zap className="w-3.5 h-3.5 text-rose-600" aria-hidden="true" />
         </div>
         <div data-testid="kpi-infra" className="text-base font-bold text-rose-700 font-mono mt-1">
           {formatVND(overview.monthly_infra_cost)}
@@ -63,10 +64,10 @@ export function AnalyticsKpiCards({ overview }: AnalyticsKpiCardsProps) {
       </div>
 
       {/* Net Profit & Margin */}
-      <div className="p-3.5 rounded-xl bg-white border border-surface-border flex flex-col justify-between shadow-xs">
+      <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div className="text-[10px] text-typography-muted uppercase font-semibold tracking-wider flex items-center justify-between">
           <span>Lợi Nhuận Ròng (EBITDA)</span>
-          <span>💎</span>
+          <Gem className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
         </div>
         <div data-testid="kpi-profit" className="text-base font-bold text-brand-dark font-mono mt-1">
           {formatVND(overview.net_profit)}
@@ -75,10 +76,10 @@ export function AnalyticsKpiCards({ overview }: AnalyticsKpiCardsProps) {
       </div>
 
       {/* Active Users Progress to 500 */}
-      <div className="p-3.5 rounded-xl bg-white border border-surface-border flex flex-col justify-between shadow-xs">
+      <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div className="text-[10px] text-typography-muted uppercase font-semibold tracking-wider flex items-center justify-between">
           <span>Mục Tiêu 500 MAU</span>
-          <span>🎯</span>
+          <Target className="w-3.5 h-3.5 text-purple-600" aria-hidden="true" />
         </div>
         <div data-testid="kpi-users" className="text-base font-bold text-purple-700 font-mono mt-1">
           {overview.total_users} / 500

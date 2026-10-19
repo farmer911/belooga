@@ -28,9 +28,9 @@ export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
     };
 
     const variantStyles = {
-      primary: "text-[#5bbbae]",
+      primary: "text-brand-primary",
       white: "text-white",
-      neutral: "text-[#737475]",
+      neutral: "text-typography-muted",
       currentColor: "text-current",
     };
 

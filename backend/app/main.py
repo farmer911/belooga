@@ -39,7 +39,7 @@ app.add_middleware(
 
 from fastapi.staticfiles import StaticFiles
 import os
-from app.api.v1.endpoints.media import UPLOAD_BASE
+from app.services.media_transcoder import UPLOAD_BASE
 
 for sub in ["avatars", "resumes", "videos", "chunks"]:
     os.makedirs(os.path.join(UPLOAD_BASE, sub), exist_ok=True)

@@ -75,7 +75,7 @@ if [[ "$TABLE_CHECK_OUTPUT" =~ "MISMATCH" ]] || [[ "$TABLE_CHECK_OUTPUT" =~ "ERR
     echo "  $TABLE_CHECK_OUTPUT"
     ERRORS=$((ERRORS + 1))
 else
-    echo -e "  ${GREEN}✓ All 24 PostgreSQL table names in CURRENT_STATE.md match backend/initdb.sql exactly.${NC}"
+    echo -e "  ${GREEN}✓ $TABLE_CHECK_OUTPUT${NC}"
 fi
 
 # ------------------------------------------------------------------------------
@@ -97,13 +97,14 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 3. CROSS-REFERENCE SKILLS AUDIT (Skill Lint, AUTO Facts & Quality Ratchet)
+# 3. CROSS-REFERENCE SKILLS AUDIT (Skill Lint, AUTO Facts, Ratchet & Trust Benchmark)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[3/8] Cross-Referencing Skill Files (.agents/**/*.md) against Code...${NC}"
+echo -e "\n${YELLOW}[3/8] Cross-Referencing Skill Files (.agents/**/*.md) & Anti-Deception Benchmark...${NC}"
 
 $PYTHON_BIN scripts/lint-skills.py --quiet || ERRORS=$((ERRORS + 1))
 $PYTHON_BIN scripts/render-skill-facts.py --check || ERRORS=$((ERRORS + 1))
 $PYTHON_BIN scripts/ratchet.py || ERRORS=$((ERRORS + 1))
+$PYTHON_BIN scripts/trust-benchmark.py || ERRORS=$((ERRORS + 1))
 
 
 # ------------------------------------------------------------------------------
@@ -154,19 +155,20 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 5. BLOCKING CALLS IN ASYNC EVENT LOOP
+# 5. BLOCKING CALLS IN ASYNC EVENT LOOP (ALL BACKEND/APP/**/*.PY)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[5/8] Auditing Event-Loop Non-Blocking Safety (AST Inspection)...${NC}"
+echo -e "\n${YELLOW}[5/8] Auditing Event-Loop Non-Blocking Safety Across All Backend Layers (AST)...${NC}"
 
 BLOCKING_CALLS=$($PYTHON_BIN << 'EOF'
-import ast, glob
+import ast
+from pathlib import Path
 
 BLOCKING_FUNCS = {'open', 'remove', 'unlink', 'rmtree', 'copy', 'move', 'build'}
 
 violations = []
-for file_path in glob.glob('backend/app/api/v1/endpoints/*.py'):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        tree = ast.parse(f.read(), filename=file_path)
+for file_path in Path('backend/app').rglob('*.py'):
+    content = file_path.read_text(encoding='utf-8')
+    tree = ast.parse(content, filename=str(file_path))
 
     for node in ast.walk(tree):
         if isinstance(node, ast.AsyncFunctionDef):
@@ -187,7 +189,7 @@ EOF
 )
 
 if [ -z "$BLOCKING_CALLS" ]; then
-    echo -e "  ${GREEN}✓ Zero direct blocking I/O calls found in async endpoint definitions.${NC}"
+    echo -e "  ${GREEN}✓ Zero direct blocking I/O calls found in async functions across backend/app/.${NC}"
 else
     echo -e "  ${RED}CRITICAL: Direct blocking calls found inside async functions:${NC}"
     echo "$BLOCKING_CALLS"

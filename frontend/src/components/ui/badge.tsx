@@ -20,17 +20,17 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
 
     const variantStyles = {
       default:
-        "bg-[#5bbbae]/15 text-[#21655e] border border-[#5bbbae]/30",
+        "bg-brand-primary/15 text-brand-dark border border-brand-primary/30",
       primary:
-        "bg-[#5bbbae] text-white shadow-xs",
+        "bg-brand-primary text-white shadow-xs",
       teal:
-        "bg-[#5bbbae]/15 text-[#21655e] border border-[#5bbbae]/30",
+        "bg-brand-primary/15 text-brand-dark border border-brand-primary/30",
       neutral:
-        "bg-slate-100 text-[#515151] border border-slate-200",
+        "bg-surface-divider text-typography-heading border border-surface-border",
       outline:
-        "border border-[#5bbbae] text-[#5bbbae] bg-transparent hover:bg-[#5bbbae]/10",
+        "border border-brand-primary text-brand-primary bg-transparent hover:bg-brand-primary/10",
       secondary:
-        "bg-[#39a0e8]/15 text-[#39a0e8] border border-[#39a0e8]/30",
+        "bg-brand-blue/15 text-brand-blue border border-brand-blue/30",
       destructive:
         "bg-red-50 text-red-700 border border-red-200",
     };

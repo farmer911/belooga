@@ -1,5 +1,6 @@
 ---
-trigger: glob: legacy/**
+trigger: glob
+globs: legacy/**
 description: Strict READ-ONLY protection for legacy artifacts.
 ---
 

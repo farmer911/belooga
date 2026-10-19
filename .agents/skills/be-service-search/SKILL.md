@@ -31,6 +31,6 @@ Flow: router (`app/api/v1/endpoints/search.py`) -> `CatalogsService` (`services/
 
 ## Self-Verification
 ```bash
-backend/.venv/bin/pytest backend/tests/test_search_rank_and_vector.py -v
+backend/.venv/bin/pytest backend/tests/test_catalogs_salary.py backend/tests/test_profile_privacy_and_pii.py -v
 python3 scripts/lint-skills.py --quiet
 ```

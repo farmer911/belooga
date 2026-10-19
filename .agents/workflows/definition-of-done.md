@@ -1,43 +1,44 @@
 ---
 name: definition-of-done
-description: Mandatory 6-step quality gate required before committing or reporting task completion.
+description: Mandatory 6-step quality and knowledge-sync gate required before committing or reporting task completion.
 ---
 
 # Workflow: Definition of Done (DoD)
 
 Execute this workflow before declaring any feature or bug fix complete. Detailed contract: `.agents/skills/definition-of-done/SKILL.md`.
 
-## Step 1: Regenerate Single Source of Truth
+## Step 1: Synchronize Single Source of Truth & Skill Facts
 ```bash
 python3 scripts/generate-current-state.py --allow-dirty
+python3 scripts/render-skill-facts.py --write
 ```
-Ensure `CURRENT_STATE.md` reflects all endpoint and route changes.
+Ensure `CURRENT_STATE.md` and `<!-- AUTO:BEGIN -->` blocks in `.agents/skills/*/SKILL.md` reflect all endpoint, schema, and route changes.
 
-## Step 2: Run SSOT Ground Truth Auditor
+## Step 2: Run Anti-Deception & Trust Benchmark
+```bash
+python3 scripts/trust-benchmark.py
+```
+Must achieve **100% Trust Score (0 violations across all 6 axes)**.
+
+## Step 3: Run SSOT Ground Truth Auditor
 ```bash
 bash scripts/audit-truth.sh
 ```
-All verification gates must report green.
+All verification gates (DB schema, AST IDOR, async non-blocking, pytest, tsc, skill lint, ratchet) must report green.
 
-## Step 3: Run Backend Tests
+## Step 4: Lock In Ratchet Improvements (If Metrics Improved)
 ```bash
-backend/.venv/bin/pytest backend/tests/ -v
+python3 scripts/ratchet.py
 ```
-All integration and security tests must pass.
-
-## Step 4: Run Frontend Typecheck
-```bash
-cd frontend && bun x tsc --noEmit
-```
-Must report 0 TypeScript errors.
+If any metric prints `better`, lock in the lower baseline via `python3 scripts/ratchet.py --update`.
 
 ## Step 5: Visual Verification (If UI was modified)
 - Inspect the affected route in browser.
 - Verify against legacy source at `$LEGACY_DIR` (default: `../Beloga-CV`).
 - Ensure zero class collision or global CSS pollution.
 
-## Step 6: Git Status Review
+## Step 6: Update `.agents/STATE.md` & Git Status Review
 ```bash
 git status
 ```
-Verify that no temporary scratch files, test dumps, or unintended edits remain uncommitted.
+Mark completed items `[x]` in `.agents/STATE.md` and verify no temporary scratch files remain uncommitted.

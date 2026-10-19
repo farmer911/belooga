@@ -16,17 +16,17 @@ This section maintains responsibility for:
 ---
 
 ## 2. API Contracts & Media Streams
-- **Video Stream:** Static/streamed from `/v1/media/video/{filename}` or signed CDN URL.
-- **Video Status:** `GET /v1/media/video-status/{username}`
+- **Video Stream:** Static/streamed from `/uploads/videos/{filename}` or signed CDN URL.
+- **Video Status:** `GET /v1/profile/{username}/video-status/`
 
 ---
 
 ## 3. QC Anti-Regression Selectors
 Playwright E2E and visual tests target these selectors:
-- `[data-testid="video-pitch-card"]`: Outer pitch video card container.
-- `[data-testid="play-pitch-btn"]`: Thumbnail play trigger button.
-- `[data-testid="video-modal"]`: Dialog container for the video player.
-- `[data-testid="video-player"]`: Underlying `<video>` HTML5 element.
-- `[data-testid="video-play-btn"]`: Modal video play button.
-- `[data-testid="video-pause-btn"]`: Modal video pause button.
-- `[data-testid="close-video-modal-btn"]`: Modal dismissal button.
+- `[data-testid="record-pitch-studio-btn"]`: Trigger button to open WebRTC studio.
+- `[data-testid="play-pitch-modal-btn"]`: Thumbnail play trigger button.
+- `[data-testid="candidate-poster-img"]`: Poster thumbnail image.
+- `[data-testid="pitch-video-modal"]`: Dialog container for the video player.
+- `[data-testid="modal-video-player"]`: Underlying `<video>` HTML5 element.
+- `[data-testid="video-mute-toggle"]`: Modal audio mute toggle button.
+- `[data-testid="close-pitch-modal-btn"]`: Modal dismissal button.

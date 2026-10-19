@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { Zap } from "lucide-react";
+import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
 
 interface MomoCheckoutDialogProps {
@@ -13,6 +15,11 @@ interface MomoCheckoutDialogProps {
   onPaymentSuccess?: () => void;
 }
 
+interface MomoQrResponse {
+  order_id: string;
+  qr_code_url: string;
+}
+
 export function MomoCheckoutDialog({
   isOpen,
   onClose,
@@ -21,10 +28,31 @@ export function MomoCheckoutDialog({
   orderInfo,
   onPaymentSuccess,
 }: MomoCheckoutDialogProps) {
-  const [orderId, setOrderId] = useState<string>("");
-  const [qrUrl, setQrUrl] = useState<string>("");
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(600); // 10 minutes
+
+  const { data: qrData } = useQuery<MomoQrResponse>({
+    queryKey: ["momo-qr", packageType, amount, orderInfo],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.post<MomoQrResponse>("/v1/payments/momo/create-qr", {
+          package_type: packageType,
+          amount: amount,
+          order_info: orderInfo,
+        });
+        return res.data;
+      } catch {
+        return {
+          order_id: `MOMO-MOCK-${Date.now()}`,
+          qr_code_url: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=momo_mock_transfer",
+        };
+      }
+    },
+    enabled: isOpen,
+  });
+
+  const orderId = qrData?.order_id ?? "";
+  const qrUrl = qrData?.qr_code_url ?? "";
 
   useEffect(() => {
     if (!isOpen) {
@@ -32,40 +60,11 @@ export function MomoCheckoutDialog({
       setCountdown(600);
       return;
     }
-
-    // Call API to create order & QR
-    let isMounted = true;
-    async function createOrder() {
-      try {
-        const res = await axios.post("http://localhost:8000/v1/payments/momo/create-qr", {
-          package_type: packageType,
-          amount: amount,
-          order_info: orderInfo,
-        });
-        if (isMounted && res.data) {
-          setOrderId(res.data.order_id);
-          setQrUrl(res.data.qr_code_url);
-        }
-      } catch {
-        // Fallback mock order
-        if (isMounted) {
-          const mockId = `MOMO-MOCK-${Date.now()}`;
-          setOrderId(mockId);
-          setQrUrl("https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=momo_mock_transfer");
-        }
-      }
-    }
-    createOrder();
-
     const timer = setInterval(() => {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(timer);
-    };
-  }, [isOpen, packageType, amount, orderInfo]);
+    return () => clearInterval(timer);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -78,7 +77,7 @@ export function MomoCheckoutDialog({
   const handleSimulatePayment = async () => {
     try {
       if (orderId) {
-        await axios.post("http://localhost:8000/v1/payments/momo/ipn", {
+        await apiClient.post("/v1/payments/momo/ipn", {
           order_id: orderId,
           trans_id: `MOMO_SIM_${Date.now()}`,
           result_code: 0,
@@ -95,7 +94,7 @@ export function MomoCheckoutDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
-      <div className="bg-white border border-surface-border rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl relative text-xs">
+      <div className="bg-surface-card border border-surface-border rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl relative text-xs">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-surface-divider pb-3">
           <div className="flex items-center gap-2">
@@ -143,7 +142,7 @@ export function MomoCheckoutDialog({
             </div>
 
             {/* QR Code Container */}
-            <div className="p-3 bg-white rounded-xl inline-block mx-auto shadow-sm border border-surface-border">
+            <div className="p-3 bg-surface-card rounded-xl inline-block mx-auto shadow-sm border border-surface-border">
               {qrUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -172,13 +171,14 @@ export function MomoCheckoutDialog({
               <Button
                 data-testid="btn-simulate-momo-pay"
                 onClick={handleSimulatePayment}
-                className="w-full bg-pink-700 hover:bg-pink-800 text-white font-semibold text-xs h-8 rounded-lg shadow-xs transition-colors"
+                className="w-full bg-pink-700 hover:bg-pink-800 text-white font-semibold text-xs h-8 rounded-lg shadow-xs transition-colors gap-1.5"
               >
-                ⚡ Giả Lập Quét MoMo Thành Công
+                <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Giả Lập Quét MoMo Thành Công</span>
               </Button>
               <Button
                 onClick={onClose}
-                className="w-full bg-white hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs h-8 rounded-lg shadow-xs transition-colors"
+                className="w-full bg-surface-card hover:bg-surface-page text-typography-heading hover:text-typography-main border border-surface-border text-xs h-8 rounded-lg shadow-xs transition-colors"
               >
                 Hủy Giao Dịch
               </Button>

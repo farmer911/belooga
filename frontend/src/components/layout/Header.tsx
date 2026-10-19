@@ -1,6 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { EcosystemMenu } from "@/components/layout/ecosystem-menu";
@@ -8,6 +11,12 @@ import { ThemeToggle } from "@/components/common/theme-toggle";
 
 export function Header() {
   const { isAuthenticated, user, logout } = useAuthStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-surface-border bg-surface-card/95 backdrop-blur-sm">
@@ -22,7 +31,7 @@ export function Header() {
         </Link>
 
         {/* Navigation & Actions */}
-        <nav className="flex items-center gap-3 sm:gap-6">
+        <nav className="flex items-center gap-2 sm:gap-5">
           <Link
             href="/search"
             className="text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors"
@@ -30,7 +39,7 @@ export function Header() {
             Find Talent
           </Link>
 
-          {/* New Tools & Ecosystem Dropdown Menu */}
+          {/* Tools & Ecosystem Dropdown Menu */}
           <EcosystemMenu />
 
           <Link
@@ -56,7 +65,7 @@ export function Header() {
           <ThemeToggle />
 
           {isAuthenticated && user ? (
-            <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-3">
               <Link
                 href={`/user/${user.username}`}
                 className="flex items-center gap-2 text-sm font-medium text-typography-main hover:text-brand-primary"
@@ -73,10 +82,10 @@ export function Header() {
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/login"
-                className="text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors px-3 py-2"
+                className="text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors px-2.5 py-1.5"
               >
                 Login
               </Link>
@@ -87,8 +96,93 @@ export function Header() {
               </Link>
             </div>
           )}
+
+          {/* Mobile Responsive Menu Toggle (<768px) */}
+          <button
+            type="button"
+            data-testid="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-surface-border bg-surface-card hover:bg-surface-page text-typography-heading hover:text-brand-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <Menu className="w-4 h-4" aria-hidden="true" />
+            )}
+          </button>
         </nav>
       </div>
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div
+          data-testid="mobile-nav-drawer"
+          className="md:hidden border-t border-surface-border bg-surface-card px-4 py-4 space-y-3 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150"
+        >
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <Link
+              href="/search"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Find Talent
+            </Link>
+            <Link
+              href="/expert-review"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Expert Review
+            </Link>
+            <Link
+              href="/careers"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Careers
+            </Link>
+            <Link
+              href="/blog"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Blog
+            </Link>
+          </div>
+
+          <div className="pt-2 border-t border-surface-divider flex items-center justify-between gap-2">
+            {isAuthenticated && user ? (
+              <>
+                <Link
+                  href={`/user/${user.username}`}
+                  className="flex items-center gap-2 text-sm font-medium text-typography-main hover:text-brand-primary"
+                >
+                  <img
+                    src={user.avatarUrl || "/images/avatar.jpg"}
+                    alt={user.firstName}
+                    className="h-8 w-8 rounded-full object-cover border border-surface-border"
+                  />
+                  <span>{user.firstName}</span>
+                </Link>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 w-full">
+                <Link href="/login" className="flex-1">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register" className="flex-1">
+                  <Button variant="default" size="sm" className="w-full">
+                    Register
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Briefcase, Trophy, Plus, Target, Zap, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,7 +10,7 @@ import { KanbanColumn } from "@/components/features/job-tracker/kanban-column";
 import { AddJobDialog } from "@/components/features/job-tracker/add-job-dialog";
 
 export default function JobTrackerKanbanPage() {
-  const { jobs, isLoading, error, addJob, moveStatus, deleteJob } = useJobTracker();
+  const { jobs, isLoading, addJob, moveStatus, deleteJob } = useJobTracker();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -39,21 +40,23 @@ export default function JobTrackerKanbanPage() {
         </div>
 
         {/* Search & Quick Stats */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Lọc công ty hoặc vị trí..."
-            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary w-48"
+            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-surface-card focus:ring-1 focus:ring-brand-primary w-40 sm:w-48"
           />
 
           <div className="hidden sm:flex items-center gap-2 text-[11px]">
-            <span className="px-2.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-medium">
-              💼 {interviewCount} Phỏng vấn
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-medium">
+              <Briefcase className="w-3 h-3" aria-hidden="true" />
+              <span>{interviewCount} Phỏng vấn</span>
             </span>
-            <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
-              🏆 {offerCount} Offer
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+              <Trophy className="w-3 h-3" aria-hidden="true" />
+              <span>{offerCount} Offer</span>
             </span>
           </div>
 
@@ -61,7 +64,8 @@ export default function JobTrackerKanbanPage() {
             onClick={() => setIsAddOpen(true)}
             className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3.5 h-8 rounded-lg shadow-xs flex items-center gap-1"
           >
-            <span>➕</span> Thêm Công Việc
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Thêm Công Việc</span>
           </Button>
         </div>
       </div>
@@ -77,7 +81,7 @@ export default function JobTrackerKanbanPage() {
             <KanbanColumn
               id="TARGETING"
               title="Nhắm Mục Tiêu"
-              icon="🎯"
+              icon={<Target className="w-3.5 h-3.5" aria-hidden="true" />}
               badgeColor="border-t-2 border-t-brand-primary"
               jobs={getJobsByStatus("TARGETING")}
               onMove={moveStatus}
@@ -87,7 +91,7 @@ export default function JobTrackerKanbanPage() {
             <KanbanColumn
               id="TAILORED"
               title="Đã Tối Ưu CV"
-              icon="⚡"
+              icon={<Zap className="w-3.5 h-3.5" aria-hidden="true" />}
               badgeColor="border-t-2 border-t-brand-blue"
               jobs={getJobsByStatus("TAILORED")}
               onMove={moveStatus}
@@ -97,7 +101,7 @@ export default function JobTrackerKanbanPage() {
             <KanbanColumn
               id="APPLIED"
               title="Đã Nộp Đơn"
-              icon="📨"
+              icon={<Send className="w-3.5 h-3.5" aria-hidden="true" />}
               badgeColor="border-t-2 border-t-purple-500"
               jobs={getJobsByStatus("APPLIED")}
               onMove={moveStatus}
@@ -107,7 +111,7 @@ export default function JobTrackerKanbanPage() {
             <KanbanColumn
               id="INTERVIEW"
               title="Đang Phỏng Vấn"
-              icon="💼"
+              icon={<Briefcase className="w-3.5 h-3.5" aria-hidden="true" />}
               badgeColor="border-t-2 border-t-amber-500"
               jobs={getJobsByStatus("INTERVIEW")}
               onMove={moveStatus}
@@ -117,7 +121,7 @@ export default function JobTrackerKanbanPage() {
             <KanbanColumn
               id="OFFER"
               title="Nhận Offer / Hired"
-              icon="🏆"
+              icon={<Trophy className="w-3.5 h-3.5" aria-hidden="true" />}
               badgeColor="border-t-2 border-t-emerald-500"
               jobs={getJobsByStatus("OFFER")}
               onMove={moveStatus}

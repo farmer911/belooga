@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.job_tracker_repo import JobTrackerRepository
 from app.schemas.job_tracker import TrackedJobCreateRequest, TrackedJobResponse
-from app.models.job_tracker import CandidateJobApplicationTracker
 
 VALID_STATUSES = {"TARGETING", "TAILORED", "APPLIED", "INTERVIEW", "OFFER"}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Rocket, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export interface SalarySkill {
@@ -16,11 +17,12 @@ interface SkillPremiumRadarProps {
 
 export function SkillPremiumRadar({ skills, techStack }: SkillPremiumRadarProps) {
   return (
-    <div className="p-5 rounded-xl bg-white border border-surface-border space-y-3.5 shadow-xs">
+    <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-3.5 shadow-xs">
       <div className="flex items-center justify-between border-b border-surface-divider pb-3">
         <div>
           <h4 className="font-bold text-typography-main text-xs uppercase tracking-wider flex items-center gap-1.5">
-            <span>🚀</span> Top Kỹ Năng Kéo Lương Tăng Vọt (+15% - +35%)
+            <Rocket className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+            <span>Top Kỹ Năng Kéo Lương Tăng Vọt (+15% - +35%)</span>
           </h4>
           <p className="text-[11px] text-typography-muted mt-0.5">
             Các kỹ năng xuất hiện nhiều nhất trong nhóm JD trả lương P75 cho {techStack}
@@ -58,8 +60,11 @@ export function SkillPremiumRadar({ skills, techStack }: SkillPremiumRadarProps)
         ))}
       </div>
 
-      <div className="p-3 rounded-xl bg-teal-50/50 border border-teal-200 text-[11px] text-brand-dark leading-relaxed">
-        💡 <strong>Mẹo Đàm Phán Lương:</strong> Bổ sung 2 trong số các kỹ năng trên vào CV trước khi nộp có thể giúp bạn tự tin deal thêm 5 - 10 triệu VNĐ/tháng.
+      <div className="p-3 rounded-xl bg-teal-50/50 border border-teal-200 text-[11px] text-brand-dark leading-relaxed flex items-start gap-2">
+        <Lightbulb className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" aria-hidden="true" />
+        <div>
+          <strong>Mẹo Đàm Phán Lương:</strong> Bổ sung 2 trong số các kỹ năng trên vào CV trước khi nộp có thể giúp bạn tự tin deal thêm 5 - 10 triệu VNĐ/tháng.
+        </div>
       </div>
     </div>
   );

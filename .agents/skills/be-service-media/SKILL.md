@@ -19,7 +19,7 @@ description: Chunked video uploads, media storage, video transcoding, and Report
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | public |
 
 - Router: `backend/app/api/v1/endpoints/media.py`
-- Service: `backend/app/services/media_service.py`, `backend/app/services/media_transcoder.py`
+- Service: `backend/app/services/media_service.py`, `backend/app/services/media_transcoder.py`, `backend/app/services/pdf_generator.py`
 - Repository: `backend/app/repositories/media_repo.py`, `backend/app/repositories/profile_repo.py`
 - Tests: `backend/tests/test_idor_guards.py`, `backend/tests/test_media_traversal.py`, `backend/tests/test_profile_privacy_and_pii.py`
 <!-- AUTO:END -->
@@ -37,6 +37,6 @@ Flow: router (`app/api/v1/endpoints/media.py`) -> `MediaService` (`services/medi
 
 ## Self-Verification
 ```bash
-backend/.venv/bin/pytest backend/tests/test_media_traversal.py backend/tests/test_resume_pdf.py -v
+backend/.venv/bin/pytest backend/tests/test_media_traversal.py backend/tests/test_idor_guards.py -v
 python3 scripts/lint-skills.py --quiet
 ```

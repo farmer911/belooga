@@ -65,7 +65,7 @@ export function ConfirmDialog({
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
               isDestructive
                 ? "bg-red-100 text-red-600"
-                : "bg-[#d7ecea] text-[#21655e]"
+                : "bg-brand-overlay text-brand-dark"
             )}
           >
             {isDestructive ? (
@@ -77,10 +77,10 @@ export function ConfirmDialog({
 
           <div className="flex-1">
             <DialogHeader className="mb-2 space-y-1">
-              <DialogTitle className="text-base font-semibold text-[#252525]">
+              <DialogTitle className="text-base font-semibold text-typography-main">
                 {title}
               </DialogTitle>
-              <DialogDescription className="text-sm text-[#737475]">
+              <DialogDescription className="text-sm text-typography-muted">
                 {description}
               </DialogDescription>
             </DialogHeader>
@@ -93,7 +93,7 @@ export function ConfirmDialog({
             variant="ghost"
             onClick={onClose}
             disabled={isLoading}
-            className="text-sm text-[#515151]"
+            className="text-sm text-typography-heading"
           >
             {cancelText}
           </Button>
@@ -104,7 +104,7 @@ export function ConfirmDialog({
             disabled={isLoading}
             className={cn(
               "text-sm font-medium",
-              !isDestructive && "bg-[#5bbbae] hover:bg-[#497d76] text-white"
+              !isDestructive && "bg-brand-primary hover:bg-brand-hover text-white"
             )}
           >
             {isLoading ? (

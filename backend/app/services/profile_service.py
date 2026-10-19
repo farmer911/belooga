@@ -5,7 +5,6 @@ PII masking, biographical updates, and skills taxonomy associations.
 """
 
 from typing import Any, Dict, Optional
-import uuid
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,6 +67,7 @@ class ProfileService:
             "resume_url": row.resume_url or f"http://localhost:8000/v1/profile/{clean_username}/pdf/",
             "seeking_status": row.seeking_status,
             "employment_status": row.employment_status,
+            "is_hidden": bool(row.is_hidden),
             "job_experiences": jobs,
             "education_experiences": education,
             "skills": skills,

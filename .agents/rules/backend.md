@@ -1,5 +1,6 @@
 ---
-trigger: glob: backend/**
+trigger: glob
+globs: backend/**
 description: Invariants and standards for Belooga FastAPI backend.
 ---
 

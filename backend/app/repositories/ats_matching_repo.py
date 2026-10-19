@@ -2,7 +2,6 @@
 
 import uuid
 from typing import Optional, List
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ats_matching import JobDescription, ResumeJDMatch
@@ -53,8 +52,3 @@ class ATSMatchingRepository:
         await self.db.commit()
         await self.db.refresh(match)
         return match
-
-    async def get_match_by_id(self, match_id: uuid.UUID) -> Optional[ResumeJDMatch]:
-        query = select(ResumeJDMatch).where(ResumeJDMatch.id == match_id)
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()

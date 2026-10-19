@@ -4,12 +4,9 @@ test.describe('Visual & Anti-Hallucination Quality Gate', () => {
   test('TC-VIS-001: 54px Video Play Button Geometry & Hover State', async ({ page }) => {
     await page.goto('/');
     
-    // Check if card container exists on page
+    // Assert card container exists on homepage (zero conditional skip)
     const videoCard = page.locator('.start-content-video').first();
-    if (await videoCard.count() === 0) {
-      test.skip();
-      return;
-    }
+    await expect(videoCard).toBeVisible();
 
     const overlay = videoCard.locator('.modal-start');
     const playIcon = videoCard.locator('.video-play-icon');

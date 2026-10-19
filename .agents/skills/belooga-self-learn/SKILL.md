@@ -1,57 +1,59 @@
 ---
 name: belooga-self-learn
-description: Repository memory and continuous learning protocol for capturing operational discoveries, postmortems, and preventing regressions. Use when learning from an error or incident, updating docs/VIOLATIONS_REGISTER.md, or adding guardrails to prevent repeating mistakes. Not for general profile or code features.
+description: Repository memory, 5-step root-cause learning, Rule-to-Script promotion, and continuous evolution protocol. Use when learning from an error, test failure, user correction, or incident, updating docs/VIOLATIONS_REGISTER.md, or promoting lessons into scripts/trust-benchmark.py and domain skills. Not for general profile or code features.
 ---
 
-# Belooga Continuous Learning Protocol
+# Belooga 5-Step Continuous Learning & Self-Evolution Protocol
 
-> **Purpose:** Transform runtime incidents, hallucination traps, and debugging insights into permanent, automated guardrails across the repository.
+> **Purpose:** Transform runtime incidents, user corrections, and debugging discoveries into permanent deterministic code guards and compressed domain intelligence.
 
 ---
 
 ## 1. Trigger Conditions
 
 Activate this protocol immediately when:
-1. **User Correction:** The user points out a hallucination, an unverified assumption, or incorrect styling.
-2. **Test Regression / CI Failure:** An E2E, visual, or pytest test catches a silent break or cascade error.
-3. **Unexpected Root Cause:** A bug fix uncovers non-obvious architecture constraints (e.g. async event-loop blocking, CSS cascade collision, Safari WebRTC codec differences).
+1. **User Correction / Pushback:** The user exposes a hallucination, sycophancy, band-aid fix, or unverified assumption.
+2. **Test / Gate Regression:** A pytest, Playwright E2E, typecheck, or `scripts/trust-benchmark.py` gate fails during development.
+3. **Non-Obvious Root Cause:** A fix uncovers a deeper architectural trap (e.g. async event-loop blocking in services, CSS cascade collision, IDOR gap, or ORM lazy-load trap).
+4. **Post-Feature Evolution:** A new feature introduces new routes, models, or product laws that must be synchronized into the harness.
 
 ---
 
-## 2. Standard Postmortem Structure
+## 2. The Mandatory 5-Step Learning Structure
 
-Every lesson must document three concrete elements:
+Every mistake or operational discovery must be analyzed and resolved across all 5 dimensions:
 
-| Component | Definition | Example |
+| Step | Question Answered | Concrete Action Required |
 |---|---|---|
-| **1. Symptom** | The exact observed failure with error logs or dimensions. | Play button rendered as a 54px × 240px black ellipse on card hover. |
-| **2. Root Cause** | The deep technical reason. | Class `.modal-trigger` had global layout styles in CSS, colliding with `.video-play-icon`. |
-| **3. Harness Guard** | Concrete, automated barrier preventing recurrence. | Added TC-VIS-003 to `qc/tests/visual/play-button.spec.ts` and locked in harness rules. |
+| **1. Where (Sai ở đâu)** | Exact file, line range, and architectural layer (`router` / `service` / `repo` / `hook` / `CSS`). | Pinpoint the exact symbol and call site, never vague descriptions. |
+| **2. How & Why (Sai như thế nào)** | What was the exact technical mechanism and flawed assumption behind the bug? | Trace the root cause across all callers (`grep` / `graphify`), not just the surface symptom. |
+| **3. Minimal Fix (Sửa làm sao)** | How is the root cause fixed with the fewest lines (Ponytail)? | Fix the shared function once; delete band-aid wrappers or redundant branches. |
+| **4. Anti-Recurrence Guard (Chặn tái phạm)** | How do we make it physically impossible to repeat this mistake? | **Rule-to-Script Promotion:** Add an AST/Regex check in `scripts/trust-benchmark.py`, `scripts/audit-truth.sh`, or a regression test in `backend/tests/` / `qc/tests/`. |
+| **5. Self-Upgrade (Tự tiến hóa)** | How does the agent upgrade its own brain for the next task? | Update `## Known Traps` in the target `SKILL.md`, log severe traps in `docs/VIOLATIONS_REGISTER.md`, and update `.agents/PRODUCT_THESIS.md` (respecting the 120-line eviction cap). |
 
 ---
 
-## 3. Destination Routing Matrix
+## 3. Destination Routing & Rule-to-Script Promotion
 
-Categorize the lesson and route it to the exact single source of truth:
+> **Iron Law:** Prose rules in Markdown can be forgotten by LLMs; exit code `1` in Python/Bash cannot. Always prefer promoting a lesson into an executable check.
 
-| Lesson Category | Target File | Action Required |
+| Discovery Type | Target Destination | Mandatory Action |
 |---|---|---|
-| **Severe Hallucination / UI Distortion / Repeated Mistake** | `docs/VIOLATIONS_REGISTER.md` | Append a new entry `[VIOLATION-XXX]` with Symptom, Root Cause, Remediation, and Status. |
-| **Global Agent Boundary / Prohibition** | `.agents/rules/anti-hallucination-harness.md` or `.agents/rules/backend.md` | Add a concise numbered rule to the appropriate rule file. |
-| **Visual / Interactive UI Regression** | `qc/tests/visual/` | Author a Playwright assertion (e.g. bounding box, pseudo-element style, or hover state). |
-| **Backend Invariant / IDOR / Security** | `backend/tests/` | Add a test in `backend/tests/test_idor_guards.py` or `backend/tests/test_media_traversal.py`. |
-| **Skill Fact Outdated / Wrong** | `scripts/render-skill-facts.py` or `scripts/lint-skills.py` | Fix the generator or linter script. Never manually edit generated AUTO blocks. |
-| **Skill Missed Activation** | Target `.agents/skills/*/SKILL.md` | Add the user's literal trigger phrase to the skill's `description`. |
+| **Band-Aid / Deception / Anti-Pattern** | `scripts/trust-benchmark.py` or `scripts/audit-truth.sh` | Encode an AST or regex detector so future commits fail automatically. |
+| **Code Bloat / Type Evasion Improvement** | `.agents/ratchet.json` | Run `python3 scripts/ratchet.py --update` to lock in the lower baseline. |
+| **New Route / Table / Schema Added** | `.agents/skills/*/SKILL.md` & `CURRENT_STATE.md` | Run `python3 scripts/generate-current-state.py --allow-dirty && python3 scripts/render-skill-facts.py --write`. |
+| **Domain-Specific Trap** | `.agents/skills/{be-service-*,fe-page-*}/SKILL.md` | Add a 1-2 line bullet under `## Known Traps` (keep skill <= 200 lines). |
+| **Business / UX / Human Insight** | `.agents/PRODUCT_THESIS.md` | Add insight and evict/compress old lines to stay <= 120 lines. |
+| **Severe Hallucination / UI Distortion** | `docs/VIOLATIONS_REGISTER.md` | Append `[VIOLATION-XXX]` with the 5-step breakdown. |
 
 ---
 
-## 4. Execution Protocol
+## 4. Verification & Sign-Off
 
-When capturing a lesson:
-1. **Be Empirical:** Only document what was actually observed and verified. Never guess or speculate.
-2. **Minimal Diff:** Keep rule and violation entries concise, atomic, and actionable.
-3. **Verify SSOT Integrity:** Always run `bash scripts/audit-truth.sh` and `python3 scripts/lint-skills.py --quiet` after updating docs, rules, or skills to ensure zero reference drift.
-4. **Summary Report:** Output a 3-line confirmation:
-   - **What happened:** (Brief symptom)
-   - **Root cause:** (Technical reason)
-   - **Where it was saved:** (Target file and specific rule/test added)
+After executing a self-learn update, always run:
+```bash
+python3 scripts/render-skill-facts.py --write
+python3 scripts/lint-skills.py --quiet
+python3 scripts/trust-benchmark.py
+```
+Output a 5-line summary mapping strictly to: **Where -> How/Why -> Fix -> Automated Guard -> Brain Upgrade**.

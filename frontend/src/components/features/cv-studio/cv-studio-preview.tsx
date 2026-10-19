@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { Lock, Printer, Mail, Phone, MapPin, Link2 } from "lucide-react";
 import { CVData } from "./cv-studio-editor";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +31,7 @@ export function CVStudioPreview({
   return (
     <div className="lg:col-span-5 flex flex-col bg-surface-divider/40 h-full overflow-hidden">
       {/* Top Preview Control Bar */}
-      <div className="border-b border-surface-border bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs shadow-xs">
+      <div className="border-b border-surface-border bg-surface-card px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs shadow-xs">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-typography-main">Xem Trước A4 Chuẩn ATS</span>
           <Badge variant="outline" className="text-[10px] text-emerald-700 border-emerald-300 bg-emerald-50 font-semibold">
@@ -39,9 +40,10 @@ export function CVStudioPreview({
           {snapOnePage && (
             <span
               data-testid="snap-indicator"
-              className="text-[10px] px-2 py-0.5 rounded-md bg-teal-50/50 border border-teal-200 text-brand-dark font-mono font-medium"
+              className="text-[10px] px-2 py-0.5 rounded-md bg-teal-50/50 border border-teal-200 text-brand-dark font-mono font-medium inline-flex items-center gap-1"
             >
-              🔒 Khóa 1 trang A4
+              <Lock className="w-3 h-3" aria-hidden="true" />
+              <span>Khóa 1 trang A4</span>
             </span>
           )}
         </div>
@@ -71,7 +73,8 @@ export function CVStudioPreview({
             onClick={handlePrint}
             className="bg-brand-primary hover:bg-brand-hover text-white text-xs px-3 h-7 rounded-lg shadow-xs flex items-center gap-1 font-medium cursor-pointer"
           >
-            <span>🖨️</span> Xuất PDF
+            <Printer className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Xuất PDF</span>
           </Button>
         </div>
       </div>
@@ -88,7 +91,7 @@ export function CVStudioPreview({
             fontSize: `${fontSize}pt`,
             lineHeight: lineHeight,
           }}
-          className={`w-[210mm] max-w-full bg-white text-typography-main shadow-lg rounded-sm transition-all duration-150 select-text border border-surface-border ${
+          className={`w-[210mm] max-w-full bg-surface-card text-typography-main shadow-lg rounded-sm transition-all duration-150 select-text border border-surface-border ${
             snapOnePage ? "min-h-[297mm] max-h-[297mm] overflow-hidden" : "min-h-[297mm]"
           }`}
         >
@@ -109,10 +112,26 @@ export function CVStudioPreview({
               {cvData.headline || "Chuyên Viên / Kỹ Sư Công Nghệ Thông Tin"}
             </div>
             <div className="text-typography-body flex flex-wrap gap-x-3 gap-y-0.5 mt-1 font-normal text-[0.9em]">
-              {cvData.email && <span>📧 {cvData.email}</span>}
-              {cvData.phone && <span>📱 {cvData.phone}</span>}
-              <span>📍 Hồ Chí Minh, Việt Nam</span>
-              <span>🔗 linkedin.com/in/belooga-talent</span>
+              {cvData.email && (
+                <span className="inline-flex items-center gap-1">
+                  <Mail className="w-3 h-3" aria-hidden="true" />
+                  <span>{cvData.email}</span>
+                </span>
+              )}
+              {cvData.phone && (
+                <span className="inline-flex items-center gap-1">
+                  <Phone className="w-3 h-3" aria-hidden="true" />
+                  <span>{cvData.phone}</span>
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="w-3 h-3" aria-hidden="true" />
+                <span>Hồ Chí Minh, Việt Nam</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Link2 className="w-3 h-3" aria-hidden="true" />
+                <span>linkedin.com/in/belooga-talent</span>
+              </span>
             </div>
           </div>
 

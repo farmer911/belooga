@@ -22,7 +22,7 @@ description: Work history and education CRUD plus drag-and-drop reorder for cand
 - Router: `backend/app/api/v1/endpoints/timeline.py`
 - Service: `backend/app/services/timeline_service.py`
 - Repository: `backend/app/repositories/profile_repo.py`, `backend/app/repositories/timeline_repo.py`
-- Tests: `backend/tests/test_timeline_reorder.py`
+- Tests: `backend/tests/test_idor_guards.py`, `backend/tests/test_timeline_reorder.py`
 <!-- AUTO:END -->
 
 Flow: router (parse HTTP, inject user) -> `TimelineService` (ownership, workflow, commit) -> `TimelineRepository` (SQL, locks). Routers never touch SQL.

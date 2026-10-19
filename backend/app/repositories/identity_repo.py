@@ -4,14 +4,13 @@ Data access layer for identities, refresh sessions, and authentication tokens.
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional
 import uuid
 
-from sqlalchemy import func, select, text, update
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.identity import Identity, RefreshSession
-from app.models.profile import CandidateProfile
 
 
 class IdentityRepository:

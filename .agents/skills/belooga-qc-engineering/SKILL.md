@@ -14,17 +14,23 @@ description: Playwright E2E and visual tests in qc/. Use when writing or fixing 
 ```
 qc/
 ├── pages/
-│   └── base.page.ts              # Base Page Object Model
+│   └── base.page.ts                    # Base Page Object Model
 ├── tests/
 │   ├── visual/
-│   │   ├── play-button.spec.ts   # Video play button geometry & hover states
-│   │   └── asset-integrity.spec.ts# Literal asset resolution & zero broken images
+│   │   ├── play-button.spec.ts         # Video play button geometry & hover states
+│   │   └── asset-integrity.spec.ts     # Literal asset resolution & zero broken images
 │   └── e2e/
-│       ├── auth-flow.spec.ts     # Login, registration, password recovery
-│       ├── workspace.spec.ts     # Workspace, bio, WebRTC studio, timeline DnD
-│       ├── search.spec.ts        # Search filtering and pagination
-│       ├── expert-review.spec.ts # Expert CV Review pricing and booking dialog
-│       └── public-routes.spec.ts # Public profile, blog, careers, CMS pages
+│       ├── analytics-dashboard.spec.ts # Executive analytics KPIs & charts
+│       ├── ats-diagnostics.spec.ts     # ATS scanner, presets & MoMo QR checkout
+│       ├── auth-flow.spec.ts           # Login, registration, password recovery
+│       ├── cv-studio.spec.ts           # Interactive CV Studio & print layout
+│       ├── expert-review.spec.ts       # Expert CV Review pricing & booking dialog
+│       ├── job-tracker-kanban.spec.ts  # Candidate Kanban job tracker
+│       ├── navigation-and-theme.spec.ts# Header ecosystem menu & theme toggle
+│       ├── public-routes.spec.ts       # Homepage, public profile, blog, careers, CMS
+│       ├── salary-benchmark.spec.ts    # Salary percentiles & skill premium radar
+│       ├── search.spec.ts              # Search filtering and pagination
+│       └── workspace.spec.ts           # Workspace, bio, WebRTC studio, timeline DnD
 ├── playwright.config.ts
 └── package.json
 ```
@@ -47,16 +53,18 @@ From `scripts/seed-data.py`:
 
 ---
 
-## 4. Test Authoring Rules
+## 4. Test Authoring & Evidence Rules
 1. **Selector Standard:** Target explicit `[data-testid="..."]` attributes. Avoid brittle CSS hierarchies or dynamic classes.
 2. **Audio/Video Mocking:** Set `NEXT_PUBLIC_E2E=1` when running tests involving WebRTC or microphone permissions to ensure deterministic mock streams.
 3. **Hermetic Test Isolation:** Tests should reset state or target clean seed users rather than mutating shared singletons.
+4. **Always-On Visual & Video Evidence (`screenshot: 'on'`, `video: 'on'`):** Configured in `qc/playwright.config.ts` so passing runs emit screenshot (`.png`) and video (`.webm`) artifacts in `qc/test-results/` for PR attachment, never only on failure.
+5. **Zero Orphan Child Processes:** Any test or agent session that spawns disposable dev servers or headless browsers must terminate all child processes before exiting (`scripts/pre-push-gate.sh`).
 
 ```typescript
 test('should verify workspace bio and timeline', async ({ page }) => {
   await page.goto('/user/alexrivera');
   await expect(page.locator('[data-testid="profile-headline"]')).toBeVisible();
-  await expect(page.locator('[data-testid="experience-timeline"]')).toBeVisible();
+  await expect(page.locator('[data-testid="timeline-job-card"]').first()).toBeVisible();
 });
 ```
 

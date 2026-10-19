@@ -1,9 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
+import { reportProfileSchema, ReportProfileFormValues } from "@/lib/schemas";
 
 export interface ReportProfileModalProps {
   isOpen: boolean;
@@ -18,38 +22,46 @@ export function ReportProfileModal({
   candidateId,
   username,
 }: ReportProfileModalProps) {
-  const [reason, setReason] = React.useState("");
   const [submitted, setSubmitted] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ReportProfileFormValues>({
+    resolver: zodResolver(reportProfileSchema),
+    defaultValues: { reason: "" },
+  });
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!candidateId) return;
-    setIsSubmitting(true);
-    try {
-      await apiClient.post(`/v1/profile/${candidateId}/report/`, {
-        reason,
-      });
+  const reportMutation = useMutation({
+    mutationFn: async ({ reason }: ReportProfileFormValues) => {
+      await apiClient.post(`/v1/profile/${candidateId}/report/`, { reason });
+    },
+    onSuccess: () => {
       setSubmitted(true);
       setTimeout(() => {
         onClose();
         setSubmitted(false);
-        setReason("");
+        reset();
       }, 2000);
-    } catch (err) {
+    },
+    onError: () => {
       alert("Failed to submit report. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
+
+  if (!isOpen) return null;
+
+  const onSubmit = handleSubmit(async (values) => {
+    if (!candidateId) return;
+    await reportMutation.mutateAsync(values);
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
-        <div className="flex items-center justify-between border-b pb-3 border-[#f0f2f5]">
-          <h3 className="text-lg font-bold text-[#252525]">Report Candidate Profile</h3>
+      <div className="bg-surface-card rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+        <div className="flex items-center justify-between border-b pb-3 border-surface-divider">
+          <h3 className="text-lg font-bold text-typography-main">Report Candidate Profile</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
@@ -60,21 +72,22 @@ export function ReportProfileModal({
             Thank you. Report received and sent to moderation team.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <p className="text-xs text-[#737475]">
+          <form onSubmit={onSubmit} noValidate className="space-y-4">
+            <p className="text-xs text-typography-muted">
               Please specify the reason for reporting @{username}&apos;s profile (e.g. misleading credentials, inappropriate content).
             </p>
-            <textarea
-              required
-              rows={4}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Describe the issue..."
-              className="w-full p-3 border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-            />
+            <div className="space-y-1">
+              <textarea
+                rows={4}
+                placeholder="Describe the issue..."
+                className="w-full p-3 border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                {...register("reason")}
+              />
+              {errors.reason && <p className="text-[11px] text-red-600">{errors.reason.message}</p>}
+            </div>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={reportMutation.isPending}
               data-testid="report-modal-submit"
               className="w-full bg-red-600 hover:bg-red-700 text-white cursor-pointer"
             >

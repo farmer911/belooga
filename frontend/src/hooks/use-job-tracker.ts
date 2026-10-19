@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
 
 export type KanbanStatus = "TARGETING" | "TAILORED" | "APPLIED" | "INTERVIEW" | "OFFER";
@@ -29,60 +30,51 @@ export interface CreateTrackedJobPayload {
 }
 
 export function useJobTracker() {
-  const [jobs, setJobs] = useState<TrackedJob[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: jobs = [], isLoading, error: rawError, refetch } = useQuery<TrackedJob[]>({
+    queryKey: ["tracked-jobs"],
+    queryFn: async () => {
+      const response = await apiClient.get<TrackedJob[]>("/v1/tracker/jobs/");
+      return response.data;
+    },
+  });
+
+  const error = rawError ? "Không thể tải danh sách ứng tuyển." : null;
 
   const fetchJobs = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.get<TrackedJob[]>("/v1/tracker/jobs/");
-      setJobs(response.data);
-    } catch (err: unknown) {
-      setError("Không thể tải danh sách ứng tuyển.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const addJob = useCallback(async (payload: CreateTrackedJobPayload) => {
-    try {
-      const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
-      setJobs((prev) => [response.data, ...prev]);
-      return response.data;
-    } catch (err: unknown) {
-      throw err;
-    }
-  }, []);
+    const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => [response.data, ...prev]);
+    return response.data;
+  }, [queryClient]);
 
   const moveStatus = useCallback(async (jobId: string, newStatus: KanbanStatus) => {
-    // Optimistic UI update
-    setJobs((prev) =>
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
       prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j))
     );
     try {
       await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}/status`, { status: newStatus });
     } catch (err: unknown) {
-      // Rollback on error
-      fetchJobs();
+      await refetch();
       throw err;
     }
-  }, [fetchJobs]);
+  }, [queryClient, refetch]);
 
   const deleteJob = useCallback(async (jobId: string) => {
-    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
+      prev.filter((j) => j.id !== jobId)
+    );
     try {
       await apiClient.delete(`/v1/tracker/jobs/${jobId}`);
     } catch (err: unknown) {
-      fetchJobs();
+      await refetch();
       throw err;
     }
-  }, [fetchJobs]);
-
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  }, [queryClient, refetch]);
 
   return {
     jobs,

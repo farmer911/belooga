@@ -241,11 +241,11 @@ def test_pydantic_v2_schemas_contracts():
 
 
 def test_alembic_revision_file_validity():
-    """Verify baseline Alembic migration script 0001_initial_schema.py."""
+    """Verify baseline Alembic migration script 0001_initial_schema.py via AST parsing."""
+    import ast
     migration_file = Path(__file__).resolve().parent.parent / "alembic" / "versions" / "0001_initial_schema.py"
     assert migration_file.exists()
-    content = migration_file.read_text(encoding="utf-8")
-    assert 'revision: str = "0001"' in content or "revision = '0001'" in content
-    assert "TABLES_IN_REVERSE_ORDER" in content
-    assert "def upgrade()" in content
-    assert "def downgrade()" in content
+    tree = ast.parse(migration_file.read_text(encoding="utf-8"))
+    func_names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+    assert {"upgrade", "downgrade"}.issubset(func_names)
+

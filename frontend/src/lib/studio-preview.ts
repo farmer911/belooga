@@ -144,22 +144,27 @@ export function createStudioPreviewStream(
   };
 
   requestAnimationFrame(draw);
-  const stream = canvas.captureStream(30);
-  (stream as any).isSynthetic = true;
+  const stream = canvas.captureStream(30) as MediaStream & { isSynthetic?: boolean };
+  stream.isSynthetic = true;
 
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0; // Pure silence
-    osc.connect(gain);
-    const dst = audioCtx.createMediaStreamDestination();
-    gain.connect(dst);
-    osc.start();
-    const track = dst.stream.getAudioTracks()[0];
-    if (track) {
-      (track as any).isSynthetic = true;
-      stream.addTrack(track);
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (AudioContextCtor) {
+      const audioCtx = new AudioContextCtor();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0; // Pure silence
+      osc.connect(gain);
+      const dst = audioCtx.createMediaStreamDestination();
+      gain.connect(dst);
+      osc.start();
+      const track = dst.stream.getAudioTracks()[0] as (MediaStreamTrack & { isSynthetic?: boolean }) | undefined;
+      if (track) {
+        track.isSynthetic = true;
+        stream.addTrack(track);
+      }
     }
   } catch (e) {
     // AudioContext optional

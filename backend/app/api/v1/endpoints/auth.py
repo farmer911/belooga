@@ -5,7 +5,6 @@ Security Invariant:
   a 15s grace window for concurrent requests, and delete_cookie upon family revocation.
 """
 
-from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -81,12 +80,11 @@ async def get_current_session_user(
     return await service.get_current_session_user(current_user.id)
 
 
-@router.post("/auth/logout/", tags=["Domain 1: Identity & Sessions"])
+@router.post("/auth/logout/", response_model=dict[str, str], tags=["Domain 1: Identity & Sessions"])
 async def logout(
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     refresh_token = request.cookies.get("belooga_refresh_token")
-    service = AuthService(db)
-    return await service.logout(refresh_token, response)
+    return await AuthService(db).logout(refresh_token, response)

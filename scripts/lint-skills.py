@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """
-lint-skills.py — Hard-gate linter for .agents/ (skills, rules, workflows, ROUTER, GEMINI.md).
+lint-skills.py — Top-Tier S Hard-Gate Linter for .agents/ (skills, rules, workflows, ROUTER, GEMINI.md).
 
-Checks what a reviewer would otherwise check by hand. Every finding is a fact
-about the repo, not an opinion. Exit 1 if any ERROR is found.
+Enforces 100% empirical truth across the skill ecosystem:
+  1. Valid YAML frontmatter (`yaml.safe_load`) on all skills, rules, and workflows
+  2. Zero dangling skill references or hardcoded inventory counts outside AUTO blocks
+  3. 100% file path existence (both inline backticks and inside bash code blocks)
+  4. 100% `data-testid` existence against `frontend/src/**/*.tsx`
+  5. 100% `/v1/...` API endpoint existence against `CURRENT_STATE.md`
+  6. 100% coverage of all backend routers & frontend pages in `render-skill-facts.py`,
+     and 100% registration of all skills in `.agents/ROUTER.md` and `.agents/evals/triggers.yaml`
 
 Usage:
     python3 scripts/lint-skills.py            # full report
     python3 scripts/lint-skills.py --quiet    # only summary + errors
 """
 import ast
+import importlib.util
 import json
 import re
 import sys
 from pathlib import Path
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS = ROOT / ".agents"
@@ -28,7 +36,6 @@ SKILL_NAME_PREFIXES = (
     "be-", "fe-", "qc-", "belooga-", "ponytail", "tdd-", "clean-", "definition-",
     "engineering-", "legacy-", "systems-", "enterprise-", "architect-",
 )
-# Unquoted mentions are only checked for unambiguous skill-family patterns
 BARE_SKILL_RE = re.compile(
     r"\b((?:fe-section|fe-page|be-service)-[a-z0-9-]+|[a-z]+-(?:reviewer-guide(?:lines)?|patterns-and-practices))\b"
 )
@@ -48,7 +55,8 @@ findings = []  # (severity, file, message)
 
 
 def add(sev, path, msg):
-    findings.append((sev, str(path.relative_to(ROOT)), msg))
+    rel_p = str(path.relative_to(ROOT)) if isinstance(path, Path) and path.is_relative_to(ROOT) else str(path)
+    findings.append((sev, rel_p, msg))
 
 
 # ---------- ground truth from the repo ----------
@@ -70,22 +78,51 @@ def pkg_scripts(sub):
     p = ROOT / sub / "package.json"
     if not p.exists():
         return set()
-    return set(json.loads(p.read_text()).get("scripts", {}).keys())
+    return set(json.loads(p.read_text(encoding="utf-8")).get("scripts", {}).keys())
 
 
 scripts = {"qc": pkg_scripts("qc"), "frontend": pkg_scripts("frontend")}
 
+# Ground-truth frontend data-testids
+all_fe_testids = set()
+for f in (ROOT / "frontend" / "src").rglob("*.tsx"):
+    all_fe_testids |= set(re.findall(r'data-testid="([^"]+)"', f.read_text(encoding="utf-8", errors="ignore")))
+
+# Ground-truth backend API endpoints from CURRENT_STATE.md
+cs_text = (ROOT / "CURRENT_STATE.md").read_text(encoding="utf-8") if (ROOT / "CURRENT_STATE.md").exists() else ""
+valid_api_endpoints = set(re.findall(r"\|\s*`(/v1[^`]*)`\s*\|", cs_text))
+valid_api_norm = {ep.rstrip("/") for ep in valid_api_endpoints}
+
 
 def resolve_path(raw):
     raw = raw.strip("/")
-    for base in ("", "frontend/", "backend/"):
+    for base in ("", "frontend/", "backend/", "qc/", "frontend/src/", "backend/app/"):
         if (ROOT / (base + raw)).exists():
             return True
     return False
 
 
 # ---------- per-file checks ----------
+def check_frontmatter_yaml(path, text):
+    if not text.startswith("---"):
+        return None
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        add("ERROR", path, "unclosed YAML frontmatter block")
+        return None
+    try:
+        data = yaml.safe_load(parts[1])
+        if not isinstance(data, dict):
+            add("ERROR", path, "YAML frontmatter must parse to a key-value mapping")
+            return None
+        return data
+    except Exception as e:
+        add("ERROR", path, f"invalid YAML frontmatter: {e}")
+        return None
+
+
 def check_common(path, text):
+    check_frontmatter_yaml(path, text)
     body = AUTO_BLOCK_RE.sub("", text)
 
     # 1. dangling skill references
@@ -127,12 +164,30 @@ def check_common(path, text):
         if script not in scripts[sub]:
             add("ERROR", path, f"`cd {sub} && bun run {script}` — script '{script}' not in {sub}/package.json")
 
-    # 7. referenced repo files that do not exist
-    for fp in set(re.findall(r"`((?:frontend|backend|qc|scripts|docs)/[\w\-/\[\]().]+\.(?:tsx?|py|sql|sh|md|json))`", body)):
-        if not (ROOT / fp).exists():
+    # 7. referenced repo files (both inline backticks AND inside bash commands) that do not exist
+    for m in re.finditer(r"(?:^|[\s`\"])((?:frontend|backend|qc|scripts|docs|tests)/[\w\-/\[\]().]+\.(?:tsx?|py|sql|sh|md|json))", body):
+        fp = m.group(1)
+        if "<" in fp or ">" in fp or "*" in fp or "{" in fp:
+            continue
+        if not resolve_path(fp):
             add("ERROR", path, f"references missing file `{fp}`")
 
-    # 8. archived docs used as active targets
+    # 8. phantom data-testid selectors
+    if "ui-ux-pro-max" not in path.parts:
+        for tid in set(re.findall(r'data-testid="([^"]+)"', body)):
+            if tid != "..." and tid not in all_fe_testids:
+                add("ERROR", path, f"references phantom data-testid `{tid}` not found in frontend/src/")
+
+    # 9. invalid /v1/... API endpoint paths
+    if valid_api_norm and "ui-ux-pro-max" not in path.parts:
+        for m in re.finditer(r"`(?:GET|POST|PUT|PATCH|DELETE)?\s*(/v1/[\w\-{}/]+)`", body):
+            ep = m.group(1)
+            if "*" in ep or "..." in ep or ep.startswith("/v1/endpoints"):
+                continue
+            if ep.rstrip("/") not in valid_api_norm:
+                add("ERROR", path, f"references invalid API endpoint `{ep}` not in CURRENT_STATE.md")
+
+    # 10. archived docs used as active targets
     if re.search(r"docs/archive/VIOLATIONS_REGISTER\.md", body):
         add("WARN", path, "uses docs/archive/ as an active write target (GEMINI.md declares archive non-authoritative)")
 
@@ -142,15 +197,12 @@ def check_skill(path, text):
     name = path.parent.name
     if len(lines) > SKILL_MAX_LINES:
         add("ERROR", path, f"{len(lines)} lines > {SKILL_MAX_LINES}; move detail into references/")
-    if not text.startswith("---"):
-        add("ERROR", path, "missing YAML frontmatter")
+    fm = check_frontmatter_yaml(path, text)
+    if not fm:
         return
-    fm = text.split("---", 2)[1]
-    m_name = re.search(r"^name:\s*(\S+)", fm, re.M)
-    if not m_name or m_name.group(1) != name:
+    if fm.get("name") != name:
         add("ERROR", path, "frontmatter name does not match directory")
-    m_desc = re.search(r"description:\s*>?\s*(.*?)(?=\n[a-z][\w-]*:|\Z)", fm, re.S)
-    desc = " ".join(m_desc.group(1).split()) if m_desc else ""
+    desc = str(fm.get("description", "")).strip()
     if not desc:
         add("ERROR", path, "missing description")
     else:
@@ -176,16 +228,71 @@ def check_reference(path, text):
         add("ERROR", path, "contains TO-BE / planned-target content; move to docs/adr/")
 
 
-targets = sorted(AGENTS.rglob("*.md")) + [ROOT / "GEMINI.md", ROOT / "CLAUDE.md"]
+def check_ecosystem_coverage():
+    # Verify 100% of backend routers & frontend pages are registered in render-skill-facts.py
+    spec = importlib.util.spec_from_file_location("rsf", ROOT / "scripts" / "render-skill-facts.py")
+    rsf = importlib.util.module_from_spec(spec)
+    rsf_src = (ROOT / "scripts" / "render-skill-facts.py").read_text(encoding="utf-8")
+    tree = ast.parse(rsf_src)
+    be_mapped, fe_mapped = set(), set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
+            tname = n.targets[0].id
+            if tname in ("BACKEND", "FRONTEND") and isinstance(n.value, ast.Dict):
+                vals = {elt.value for v in n.value.values if isinstance(v, ast.List) for elt in v.elts if isinstance(elt, ast.Constant)}
+                if tname == "BACKEND":
+                    be_mapped = vals
+                else:
+                    fe_mapped = vals
+
+    actual_be = {p.name for p in (ROOT / "backend" / "app" / "api" / "v1" / "endpoints").glob("*.py") if p.name != "__init__.py"}
+    actual_fe = {p.relative_to(ROOT / "frontend" / "src" / "app").as_posix() for p in (ROOT / "frontend" / "src" / "app").rglob("page.tsx")}
+
+    for unmapped in sorted(actual_be - be_mapped):
+        add("ERROR", ROOT / "scripts" / "render-skill-facts.py", f"backend endpoint module `{unmapped}` is not covered by any be-service-* skill")
+    for unmapped in sorted(actual_fe - fe_mapped):
+        add("ERROR", ROOT / "scripts" / "render-skill-facts.py", f"frontend page `{unmapped}` is not covered by any fe-page-* skill")
+
+    # Verify 100% of skills are in ROUTER.md and triggers.yaml
+    router_txt = (AGENTS / "ROUTER.md").read_text(encoding="utf-8") if (AGENTS / "ROUTER.md").exists() else ""
+    for sk in sorted(existing_skills):
+        if f"`{sk}`" not in router_txt:
+            add("ERROR", AGENTS / "ROUTER.md", f"skill `{sk}` missing from ROUTER.md")
+
+    trig_path = AGENTS / "evals" / "triggers.yaml"
+    if trig_path.exists():
+        trig_data = yaml.safe_load(trig_path.read_text(encoding="utf-8")) or []
+        trig_skills = {item.get("skill") for item in trig_data if isinstance(item, dict)}
+        for sk in sorted(existing_skills - trig_skills):
+            add("ERROR", trig_path, f"skill `{sk}` missing from triggers.yaml evaluation dataset")
+
+    # Enforce strict repository markdown whitelist (prevent redundant .md sprawl)
+    allowed_md = {"CURRENT_STATE.md", "GEMINI.md", "README.md", "docs/VIOLATIONS_REGISTER.md", "docs/ponytail-debt.md", "frontend/AGENTS.md", "graphify-out/GRAPH_REPORT.md"}
+    for md in ROOT.rglob("*.md"):
+        rel = md.relative_to(ROOT).as_posix()
+        if any(rel.startswith(p) for p in (".agents/", "docs/adr/", "legacy/", "node_modules/", "frontend/node_modules/", "qc/node_modules/", "backend/.venv/", ".pytest_cache/", ".git/")):
+            continue
+        if rel not in allowed_md:
+            add("ERROR", md, f"redundant/unapproved markdown file `{rel}` outside canonical SSOT whitelist")
+
+
+targets = sorted(AGENTS.rglob("*.md")) + [ROOT / "GEMINI.md", ROOT / "README.md"] + sorted((ROOT / "docs" / "adr").glob("*.md"))
 for p in targets:
     if not p.exists():
         continue
     t = p.read_text(encoding="utf-8", errors="ignore")
-    check_common(p, t)
+    if p.name != "STATE.md":
+        check_common(p, t)
     if p.name == "SKILL.md":
         check_skill(p, t)
+    elif p.name == "STATE.md" and len(t.splitlines()) > 50:
+        add("ERROR", p, f"{len(t.splitlines())} lines > 50 (STATE.md scratchpad cap)")
+    elif p.name == "PRODUCT_THESIS.md" and len(t.splitlines()) > 120:
+        add("ERROR", p, f"{len(t.splitlines())} lines > 120 (PRODUCT_THESIS.md zero-sum cap)")
     elif "references" in p.parts:
         check_reference(p, t)
+
+check_ecosystem_coverage()
 
 # ---------- report ----------
 by_file = {}

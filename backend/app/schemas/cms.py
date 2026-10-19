@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 

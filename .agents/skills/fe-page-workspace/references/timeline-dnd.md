@@ -26,9 +26,10 @@ This section maintains responsibility for:
 ---
 
 ## 3. QC Anti-Regression Selectors
-- `[data-testid="experience-timeline"]`: Container for job experiences list.
-- `[data-testid="education-timeline"]`: Container for education entries list.
-- `[data-testid="timeline-item-card"]`: Card representing an individual job or education item.
-- `[data-testid="timeline-drag-handle"]`: Grab handle triggering drag-and-drop.
-- `[data-testid="delete-timeline-item-btn"]`: Item deletion button.
+- `[data-testid="timeline-job-card"]`: Card representing an individual job or education item.
+- `[data-testid="dnd-handle"]`: Grab handle triggering drag-and-drop.
+- `[data-testid="delete-experience-btn"]`: Item deletion button.
 - `[data-testid="add-experience-btn"]`: Modal trigger to add a job entry.
+- `[data-testid="experience-modal-submit"]`: Submit button inside job modal.
+- `[data-testid="add-education-btn"]`: Modal trigger to add an education entry.
+- `[data-testid="education-modal-submit"]`: Submit button inside education modal.

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AlertTriangle, Lightbulb, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ATSScanResult } from "@/hooks/use-ats-diagnostics";
 
@@ -19,7 +20,7 @@ export function ATSScorecard({ result, activeTab, setActiveTab, onPayClick }: AT
   };
 
   return (
-    <div className="border border-surface-border rounded-xl bg-white p-4 space-y-4 shadow-xs">
+    <div className="border border-surface-border rounded-xl bg-surface-card p-4 space-y-4 shadow-xs">
       {/* Score Header */}
       <div className="flex items-center justify-between border-b border-surface-divider pb-3.5">
         <div>
@@ -107,7 +108,7 @@ export function ATSScorecard({ result, activeTab, setActiveTab, onPayClick }: AT
           <div className="space-y-3">
             <div>
               <div className="text-[11px] font-semibold text-rose-700 mb-1.5 flex items-center gap-1">
-                <span>❌ Kỹ năng cốt lõi trong JD nhưng CV chưa có:</span>
+                <span>Kỹ năng cốt lõi trong JD nhưng CV chưa có:</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {result.missing_skills.length > 0 ? (
@@ -120,7 +121,10 @@ export function ATSScorecard({ result, activeTab, setActiveTab, onPayClick }: AT
                     </span>
                   ))
                 ) : (
-                  <span className="text-emerald-700 text-xs font-medium">🎉 Tuyệt vời! Bạn đã bao phủ 100% kỹ năng trong JD.</span>
+                  <span className="text-emerald-700 text-xs font-medium inline-flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Tuyệt vời! Bạn đã bao phủ 100% kỹ năng trong JD.</span>
+                  </span>
                 )}
               </div>
             </div>
@@ -149,11 +153,15 @@ export function ATSScorecard({ result, activeTab, setActiveTab, onPayClick }: AT
               result.star_analysis.map((item, i) => (
                 <div key={i} className="p-2.5 bg-surface-page rounded-lg border border-surface-border space-y-1.5">
                   <div className="text-typography-muted font-mono text-[10px] line-clamp-1 italic">
-                    "{item.original_text}"
+                    &quot;{item.original_text}&quot;
                   </div>
-                  <div className="text-amber-800 text-[11px] font-medium">⚠️ {item.critique}</div>
-                  <div className="text-brand-dark text-[11px] bg-teal-50/50 p-2 rounded-md border border-teal-200">
-                    💡 Gợi ý STAR: {item.suggested_star_rewrite}
+                  <div className="text-amber-800 text-[11px] font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span>{item.critique}</span>
+                  </div>
+                  <div className="text-brand-dark text-[11px] bg-teal-50/50 p-2 rounded-md border border-teal-200 flex items-start gap-1.5">
+                    <Lightbulb className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand-primary" aria-hidden="true" />
+                    <span>Gợi ý STAR: {item.suggested_star_rewrite}</span>
                   </div>
                 </div>
               ))
@@ -167,8 +175,9 @@ export function ATSScorecard({ result, activeTab, setActiveTab, onPayClick }: AT
           <div className="space-y-2">
             {result.parse_warnings.length > 0 ? (
               result.parse_warnings.map((warn, i) => (
-                <div key={i} className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
-                  ⚠️ {warn}
+                <div key={i} className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{warn}</span>
                 </div>
               ))
             ) : (

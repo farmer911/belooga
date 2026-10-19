@@ -6,12 +6,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class ProfileUpdate(BaseModel):
     """Payload for updating candidate biographical profile attributes."""
 
+    first_name: Optional[str] = Field(None, max_length=100)
+    last_name: Optional[str] = Field(None, max_length=100)
     headline: Optional[str] = Field(None, max_length=255)
     bio: Optional[str] = None
     location: Optional[str] = Field(None, max_length=255)
     phone: Optional[str] = Field(None, max_length=50)
     seeking_status: Optional[str] = Field(None, max_length=64)
     employment_status: Optional[str] = Field(None, max_length=64)
+    is_hidden: Optional[bool] = None
 
 
 class SkillAdd(BaseModel):
@@ -58,6 +61,7 @@ class ProfileResponse(BaseModel):
     resume_url: Optional[str] = None
     seeking_status: Optional[str] = None
     employment_status: Optional[str] = None
+    is_hidden: Optional[bool] = False
     job_experiences: List[Dict[str, Any]] = Field(default_factory=list)
     education_experiences: List[Dict[str, Any]] = Field(default_factory=list)
     skills: List[str] = Field(default_factory=list)

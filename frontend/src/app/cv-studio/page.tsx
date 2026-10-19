@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { Zap, Target, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CVStudioSidebar } from "@/components/features/cv-studio/cv-studio-sidebar";
@@ -78,24 +79,27 @@ export default function CVStudioPage() {
         </div>
 
         {/* Quick presets and tools */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleResetSample}
-            className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading rounded-md border border-surface-border transition-colors text-[11px] cursor-pointer"
+            className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading rounded-md border border-surface-border transition-colors text-[11px] flex items-center gap-1 cursor-pointer"
           >
-            ↺ Nạp Mẫu Chuẩn
+            <RotateCcw className="w-3 h-3" aria-hidden="true" />
+            <span>Nạp Mẫu Chuẩn</span>
           </button>
           <button
             onClick={handleAutoFit}
-            className="px-2.5 py-1 bg-teal-50/50 hover:bg-brand-overlay text-brand-dark rounded-md border border-teal-200 transition-colors text-[11px] font-semibold cursor-pointer"
+            className="px-2.5 py-1 bg-teal-50/50 hover:bg-brand-overlay text-brand-dark rounded-md border border-teal-200 transition-colors text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
           >
-            ⚡ Tự Động Tối Ưu Lề
+            <Zap className="w-3 h-3" aria-hidden="true" />
+            <span>Tự Động Tối Ưu Lề</span>
           </button>
           <Link href="/ats-diagnostics">
             <Button
               className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs flex items-center gap-1"
             >
-              <span>🎯</span> Sang Quét ATS
+              <Target className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Sang Quét ATS</span>
             </Button>
           </Link>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Target, Lightbulb } from "lucide-react";
 import { FunnelStage } from "@/hooks/use-analytics-dashboard";
 
 interface AnalyticsFunnelCardProps {
@@ -9,10 +10,11 @@ interface AnalyticsFunnelCardProps {
 
 export function AnalyticsFunnelCard({ funnel }: AnalyticsFunnelCardProps) {
   return (
-    <div className="p-5 rounded-xl bg-white border border-surface-border space-y-3.5 shadow-xs">
+    <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-3.5 shadow-xs">
       <div className="flex items-center justify-between border-b border-surface-divider pb-3">
         <h4 className="font-bold text-typography-main text-xs flex items-center gap-1.5 uppercase tracking-wider">
-          <span>🎯</span> Phễu Chuyển Đổi Tự Nguyện (PLG Conversion Funnel)
+          <Target className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+          <span>Phễu Chuyển Đổi Tự Nguyện (PLG Conversion Funnel)</span>
         </h4>
         <span className="text-[10px] text-brand-dark font-mono font-semibold bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-200">
           Tỷ lệ trả phí: 27.0%
@@ -46,8 +48,11 @@ export function AnalyticsFunnelCard({ funnel }: AnalyticsFunnelCardProps) {
         ))}
       </div>
 
-      <div className="p-3 rounded-xl bg-surface-page border border-surface-border text-[11px] text-typography-heading leading-relaxed">
-        💡 <strong>Chiến lược "Aha-Moment":</strong> Sau khi xem lỗi quét ATS miễn phí, 21% ứng viên chủ động trả 29k để tự động tối ưu form STAR và lề trang, 6% tiếp tục book Chuyên gia chấm bài sâu.
+      <div className="p-3 rounded-xl bg-surface-page border border-surface-border text-[11px] text-typography-heading leading-relaxed flex items-start gap-2">
+        <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
+        <div>
+          <strong>Chiến lược &quot;Aha-Moment&quot;:</strong> Sau khi xem lỗi quét ATS miễn phí, 21% ứng viên chủ động trả 29k để tự động tối ưu form STAR và lề trang, 6% tiếp tục book Chuyên gia chấm bài sâu.
+        </div>
       </div>
     </div>
   );

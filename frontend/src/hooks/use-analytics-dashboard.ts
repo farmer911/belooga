@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/api-client";
 
 export interface OverviewMetrics {
   total_users: number;
@@ -74,73 +74,22 @@ const DEFAULT_ANALYTICS: AnalyticsData = {
     { stage: "4. Đặt Chuyên Gia Review Chuyên Sâu (8% phí)", count: 41, conversion_rate: 6 },
   ],
   recent_transactions: [
-    {
-      id: "TXN-2026-091",
-      user_name: "Nguyễn Văn An",
-      package_name: "Micro-Pass 29k (1-Click ATS Tailor)",
-      amount: 29000,
-      platform_fee: 29000,
-      payment_method: "MoMo QR",
-      status: "SUCCESS",
-      created_at: "16:21 05/10",
-    },
-    {
-      id: "TXN-2026-090",
-      user_name: "Trần Thị Mai",
-      package_name: "Expert Review Senior Architect (Escrow)",
-      amount: 350000,
-      platform_fee: 28000,
-      payment_method: "MoMo QR",
-      status: "HELD_IN_ESCROW",
-      created_at: "15:15 05/10",
-    },
-    {
-      id: "TXN-2026-089",
-      user_name: "Lê Hoàng Long",
-      package_name: "Micro-Pass 59k (Full 3 Đợt Quét)",
-      amount: 59000,
-      platform_fee: 59000,
-      payment_method: "MoMo QR",
-      status: "SUCCESS",
-      created_at: "13:30 05/10",
-    },
-    {
-      id: "TXN-2026-088",
-      user_name: "Đặng Quốc Huy",
-      package_name: "Expert Review Mid Golang (Escrow)",
-      amount: 250000,
-      platform_fee: 20000,
-      payment_method: "MoMo QR",
-      status: "RELEASED",
-      created_at: "11:10 05/10",
-    },
+    { id: "TXN-2026-091", user_name: "Nguyễn Văn An", package_name: "Micro-Pass 29k (1-Click ATS Tailor)", amount: 29000, platform_fee: 29000, payment_method: "MoMo QR", status: "SUCCESS", created_at: "16:21 05/10" },
+    { id: "TXN-2026-090", user_name: "Trần Thị Mai", package_name: "Expert Review Senior Architect (Escrow)", amount: 350000, platform_fee: 28000, payment_method: "MoMo QR", status: "HELD_IN_ESCROW", created_at: "15:15 05/10" },
+    { id: "TXN-2026-089", user_name: "Lê Hoàng Long", package_name: "Micro-Pass 59k (Full 3 Đợt Quét)", amount: 59000, platform_fee: 59000, payment_method: "MoMo QR", status: "SUCCESS", created_at: "13:30 05/10" },
+    { id: "TXN-2026-088", user_name: "Đặng Quốc Huy", package_name: "Expert Review Mid Golang (Escrow)", amount: 250000, platform_fee: 20000, payment_method: "MoMo QR", status: "RELEASED", created_at: "11:10 05/10" },
   ],
 };
 
 export function useAnalyticsDashboard() {
-  const [data, setData] = useState<AnalyticsData>(DEFAULT_ANALYTICS);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data = DEFAULT_ANALYTICS, isLoading } = useQuery<AnalyticsData>({
+    queryKey: ["analytics-dashboard"],
+    queryFn: async () => {
+      const res = await apiClient.get<AnalyticsData>("/v1/analytics/dashboard", { timeout: 3000 });
+      return res.data;
+    },
+    placeholderData: DEFAULT_ANALYTICS,
+  });
 
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchAnalytics() {
-      try {
-        const res = await axios.get("http://localhost:8000/v1/analytics/dashboard", { timeout: 3000 });
-        if (isMounted && res.data) {
-          setData(res.data);
-        }
-      } catch {
-        // Fallback to default realistic analytics if backend unreachable or network delay
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-    fetchAnalytics();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  return { data, isLoading, error };
+  return { data, isLoading, error: null };
 }

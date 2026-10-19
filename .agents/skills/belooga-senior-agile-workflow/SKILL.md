@@ -62,16 +62,12 @@ Strictly adhere to `.agents/skills/tdd-workflow/SKILL.md`:
 ## 4. Phase 4: GitHub Pull Request & Evidence
 
 Once all ACs are satisfied locally:
-1. **Local Pre-Flight Checks:**
+1. **Local Pre-Flight & Pre-Push Gate (Worktree-Safe):**
    ```bash
-   # 1. Backend tests
-   backend/.venv/bin/pytest backend/tests/ -v
-   # 2. Frontend typecheck
-   cd frontend && bun x tsc --noEmit
-   # 3. SSOT truth & Quality ratchet
+   bash scripts/pre-push-gate.sh
    bash scripts/audit-truth.sh
    ```
-2. **Push & Open Pull Request:**
+2. **Push, Attach Evidence & Open Pull Request:**
    ```bash
    git push -u origin feature/BEL-103-momo-qr
    gh pr create --title "feat(payments): BEL-103 integrate MoMo QR checkout" --body "..."
@@ -79,25 +75,25 @@ Once all ACs are satisfied locally:
 3. **PR Description Template:**
    - **Context & Objective:** Why this change was made.
    - **Acceptance Criteria Checklist:** `[x]` checked for all met criteria.
-   - **Empirical Evidence:** Exact command output with 0 errors.
+   - **Empirical & Visual Evidence:** Exact command output with 0 errors + Playwright `.png`/`.webm` video artifacts for UI flows.
 
 ---
 
-## 5. Phase 5: Adversarial Review, Approval & Merge
+## 5. Phase 5: Adversarial Review, CI Monitor & Merge
 
-1. **Review Checklist:**
-   - IDOR guards present on user mutations (`current_user.id == target_id`).
-   - Zero blocking I/O calls inside async functions (`asyncio.to_thread` for files/PDF).
-   - No unindexed fallback queries (`OR ILIKE` prohibited per ADR-005).
-   - Zero regression in `.agents/ratchet.json`.
-2. **Merge Protocol:**
+1. **Independent Subagent Review (`Author != Reviewer != Fixer`):**
+   - Run an isolated reviewer subagent pass against `git diff` using `be-code-review` / `fe-code-review` (enforcing **Fix by Invariant** across sibling sites and **Simplification Pass** to delete unrequired code).
+2. **Remote CI Monitor & Auto-Repair:**
+   - Watch remote GitHub Actions checks and pull logs to repair any CI failure before merge:
+     ```bash
+     gh pr checks --watch || gh run view --log-failed
+     ```
+3. **Merge Protocol:**
    - Squash and merge into `main`:
      ```bash
      gh pr merge --squash --delete-branch
-     # Or git merge on main:
-     git checkout main && git merge --squash feature/BEL-103-momo-qr && git push origin main
      ```
-3. **Mark Done in Mission Control:**
+4. **Mark Done in Mission Control:**
    ```bash
    cd ../beloga-agent-kanban && bun run agent update BEL-xxx --status DONE --pr https://github.com/...
    ```

@@ -74,10 +74,10 @@ export function WebRTCStudioModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-[#5bbbae]" />
+            <Video className="w-5 h-5 text-brand-primary" />
             <h3 className="text-lg font-bold flex items-center gap-2">
               <span>0:30 Video Pitch Recording Studio</span>
-              <span className="text-xs font-mono font-normal text-[#5bbbae] bg-[#5bbbae]/10 border border-[#5bbbae]/20 px-2 py-0.5 rounded">
+              <span className="text-xs font-mono font-normal text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-2 py-0.5 rounded">
                 Max 5:00
               </span>
             </h3>
@@ -160,10 +160,10 @@ export function WebRTCStudioModal({
           <div className="space-y-1 bg-slate-800 p-3 rounded-lg border border-slate-700">
             <div className="flex justify-between text-xs text-slate-300">
               <span>Streaming Chunked Upload: Chunk {chunkProgress.uploadedChunks}/{chunkProgress.totalChunks}</span>
-              <span className="font-mono text-[#5bbbae]">{chunkProgress.percentage}%</span>
+              <span className="font-mono text-brand-primary">{chunkProgress.percentage}%</span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div className="bg-[#5bbbae] h-2 transition-all duration-300" style={{ width: `${chunkProgress.percentage}%` }} />
+              <div className="bg-brand-primary h-2 transition-all duration-300" style={{ width: `${chunkProgress.percentage}%` }} />
             </div>
           </div>
         )}
@@ -215,7 +215,7 @@ export function WebRTCStudioModal({
                   variant="default"
                   size="sm"
                   disabled={isUploadingChunks}
-                  className="bg-[#5bbbae] hover:bg-[#497d76] text-white gap-1.5 cursor-pointer"
+                  className="bg-brand-primary hover:bg-brand-hover text-white gap-1.5 cursor-pointer"
                   onClick={uploadPitch}
                 >
                   {isUploadingChunks ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}

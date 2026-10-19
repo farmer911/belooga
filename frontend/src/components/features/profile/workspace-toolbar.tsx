@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, ExternalLink, Edit3, Download } from "lucide-react";
+import { CheckCircle2, ExternalLink, Edit3, Download, Lock, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface WorkspaceToolbarProps {
@@ -19,42 +19,52 @@ export function WorkspaceToolbar({
   onDownloadPdf,
 }: WorkspaceToolbarProps) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-[#d1d6da] shadow-sm">
-      <div className="flex items-center gap-3">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 bg-surface-card p-4 rounded-xl border border-surface-border shadow-sm">
+      <div className="flex flex-wrap items-center gap-3">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <CheckCircle2 className="w-3.5 h-3.5" /> Workspace Live & Interactive
+          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Workspace Live & Interactive
         </span>
-        <span className="text-xs text-[#737475]">Drag & Drop Timeline • Chunked Upload Active</span>
+        <span className="text-xs text-typography-muted">Drag & Drop Timeline • Chunked Upload Active</span>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           variant="outline"
           size="sm"
           data-testid="visibility-toggle"
-          className="gap-2 text-xs border-[#d1d6da]"
+          className="gap-2 text-xs border-surface-border"
           onClick={onToggleVisibility}
         >
-          {isHidden ? "🔒 Profile Hidden" : "🌐 Profile Public"}
+          {isHidden ? (
+            <>
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Profile Hidden</span>
+            </>
+          ) : (
+            <>
+              <Globe className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Profile Public</span>
+            </>
+          )}
         </Button>
         <Link href={`/public/${username}`}>
-          <Button variant="outline" size="sm" className="gap-2 text-[#515151]">
-            <ExternalLink className="w-4 h-4" /> View Public CV
+          <Button variant="outline" size="sm" className="gap-2 text-typography-heading">
+            <ExternalLink className="w-4 h-4" aria-hidden="true" /> View Public CV
           </Button>
         </Link>
         <Link href={`/user/${username}/update`}>
-          <Button variant="outline" size="sm" className="gap-2 border-[#5bbbae] text-[#5bbbae]">
-            <Edit3 className="w-4 h-4" /> Edit Bio & Info
+          <Button variant="outline" size="sm" className="gap-2 border-brand-primary text-brand-primary">
+            <Edit3 className="w-4 h-4" aria-hidden="true" /> Edit Bio & Info
           </Button>
         </Link>
         <Button
           variant="default"
           size="sm"
           data-testid="download-pdf-btn"
-          className="gap-2 bg-[#5bbbae] hover:bg-[#497d76] text-white"
+          className="gap-2 bg-brand-primary hover:bg-brand-hover text-white"
           onClick={onDownloadPdf}
         >
-          <Download className="w-4 h-4" /> Download Official PDF
+          <Download className="w-4 h-4" aria-hidden="true" /> Download Official PDF
         </Button>
       </div>
     </div>

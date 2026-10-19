@@ -10,9 +10,8 @@ import os
 import shutil
 import time
 from typing import Any, Dict, Optional
-import uuid
 
-from fastapi import HTTPException, Response, UploadFile, status
+from fastapi import HTTPException, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import AuthenticatedUser, verify_profile_owner
@@ -88,6 +87,9 @@ class MediaService:
         await write_bytes_async(target_path, content)
 
         resume_url = f"http://localhost:8000/uploads/resumes/{safe_filename}"
+        await self.media_repo.update_resume_url(profile.id, resume_url)
+        await self.db.commit()
+
         return {
             "resume_url": resume_url,
             "filename": file.filename or safe_filename,
@@ -96,6 +98,13 @@ class MediaService:
 
     async def delete_resume(self, username: str, current_user: AuthenticatedUser) -> Dict[str, str]:
         verify_profile_owner(current_user, username)
+        clean_username = username.lower().strip()
+        profile = await self.profile_repo.get_by_username(clean_username)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        await self.media_repo.update_resume_url(profile.id, None)
+        await self.db.commit()
         return {"message": "Resume PDF removed successfully"}
 
     async def generate_candidate_pdf(
@@ -112,9 +121,9 @@ class MediaService:
         if row.is_hidden and not is_owner:
             raise HTTPException(status_code=404, detail="Candidate not found")
 
-        jobs = await self.media_repo.get_pdf_jobs(row.id)
-        education = await self.media_repo.get_pdf_education(row.id)
-        skills = await self.media_repo.get_pdf_skills(row.id)
+        jobs = await self.profile_repo.get_jobs(row.id)
+        education = await self.profile_repo.get_education(row.id)
+        skills = await self.profile_repo.get_skills(row.id)
 
         pdf_bytes = await generate_pdf_resume_async(row, jobs, education, skills, clean_username)
         return Response(
@@ -137,7 +146,7 @@ class MediaService:
     ) -> Dict[str, Any]:
         verify_profile_owner(current_user, username)
         upload_dir = get_validated_upload_dir(upload_id, current_user.id)
-        os.makedirs(upload_dir, exist_ok=True)
+        await asyncio.to_thread(os.makedirs, upload_dir, exist_ok=True)
 
         chunk_filename = f"chunk_{chunk_index:05d}"
         chunk_path = os.path.join(upload_dir, chunk_filename)
@@ -158,7 +167,7 @@ class MediaService:
     ) -> Dict[str, Any]:
         verify_profile_owner(current_user, payload.username)
         upload_dir = get_validated_upload_dir(payload.upload_id, current_user.id)
-        if not os.path.exists(upload_dir):
+        if not await asyncio.to_thread(os.path.exists, upload_dir):
             raise HTTPException(status_code=400, detail="Invalid upload session or chunks expired")
 
         clean_username = payload.username.lower().strip()

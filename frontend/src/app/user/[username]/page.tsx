@@ -58,7 +58,7 @@ export default function WorkspacePage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center" data-testid="workspace-loading-spinner">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#5bbbae]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-primary" />
       </div>
     );
   }
@@ -66,8 +66,8 @@ export default function WorkspacePage() {
   if (!profile) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4" data-testid="workspace-error-banner">
-        <h2 className="text-2xl font-bold text-[#252525]">Candidate Profile Not Found</h2>
-        <p className="text-sm text-[#737475]">The profile @{username} does not exist or is set to private.</p>
+        <h2 className="text-2xl font-bold text-typography-main">Candidate Profile Not Found</h2>
+        <p className="text-sm text-typography-muted">The profile @{username} does not exist or is set to private.</p>
         <Link href="/">
           <Button variant="default">Back to Home</Button>
         </Link>
@@ -76,7 +76,7 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-8" data-testid="workspace-container">
+    <div className="min-h-screen bg-surface-page py-8" data-testid="workspace-container">
       {/* Hidden file inputs for avatar & resume */}
       <input type="file" ref={resumeInputRef} accept=".pdf" className="hidden" onChange={handleResumeFileChange} />
       <input type="file" id="avatar-upload-input" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarFileChange} />

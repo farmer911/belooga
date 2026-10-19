@@ -36,12 +36,14 @@ pages = [p for p in fe_src if p.name == "page.tsx"]
 
 current = {
     "fe_arbitrary_hex": count(r"\[#[0-9a-fA-F]{3,8}\]", fe_src),
+    "fe_structural_emoji": count(r"[\U0001F300-\U0001FAFF\u2600-\u26FF]", fe_src),
     "fe_any": count(r":\s*any\b|\bas any\b|<any>", fe_src),
     "fe_ts_ignore": count(r"@ts-ignore|@ts-expect-error", fe_src),
     "fe_max_page_lines": max((len(p.read_text().splitlines()) for p in pages), default=0),
     "fe_files_over_300_lines": sum(1 for p in fe_src if len(p.read_text().splitlines()) > 300),
+    "be_files_over_300_lines": sum(1 for p in be_src if len(p.read_text().splitlines()) > 300),
     "be_type_ignore": count(r"#\s*type:\s*ignore", be_src),
-    "be_sql_in_routers": count(r"\btext\(", list((BE / "api").rglob("*.py"))),
+    "be_sql_in_routers": count(r"\b(text|select)\(|\b(db|session)\.execute\(", list((BE / "api").rglob("*.py"))),
     "be_routes_without_response_model": sum(
         1 for p in (BE / "api").rglob("*.py")
         for line in p.read_text().splitlines()

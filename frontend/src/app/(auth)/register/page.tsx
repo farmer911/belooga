@@ -3,118 +3,112 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/services/api-client";
+import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
+import { registerSchema, RegisterFormValues } from "@/lib/schemas";
+
+type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
+
+function useDebouncedAvailability(value: string, isValid: boolean, endpoint: string): AvailabilityStatus {
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    if (!isValid) {
+      setDebounced("");
+      return;
+    }
+    const timer = setTimeout(() => setDebounced(value.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [value, isValid]);
+
+  const { data, isFetching } = useQuery<{ available: boolean }>({
+    queryKey: ["availability-check", endpoint, debounced],
+    queryFn: async () => {
+      const res = await apiClient.get<{ available: boolean }>(`${endpoint}${encodeURIComponent(debounced)}`);
+      return res.data;
+    },
+    enabled: isValid && debounced.length > 0,
+  });
+
+  if (!isValid || !debounced) return "idle";
+  if (isFetching) return "checking";
+  if (!data) return "idle";
+  return data.available ? "available" : "taken";
+}
+
+function StatusBadge({ status, okLabel, takenLabel }: { status: AvailabilityStatus; okLabel: string; takenLabel: string }) {
+  if (status === "checking") return <span className="text-xs text-slate-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Checking...</span>;
+  if (status === "available") return <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium"><CheckCircle2 className="w-3 h-3" /> {okLabel}</span>;
+  if (status === "taken") return <span className="text-xs text-red-600 flex items-center gap-1 font-medium"><AlertCircle className="w-3 h-3" /> {takenLabel}</span>;
+  return null;
+}
+
+const INPUT_CLS = "w-full px-3 py-2 bg-surface-card border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
+const ICON_INPUT_CLS = "w-full pl-9 pr-4 py-2 bg-surface-card border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
 
 export default function RegisterPage() {
   const router = useRouter();
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [agreeTerms, setAgreeTerms] = useState(false);
-
-  // Availability validation states
-  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
-  const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
-
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Debounced Username Check
-  useEffect(() => {
-    if (!username || username.trim().length < 3) {
-      setUsernameStatus("idle");
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { firstName: "", lastName: "", username: "", email: "", password: "", agreeTerms: false },
+  });
 
-    const timer = setTimeout(async () => {
-      setUsernameStatus("checking");
-      try {
-        const res = await apiClient.get(`/v1/users/exists/username/?username=${encodeURIComponent(username.trim())}`);
-        setUsernameStatus(res.data.available ? "available" : "taken");
-      } catch {
-        setUsernameStatus("idle");
-      }
-    }, 300);
+  const username = watch("username") || "";
+  const email = watch("email") || "";
+  const usernameStatus = useDebouncedAvailability(username, username.trim().length >= 3, "/v1/users/exists/username/?username=");
+  const emailStatus = useDebouncedAvailability(email, email.includes("@"), "/v1/users/exists/email/?email=");
 
-    return () => clearTimeout(timer);
-  }, [username]);
+  const registerMutation = useMutation({
+    mutationFn: async (values: RegisterFormValues) => {
+      const res = await apiClient.post("/v1/users/register/", {
+        first_name: values.firstName,
+        last_name: values.lastName,
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      });
+      return res.data;
+    },
+    onSuccess: ({ access_token, user }) => {
+      setAccessToken(access_token);
+      setUser(user);
+      router.push(`/user/${user.username}`);
+    },
+    onError: (err: unknown) => {
+      setErrorMessage(getApiErrorDetail(err, "Registration failed. Please verify your details."));
+    },
+  });
 
-  // Debounced Email Check
-  useEffect(() => {
-    if (!email || !email.includes("@")) {
-      setEmailStatus("idle");
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setEmailStatus("checking");
-      try {
-        const res = await apiClient.get(`/v1/users/exists/email/?email=${encodeURIComponent(email.trim())}`);
-        setEmailStatus(res.data.available ? "available" : "taken");
-      } catch {
-        setEmailStatus("idle");
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [email]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!agreeTerms) {
-      setErrorMessage("Please agree to the Terms of Service and Privacy Policy.");
-      return;
-    }
-
+  const onSubmit = handleSubmit(async (values) => {
     if (usernameStatus === "taken" || emailStatus === "taken") {
       setErrorMessage("Please select a unique email and username.");
       return;
     }
-
-    setIsLoading(true);
     setErrorMessage(null);
-
-    try {
-      const response = await apiClient.post("/v1/users/register/", {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        username: username.trim(),
-        email: email.trim(),
-        password,
-      });
-
-      const { access_token, user } = response.data;
-      setAccessToken(access_token);
-      setUser(user);
-
-      // Redirect directly to candidate workspace
-      router.push(`/user/${user.username}`);
-    } catch (err: any) {
-      const detail = err.response?.data?.detail || "Registration failed. Please verify your details.";
-      setErrorMessage(detail);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    await registerMutation.mutateAsync(values);
+  });
 
   return (
-    <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2 bg-[#f8f9fa]">
-      {/* Left Column: Register Form */}
+    <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2 bg-surface-page">
       <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
         <div className="max-w-md w-full mx-auto space-y-8">
           <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold text-[#252525] tracking-tight">
-              Create Candidate Profile
-            </h1>
-            <p className="text-sm text-[#737475]">
+            <h1 className="text-3xl font-extrabold text-typography-main tracking-tight">Create Candidate Profile</h1>
+            <p className="text-sm text-typography-muted">
               Showcase your talent with a 0:30 video pitch and a verified career timeline.
             </p>
           </div>
@@ -126,194 +120,112 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Names row */}
+          <form onSubmit={onSubmit} noValidate className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Jane"
-                  className="w-full px-3 py-2 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-                />
+                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">First Name</label>
+                <input type="text" placeholder="Jane" className={INPUT_CLS} {...register("firstName")} />
+                {errors.firstName && <p className="text-[11px] text-red-600">{errors.firstName.message}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Doe"
-                  className="w-full px-3 py-2 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-                />
+                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Last Name</label>
+                <input type="text" placeholder="Doe" className={INPUT_CLS} {...register("lastName")} />
+                {errors.lastName && <p className="text-[11px] text-red-600">{errors.lastName.message}</p>}
               </div>
             </div>
 
-            {/* Username with Availability Indicator */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                  Username (CV URL Slug)
-                </label>
-                {usernameStatus === "checking" && (
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Checking...
-                  </span>
-                )}
-                {usernameStatus === "available" && (
-                  <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
-                    <CheckCircle2 className="w-3 h-3" /> Available
-                  </span>
-                )}
-                {usernameStatus === "taken" && (
-                  <span className="text-xs text-red-600 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3" /> Already taken
-                  </span>
-                )}
+                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Username (CV URL Slug)</label>
+                <StatusBadge status={usernameStatus} okLabel="Available" takenLabel="Already taken" />
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4" />
-                </div>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><User className="w-4 h-4" /></div>
                 <input
                   type="text"
-                  required
                   data-testid="register-username-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                   placeholder="janedoe"
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
+                  className={ICON_INPUT_CLS}
+                  {...register("username", {
+                    onChange: (e) => setValue("username", e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "")),
+                  })}
                 />
               </div>
-              <p className="text-[11px] text-[#737475]">
-                Your public CV will be at: belooga.com/public/{username || "username"}
-              </p>
+              {errors.username && <p className="text-[11px] text-red-600">{errors.username.message}</p>}
+              <p className="text-[11px] text-typography-muted">Your public CV will be at: belooga.com/public/{username || "username"}</p>
             </div>
 
-            {/* Email with Availability Indicator */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                  Email Address
-                </label>
-                {emailStatus === "checking" && (
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Checking...
-                  </span>
-                )}
-                {emailStatus === "available" && (
-                  <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
-                    <CheckCircle2 className="w-3 h-3" /> Valid
-                  </span>
-                )}
-                {emailStatus === "taken" && (
-                  <span className="text-xs text-red-600 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3" /> Registered
-                  </span>
-                )}
+                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Email Address</label>
+                <StatusBadge status={emailStatus} okLabel="Valid" takenLabel="Registered" />
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  data-testid="register-email-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jane@example.com"
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Mail className="w-4 h-4" /></div>
+                <input type="email" data-testid="register-email-input" placeholder="jane@example.com" className={ICON_INPUT_CLS} {...register("email")} />
               </div>
+              {errors.email && <p className="text-[11px] text-red-600">{errors.email.message}</p>}
             </div>
 
-            {/* Password */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                Password (min 8 characters)
-              </label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Password (min 8 characters)</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  data-testid="register-password-input"
-                  minLength={8}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Lock className="w-4 h-4" /></div>
+                <input type="password" data-testid="register-password-input" placeholder="••••••••" className={ICON_INPUT_CLS} {...register("password")} />
               </div>
+              {errors.password && <p className="text-[11px] text-red-600">{errors.password.message}</p>}
             </div>
 
-            {/* Terms checkbox */}
-            <div className="flex items-start gap-2 pt-2">
-              <input
-                type="checkbox"
-                id="terms"
-                required
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-[#d1d6da] text-[#5bbbae] focus:ring-[#5bbbae]"
-              />
-              <label htmlFor="terms" className="text-xs text-[#515151]">
-                I agree to Belooga's{" "}
-                <Link href="/terms-and-conditions" className="text-[#5bbbae] hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy-policy" className="text-[#5bbbae] hover:underline">
-                  Privacy Policy
-                </Link>
-                .
-              </label>
+            <div className="space-y-1 pt-2">
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  className="mt-1 h-4 w-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
+                  {...register("agreeTerms")}
+                />
+                <label htmlFor="terms" className="text-xs text-typography-heading">
+                  I agree to Belooga&apos;s{" "}
+                  <Link href="/terms-and-conditions" className="text-brand-primary hover:underline">Terms of Service</Link>{" "}
+                  and{" "}
+                  <Link href="/privacy-policy" className="text-brand-primary hover:underline">Privacy Policy</Link>.
+                </label>
+              </div>
+              {errors.agreeTerms && <p className="text-[11px] text-red-600">{errors.agreeTerms.message}</p>}
             </div>
 
             <Button
               type="submit"
               size="lg"
               data-testid="register-submit-btn"
-              disabled={isLoading}
-              className="w-full bg-[#5bbbae] hover:bg-[#497d76] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 mt-4"
+              disabled={registerMutation.isPending}
+              className="w-full bg-brand-primary hover:bg-brand-hover text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? "Creating Profile..." : "Complete Registration"}
+              {registerMutation.isPending ? "Creating Profile..." : "Complete Registration"}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </form>
 
-          <p className="text-center text-sm text-[#737475]">
+          <p className="text-center text-sm text-typography-muted">
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-[#5bbbae] hover:underline">
+            <Link href="/login" className="font-semibold text-brand-primary hover:underline">
               Sign In
             </Link>
           </p>
         </div>
       </div>
 
-      {/* Right Column: Hero Split Visual with #d7ecea Tint */}
       <div className="hidden lg:relative lg:flex flex-col justify-end p-12 bg-slate-900 overflow-hidden">
         <img
           src="/images/home/matt-poster.png"
           alt="Belooga Talent Community"
           className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity"
         />
-        <div className="absolute inset-0 bg-[#d7ecea] opacity-25 mix-blend-color" />
+        <div className="absolute inset-0 bg-brand-overlay opacity-25 mix-blend-color" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
 
         <div className="relative z-10 max-w-lg text-white space-y-4">
-          <div className="inline-block px-3 py-1 rounded-full bg-[#5bbbae]/20 border border-[#5bbbae]/40 text-[#3fc6b7] text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-block px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/40 text-brand-accent text-xs font-semibold uppercase tracking-wider">
             Candidate First
           </div>
           <h2 className="text-3xl font-extrabold leading-snug">

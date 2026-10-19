@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
 
 export interface STARAnalysisItem {
@@ -34,19 +35,20 @@ export interface ATSScanPayload {
 
 export function useATSDiagnostics() {
   const [result, setResult] = useState<ATSScanResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"skills" | "star" | "warnings">("skills");
   const [previewMode, setPreviewMode] = useState<"visual" | "bot_eye">("visual");
 
-  const scanCV = useCallback(async (payload: ATSScanPayload) => {
-    setIsLoading(true);
-    setError(null);
-    try {
+  const scanMutation = useMutation({
+    mutationFn: async (payload: ATSScanPayload) => {
       const response = await apiClient.post<ATSScanResult>("/v1/match/ats-scan", payload);
-      setResult(response.data);
       return response.data;
-    } catch (err: unknown) {
+    },
+    onSuccess: (data) => {
+      setError(null);
+      setResult(data);
+    },
+    onError: (err: unknown) => {
       let msg = "Không thể phân tích CV. Vui lòng thử lại.";
       if (typeof err === "object" && err !== null && "response" in err) {
         const resp = (err as { response?: { data?: { detail?: string } } }).response;
@@ -55,15 +57,19 @@ export function useATSDiagnostics() {
         }
       }
       setError(msg);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+  });
+
+  const scanCV = useCallback(
+    async (payload: ATSScanPayload) => {
+      return scanMutation.mutateAsync(payload);
+    },
+    [scanMutation]
+  );
 
   return {
     result,
-    isLoading,
+    isLoading: scanMutation.isPending,
     error,
     activeTab,
     previewMode,

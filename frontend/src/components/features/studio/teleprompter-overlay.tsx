@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  Mic,
-  MicOff,
-  Pause,
-} from "lucide-react";
+import { Maximize2, Minimize2, RotateCcw, Mic, MicOff, Pause } from "lucide-react";
 import { TeleprompterEditorDialog } from "./teleprompter-editor-dialog";
 
 export interface TeleprompterOverlayProps {
@@ -35,6 +28,11 @@ export interface TeleprompterOverlayProps {
   onResetPrompter: () => void;
   onSimulateVoice: () => void;
 }
+
+const MASK_STYLE = {
+  maskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
+  WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
+};
 
 export function TeleprompterOverlay({
   teleprompterEnabled,
@@ -74,6 +72,8 @@ export function TeleprompterOverlay({
     );
   }
 
+  const pctRead = Math.round((activeWordIndex / Math.max(1, scriptWords.length)) * 100);
+
   if (isPrompterCollapsed) {
     return (
       <div
@@ -81,19 +81,21 @@ export function TeleprompterOverlay({
         className="absolute bottom-12 inset-x-3 sm:inset-x-8 z-20 pointer-events-auto flex items-center justify-between bg-slate-950/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-700/80 shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-2"
       >
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <span className="w-2 h-2 rounded-full bg-[#5bbbae] animate-pulse shrink-0" />
-          <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wide shrink-0">
-            Prompter
-          </span>
-          <span className="text-[10px] text-emerald-400 font-mono shrink-0">
-            ({Math.round((activeWordIndex / Math.max(1, scriptWords.length)) * 100)}%)
-          </span>
+          <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse shrink-0" />
+          <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wide shrink-0">Prompter</span>
+          <span className="text-[10px] text-emerald-400 font-mono shrink-0">({pctRead}%)</span>
           <span className="text-[11px] text-slate-300 bg-slate-900 border border-slate-700/80 px-2 py-0.5 rounded truncate max-w-[140px] sm:max-w-[260px]">
-            Word: <strong className="text-[#5bbbae]">{scriptWords[activeWordIndex] || "Ready"}</strong>
+            Word: <strong className="text-brand-primary">{scriptWords[activeWordIndex] || "Ready"}</strong>
           </span>
           {isRecording && (
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded hidden md:inline shrink-0 bg-slate-800 text-slate-300 border border-slate-700">
-              {isVoiceActive ? "🎤 Voice Active" : !hasVoiceStarted ? "⏳ Awaiting Voice" : "⏸ Paused"}
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded hidden md:inline-flex items-center gap-1 shrink-0 bg-slate-800 text-slate-300 border border-slate-700">
+              {isVoiceActive ? (
+                <><Mic className="w-3 h-3 text-emerald-400" /> Voice Active</>
+              ) : !hasVoiceStarted ? (
+                <><MicOff className="w-3 h-3 text-amber-400" /> Awaiting Voice</>
+              ) : (
+                <><Pause className="w-3 h-3 text-cyan-400" /> Paused</>
+              )}
             </span>
           )}
         </div>
@@ -102,7 +104,7 @@ export function TeleprompterOverlay({
           type="button"
           data-testid="expand-teleprompter-sidebar-btn"
           onClick={() => setIsPrompterCollapsed(false)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#5bbbae] hover:bg-[#4ea89c] text-slate-950 font-bold text-[11px] transition-colors shadow-md cursor-pointer shrink-0"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-brand-primary hover:bg-brand-hover text-slate-950 font-bold text-[11px] transition-colors shadow-md cursor-pointer shrink-0"
         >
           <Maximize2 className="w-3 h-3" /> Expand
         </button>
@@ -112,16 +114,11 @@ export function TeleprompterOverlay({
 
   return (
     <div className="absolute inset-x-2 sm:inset-x-5 top-12 bottom-12 z-20 pointer-events-auto flex flex-col justify-between animate-in fade-in transition-all duration-300">
-      {/* Prompter Header */}
       <div className="flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-t-xl border border-slate-700/70 border-b-0 text-xs shadow-lg">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#5bbbae] animate-pulse" />
-          <span className="font-bold text-slate-200 text-[11px] tracking-wide uppercase">
-            Prompter
-          </span>
-          <span className="text-[10px] text-emerald-400 font-mono hidden sm:inline">
-            ({Math.round((activeWordIndex / Math.max(1, scriptWords.length)) * 100)}% read)
-          </span>
+          <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
+          <span className="font-bold text-slate-200 text-[11px] tracking-wide uppercase">Prompter</span>
+          <span className="text-[10px] text-emerald-400 font-mono hidden sm:inline">({pctRead}% read)</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -132,26 +129,20 @@ export function TeleprompterOverlay({
               data-testid={`prompter-speed-${spd}`}
               onClick={() => setTeleprompterSpeed(spd)}
               className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${
-                teleprompterSpeed === spd
-                  ? "bg-[#5bbbae] text-white font-bold"
-                  : "bg-slate-800 text-slate-400 hover:text-white"
+                teleprompterSpeed === spd ? "bg-brand-primary text-white font-bold" : "bg-slate-800 text-slate-400 hover:text-white"
               }`}
             >
               {spd}wpm
             </button>
           ))}
-
           <button
             type="button"
-            onClick={() =>
-              setTeleprompterFontSize((prev) => (prev === "sm" ? "md" : prev === "md" ? "lg" : "sm"))
-            }
+            onClick={() => setTeleprompterFontSize((prev) => (prev === "sm" ? "md" : prev === "md" ? "lg" : "sm"))}
             className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 hover:text-white border border-slate-700 ml-1"
             title="Toggle Font Size"
           >
             {teleprompterFontSize.toUpperCase()}
           </button>
-
           <button
             type="button"
             data-testid="prompter-reset-btn"
@@ -161,7 +152,6 @@ export function TeleprompterOverlay({
           >
             <RotateCcw className="w-3 h-3" />
           </button>
-
           <button
             type="button"
             data-testid="collapse-teleprompter-sidebar-btn"
@@ -169,21 +159,17 @@ export function TeleprompterOverlay({
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 hover:text-white border border-slate-700 ml-1 cursor-pointer transition-colors"
             title="Collapse teleprompter sidebar"
           >
-            <Minimize2 className="w-3 h-3 text-[#5bbbae]" />
+            <Minimize2 className="w-3 h-3 text-brand-primary" />
             <span className="hidden sm:inline">Collapse</span>
           </button>
         </div>
       </div>
 
-      {/* Scrollable Prompter Body with Auto-scroll and Karaoke-Highlight */}
       <div
-        ref={teleprompterContainerRef as any}
+        ref={teleprompterContainerRef}
         data-testid="teleprompter-text-container"
         className="flex-1 overflow-y-auto bg-slate-950/75 backdrop-blur-md px-4 sm:px-6 py-8 border-x border-slate-700/70 text-center select-none scroll-smooth"
-        style={{
-          maskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
-        }}
+        style={MASK_STYLE}
       >
         <div
           className={`leading-relaxed transition-all ${
@@ -195,22 +181,15 @@ export function TeleprompterOverlay({
           }`}
         >
           {scriptWords.map((word, idx) => {
-            const isPast = idx < activeWordIndex;
             const isCurrent = idx === activeWordIndex;
             const isAwaitingVoice = isRecording && !hasVoiceStarted && isCurrent;
-
-            let wordStyle = "text-slate-100 hover:text-white";
-            if (isCurrent) {
-              if (isAwaitingVoice) {
-                wordStyle =
-                  "border-2 border-[#5bbbae] text-[#5bbbae] bg-[#5bbbae]/15 font-bold scale-105 shadow-[0_0_14px_rgba(91,187,174,0.5)] animate-pulse z-10";
-              } else {
-                wordStyle =
-                  "bg-[#5bbbae] text-slate-950 font-black scale-110 shadow-[0_0_16px_rgba(91,187,174,0.95)] z-10";
-              }
-            } else if (isPast) {
-              wordStyle = "text-slate-500 opacity-60";
-            }
+            const wordStyle = isCurrent
+              ? isAwaitingVoice
+                ? "border-2 border-brand-primary text-brand-primary bg-brand-primary/15 font-bold scale-105 shadow-[0_0_14px_rgba(91,187,174,0.5)] animate-pulse z-10"
+                : "bg-brand-primary text-slate-950 font-black scale-110 shadow-[0_0_16px_rgba(91,187,174,0.95)] z-10"
+              : idx < activeWordIndex
+              ? "text-slate-500 opacity-60"
+              : "text-slate-100 hover:text-white";
 
             return (
               <span
@@ -226,38 +205,25 @@ export function TeleprompterOverlay({
         </div>
       </div>
 
-      {/* Prompter Footer with Voice Detection Status */}
       <div className="flex items-center justify-between bg-slate-950/90 backdrop-blur-md px-3 py-2 rounded-b-xl border border-slate-700/70 border-t-0 text-[11px] text-slate-400 shadow-lg">
         <div className="flex items-center gap-2">
           {isRecording ? (
             isVoiceActive ? (
-              <span
-                data-testid="voice-detection-status"
-                className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] font-semibold animate-pulse"
-              >
+              <span data-testid="voice-detection-status" className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] font-semibold animate-pulse">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
                 <Mic className="w-3.5 h-3.5 text-emerald-400" /> Voice Detected • Highlighting & Scrolling
               </span>
             ) : !hasVoiceStarted ? (
-              <span
-                data-testid="voice-detection-status"
-                className="flex items-center gap-1.5 text-amber-400 font-mono text-[11px] font-medium"
-              >
+              <span data-testid="voice-detection-status" className="flex items-center gap-1.5 text-amber-400 font-mono text-[11px] font-medium">
                 <MicOff className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> Awaiting Voice (Speak script to advance)
               </span>
             ) : (
-              <span
-                data-testid="voice-detection-status"
-                className="flex items-center gap-1.5 text-cyan-300 font-mono text-[11px]"
-              >
+              <span data-testid="voice-detection-status" className="flex items-center gap-1.5 text-cyan-300 font-mono text-[11px]">
                 <Pause className="w-3.5 h-3.5 text-cyan-400" /> Voice Paused • Teleprompter Frozen
               </span>
             )
           ) : (
-            <span
-              data-testid="voice-detection-status"
-              className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px]"
-            >
+            <span data-testid="voice-detection-status" className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px]">
               <Mic className="w-3.5 h-3.5 text-emerald-400" /> Voice Follow & Auto-Scroll Ready
             </span>
           )}
@@ -275,9 +241,7 @@ export function TeleprompterOverlay({
               Speak Now
             </button>
           )}
-          <span className="text-[10px] text-slate-500 hidden sm:inline">
-            Click any word to jump
-          </span>
+          <span className="text-[10px] text-slate-500 hidden sm:inline">Click any word to jump</span>
         </div>
       </div>
     </div>

@@ -75,7 +75,7 @@ class ExpertReviewRepository:
             .options(
                 selectinload(CVReviewOrder.expert),
                 selectinload(CVReviewOrder.package),
-                selectinload(CVReviewOrder.feedback),
+                selectinload(CVReviewOrder.feedback).selectinload(CVReviewFeedback.expert),
             )
             .where(CVReviewOrder.id == order_id)
         )
@@ -90,7 +90,7 @@ class ExpertReviewRepository:
             .options(
                 selectinload(CVReviewOrder.expert),
                 selectinload(CVReviewOrder.package),
-                selectinload(CVReviewOrder.feedback),
+                selectinload(CVReviewOrder.feedback).selectinload(CVReviewFeedback.expert),
             )
             .where(CVReviewOrder.candidate_identity_id == candidate_identity_id)
             .order_by(CVReviewOrder.created_at.desc())
@@ -119,3 +119,19 @@ class ExpertReviewRepository:
         )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
+
+    async def seed_packages_if_empty(self, pkg_seeds: list[tuple]) -> None:
+        if not await self.list_packages():
+            self.db.add_all([
+                CVReviewPackage(name=n, slug=s, description=d, price_cents=p, turn_around_hours=h, is_popular=pop, features=f)
+                for n, s, d, p, h, pop, f in pkg_seeds
+            ])
+            await self.db.commit()
+
+    async def seed_experts_if_empty(self, exp_seeds: list[tuple]) -> None:
+        if not await self.list_experts():
+            self.db.add_all([
+                ExpertProfile(full_name=fn, headline=hl, bio=b, avatar_url=av, company=co, role_category=rc, years_of_experience=yoe, rating=rt, total_reviews_count=cnt, turn_around_days=td, is_active=True)
+                for fn, hl, b, av, co, rc, yoe, rt, cnt, td in exp_seeds
+            ])
+            await self.db.commit()

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { Target, MapPin } from "lucide-react";
+import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalaryPercentileCard } from "@/components/features/salary-benchmark/salary-percentile-card";
@@ -12,54 +14,47 @@ const STACKS = ["Golang", "Python / AI", "React / Frontend", "Java / Spring", "D
 const LEVELS = ["Junior", "Mid-Level", "Senior", "Lead / Architect"];
 const LOCATIONS = ["Ho Chi Minh", "Ha Noi", "Da Nang", "Remote"];
 
+const DEFAULT_SKILLS: SalarySkill[] = [
+  { name: "Apache Kafka", salary_premium: "+25%", popularity_pct: 88 },
+  { name: "Kubernetes & Helm", salary_premium: "+22%", popularity_pct: 82 },
+  { name: "gRPC / Protobuf", salary_premium: "+18%", popularity_pct: 76 },
+  { name: "Redis Cluster", salary_premium: "+15%", popularity_pct: 91 },
+  { name: "Distributed Tracing", salary_premium: "+14%", popularity_pct: 65 },
+];
+
+interface SalaryBenchmarkData {
+  p25_salary_vnd: number;
+  p50_salary_vnd: number;
+  p75_salary_vnd: number;
+  sample_size_jds: number;
+  top_paid_skills: SalarySkill[];
+}
+
 export default function SalaryBenchmarkPage() {
   const [techStack, setTechStack] = useState<string>("Golang");
   const [level, setLevel] = useState<string>("Senior");
   const [location, setLocation] = useState<string>("Ho Chi Minh");
 
-  const [p25, setP25] = useState<number>(43200000);
-  const [p50, setP50] = useState<number>(54000000);
-  const [p75, setP75] = useState<number>(69600000);
-  const [sampleSize, setSampleSize] = useState<number>(342);
-  const [skills, setSkills] = useState<SalarySkill[]>([
-    { name: "Apache Kafka", salary_premium: "+25%", popularity_pct: 88 },
-    { name: "Kubernetes & Helm", salary_premium: "+22%", popularity_pct: 82 },
-    { name: "gRPC / Protobuf", salary_premium: "+18%", popularity_pct: 76 },
-    { name: "Redis Cluster", salary_premium: "+15%", popularity_pct: 91 },
-    { name: "Distributed Tracing", salary_premium: "+14%", popularity_pct: 65 },
-  ]);
+  const { data: benchmark } = useQuery<SalaryBenchmarkData>({
+    queryKey: ["salary-benchmark", techStack, level, location],
+    queryFn: async () => {
+      const queryStack = techStack.split(" ")[0];
+      const queryLevel = level.split(" ")[0];
+      const res = await apiClient.get<SalaryBenchmarkData>(
+        `/v1/catalogs/salary-benchmark?tech_stack=${encodeURIComponent(queryStack)}&level=${encodeURIComponent(queryLevel)}&location=${encodeURIComponent(location)}`,
+        { timeout: 3000 }
+      );
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchBenchmark() {
-      try {
-        const queryStack = techStack.split(" ")[0];
-        const queryLevel = level.split(" ")[0];
-        const res = await axios.get(
-          `http://localhost:8000/v1/catalogs/salary-benchmark?tech_stack=${queryStack}&level=${queryLevel}&location=${location}`,
-          { timeout: 3000 }
-        );
-        if (isMounted && res.data) {
-          setP25(res.data.p25_salary_vnd);
-          setP50(res.data.p50_salary_vnd);
-          setP75(res.data.p75_salary_vnd);
-          setSampleSize(res.data.sample_size_jds);
-          setSkills(res.data.top_paid_skills);
-        }
-      } catch {
-        // Fallback calculations for responsive client interaction
-        const isSenior = level.includes("Senior") || level.includes("Lead");
-        const base = isSenior ? 48000000 : 25000000;
-        setP25(Math.round(base * 0.8));
-        setP50(base);
-        setP75(Math.round(base * 1.3));
-      }
-    }
-    fetchBenchmark();
-    return () => {
-      isMounted = false;
-    };
-  }, [techStack, level, location]);
+  const isSenior = level.includes("Senior") || level.includes("Lead");
+  const fallbackBase = isSenior ? 48000000 : 25000000;
+  const p25 = benchmark?.p25_salary_vnd ?? Math.round(fallbackBase * 0.8);
+  const p50 = benchmark?.p50_salary_vnd ?? fallbackBase;
+  const p75 = benchmark?.p75_salary_vnd ?? Math.round(fallbackBase * 1.3);
+  const sampleSize = benchmark?.sample_size_jds ?? 342;
+  const skills = benchmark?.top_paid_skills ?? DEFAULT_SKILLS;
 
   return (
     <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
@@ -80,7 +75,8 @@ export default function SalaryBenchmarkPage() {
         <div className="flex items-center gap-2">
           <Link href="/ats-diagnostics">
             <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3.5 h-8 rounded-lg shadow-xs flex items-center gap-1.5">
-              <span>🎯</span> So Khớp Với JD Ngay
+              <Target className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>So Khớp Với JD Ngay</span>
             </Button>
           </Link>
         </div>
@@ -138,13 +134,14 @@ export default function SalaryBenchmarkPage() {
                 <button
                   key={loc}
                   onClick={() => setLocation(loc)}
-                  className={`px-2.5 py-1 rounded-md text-xs transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs transition-colors inline-flex items-center gap-1 cursor-pointer ${
                     location === loc
                       ? "bg-brand-overlay text-brand-dark font-semibold border border-teal-200"
                       : "bg-surface-page border border-surface-border text-typography-muted hover:text-typography-main"
                   }`}
                 >
-                  📍 {loc}
+                  <MapPin className="w-3 h-3" aria-hidden="true" />
+                  <span>{loc}</span>
                 </button>
               ))}
             </div>

@@ -34,13 +34,13 @@ export function FormField({
         <div className="flex items-center justify-between">
           <label
             htmlFor={fieldId}
-            className="block text-xs font-semibold uppercase tracking-wider text-[#515151]"
+            className="block text-xs font-semibold uppercase tracking-wider text-typography-heading"
           >
             {label}
             {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
           </label>
           {optional && (
-            <span className="text-xs text-[#737475] font-normal">
+            <span className="text-xs text-typography-muted font-normal">
               (Optional)
             </span>
           )}
@@ -79,7 +79,7 @@ export function FormField({
           <span>{error}</span>
         </p>
       ) : helperText ? (
-        <p id={helperId} className="text-xs text-[#737475] mt-1">
+        <p id={helperId} className="text-xs text-typography-muted mt-1">
           {helperText}
         </p>
       ) : null}

@@ -40,9 +40,9 @@ export function SkillsCard({
   };
 
   return (
-    <div data-testid="skills-container" className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-4">
+    <div data-testid="skills-container" className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-[#252525]">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-typography-main">
           Skills & Strengths
         </h3>
         {isEditable && onAddSkill && (
@@ -50,7 +50,7 @@ export function SkillsCard({
             type="button"
             data-testid="add-skill-btn"
             onClick={() => setModalOpen(true)}
-            className="text-xs font-semibold text-[#5bbbae] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs font-semibold text-brand-primary hover:underline flex items-center gap-1 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" /> Add
           </button>
@@ -62,7 +62,7 @@ export function SkillsCard({
           <span
             key={idx}
             data-testid="skill-badge"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#f8f9fa] border border-[#d1d6da] rounded-md text-xs font-medium text-[#515151] hover:border-[#5bbbae] transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading hover:border-brand-primary transition-colors"
           >
             <span>{skill}</span>
             {isEditable && onRemoveSkill && (
@@ -82,8 +82,8 @@ export function SkillsCard({
 
       {/* Suggested additions */}
       {isEditable && onAddSkill && (
-        <div className="pt-2 border-t border-[#f0f2f5]">
-          <p className="text-[11px] text-[#737475] mb-1.5">Suggested additions:</p>
+        <div className="pt-2 border-t border-surface-divider">
+          <p className="text-[11px] text-typography-muted mb-1.5">Suggested additions:</p>
           <div className="flex flex-wrap gap-1.5">
             {SUGGESTIONS.filter((s) => !skills.includes(s)).map((s) => (
               <button
@@ -91,7 +91,7 @@ export function SkillsCard({
                 type="button"
                 data-testid="skill-suggestion-item"
                 onClick={() => handleAdd(s)}
-                className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-[#5bbbae]/15 hover:text-[#21655e] text-[#515151] transition-colors cursor-pointer"
+                className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-brand-primary/15 hover:text-brand-dark text-typography-heading transition-colors cursor-pointer"
               >
                 + {s}
               </button>
@@ -105,7 +105,7 @@ export function SkillsCard({
         <DialogOverlay />
         <DialogContent className="max-w-sm w-full p-6 space-y-4">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold text-[#252525]">Add Skill or Strength</DialogTitle>
+            <DialogTitle className="text-base font-bold text-typography-main">Add Skill or Strength</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
@@ -128,7 +128,7 @@ export function SkillsCard({
               </Button>
               <Button
                 size="sm"
-                className="bg-[#5bbbae] hover:bg-[#497d76] text-white"
+                className="bg-brand-primary hover:bg-brand-hover text-white"
                 onClick={() => handleAdd(newSkillText)}
               >
                 Add Skill

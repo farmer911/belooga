@@ -8,7 +8,6 @@ import asyncio
 import logging
 import os
 import re
-import shutil
 import subprocess
 from typing import Optional, Tuple
 import uuid
@@ -106,8 +105,8 @@ async def transcode_to_streaming_mp4(raw_path: str, mp4_path: str, fallback_path
     if transcode_success:
         try:
             await asyncio.to_thread(os.remove, raw_path)
-        except Exception:
-            pass
+        except OSError as cleanup_err:
+            logger.debug(f"Raw video cleanup skipped for {raw_path}: {cleanup_err}")
         return mp4_path, os.path.basename(mp4_path)
     else:
         try:

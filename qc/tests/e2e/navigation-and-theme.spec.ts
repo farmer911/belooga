@@ -70,4 +70,21 @@ test.describe('Navigation, Ecosystem Dropdown & Theme Toggle Quality Gate', () =
     const updatedTheme = await page.evaluate(() => localStorage.getItem('belooga-theme'));
     expect(updatedTheme).toBe('light');
   });
+
+  test('TC-NAV-003: Mobile 375px responsive navigation drawer and Dark Mode surface parity', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const mobileToggle = page.locator('[data-testid="mobile-menu-toggle"]');
+    await expect(mobileToggle).toBeVisible();
+    await mobileToggle.click();
+
+    const mobileDrawer = page.locator('[data-testid="mobile-nav-drawer"]');
+    await expect(mobileDrawer).toBeVisible();
+    await expect(mobileDrawer.locator('a[href="/expert-review"]')).toBeVisible();
+    await expect(mobileDrawer.locator('a[href="/careers"]')).toBeVisible();
+    await expect(mobileDrawer.locator('a[href="/blog"]')).toBeVisible();
+  });
 });
+

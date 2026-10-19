@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -27,7 +28,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <div
-        className="w-8 h-8 rounded-lg border border-surface-border bg-surface-card opacity-50"
+        className="w-9 h-9 rounded-lg border border-surface-border bg-surface-card opacity-50"
         aria-hidden="true"
       />
     );
@@ -36,19 +37,16 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
+      data-testid="theme-toggle-btn"
       onClick={toggleTheme}
       aria-label={isDark ? "Chuyển sang chế độ Sáng" : "Chuyển sang chế độ Tối"}
       title={isDark ? "Chế độ Sáng" : "Chế độ Tối"}
-      className="w-8 h-8 flex items-center justify-center rounded-lg border border-surface-border bg-surface-card hover:bg-surface-page text-typography-heading hover:text-brand-primary transition-colors cursor-pointer shadow-xs"
+      className="w-9 h-9 flex items-center justify-center rounded-lg border border-surface-border bg-surface-card hover:bg-surface-page text-typography-heading hover:text-brand-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer shadow-xs"
     >
       {isDark ? (
-        <span className="text-sm select-none" role="img" aria-label="Sun">
-          ☀️
-        </span>
+        <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
       ) : (
-        <span className="text-sm select-none" role="img" aria-label="Moon">
-          🌙
-        </span>
+        <Moon className="w-4 h-4 text-typography-heading" aria-hidden="true" />
       )}
     </button>
   );

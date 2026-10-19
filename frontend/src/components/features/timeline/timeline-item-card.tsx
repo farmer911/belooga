@@ -57,26 +57,26 @@ export const TimelineItemCard = React.memo(function TimelineItemCard({
         isDraggable ? "cursor-move" : ""
       } ${
         isDragged
-          ? "opacity-40 border-dashed border-[#5bbbae] bg-slate-50"
+          ? "opacity-40 border-dashed border-brand-primary bg-slate-50"
           : isDragOver
-          ? "border-[#5bbbae] bg-teal-50/40 shadow-md scale-[1.01]"
-          : "border-[#d1d6da] bg-[#f8f9fa] hover:border-[#5bbbae]"
+          ? "border-brand-primary bg-teal-50/40 shadow-md scale-[1.01]"
+          : "border-surface-border bg-surface-page hover:border-brand-primary"
       }`}
     >
       {isEditable && isDraggable && (
-        <div className="text-slate-400 group-hover:text-[#5bbbae] pt-1" data-testid="dnd-handle">
+        <div className="text-slate-400 group-hover:text-brand-primary pt-1" data-testid="dnd-handle">
           <GripVertical className="w-5 h-5 cursor-grab active:cursor-grabbing" />
         </div>
       )}
 
       {/* Clean Badge Icon */}
-      <div className="w-12 h-12 rounded-lg bg-[#5bbbae]/10 border border-[#5bbbae]/20 flex items-center justify-center flex-shrink-0 text-[#21655e] font-bold text-base">
-        {companyInitials || <Briefcase className="w-5 h-5 text-[#5bbbae]" />}
+      <div className="w-12 h-12 rounded-lg bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center flex-shrink-0 text-brand-dark font-bold text-base">
+        {companyInitials || <Briefcase className="w-5 h-5 text-brand-primary" />}
       </div>
 
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-[#252525]">{title}</h3>
+          <h3 className="text-base font-bold text-typography-main">{title}</h3>
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-400 flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
@@ -95,9 +95,9 @@ export const TimelineItemCard = React.memo(function TimelineItemCard({
             )}
           </div>
         </div>
-        <p className="text-xs font-semibold text-[#5bbbae]">{companyName}</p>
+        <p className="text-xs font-semibold text-brand-primary">{companyName}</p>
         {description && (
-          <p className="text-xs text-[#666666] leading-relaxed pt-1">
+          <p className="text-xs text-typography-body leading-relaxed pt-1">
             {description}
           </p>
         )}

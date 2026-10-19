@@ -3,56 +3,57 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/services/api-client";
+import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
+import { loginSchema, LoginFormValues } from "@/lib/schemas";
 
 export default function LoginPage() {
   const router = useRouter();
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrorMessage(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-    try {
-      const response = await apiClient.post("/v1/auth/login/", {
-        email: email.trim(),
-        password,
-      });
-
-      const { access_token, user } = response.data;
+  const loginMutation = useMutation({
+    mutationFn: async (values: LoginFormValues) => {
+      const response = await apiClient.post("/v1/auth/login/", values);
+      return response.data;
+    },
+    onSuccess: ({ access_token, user }) => {
       setAccessToken(access_token);
       setUser(user);
-
-      // Redirect to Candidate Workspace
       router.push(`/user/${user.username}`);
-    } catch (err: any) {
-      const detail = err.response?.data?.detail || "Invalid credentials. Please verify your email and password.";
-      setErrorMessage(detail);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    onError: (err: unknown) => {
+      setErrorMessage(getApiErrorDetail(err, "Invalid credentials. Please verify your email and password."));
+    },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    setErrorMessage(null);
+    await loginMutation.mutateAsync(values);
+  });
 
   return (
-    <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2 bg-[#f8f9fa]">
-      {/* Left Column: Form Area */}
+    <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2 bg-surface-page">
       <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
         <div className="max-w-md w-full mx-auto space-y-8">
           <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold text-[#252525] tracking-tight">
-              Welcome Back
-            </h1>
-            <p className="text-sm text-[#737475]">
+            <h1 className="text-3xl font-extrabold text-typography-main tracking-tight">Welcome Back</h1>
+            <p className="text-sm text-typography-muted">
               Log in to your Belooga account to manage your profile, elevator pitch, and career timeline.
             </p>
           </div>
@@ -64,36 +65,28 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={onSubmit} noValidate className="space-y-5">
             <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                Email Address
-              </label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Email Address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                   <Mail className="w-5 h-5" />
                 </div>
                 <input
                   type="email"
-                  required
                   data-testid="login-email-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae] focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-surface-card border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all"
+                  {...register("email")}
                 />
               </div>
+              {errors.email && <p className="text-[11px] text-red-600">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#515151]">
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-medium text-[#5bbbae] hover:underline"
-                >
+                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Password</label>
+                <Link href="/forgot-password" className="text-xs font-medium text-brand-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -103,61 +96,51 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="password"
-                  required
                   data-testid="login-password-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae] focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-surface-card border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all"
+                  {...register("password")}
                 />
               </div>
+              {errors.password && <p className="text-[11px] text-red-600">{errors.password.message}</p>}
             </div>
 
             <Button
               type="submit"
               size="lg"
               data-testid="login-submit-btn"
-              disabled={isLoading}
-              className="w-full bg-[#5bbbae] hover:bg-[#497d76] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
+              disabled={loginMutation.isPending}
+              className="w-full bg-brand-primary hover:bg-brand-hover text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2"
             >
-              {isLoading ? "Signing in..." : "Sign In to Account"}
+              {loginMutation.isPending ? "Signing in..." : "Sign In to Account"}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#d1d6da]" />
+              <div className="w-full border-t border-surface-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#f8f9fa] px-3 text-[#737475]">Or continue with</span>
+              <span className="bg-surface-page px-3 text-typography-muted">Or continue with</span>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              className="flex items-center justify-center py-2.5 px-4 border border-[#d1d6da] bg-white rounded-lg text-xs font-semibold text-[#515151] hover:bg-slate-50 transition-colors"
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center py-2.5 px-4 border border-[#d1d6da] bg-white rounded-lg text-xs font-semibold text-[#515151] hover:bg-slate-50 transition-colors"
-            >
-              LinkedIn
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center py-2.5 px-4 border border-[#d1d6da] bg-white rounded-lg text-xs font-semibold text-[#515151] hover:bg-slate-50 transition-colors"
-            >
-              Facebook
-            </button>
+            {["Google", "LinkedIn", "Facebook"].map((provider) => (
+              <button
+                key={provider}
+                type="button"
+                className="flex items-center justify-center py-2.5 px-4 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-slate-50 transition-colors"
+              >
+                {provider}
+              </button>
+            ))}
           </div>
 
-          <p className="text-center text-sm text-[#737475]">
+          <p className="text-center text-sm text-typography-muted">
             Don't have a candidate account yet?{" "}
-            <Link href="/register" className="font-semibold text-[#5bbbae] hover:underline">
+            <Link href="/register" className="font-semibold text-brand-primary hover:underline">
               Create Profile
             </Link>
           </p>
@@ -171,11 +154,11 @@ export default function LoginPage() {
           alt="Belooga Candidate Experience"
           className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity"
         />
-        <div className="absolute inset-0 bg-[#d7ecea] opacity-25 mix-blend-color" />
+        <div className="absolute inset-0 bg-brand-overlay opacity-25 mix-blend-color" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
 
         <div className="relative z-10 max-w-lg text-white space-y-4">
-          <div className="inline-block px-3 py-1 rounded-full bg-[#5bbbae]/20 border border-[#5bbbae]/40 text-[#3fc6b7] text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-block px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/40 text-brand-accent text-xs font-semibold uppercase tracking-wider">
             Verified Video Resumes
           </div>
           <h2 className="text-3xl font-extrabold leading-snug">

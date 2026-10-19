@@ -18,7 +18,7 @@ description: Candidate profile CRUD, visibility (is_hidden), PII privacy, and sk
 - Router: `backend/app/api/v1/endpoints/profile.py`
 - Service: `backend/app/services/profile_service.py`
 - Repository: `backend/app/repositories/profile_repo.py`
-- Tests: `backend/tests/test_idor_guards.py`, `backend/tests/test_profile_privacy_and_pii.py`, `backend/tests/test_timeline_reorder.py`
+- Tests: `backend/tests/test_idor_guards.py`, `backend/tests/test_profile_privacy_and_pii.py`
 <!-- AUTO:END -->
 
 Flow: router (`app/api/v1/endpoints/profile.py`) -> `ProfileService` -> `ProfileRepository` -> SQLAlchemy models.

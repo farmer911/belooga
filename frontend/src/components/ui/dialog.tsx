@@ -156,7 +156,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
           onClick?.(e);
         }}
         className={cn(
-          "relative z-50 w-full rounded-xl bg-white p-6 shadow-xl border border-[#d1d6da] transition-all duration-200 animate-in fade-in zoom-in-95",
+          "relative z-50 w-full rounded-xl bg-surface-card text-typography-main p-6 shadow-xl border border-surface-border transition-all duration-200 animate-in fade-in zoom-in-95",
           sizeStyles[size],
           className
         )}
@@ -167,9 +167,9 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="absolute right-4 top-4 rounded-md p-1.5 text-[#737475] hover:text-[#252525] hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
+            className="absolute right-4 top-4 rounded-md p-1.5 text-typography-muted hover:text-typography-main hover:bg-surface-divider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         )}
         {children}
@@ -201,7 +201,7 @@ export function DialogTitle({
     <h2
       id={titleId}
       className={cn(
-        "text-lg font-bold text-[#252525] leading-none tracking-tight",
+        "text-lg font-bold text-typography-main leading-none tracking-tight",
         className
       )}
       {...props}
@@ -218,7 +218,7 @@ export function DialogDescription({
   return (
     <p
       id={descId}
-      className={cn("text-sm text-[#737475] mt-1", className)}
+      className={cn("text-sm text-typography-muted mt-1", className)}
       {...props}
     />
   );

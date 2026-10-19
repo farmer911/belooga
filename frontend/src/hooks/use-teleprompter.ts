@@ -5,6 +5,27 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const DEFAULT_SCRIPT =
   "Hello, I am a passionate Senior Software Engineer with deep expertise in full-stack architecture, high-performance distributed systems, and modern UI engineering.\n\nOver the past 6 years, I have spearheaded the architecture of resilient cloud-native platforms, designed scalable microservices handling millions of daily transactions, and crafted buttery-smooth user interfaces.\n\nI thrive in fast-paced environments where code quality, clean architecture, and rapid execution matter. Excited to connect and build impactful products together!";
 
+interface SpeechRecognitionResultEvent {
+  resultIndex: number;
+  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+}
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  SpeechRecognition?: new () => SpeechRecognitionInstance;
+  webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+}
+
 export function useTeleprompter(isRecording: boolean) {
   const [teleprompterEnabled, setTeleprompterEnabled] = useState(true);
   const [isPrompterCollapsed, setIsPrompterCollapsed] = useState(false);
@@ -22,7 +43,7 @@ export function useTeleprompter(isRecording: boolean) {
 
   const scriptFileInputRef = useRef<HTMLInputElement>(null);
   const teleprompterContainerRef = useRef<HTMLDivElement>(null);
-  const speechRecognitionRef = useRef<any>(null);
+  const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   // Parse words
   useEffect(() => {
@@ -55,8 +76,8 @@ export function useTeleprompter(isRecording: boolean) {
       if (typeof navigator !== "undefined" && navigator.webdriver) {
         return;
       }
-      const SpeechRecognitionClass =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const win = window as WindowWithSpeechRecognition;
+      const SpeechRecognitionClass = win.SpeechRecognition || win.webkitSpeechRecognition;
 
       if (SpeechRecognitionClass) {
         try {
@@ -65,7 +86,7 @@ export function useTeleprompter(isRecording: boolean) {
           recognizer.interimResults = true;
           recognizer.lang = navigator.language || "en-US";
 
-          recognizer.onresult = (event: any) => {
+          recognizer.onresult = (event: SpeechRecognitionResultEvent) => {
             let transcript = "";
             for (let i = event.resultIndex; i < event.results.length; i++) {
               transcript += event.results[i][0].transcript + " ";

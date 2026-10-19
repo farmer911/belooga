@@ -36,7 +36,7 @@ export default function ExpertReviewPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-surface-card">
       {/* 1. Hero Section */}
       <ExpertHero
         onBrowseExperts={scrollToExperts}

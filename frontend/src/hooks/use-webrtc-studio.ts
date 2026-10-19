@@ -76,42 +76,39 @@ export function useWebRTCStudio(
     }
   }, [mediaStream, recordedVideoUrl, isOpen]);
 
-  const handleDeviceChange = async (id: string) => {
-    setSelectedDeviceId(id);
+  const reacquireStream = async (
+    devId: string,
+    res: Resolution,
+    ratio: AspectRatio,
+    audioId: string
+  ) => {
     if (isRecordingRef.current) return;
     if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
-    const stream = (await acquireStream(id, selectedResolution, selectedRatio, selectedAudioDeviceId)) ||
-      createStudioPreviewStream(candidateName, getResolutionConfig(selectedResolution, selectedRatio).width, getResolutionConfig(selectedResolution, selectedRatio).height, selectedRatio, canvasAnimationRef.current);
+    const cfg = getResolutionConfig(res, ratio);
+    const stream =
+      (await acquireStream(devId, res, ratio, audioId)) ||
+      createStudioPreviewStream(candidateName, cfg.width, cfg.height, ratio, canvasAnimationRef.current);
     setMediaStream(stream);
+  };
+
+  const handleDeviceChange = async (id: string) => {
+    setSelectedDeviceId(id);
+    await reacquireStream(id, selectedResolution, selectedRatio, selectedAudioDeviceId);
   };
 
   const handleAudioDeviceChange = async (id: string) => {
     setSelectedAudioDeviceId(id);
-    if (isRecordingRef.current) return;
-    if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
-    const stream = (await acquireStream(selectedDeviceId, selectedResolution, selectedRatio, id)) ||
-      createStudioPreviewStream(candidateName, getResolutionConfig(selectedResolution, selectedRatio).width, getResolutionConfig(selectedResolution, selectedRatio).height, selectedRatio, canvasAnimationRef.current);
-    setMediaStream(stream);
+    await reacquireStream(selectedDeviceId, selectedResolution, selectedRatio, id);
   };
 
   const handleResolutionChange = async (res: Resolution) => {
     setSelectedResolution(res);
-    if (isRecordingRef.current) return;
-    if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
-    const cfg = getResolutionConfig(res, selectedRatio);
-    const stream = (await acquireStream(selectedDeviceId, res, selectedRatio, selectedAudioDeviceId)) ||
-      createStudioPreviewStream(candidateName, cfg.width, cfg.height, selectedRatio, canvasAnimationRef.current);
-    setMediaStream(stream);
+    await reacquireStream(selectedDeviceId, res, selectedRatio, selectedAudioDeviceId);
   };
 
   const handleRatioChange = async (ratio: AspectRatio) => {
     setSelectedRatio(ratio);
-    if (isRecordingRef.current) return;
-    if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
-    const cfg = getResolutionConfig(selectedResolution, ratio);
-    const stream = (await acquireStream(selectedDeviceId, selectedResolution, ratio, selectedAudioDeviceId)) ||
-      createStudioPreviewStream(candidateName, cfg.width, cfg.height, ratio, canvasAnimationRef.current);
-    setMediaStream(stream);
+    await reacquireStream(selectedDeviceId, selectedResolution, ratio, selectedAudioDeviceId);
   };
 
   const startStudio = useCallback(async () => {

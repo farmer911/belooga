@@ -2,6 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 
+interface WindowWithWebkitAudio extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
+interface SyntheticMediaStream extends MediaStream {
+  isSynthetic?: boolean;
+}
+
 export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean) {
   const [audioMeterLevel, setAudioMeterLevel] = useState(0);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -11,7 +19,7 @@ export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean
     let active = true;
     if (isActive && typeof window !== "undefined") {
       try {
-        const AudioClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioClass = window.AudioContext || (window as WindowWithWebkitAudio).webkitAudioContext;
         if (AudioClass) {
           const ctx = new AudioClass();
           audioContextRef.current = ctx;
@@ -19,7 +27,7 @@ export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean
           analyser.fftSize = 64;
           analyser.smoothingTimeConstant = 0.4;
           const tracks = mediaStream?.getAudioTracks() || [];
-          if (tracks.length > 0 && !(mediaStream as any)?.isSynthetic) {
+          if (tracks.length > 0 && !(mediaStream as SyntheticMediaStream | null)?.isSynthetic) {
             try {
               const src = ctx.createMediaStreamSource(mediaStream!);
               src.connect(analyser);

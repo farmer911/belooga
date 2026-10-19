@@ -6,13 +6,6 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class STARAnalysisItem(BaseModel):
-    original_text: str
-    critique: str
-    suggested_star_rewrite: str
-    metrics_detected: List[str] = Field(default_factory=list)
-
-
 class ATSScanRequest(BaseModel):
     job_title: str = Field(..., max_length=255, description="Target job position title")
     company_name: Optional[str] = Field(None, max_length=255, description="Target hiring company name")

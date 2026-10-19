@@ -3,50 +3,54 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Lock, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { passwordChangeSchema, PasswordFormValues } from "@/lib/schemas";
+
+const INPUT_CLS =
+  "w-full px-3 py-2 border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
 
 export default function AccountSettingsPage() {
   const params = useParams();
   const username = params.username as string;
   const router = useRouter();
-
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordChanged, setPasswordChanged] = useState(false);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword === confirmPassword) {
-      setPasswordChanged(true);
-      setTimeout(() => setPasswordChanged(false), 3000);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } else {
-      alert("New passwords do not match.");
-    }
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
+  });
+
+  const onPasswordSubmit = handleSubmit(() => {
+    setPasswordChanged(true);
+    setTimeout(() => setPasswordChanged(false), 3000);
+    reset();
+  });
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] py-10">
+    <div className="min-h-screen bg-surface-page py-10">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        
         <div className="flex items-center justify-between">
           <Link
             href={`/user/${username}`}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-[#5bbbae] hover:underline"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-brand-primary hover:underline"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Workspace
           </Link>
-          <span className="text-xs text-[#737475]">Account Security @{username}</span>
+          <span className="text-xs text-typography-muted">Account Security @{username}</span>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#d1d6da] p-8 shadow-sm space-y-6">
+        <div className="bg-surface-card rounded-xl border border-surface-border p-8 shadow-sm space-y-6">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-[#252525]">Account Settings</h1>
-            <p className="text-sm text-[#737475]">
+            <h1 className="text-2xl font-bold text-typography-main">Account Settings</h1>
+            <p className="text-sm text-typography-muted">
               Manage your credentials, password security, and account preferences.
             </p>
           </div>
@@ -58,60 +62,41 @@ export default function AccountSettingsPage() {
             </div>
           )}
 
-          {/* Change Password Form */}
-          <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-2" data-testid="settings-password-form">
-            <h3 className="text-base font-bold text-[#252525] flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[#5bbbae]" /> Change Password
+          <form onSubmit={onPasswordSubmit} noValidate className="space-y-4 pt-2" data-testid="settings-password-form">
+            <h3 className="text-base font-bold text-typography-main flex items-center gap-2">
+              <Lock className="w-4 h-4 text-brand-primary" /> Change Password
             </h3>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#515151]">Current Password</label>
-              <input
-                type="password"
-                required
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-              />
+              <label className="text-xs font-semibold text-typography-heading">Current Password</label>
+              <input type="password" className={INPUT_CLS} {...register("currentPassword")} />
+              {errors.currentPassword && <p className="text-[11px] text-red-600">{errors.currentPassword.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">New Password</label>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-                />
+                <label className="text-xs font-semibold text-typography-heading">New Password</label>
+                <input type="password" className={INPUT_CLS} {...register("newPassword")} />
+                {errors.newPassword && <p className="text-[11px] text-red-600">{errors.newPassword.message}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">Confirm New Password</label>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#d1d6da] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5bbbae]"
-                />
+                <label className="text-xs font-semibold text-typography-heading">Confirm New Password</label>
+                <input type="password" className={INPUT_CLS} {...register("confirmPassword")} />
+                {errors.confirmPassword && <p className="text-[11px] text-red-600">{errors.confirmPassword.message}</p>}
               </div>
             </div>
 
-            <Button type="submit" className="bg-[#5bbbae] hover:bg-[#497d76] text-white">
+            <Button type="submit" className="bg-brand-primary hover:bg-brand-hover text-white">
               Update Password
             </Button>
           </form>
 
-          {/* Danger Zone */}
-          <div className="pt-8 border-t border-[#f0f2f5] space-y-4">
+          <div className="pt-8 border-t border-surface-divider space-y-4">
             <div className="space-y-1">
               <h3 className="text-base font-bold text-red-600 flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5" /> Danger Zone
               </h3>
-              <p className="text-xs text-[#737475]">
+              <p className="text-xs text-typography-muted">
                 Once you delete your account, your profile, video pitch, timeline, and resume will be permanently erased.
               </p>
             </div>

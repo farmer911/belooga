@@ -1,5 +1,6 @@
 ---
-trigger: glob: qc/**
+trigger: glob
+globs: qc/**
 description: Quality Control & Playwright test automation rules for Belooga.
 ---
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata: Metadata = {
   title: "Belooga — Talent Discovery & Video Elevator Pitch Platform",
@@ -23,9 +24,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-surface-page text-typography-main transition-colors duration-200">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <QueryProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </QueryProvider>
       </body>
     </html>
   );

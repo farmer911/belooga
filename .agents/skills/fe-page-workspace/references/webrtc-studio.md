@@ -18,14 +18,16 @@ This section maintains responsibility for:
 ---
 
 ## 2. API Contracts & Chunked Uploads
-- **Upload Chunk:** `POST /v1/media/upload/chunk/` (`multipart/form-data`)
-- **Complete Upload:** `POST /v1/media/upload/complete/` (`{ "filename": "...", "total_chunks": N }`)
+- **Upload Chunk:** `POST /v1/media/upload/chunk` (`multipart/form-data`)
+- **Complete Upload:** `POST /v1/media/upload/complete` (`{ "filename": "...", "total_chunks": N }`)
 
 ---
 
 ## 3. QC Anti-Regression Selectors
-- `[data-testid="studio-modal"]`: Dialog containing the WebRTC recording studio.
-- `[data-testid="open-studio-btn"]`: Trigger button opening the studio modal.
-- `[data-testid="record-toggle-btn"]`: Start/stop recording button.
-- `[data-testid="studio-viewfinder"]`: Camera stream preview element.
-- `[data-testid="teleprompter-overlay"]`: Scrolling teleprompter text container.
+- `[data-testid="record-pitch-studio-btn"]`: Trigger button opening the studio modal.
+- `[data-testid="studio-record-btn"]`: Start recording button.
+- `[data-testid="studio-stop-btn"]`: Stop recording button.
+- `[data-testid="studio-retake-btn"]`: Retake recording button.
+- `[data-testid="studio-save-btn"]`: Save and upload recording button.
+- `[data-testid="studio-live-cam"]`: Camera stream preview element.
+- `[data-testid="teleprompter-text-container"]`: Scrolling teleprompter text container.

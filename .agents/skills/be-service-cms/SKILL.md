@@ -18,7 +18,7 @@ description: Public CMS endpoints, contact inquiries, FAQs, job postings, and pr
 - Router: `backend/app/api/v1/endpoints/cms.py`
 - Service: `backend/app/services/cms_service.py`
 - Repository: `backend/app/repositories/cms_repo.py`
-- Tests: _none — add one_
+- Tests: `backend/tests/test_backend_foundation.py`
 <!-- AUTO:END -->
 
 Flow: router (`app/api/v1/endpoints/cms.py`) -> `CmsService` -> `CmsRepository` -> SQLAlchemy models.

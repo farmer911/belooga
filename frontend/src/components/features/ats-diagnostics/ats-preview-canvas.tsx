@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { FileText, Bot } from "lucide-react";
 
 interface ATSPreviewCanvasProps {
   cvText: string;
@@ -17,19 +18,20 @@ export function ATSPreviewCanvas({ cvText, previewMode, setPreviewMode }: ATSPre
   return (
     <section className="lg:col-span-7 flex flex-col bg-surface-divider/40 overflow-hidden">
       {/* Preview Mode Switcher Bar */}
-      <div className="border-b border-surface-border bg-white px-4 py-2 flex items-center justify-between text-xs shadow-xs">
+      <div className="border-b border-surface-border bg-surface-card px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs shadow-xs">
         <div className="flex items-center gap-2">
           <span className="text-typography-heading font-medium">Chế độ xem:</span>
           <div className="bg-surface-page p-1 rounded-lg border border-surface-border flex gap-1">
             <button
               onClick={() => setPreviewMode("visual")}
-              className={`px-3 py-1 rounded-md transition-colors text-xs font-medium cursor-pointer ${
+              className={`px-3 py-1 rounded-md transition-colors text-xs font-medium flex items-center gap-1 cursor-pointer ${
                 previewMode === "visual"
                   ? "bg-brand-primary text-white font-bold shadow-xs"
                   : "text-typography-muted hover:text-typography-main"
               }`}
             >
-              📄 Visual Document
+              <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Visual Document</span>
             </button>
             <button
               onClick={() => setPreviewMode("bot_eye")}
@@ -39,7 +41,8 @@ export function ATSPreviewCanvas({ cvText, previewMode, setPreviewMode }: ATSPre
                   : "text-typography-muted hover:text-typography-main"
               }`}
             >
-              <span>🤖</span> Mắt Bot ATS Nhìn (Raw Text)
+              <Bot className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Mắt Bot ATS Nhìn (Raw Text)</span>
             </button>
           </div>
         </div>
@@ -54,8 +57,8 @@ export function ATSPreviewCanvas({ cvText, previewMode, setPreviewMode }: ATSPre
       {/* Preview Canvas Area */}
       <div className="flex-1 p-6 overflow-y-auto flex justify-center items-start bg-surface-divider/60">
         {previewMode === "visual" ? (
-          /* Visual White Document Container (Standard A4 Paper Emulation) */
-          <div className="w-full max-w-2xl bg-white text-typography-main p-8 rounded-xl shadow-md font-sans text-xs space-y-4 border border-surface-border min-h-[600px]">
+          /* Visual Document Container (Standard A4 Paper Emulation) */
+          <div className="w-full max-w-2xl bg-surface-card text-typography-main p-8 rounded-xl shadow-md font-sans text-xs space-y-4 border border-surface-border min-h-[600px]">
             <div className="border-b border-surface-divider pb-3">
               <h1 className="text-lg font-bold uppercase tracking-wide text-typography-main">
                 {nameLine}

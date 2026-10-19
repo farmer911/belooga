@@ -232,3 +232,100 @@
   should_not_trigger:
     - prompt: "Ghi nhận vi phạm quy chuẩn vào sổ vi phạm"
       expected: belooga-self-learn
+
+- skill: be-service-ats
+  should_trigger:
+    - "Sửa thuật toán chấm điểm ATS scan và trích xuất từ khóa JD trong backend"
+    - "Cập nhật ATSMatchingService kiểm tra STAR metric cho CV ứng viên"
+  should_not_trigger:
+    - prompt: "Sửa giao diện ATS scorecard tại trang /ats-diagnostics"
+      expected: fe-page-ats
+
+- skill: be-service-jobs
+  should_trigger:
+    - "Thêm API chuyển trạng thái cột Kanban cho ứng tuyển việc làm tại job_tracker.py"
+    - "Kiểm tra quyền sở hữu IDOR khi xóa job trong JobTrackerService"
+  should_not_trigger:
+    - prompt: "Sửa giao diện kéo thả cột Kanban tại /workspace/jobs"
+      expected: fe-page-jobs
+
+- skill: be-service-analytics
+  should_trigger:
+    - "Cập nhật câu query tổng hợp doanh thu GMV và conversion funnel trong AnalyticsService"
+    - "Sửa API /v1/analytics/dashboard trả về số liệu KPI executive"
+  should_not_trigger:
+    - prompt: "Sửa biểu đồ doanh thu trên trang /admin/analytics"
+      expected: fe-page-analytics
+
+- skill: be-service-payments
+  should_trigger:
+    - "Xác thực chữ ký HMAC-SHA256 cho webhook MoMo IPN tại payments.py"
+    - "Tạo mã QR thanh toán MoMo và kiểm tra idempotency đơn hàng"
+  should_not_trigger:
+    - prompt: "Sửa modal hiển thị mã QR MoMo trên frontend"
+      expected: fe-page-ats
+
+- skill: fe-page-ats
+  should_trigger:
+    - "Sửa giao diện chấm điểm ATS diagnostics và modal chia sẻ kết quả"
+    - "Cập nhật hộp thoại thanh toán MoMo QR trên trang /ats-diagnostics"
+  should_not_trigger:
+    - prompt: "Sửa thuật toán tính điểm ATS trong ATSMatchingService"
+      expected: be-service-ats
+
+- skill: fe-page-cv-studio
+  should_trigger:
+    - "Sửa giao diện chỉnh sửa CV trực tiếp và bản xem trước A4 tại /cv-studio"
+    - "Cập nhật biểu đồ radar kỹ năng và phân vị lương tại /salary-benchmark"
+  should_not_trigger:
+    - prompt: "Sửa API tra cứu mức lương trong catalogs.py"
+      expected: be-service-catalogs
+
+- skill: fe-page-jobs
+  should_trigger:
+    - "Sửa giao diện bảng Kanban theo dõi đơn ứng tuyển tại /workspace/jobs"
+    - "Thêm hộp thoại tạo công việc mới trong components/features/job-tracker/"
+  should_not_trigger:
+    - prompt: "Sửa endpoint PATCH /v1/tracker/jobs/{job_id}/status"
+      expected: be-service-jobs
+
+- skill: fe-page-analytics
+  should_trigger:
+    - "Sửa giao diện thẻ KPI và bảng giao dịch tại trang /admin/analytics"
+    - "Cập nhật hook use-analytics-dashboard.ts trên frontend"
+  should_not_trigger:
+    - prompt: "Sửa câu truy vấn SQL tính tổng doanh thu trong AnalyticsRepository"
+      expected: be-service-analytics
+
+- skill: investigate
+  should_trigger:
+    - "/investigate điều tra nguyên nhân gốc rễ lỗi và lập kế hoạch Option A/B vào STATE.md"
+    - "Phân tích luồng gọi hàm read-only và đề xuất phương án trước khi viết code"
+  should_not_trigger:
+    - prompt: "Viết test thất bại Red rồi sửa code ngay"
+      expected: tdd-workflow
+
+- skill: belooga-supervisor
+  should_trigger:
+    - "Đánh giá phản biện ý tưởng tính năng mới theo PRODUCT_THESIS.md và chống Yes-Man"
+    - "Kiểm tra ROI kinh doanh, rủi ro hệ thống và áp dụng Ponytail compression"
+  should_not_trigger:
+    - prompt: "Kiểm tra tiêu chuẩn hoàn thành PR cuối cùng"
+      expected: definition-of-done
+
+- skill: belooga-senior-agile-workflow
+  should_trigger:
+    - "Chia nhỏ tính năng thành các ticket Kanban, ước lượng story points và tạo nhánh git feature"
+    - "Thực hiện quy trình tạo Pull Request và đồng bộ trạng thái với beloga-agent-kanban"
+  should_not_trigger:
+    - prompt: "Chỉ điều tra lỗi read-only không tạo branch hay sửa code"
+      expected: investigate
+
+- skill: ui-ux-pro-max
+  should_trigger:
+    - "Tra cứu bảng màu, cặp font chữ và checklist thiết kế UI/UX cho SaaS"
+    - "Chạy script search.py tạo design system và kiểm tra tương phản dark mode"
+  should_not_trigger:
+    - prompt: "Sửa lỗi logic lưu access token trong Zustand store"
+      expected: fe-page-auth
+

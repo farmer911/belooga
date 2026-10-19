@@ -20,7 +20,7 @@ import { TimelineItemCard } from "./timeline-item-card";
 
 export interface ExperienceTimelineProps {
   experiences: JobExperience[];
-  onAddExperience?: (payload: Omit<JobExperience, "id">) => Promise<any>;
+  onAddExperience?: (payload: Omit<JobExperience, "id">) => Promise<unknown>;
   onDeleteExperience?: (id: string) => Promise<void> | void;
   onReorderExperiences?: (items: JobExperience[]) => Promise<void> | void;
   isEditable?: boolean;
@@ -91,15 +91,15 @@ export function ExperienceTimeline({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#d1d6da] p-6 shadow-sm space-y-6">
+    <div className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-[#5bbbae]" />
-            <h2 className="text-lg font-bold text-[#252525]">Work Experience</h2>
+            <Briefcase className="w-5 h-5 text-brand-primary" />
+            <h2 className="text-lg font-bold text-typography-main">Work Experience</h2>
           </div>
           {isEditable && (
-            <p className="text-xs text-[#737475] pt-0.5">
+            <p className="text-xs text-typography-muted pt-0.5">
               Drag the handle <GripVertical className="inline w-3.5 h-3.5 text-slate-400" /> to reorder priority.
             </p>
           )}
@@ -109,7 +109,7 @@ export function ExperienceTimeline({
             size="sm"
             variant="outline"
             data-testid="add-experience-btn"
-            className="gap-1.5 border-[#5bbbae] text-[#5bbbae] hover:bg-[#5bbbae]/10 cursor-pointer"
+            className="gap-1.5 border-brand-primary text-brand-primary hover:bg-brand-primary/10 cursor-pointer"
             onClick={() => setModalOpen(true)}
           >
             <Plus className="w-4 h-4" /> Add Experience
@@ -118,10 +118,10 @@ export function ExperienceTimeline({
       </div>
 
       {experiences.length === 0 ? (
-        <div className="p-8 text-center border-2 border-dashed border-[#d1d6da] rounded-xl space-y-3 bg-[#fafafa]">
+        <div className="p-8 text-center border-2 border-dashed border-surface-border rounded-xl space-y-3 bg-surface-subtle">
           <Briefcase className="w-10 h-10 text-slate-300 mx-auto" />
-          <p className="text-sm font-semibold text-[#515151]">No work experiences added yet</p>
-          <p className="text-xs text-[#737475] max-w-sm mx-auto">
+          <p className="text-sm font-semibold text-typography-heading">No work experiences added yet</p>
+          <p className="text-xs text-typography-muted max-w-sm mx-auto">
             Showcase your past roles, leadership, and accomplishments to stand out to hiring managers.
           </p>
           {isEditable && onAddExperience && (
@@ -129,7 +129,7 @@ export function ExperienceTimeline({
               size="sm"
               variant="default"
               data-testid="add-experience-btn"
-              className="bg-[#5bbbae] hover:bg-[#497d76] text-white gap-2 cursor-pointer"
+              className="bg-brand-primary hover:bg-brand-hover text-white gap-2 cursor-pointer"
               onClick={() => setModalOpen(true)}
             >
               <Plus className="w-4 h-4" /> Add Your First Experience
@@ -168,14 +168,14 @@ export function ExperienceTimeline({
         <DialogContent className="max-w-lg w-full p-6 space-y-5">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-[#5bbbae]" />
-              <DialogTitle className="text-lg font-bold text-[#252525]">Add Work Experience</DialogTitle>
+              <Briefcase className="w-5 h-5 text-brand-primary" />
+              <DialogTitle className="text-lg font-bold text-typography-main">Add Work Experience</DialogTitle>
             </div>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#515151]">Job Title *</label>
+              <label className="text-xs font-semibold text-typography-heading">Job Title *</label>
               <Input
                 required
                 placeholder="e.g. Senior Software Engineer"
@@ -185,7 +185,7 @@ export function ExperienceTimeline({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#515151]">Company Name *</label>
+              <label className="text-xs font-semibold text-typography-heading">Company Name *</label>
               <Input
                 required
                 placeholder="e.g. Stripe, Google, Acme Corp"
@@ -196,7 +196,7 @@ export function ExperienceTimeline({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">From Year</label>
+                <label className="text-xs font-semibold text-typography-heading">From Year</label>
                 <Input
                   type="number"
                   min={1990}
@@ -207,7 +207,7 @@ export function ExperienceTimeline({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#515151]">To Year</label>
+                <label className="text-xs font-semibold text-typography-heading">To Year</label>
                 <Input
                   type="number"
                   min={1990}
@@ -225,15 +225,15 @@ export function ExperienceTimeline({
                 id="expCurrentlyWork"
                 checked={currentlyWork}
                 onChange={(e) => setCurrentlyWork(e.target.checked)}
-                className="rounded text-[#5bbbae] focus:ring-[#5bbbae]"
+                className="rounded text-brand-primary focus:ring-brand-primary"
               />
-              <label htmlFor="expCurrentlyWork" className="text-xs text-[#515151] cursor-pointer">
+              <label htmlFor="expCurrentlyWork" className="text-xs text-typography-heading cursor-pointer">
                 I currently work here
               </label>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#515151]">Description & Achievements</label>
+              <label className="text-xs font-semibold text-typography-heading">Description & Achievements</label>
               <Textarea
                 rows={3}
                 placeholder="Key responsibilities, stack used, and accomplishments..."
@@ -250,7 +250,7 @@ export function ExperienceTimeline({
                 type="submit"
                 disabled={isSubmitting}
                 data-testid="experience-modal-submit"
-                className="bg-[#5bbbae] hover:bg-[#497d76] text-white"
+                className="bg-brand-primary hover:bg-brand-hover text-white"
               >
                 Save Experience to DB
               </Button>

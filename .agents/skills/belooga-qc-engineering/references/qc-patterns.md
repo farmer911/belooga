@@ -138,4 +138,4 @@ Before approving any test suite, verify:
 - [ ] Exactly 0 occurrences of `page.waitForTimeout()` exist in the test codebase.
 - [ ] All selectors use `getByTestId` or semantic accessibility roles; zero Tailwind CSS classes are used as locators.
 - [ ] Tests execute independently without ordering dependencies.
-- [ ] Playwright test suite passes cleanly with exit code `0`: `cd qc && bun run test`.
+- [ ] Playwright test suite passes cleanly with exit code `0`: `cd qc && bun run test:e2e`.
