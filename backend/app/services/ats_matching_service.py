@@ -13,10 +13,11 @@ from app.repositories.ats_matching_repo import ATSMatchingRepository
 from app.schemas.ats_matching import (
     ATSScanRequest,
     ATSScanResponse,
-    ShortlistedCandidateDTO,
+    InterviewKitRequest,
+    InterviewKitResponse,
+    InterviewQuestionDTO,
     SkillScarcityItemDTO,
     TalentMarketPulseResponse,
-    TalentPoolTelemetryDTO,
     TalentShortlistRequest,
     TalentShortlistResponse,
 )
@@ -60,8 +61,7 @@ class ATSMatchingService:
             else:
                 pattern = rf"\b{escaped}\b"
             if re.search(pattern, lowered):
-                canonical = "Golang" if skill.lower() == "go" else skill
-                found.add(canonical)
+                found.add("Golang" if skill.lower() == "go" else skill)
         return sorted(list(found))
 
     def _analyze_star_bullets(self, cv_text: str) -> List[Dict[str, Any]]:
@@ -170,8 +170,7 @@ class ATSMatchingService:
             active_count = 0
 
             for r in rows:
-                cand_corpus = f"{r.get('headline') or ''} {r.get('bio') or ''}"
-                cand_skills = self._extract_skills(cand_corpus)
+                cand_skills = self._extract_skills(f"{r.get('headline') or ''} {r.get('bio') or ''}")
                 matched = [s for s in jd_skills if s in cand_skills]
                 missing = [s for s in jd_skills if s not in cand_skills]
 
@@ -181,11 +180,8 @@ class ATSMatchingService:
                 video_pts = 18 if has_video else 0
                 readiness_pts = 12 if is_active else 6
                 total_score = min(100, max(25, skill_pts + video_pts + readiness_pts))
-
-                if has_video:
-                    video_count += 1
-                if is_active:
-                    active_count += 1
+                video_count += int(has_video)
+                active_count += int(is_active)
 
                 shortlist.append({
                     "profile_id": str(r["id"]),
@@ -208,28 +204,24 @@ class ATSMatchingService:
                 })
 
             shortlist.sort(key=lambda c: (c["match_score"], c["has_video_pitch"]), reverse=True)
-            trimmed = shortlist[: request.limit]
-
             is_senior = any(k in request.job_title.lower() for k in ("principal", "lead", "staff", "senior", "architect"))
             base_p50 = 68_000_000 if is_senior else 38_000_000
-            premium = 1.18 if any(s in jd_skills for s in ("Golang", "Rust", "Kubernetes", "Kafka")) else 1.0
-            p50 = int(base_p50 * premium)
+            p50 = int(base_p50 * (1.18 if any(s in jd_skills for s in ("Golang", "Rust", "Kubernetes", "Kafka")) else 1.0))
 
-            telemetry = {
-                "total_matching_candidates": total_matched,
-                "video_verified_count": video_count,
-                "actively_looking_count": active_count,
-                "estimated_salary_p25_vnd": int(p50 * 0.8),
-                "estimated_salary_p50_vnd": p50,
-                "estimated_salary_p75_vnd": int(p50 * 1.28),
-                "hiring_difficulty": "HIGH_COMPETITION" if total_matched < 20 else "BALANCED",
-            }
             return {
                 "job_title": request.job_title,
                 "company_name": request.company_name,
                 "extracted_jd_skills": jd_skills,
-                "pool_telemetry": telemetry,
-                "candidates": trimmed,
+                "pool_telemetry": {
+                    "total_matching_candidates": total_matched,
+                    "video_verified_count": video_count,
+                    "actively_looking_count": active_count,
+                    "estimated_salary_p25_vnd": int(p50 * 0.8),
+                    "estimated_salary_p50_vnd": p50,
+                    "estimated_salary_p75_vnd": int(p50 * 1.28),
+                    "hiring_difficulty": "HIGH_COMPETITION" if total_matched < 20 else "BALANCED",
+                },
+                "candidates": shortlist[: request.limit],
             }
 
         if os.getenv("ENVIRONMENT") == "testing":
@@ -246,8 +238,6 @@ class ATSMatchingService:
         async def _load_pulse() -> Dict[str, Any]:
             stats = await self.repo.get_market_pulse_stats()
             total = max(stats["total_visible"], 1)
-            video_pct = round((stats["with_video"] / total) * 100.0, 1)
-            active_pct = round((stats["actively_seeking"] / total) * 100.0, 1)
             scarcity = [
                 {"skill": "Golang / Distributed Systems", "candidate_supply": max(12, total // 14), "demand_index": 94, "scarcity_score": 9.1, "salary_premium_pct": "+24%"},
                 {"skill": "Kubernetes & Cloud Native", "candidate_supply": max(15, total // 16), "demand_index": 91, "scarcity_score": 8.7, "salary_premium_pct": "+22%"},
@@ -257,17 +247,13 @@ class ATSMatchingService:
             ]
             return {
                 "total_visible_candidates": stats["total_visible"],
-                "video_pitch_adoption_pct": video_pct,
-                "actively_seeking_pct": active_pct,
+                "video_pitch_adoption_pct": round((stats["with_video"] / total) * 100.0, 1),
+                "actively_seeking_pct": round((stats["actively_seeking"] / total) * 100.0, 1),
                 "hiring_velocity_index": 88.4,
                 "skill_scarcity_index": scarcity,
             }
 
-        if os.getenv("ENVIRONMENT") == "testing":
-            raw = await _load_pulse()
-        else:
-            raw = await platform_cache.get_or_set("market:pulse", ttl_seconds=30, loader=_load_pulse)
-
+        raw = await _load_pulse() if os.getenv("ENVIRONMENT") == "testing" else await platform_cache.get_or_set("market:pulse", ttl_seconds=30, loader=_load_pulse)
         return TalentMarketPulseResponse(
             total_visible_candidates=raw["total_visible_candidates"],
             video_pitch_adoption_pct=raw["video_pitch_adoption_pct"],
@@ -275,3 +261,32 @@ class ATSMatchingService:
             hiring_velocity_index=raw["hiring_velocity_index"],
             skill_scarcity_index=[SkillScarcityItemDTO(**item) for item in raw["skill_scarcity_index"]],
         )
+
+    async def generate_interview_kit(self, request: InterviewKitRequest) -> InterviewKitResponse:
+        jd_skills = self._extract_skills(f"{request.job_title} {request.jd_text}")
+        top_skills = jd_skills[:4] if jd_skills else ["System Design", "Backend Architecture", "PostgreSQL"]
+        org = request.company_name or "your engineering team"
+        script = (
+            f"[00-15s Hook] Hi {org}, I'm applying for {request.job_title} with hands-on ownership in {', '.join(top_skills[:3])}.\n"
+            f"[15-45s Proof & Metrics] In my recent production systems, I architected {', '.join(top_skills[:2])} pipelines with measurable SLA and latency gains.\n"
+            f"[45-60s Call-to-Action] I'd love to walk through how I can accelerate {org}'s roadmap in my full Belooga profile."
+        )
+        questions = [
+            InterviewQuestionDTO(
+                focus_skill=sk,
+                question=f"Describe a high-stakes production bottleneck you resolved using {sk}. What trade-offs did you make?",
+                star_coaching_tip=f"State baseline p95 latency/throughput, explain your {sk} architecture decision, and quantify the post-deployment delta.",
+            )
+            for sk in top_skills[:3]
+        ]
+        return InterviewKitResponse(
+            job_title=request.job_title,
+            company_name=request.company_name,
+            video_pitch_script_60s=script,
+            star_interview_questions=questions,
+            closing_questions_for_hiring_manager=[
+                f"What is the highest-leverage bottleneck the {request.job_title} will own in the first 90 days?",
+                f"How does {org} measure engineering velocity and production reliability across {', '.join(top_skills[:2])}?",
+            ],
+        )
+

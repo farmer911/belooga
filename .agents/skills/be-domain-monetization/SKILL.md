@@ -19,6 +19,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
+| `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | optional |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
@@ -36,7 +37,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 
 ## Rules
 1. **Expert Review & Job Tracker Ownership (`expert_review.py`, `job_tracker.py`):** Mutations require `Depends(get_current_user)` scoped to `current_user.id`. Validate Kanban status transitions (`TARGETING`, `TAILORED`, `APPLIED`, `INTERVIEW`, `OFFER`).
-2. **ATS Scan, Talent Shortlist & Market Pulse (`ats_matching.py`):** `POST /v1/match/ats-scan` and `POST /v1/match/talent-shortlist` use `get_current_user_optional` and enforce a hard `50,000` character payload cap (`HTTP 413`). Shortlist queries must use PostgreSQL GIN `search_vector @@ to_tsquery('english', ...)` and boost candidates with verified video pitches.
+2. **ATS Scan, Talent Shortlist, Market Pulse & Interview Kit (`ats_matching.py`):** `POST /v1/match/ats-scan`, `POST /v1/match/talent-shortlist`, and `POST /v1/match/interview-kit` use `get_current_user_optional` and enforce a hard `50,000` character payload cap (`HTTP 413` / Pydantic `max_length=50000`). Shortlist queries must use PostgreSQL GIN `search_vector @@ to_tsquery('english', ...)` and boost candidates with verified video pitches.
 3. **MoMo HMAC-SHA256 & Idempotency (`payments.py`):** Verify HMAC-SHA256 signatures on `POST /v1/payments/momo/ipn` (reject tampered payloads with 400) and handle duplicate IPN callbacks idempotently.
 4. **Analytics Coalescing (`analytics.py`):** Coalesce SQL `SUM`/`COUNT` aggregations to `0` and cache platform counts via `platform_cache.get_or_set`.
 

@@ -449,6 +449,14 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-21", "name": "Candidate Trust & Readiness Score (1,000 Burst)", **bm21})
 
+        # BM-22: 60s Video Pitch Teleprompter & STAR Interview Kit Generator Burst
+        bm22 = await run_concurrent_load(
+            total_requests=800,
+            concurrency=160,
+            worker_fn=lambda i: _post_status(client, "/v1/match/interview-kit", ats_payload),
+        )
+        results_table.append({"id": "BM-22", "name": "60s Video Pitch & STAR Interview Kit (800 Burst)", **bm22})
+
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")
     print("-" * 116)
     total_reqs = 0

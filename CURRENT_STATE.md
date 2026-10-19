@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 57 (55 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 58 (56 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -70,6 +70,7 @@
 | `GET` | `/v1/expert-review/packages/` | `list_packages` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
+| `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | Public | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |

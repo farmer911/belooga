@@ -4,11 +4,12 @@ import React from "react";
 import Link from "next/link";
 import { AlertTriangle, Lightbulb, CheckCircle2, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ATSScanResult, TalentShortlistResult } from "@/hooks/use-ats-diagnostics";
+import { ATSScanResult, InterviewKitResult, TalentShortlistResult } from "@/hooks/use-ats-diagnostics";
 
 interface ATSScorecardProps {
   result: ATSScanResult;
   shortlist?: TalentShortlistResult | null;
+  interviewKit?: InterviewKitResult | null;
   activeTab: "skills" | "star" | "warnings" | "shortlist";
   setActiveTab: (tab: "skills" | "star" | "warnings" | "shortlist") => void;
   onPayClick?: () => void;
@@ -17,6 +18,7 @@ interface ATSScorecardProps {
 export function ATSScorecard({
   result,
   shortlist,
+  interviewKit,
   activeTab,
   setActiveTab,
   onPayClick,
@@ -169,6 +171,20 @@ export function ATSScorecard({
 
         {activeTab === "star" && (
           <div className="space-y-2.5">
+            {interviewKit && (
+              <div
+                data-testid="interview-kit-pitch-script"
+                className="p-2.5 bg-teal-50/50 border border-teal-200 rounded-lg space-y-1.5"
+              >
+                <div className="font-bold text-brand-dark text-[11px] flex items-center gap-1">
+                  <Video className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
+                  <span>Kịch Bản Teleprompter Video Pitch 60s</span>
+                </div>
+                <p className="text-[11px] text-typography-heading whitespace-pre-line leading-relaxed">
+                  {interviewKit.video_pitch_script_60s}
+                </p>
+              </div>
+            )}
             {result.star_analysis.length > 0 ? (
               result.star_analysis.map((item, i) => (
                 <div key={i} className="p-2.5 bg-surface-page rounded-lg border border-surface-border space-y-1.5">

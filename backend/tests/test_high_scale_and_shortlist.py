@@ -192,3 +192,24 @@ async def test_candidate_profile_trust_score_and_privacy(
     res_hid = await client.get(f"/v1/profile/{u_hid}/trust-score")
     assert res_hid.status_code == 404
 
+
+@pytest.mark.asyncio
+async def test_interview_kit_and_video_pitch_script_generator(client: AsyncClient):
+    """Verify POST /v1/match/interview-kit generates a 60s Video Pitch Teleprompter script & STAR interview questions."""
+    payload = {
+        "job_title": "Principal Golang Engineer",
+        "company_name": "Belooga Cloud",
+        "jd_text": "Looking for Principal Golang Engineer with Kubernetes, PostgreSQL, Redis, and Kafka expertise.",
+        "cv_text": "Built Golang and PostgreSQL services handling 25,000 rps.",
+    }
+    res = await client.post("/v1/match/interview-kit", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["job_title"] == "Principal Golang Engineer"
+    assert "[00-15s" in data["video_pitch_script_60s"]
+    assert len(data["star_interview_questions"]) >= 3
+    assert "question" in data["star_interview_questions"][0]
+    assert "star_coaching_tip" in data["star_interview_questions"][0]
+    assert len(data["closing_questions_for_hiring_manager"]) >= 2
+
+

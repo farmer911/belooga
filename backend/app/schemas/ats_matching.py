@@ -85,3 +85,25 @@ class TalentMarketPulseResponse(BaseModel):
     hiring_velocity_index: float
     skill_scarcity_index: List[SkillScarcityItemDTO]
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class InterviewKitRequest(BaseModel):
+    job_title: str = Field(..., max_length=255)
+    company_name: Optional[str] = Field(None, max_length=255)
+    jd_text: str = Field(..., max_length=50000)
+    cv_text: Optional[str] = Field("", max_length=50000)
+
+
+class InterviewQuestionDTO(BaseModel):
+    focus_skill: str
+    question: str
+    star_coaching_tip: str
+
+
+class InterviewKitResponse(BaseModel):
+    job_title: str
+    company_name: Optional[str] = None
+    video_pitch_script_60s: str
+    star_interview_questions: List[InterviewQuestionDTO]
+    closing_questions_for_hiring_manager: List[str]
+

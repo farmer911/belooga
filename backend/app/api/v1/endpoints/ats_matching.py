@@ -9,6 +9,8 @@ from app.core.security import AuthenticatedUser, get_current_user_optional
 from app.schemas.ats_matching import (
     ATSScanRequest,
     ATSScanResponse,
+    InterviewKitRequest,
+    InterviewKitResponse,
     TalentMarketPulseResponse,
     TalentShortlistRequest,
     TalentShortlistResponse,
@@ -49,3 +51,16 @@ async def get_talent_market_pulse(
     """Return real-time talent pool scarcity index, video pitch adoption rate, and hiring velocity telemetry."""
     service = ATSMatchingService(db)
     return await service.get_market_pulse()
+
+
+@router.post("/interview-kit", response_model=InterviewKitResponse)
+async def generate_interview_kit_and_pitch_script(
+    request: InterviewKitRequest,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate a 60s Video Pitch Teleprompter script and targeted STAR behavioral interview questions."""
+    _ = current_user
+    service = ATSMatchingService(db)
+    return await service.generate_interview_kit(request=request)
+

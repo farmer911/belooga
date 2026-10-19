@@ -57,6 +57,18 @@ export interface TalentShortlistResult {
   candidates: ShortlistedCandidateItem[];
 }
 
+export interface InterviewKitResult {
+  job_title: string;
+  company_name?: string | null;
+  video_pitch_script_60s: string;
+  star_interview_questions: Array<{
+    focus_skill: string;
+    question: string;
+    star_coaching_tip: string;
+  }>;
+  closing_questions_for_hiring_manager: string[];
+}
+
 export interface ATSScanPayload {
   job_title: string;
   company_name?: string;
@@ -67,13 +79,14 @@ export interface ATSScanPayload {
 export function useATSDiagnostics() {
   const [result, setResult] = useState<ATSScanResult | null>(null);
   const [shortlist, setShortlist] = useState<TalentShortlistResult | null>(null);
+  const [interviewKit, setInterviewKit] = useState<InterviewKitResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"skills" | "star" | "warnings" | "shortlist">("skills");
   const [previewMode, setPreviewMode] = useState<"visual" | "bot_eye">("visual");
 
   const scanMutation = useMutation({
     mutationFn: async (payload: ATSScanPayload) => {
-      const [scanRes, shortlistRes] = await Promise.all([
+      const [scanRes, shortlistRes, kitRes] = await Promise.all([
         apiClient.post<ATSScanResult>("/v1/match/ats-scan", payload),
         apiClient.post<TalentShortlistResult>("/v1/match/talent-shortlist", {
           job_title: payload.job_title,
@@ -82,13 +95,15 @@ export function useATSDiagnostics() {
           limit: 6,
           require_video_pitch: false,
         }),
+        apiClient.post<InterviewKitResult>("/v1/match/interview-kit", payload),
       ]);
-      return { scan: scanRes.data, shortlist: shortlistRes.data };
+      return { scan: scanRes.data, shortlist: shortlistRes.data, kit: kitRes.data };
     },
     onSuccess: (data) => {
       setError(null);
       setResult(data.scan);
       setShortlist(data.shortlist);
+      setInterviewKit(data.kit);
     },
     onError: (err: unknown) => {
       let msg = "Không thể phân tích CV. Vui lòng thử lại.";
@@ -113,6 +128,7 @@ export function useATSDiagnostics() {
   return {
     result,
     shortlist,
+    interviewKit,
     isLoading: scanMutation.isPending,
     error,
     activeTab,
@@ -123,3 +139,4 @@ export function useATSDiagnostics() {
     setResult,
   };
 }
+

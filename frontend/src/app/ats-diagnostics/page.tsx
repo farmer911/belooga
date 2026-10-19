@@ -23,6 +23,7 @@ export default function ATSDiagnosticsPage() {
   const {
     result,
     shortlist,
+    interviewKit,
     isLoading,
     error,
     activeTab,
@@ -177,6 +178,7 @@ export default function ATSDiagnosticsPage() {
             <ATSScorecard
               result={result}
               shortlist={shortlist}
+              interviewKit={interviewKit}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               onPayClick={() => setIsMomoOpen(true)}
