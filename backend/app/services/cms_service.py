@@ -10,6 +10,7 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import platform_cache
 from app.repositories.cms_repo import CmsRepository
 from app.schemas.cms import ContactInquiryRequest, ReportProfileRequest
 
@@ -88,8 +89,11 @@ class CmsService:
         return STATIC_FAQS
 
     async def list_career_jobs(self) -> List[Dict[str, Any]]:
-        jobs = await self.cms_repo.list_active_career_jobs()
-        return jobs if jobs else DEFAULT_CAREER_JOBS
+        async def _compute() -> List[Dict[str, Any]]:
+            jobs = await self.cms_repo.list_active_career_jobs() if self.cms_repo else []
+            return jobs if jobs else DEFAULT_CAREER_JOBS
+
+        return await platform_cache.get_or_set("cms:career_jobs", 60, _compute)
 
     async def report_candidate_profile(
         self, user_id: uuid.UUID, payload: ReportProfileRequest

@@ -13,14 +13,14 @@ description: Frontend Public Discovery, Recruiter Profile & CMS Pages in page.ts
 - Page: `frontend/src/app/public/[username]/page.tsx` (229 lines, client component)
 - Page: `frontend/src/app/(public)/blog/page.tsx` (92 lines, server component)
 - Page: `frontend/src/app/(public)/blog/[slug]/page.tsx` (70 lines, server component)
-- Page: `frontend/src/app/(public)/careers/page.tsx` (79 lines, client component)
+- Page: `frontend/src/app/(public)/careers/page.tsx` (156 lines, client component)
 - Page: `frontend/src/app/(public)/contact-us/page.tsx` (110 lines, client component)
 - Page: `frontend/src/app/(public)/help/page.tsx` (80 lines, client component)
 - Page: `frontend/src/app/(public)/privacy-policy/page.tsx` (28 lines, server component)
 - Page: `frontend/src/app/(public)/terms-and-conditions/page.tsx` (28 lines, server component)
 - Components: `frontend/src/components/common/confirm-dialog.tsx`, `frontend/src/components/features/media/video-pitch-card.tsx`, `frontend/src/components/features/media/video-pitch-modal.tsx`, `frontend/src/components/features/profile/languages-interests-card.tsx`, `frontend/src/components/features/profile/public-contact-modal.tsx`, `frontend/src/components/features/profile/public-header-card.tsx`, `frontend/src/components/features/profile/report-profile-modal.tsx`, `frontend/src/components/features/timeline/education-timeline.tsx`, `frontend/src/components/features/timeline/timeline-item-card.tsx`, `frontend/src/components/ui/button.tsx`, `frontend/src/components/ui/dialog.tsx`, `frontend/src/components/ui/input.tsx`
 - Hooks: `frontend/src/hooks/use-candidate-profile.ts`, `frontend/src/hooks/use-video-player.ts`
-- data-testid: `add-education-btn`, `candidate-card`, `candidate-card-headline`, `candidate-card-name`, `candidate-poster-img`, `candidate-showcase-grid`, `career-trajectory-badge`, `careers-apply-modal`, `careers-openings-list`, `close-pitch-modal-btn`, `contact-form`, `contact-submit-btn`, `delete-experience-btn`, `dnd-handle`, `education-modal-submit`, `help-faq-accordion`, `home-hero-headline`, `home-market-pulse-ticker`, `home-search-input`, `home-search-submit`, `legal-content-container`, `modal-video-player`, `pitch-video-modal`, `play-pitch-modal-btn`, `profile-trust-score-card`, `public-candidate-name`, `public-profile-container`, `public-timeline-section`, `record-pitch-studio-btn`, `report-modal-submit`, `report-profile-btn`, `search-empty-state`, `search-input`, `search-pagination`, `search-submit-btn`, `search-trending-insights-bar`, `timeline-job-card`, `video-mute-toggle`, `walkthrough-modal`
+- data-testid: `add-education-btn`, `candidate-card`, `candidate-card-headline`, `candidate-card-name`, `candidate-poster-img`, `candidate-showcase-grid`, `career-trajectory-badge`, `careers-apply-modal`, `careers-ats-check-link`, `careers-openings-list`, `close-pitch-modal-btn`, `contact-form`, `contact-submit-btn`, `delete-experience-btn`, `dnd-handle`, `education-modal-submit`, `help-faq-accordion`, `home-hero-headline`, `home-market-pulse-ticker`, `home-search-input`, `home-search-submit`, `legal-content-container`, `modal-video-player`, `pitch-video-modal`, `play-pitch-modal-btn`, `profile-trust-score-card`, `public-candidate-name`, `public-profile-container`, `public-timeline-section`, `record-pitch-studio-btn`, `report-modal-submit`, `report-profile-btn`, `search-empty-state`, `search-input`, `search-pagination`, `search-submit-btn`, `search-trending-insights-bar`, `timeline-job-card`, `video-mute-toggle`, `walkthrough-modal`
 <!-- AUTO:END -->
 
 ## Rules
@@ -28,8 +28,7 @@ description: Frontend Public Discovery, Recruiter Profile & CMS Pages in page.ts
 2. **Bidirectional Search URL Sync & Trending Skills Bar:** `/search` must synchronize `?key=&page=` bidirectionally with URL state and render one-click trending query pills (`data-testid="search-trending-insights-bar"`) backed by `GET /v1/profile/search/trending/`.
 
 3. **Public Profile Read-Only, Trust & Trajectory Invariants:** `/public/[username]` must never expose editing controls or DnD handles to non-owners, renders `data-testid="profile-trust-score-card"` and `data-testid="career-trajectory-badge"` via `@tanstack/react-query` (`enabled: Boolean(profile)`), and posts abuse reports to `POST /v1/profile/{user_id}/report/`.
-
-
+4. **Careers Role Application & ATS Pre-Check:** `/careers` renders `data-testid="careers-openings-list"`, a 1-click ATS Role Match link (`data-testid="careers-ats-check-link"`), and an inline application drawer (`data-testid="careers-apply-modal"`) posting directly to `POST /v1/contact/` without stubbed `window.alert` dialogs.
 
 ## Known Traps
 - **Hidden Profile Timeline & Trust Leak (C-01):** Do not fetch timeline lists or trust scores on public views until the main profile query resolves (`enabled: Boolean(profile)`).

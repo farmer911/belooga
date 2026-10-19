@@ -311,9 +311,18 @@ async def test_search_trending_insights_and_talent_pool_pulse(client: AsyncClien
     assert "demand_growth" in data["trending_queries"][0]
 
 
+@pytest.mark.asyncio
+async def test_cms_career_jobs_and_faqs_cached_response(client: AsyncClient):
+    """Verify GET /v1/career/jobs/ and GET /v1/faqs return valid cached CMS items."""
+    jobs_res = await client.get("/v1/career/jobs/")
+    assert jobs_res.status_code == 200
+    jobs = jobs_res.json()
+    assert len(jobs) >= 1
+    assert "title" in jobs[0]
+    assert "department" in jobs[0]
 
-
-
-
-
-
+    faqs_res = await client.get("/v1/faqs")
+    assert faqs_res.status_code == 200
+    faqs = faqs_res.json()
+    assert len(faqs) >= 4
+    assert "question" in faqs[0]

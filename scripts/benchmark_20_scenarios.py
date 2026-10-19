@@ -511,8 +511,13 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-28", "name": "Live Search Trending Skills & Talent Pool Pulse", **bm28})
 
-
-
+        # BM-29: Public CMS Career Jobs & FAQs Singleflight Burst
+        bm29 = await run_concurrent_load(
+            total_requests=800,
+            concurrency=160,
+            worker_fn=lambda i: _get_status(client, "/v1/career/jobs/" if i % 2 == 0 else "/v1/faqs"),
+        )
+        results_table.append({"id": "BM-29", "name": "Public CMS Career Jobs & FAQs Singleflight Burst", **bm29})
 
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")
     print("-" * 116)

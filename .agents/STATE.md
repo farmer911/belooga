@@ -27,17 +27,6 @@
 - [x] Wave 8 + Skill Sync #8 (`7622e52`): Live Search Trending Skills & Talent Pool Pulse (`search.py` + FE `/search`)
 - [x] Wave 9 + Skill Sync #9 (`147cddc`): Candidate Workspace Live Trust & Readiness Copilot (`user/[username]/page.tsx`)
 - [x] Wave 10 + Skill Sync #10 (`1bf71dc`): Real-Time CV Studio ATS Readability & STAR Bullet Density Auditor (`cv-studio/page.tsx`)
-- [x] Wave 11 + Skill Sync #11: Homepage Live 500k Talent Pool & Trending Skills Ticker (`page.tsx`)
-- [ ] Wave 12 (05:00–06:20 AM): Continuous 28-Scenario 500k Benchmark Audit, `audit-truth.sh`, & Morning CTO Handover Report
-
-
-
-
-
-
-
-
-
-
-
-
+- [x] Wave 11 + Skill Sync #11 (`66ee961`): Homepage Live 500k Talent Pool & Trending Skills Ticker (`page.tsx`)
+- [x] Wave 12 + Skill Sync #12: Public CMS Career Jobs Singleflight Cache + Inline Application & ATS Pre-Check (`careers/page.tsx` + `BM-29` at 5,001 RPS)
+- [ ] Wave 13 (05:20–06:20 AM): 30-Scenario (`BM-30`) 500k Benchmark Audit, `audit-truth.sh`, & Morning CTO Handover Report
