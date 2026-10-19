@@ -1,4 +1,4 @@
-"""Pydantic v2 DTO Schemas for Domain 10: ATS Diagnostics & JD Matching Engine."""
+"""Pydantic v2 DTO Schemas for Domain 10: ATS Diagnostics, Recruiter Talent Shortlist & Market Pulse."""
 
 import uuid
 from typing import List, Optional, Dict, Any
@@ -24,3 +24,64 @@ class ATSScanResponse(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TalentShortlistRequest(BaseModel):
+    job_title: str = Field(..., max_length=255, description="Target role title for recruiter shortlist")
+    company_name: Optional[str] = Field(None, max_length=255, description="Hiring organization")
+    jd_text: str = Field(..., description="Job description text used to extract required skill taxonomy")
+    location: Optional[str] = Field(None, max_length=120, description="Optional location filter")
+    limit: int = Field(10, ge=1, le=50, description="Maximum shortlisted candidates to return")
+    require_video_pitch: bool = Field(False, description="Only include candidates with verified video pitches")
+
+
+class ShortlistedCandidateDTO(BaseModel):
+    profile_id: str
+    username: str
+    full_name: str
+    headline: str
+    location: str
+    seeking_status: str
+    match_score: int = Field(..., ge=0, le=100)
+    matched_skills: List[str]
+    missing_skills: List[str]
+    has_video_pitch: bool
+    video_pitch_url: Optional[str] = None
+    avatar_url: str
+    score_breakdown: Dict[str, int]
+
+
+class TalentPoolTelemetryDTO(BaseModel):
+    total_matching_candidates: int
+    video_verified_count: int
+    actively_looking_count: int
+    estimated_salary_p25_vnd: int
+    estimated_salary_p50_vnd: int
+    estimated_salary_p75_vnd: int
+    hiring_difficulty: str
+
+
+class TalentShortlistResponse(BaseModel):
+    job_title: str
+    company_name: Optional[str] = None
+    extracted_jd_skills: List[str]
+    pool_telemetry: TalentPoolTelemetryDTO
+    candidates: List[ShortlistedCandidateDTO]
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SkillScarcityItemDTO(BaseModel):
+    skill: str
+    candidate_supply: int
+    demand_index: int
+    scarcity_score: float
+    salary_premium_pct: str
+
+
+class TalentMarketPulseResponse(BaseModel):
+    total_visible_candidates: int
+    video_pitch_adoption_pct: float
+    actively_seeking_pct: float
+    hiring_velocity_index: float
+    skill_scarcity_index: List[SkillScarcityItemDTO]
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

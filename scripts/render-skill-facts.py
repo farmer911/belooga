@@ -40,12 +40,14 @@ BACKEND_TESTS = {
     "be-domain-discovery": [
         "test_backend_foundation.py",
         "test_catalogs_salary.py",
+        "test_high_scale_and_shortlist.py",
         "test_profile_privacy_and_pii.py",
     ],
     "be-domain-monetization": [
         "test_analytics.py",
         "test_ats_matching.py",
         "test_expert_review.py",
+        "test_high_scale_and_shortlist.py",
         "test_job_tracker.py",
         "test_momo_payment.py",
     ],

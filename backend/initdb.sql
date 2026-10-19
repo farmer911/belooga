@@ -87,6 +87,13 @@ CREATE TABLE IF NOT EXISTS candidate_profiles (
 );
 CREATE INDEX IF NOT EXISTS idx_candidate_profiles_username ON candidate_profiles(username);
 CREATE INDEX IF NOT EXISTS idx_candidate_profiles_search_vector ON candidate_profiles USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_candidate_profiles_visible_created
+    ON candidate_profiles (created_at DESC, id DESC)
+    WHERE is_hidden = FALSE;
+CREATE INDEX IF NOT EXISTS idx_candidate_profiles_autocomplete_trgm
+    ON candidate_profiles
+    USING gin ((coalesce(first_name, '') || ' ' || coalesce(last_name, '') || ' ' || coalesce(username, '') || ' ' || coalesce(headline, '')) gin_trgm_ops)
+    WHERE is_hidden = FALSE;
 
 -- 7. profile_media
 CREATE TABLE IF NOT EXISTS profile_media (

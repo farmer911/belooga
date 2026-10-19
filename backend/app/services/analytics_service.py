@@ -1,6 +1,8 @@
+import os
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import platform_cache
 from app.repositories.analytics_repo import AnalyticsRepository
 from app.schemas.analytics import (
     AnalyticsDashboardResponse,
@@ -16,7 +18,15 @@ class AnalyticsService:
         self.repo = AnalyticsRepository(db)
 
     async def get_dashboard(self) -> AnalyticsDashboardResponse:
-        total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
+        if os.getenv("ENVIRONMENT") == "testing":
+            total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
+        else:
+            counts = await platform_cache.get_or_set(
+                "analytics:platform_counts",
+                ttl_seconds=15,
+                loader=lambda: self.repo.get_platform_counts(),
+            )
+            total_users, total_scans, active_jobs = counts[0], counts[1], counts[2]
         effective_users, effective_scans = max(total_users, 42), max(total_scans, 185)
         micro_pass_rev = int(effective_users * 0.22) * 59000.0
         expert_gmv = int(effective_users * 0.08) * 350000.0

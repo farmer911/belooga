@@ -4,9 +4,13 @@ Business domain service for skills taxonomy, dictionary autocompletes,
 and full-text candidate discovery using PostgreSQL search_vector rankings.
 """
 
+import base64
+from datetime import datetime
+import os
 from typing import Any, Dict, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import platform_cache
 from app.repositories.catalogs_repo import CatalogsRepository
 
 DEFAULT_SKILLS = [
@@ -41,6 +45,25 @@ LOCATIONS_CATALOG = [
 ]
 
 
+def _encode_cursor(created_at: Any, row_id: Any) -> Optional[str]:
+    if not created_at or not row_id:
+        return None
+    ts_str = created_at.isoformat() if isinstance(created_at, datetime) else str(created_at)
+    raw = f"{ts_str}|{row_id}".encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii")
+
+
+def _decode_cursor(cursor: Optional[str]) -> tuple[Optional[datetime], Optional[str]]:
+    if not cursor:
+        return None, None
+    try:
+        decoded = base64.urlsafe_b64decode(cursor.encode("ascii")).decode("utf-8")
+        ts_str, row_id = decoded.split("|", 1)
+        return datetime.fromisoformat(ts_str), row_id
+    except ValueError:
+        return None, None
+
+
 class CatalogsService:
     """Service layer managing master taxonomies and talent discovery queries."""
 
@@ -49,8 +72,13 @@ class CatalogsService:
         self.catalogs_repo = CatalogsRepository(db)
 
     async def list_skills(self) -> List[str]:
-        skills = await self.catalogs_repo.list_skills(limit=100)
-        return skills if skills else DEFAULT_SKILLS
+        async def _load() -> List[str]:
+            skills = await self.catalogs_repo.list_skills(limit=100)
+            return skills if skills else DEFAULT_SKILLS
+
+        if os.getenv("ENVIRONMENT") == "testing":
+            return await _load()
+        return await platform_cache.get_or_set("catalog:skills", ttl_seconds=120, loader=_load)
 
     @staticmethod
     def _filter_catalog(catalog: List[Dict[str, str]], name: str) -> List[Dict[str, str]]:
@@ -69,50 +97,83 @@ class CatalogsService:
         return self._filter_catalog(LOCATIONS_CATALOG, name)
 
     async def search_candidates(
-        self, key: Optional[str] = "", page: int = 1, limit: int = 12
+        self,
+        key: Optional[str] = "",
+        page: int = 1,
+        limit: int = 12,
+        cursor: Optional[str] = None,
     ) -> Dict[str, Any]:
         offset = (page - 1) * limit
         clean_key = key.strip() if key else ""
+        cursor_ts, cursor_id = _decode_cursor(cursor)
 
-        rows = await self.catalogs_repo.search_candidates_fulltext(clean_key, limit, offset)
-        total_count = await self.catalogs_repo.count_candidates_fulltext(clean_key)
+        async def _execute_search() -> Dict[str, Any]:
+            rows = await self.catalogs_repo.search_candidates_fulltext(
+                clean_key,
+                limit,
+                offset,
+                cursor_created_at=cursor_ts,
+                cursor_id=cursor_id,
+            )
+            total_count = await self.catalogs_repo.count_candidates_fulltext(clean_key)
 
-        results = [
-            {
-                "id": str(r["id"]),
-                "username": r["username"],
-                "full_name": f"{r['first_name']} {r['last_name']}",
-                "headline": r["headline"] or "Candidate at Belooga",
-                "location": r["location"] or "San Francisco, CA",
-                "seeking_status": r["seeking_status"] or "Actively Looking",
-                "avatar_url": r.get("avatar_url") or "/images/avatar.jpg",
-                "video_pitch_poster": "/images/home/matt-poster.png",
-                "video_pitch_url": r.get("video_pitch_url") or "/images/home/Ava_s_Video.mp4",
-                "duration": "0:30",
+            results = [
+                {
+                    "id": str(r["id"]),
+                    "username": r["username"],
+                    "full_name": f"{r['first_name']} {r['last_name']}",
+                    "headline": r["headline"] or "Candidate at Belooga",
+                    "location": r["location"] or "San Francisco, CA",
+                    "seeking_status": r["seeking_status"] or "Actively Looking",
+                    "avatar_url": r.get("avatar_url") or "/images/avatar.jpg",
+                    "video_pitch_poster": "/images/home/matt-poster.png",
+                    "video_pitch_url": r.get("video_pitch_url") or "/images/home/Ava_s_Video.mp4",
+                    "duration": "0:30",
+                }
+                for r in rows
+            ]
+
+            next_cursor = None
+            if len(rows) == limit:
+                last_row = rows[-1]
+                next_cursor = _encode_cursor(last_row.get("created_at"), last_row.get("id"))
+
+            total_pages = (total_count + limit - 1) // limit if total_count > 0 else 1
+            return {
+                "results": results,
+                "page": page,
+                "limit": limit,
+                "total": total_count,
+                "total_pages": total_pages,
+                "next_cursor": next_cursor,
             }
-            for r in rows
-        ]
 
-        total_pages = (total_count + limit - 1) // limit if total_count > 0 else 1
-        return {
-            "results": results,
-            "page": page,
-            "limit": limit,
-            "total": total_count,
-            "total_pages": total_pages,
-        }
+        if os.getenv("ENVIRONMENT") == "testing":
+            return await _execute_search()
+
+        cache_key = f"search:{clean_key.lower()}:p={page}:l={limit}:c={cursor or ''}"
+        return await platform_cache.get_or_set(cache_key, ttl_seconds=15, loader=_execute_search)
 
     async def search_suggestions(self, key: str) -> List[Dict[str, str]]:
         clean_key = key.strip()
-        rows = await self.catalogs_repo.suggest_candidates(clean_key, limit=5)
-        return [
-            {
-                "username": r["username"],
-                "full_name": f"{r['first_name']} {r['last_name']}",
-                "headline": r["headline"] or "Candidate",
-            }
-            for r in rows
-        ]
+
+        async def _load_suggestions() -> List[Dict[str, str]]:
+            rows = await self.catalogs_repo.suggest_candidates(clean_key, limit=5)
+            return [
+                {
+                    "username": r["username"],
+                    "full_name": f"{r['first_name']} {r['last_name']}",
+                    "headline": r["headline"] or "Candidate",
+                }
+                for r in rows
+            ]
+
+        if os.getenv("ENVIRONMENT") == "testing":
+            return await _load_suggestions()
+
+        return await platform_cache.get_or_set(
+            f"suggest:{clean_key.lower()}", ttl_seconds=30, loader=_load_suggestions
+        )
 
     def get_salary_benchmark(
         self, role: str, tech_stack: str, level: str, location: str

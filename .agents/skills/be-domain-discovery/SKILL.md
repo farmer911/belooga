@@ -25,20 +25,20 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 - Router: `backend/app/api/v1/endpoints/search.py`, `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/api/v1/endpoints/cms.py`
 - Service: `backend/app/services/catalogs_service.py`, `backend/app/services/cms_service.py`
 - Repository: `backend/app/repositories/catalogs_repo.py`, `backend/app/repositories/cms_repo.py`
-- Tests: `backend/tests/test_backend_foundation.py`, `backend/tests/test_catalogs_salary.py`, `backend/tests/test_profile_privacy_and_pii.py`
+- Tests: `backend/tests/test_backend_foundation.py`, `backend/tests/test_catalogs_salary.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_profile_privacy_and_pii.py`
 <!-- AUTO:END -->
 
 ## Rules
-1. **ADR-005 Strict Index Search (`search.py`):** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` with `ts_rank_cd` and filter `is_hidden = FALSE`. Never combine `search_vector @@` with `OR ILIKE`.
-2. **Master Taxonomies (`catalogs.py`):** Normalize lookup queries (trim + lowercase) against `skills`, `languages`, `interests`, `catalog_companies`, `catalog_schools`, and `catalog_locations`.
+1. **ADR-005 Strict Index Search & Keyset Pagination (`search.py`):** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` with `ts_rank_cd` and filter `is_hidden = FALSE`. Support `cursor` keyset pagination (`(created_at, id) < (:cursor_ts, :cursor_id)`) backed by partial B-Tree index `idx_candidate_profiles_visible_created`. Never combine `search_vector @@` with `OR ILIKE`.
+2. **Master Taxonomies & Singleflight Cache (`catalogs.py`, `app/core/cache.py`):** Normalize lookup queries (trim + lowercase) and wrap hot read paths (`search_candidates`, `search_suggestions`, `list_skills`) in `platform_cache.get_or_set` to prevent cache-stampede DB overload at 10k–25k CCU.
 3. **CMS & Abuse Reports (`cms.py`):** Profile abuse reports (`POST /v1/profile/{user_id}/report/`) must validate a UUID `user_id`, not a username string.
 
 ## Known Traps
-- **Autocomplete vs. Search:** Prefix `ILIKE` is permitted only inside `/v1/profile/search/suggest/` for name autocomplete, never in main candidate search.
+- **Autocomplete vs. Search:** Prefix/substring `ILIKE` is permitted only inside `/v1/profile/search/suggest/` using the concatenated `gin_trgm_ops` expression index `idx_candidate_profiles_autocomplete_trgm`, never in main candidate search.
 - **Dependency Injection (C-06):** Always inject `AsyncSession` via FastAPI `Depends(get_db)` in `CmsService` and `CatalogsService`.
 
 ## Self-Verification
 ```bash
-backend/.venv/bin/pytest backend/tests/test_catalogs_salary.py backend/tests/test_backend_foundation.py backend/tests/test_profile_privacy_and_pii.py -v
+backend/.venv/bin/pytest backend/tests/test_catalogs_salary.py backend/tests/test_high_scale_and_shortlist.py backend/tests/test_backend_foundation.py backend/tests/test_profile_privacy_and_pii.py -v
 python3 scripts/lint-skills.py --quiet
 ```

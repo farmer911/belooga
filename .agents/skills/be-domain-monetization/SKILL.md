@@ -17,6 +17,8 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | required |
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | required |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
+| `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
+| `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
@@ -29,20 +31,21 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 - Router: `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/api/v1/endpoints/ats_matching.py`, `backend/app/api/v1/endpoints/job_tracker.py`, `backend/app/api/v1/endpoints/analytics.py`, `backend/app/api/v1/endpoints/payments.py`
 - Service: `backend/app/services/analytics_service.py`, `backend/app/services/ats_matching_service.py`, `backend/app/services/expert_review_service.py`, `backend/app/services/job_tracker_service.py`, `backend/app/services/payment_service.py`
 - Repository: `backend/app/repositories/analytics_repo.py`, `backend/app/repositories/ats_matching_repo.py`, `backend/app/repositories/expert_review_repo.py`, `backend/app/repositories/job_tracker_repo.py`
-- Tests: `backend/tests/test_analytics.py`, `backend/tests/test_ats_matching.py`, `backend/tests/test_expert_review.py`, `backend/tests/test_job_tracker.py`, `backend/tests/test_momo_payment.py`
+- Tests: `backend/tests/test_analytics.py`, `backend/tests/test_ats_matching.py`, `backend/tests/test_expert_review.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_job_tracker.py`, `backend/tests/test_momo_payment.py`
 <!-- AUTO:END -->
 
 ## Rules
 1. **Expert Review & Job Tracker Ownership (`expert_review.py`, `job_tracker.py`):** Mutations require `Depends(get_current_user)` scoped to `current_user.id`. Validate Kanban status transitions (`TARGETING`, `TAILORED`, `APPLIED`, `INTERVIEW`, `OFFER`).
-2. **ATS Guest & Auth Scanning (`ats_matching.py`):** `POST /v1/match/ats-scan` uses `get_current_user_optional` so both guest visitors and authenticated candidates receive typed `ATSScanResponse` diagnostics.
+2. **ATS Scan, Talent Shortlist & Market Pulse (`ats_matching.py`):** `POST /v1/match/ats-scan` and `POST /v1/match/talent-shortlist` use `get_current_user_optional` and enforce a hard `50,000` character payload cap (`HTTP 413`). Shortlist queries must use PostgreSQL GIN `search_vector @@ to_tsquery('english', ...)` and boost candidates with verified video pitches.
 3. **MoMo HMAC-SHA256 & Idempotency (`payments.py`):** Verify HMAC-SHA256 signatures on `POST /v1/payments/momo/ipn` (reject tampered payloads with 400) and handle duplicate IPN callbacks idempotently.
-4. **Analytics Coalescing (`analytics.py`):** Coalesce SQL `SUM`/`COUNT` aggregations to `0` so empty DB states never fail DTO validation.
+4. **Analytics Coalescing (`analytics.py`):** Coalesce SQL `SUM`/`COUNT` aggregations to `0` and cache platform counts via `platform_cache.get_or_set`.
 
 ## Known Traps
 - **Router Prefixes:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`.
+- **Sanitizing `to_tsquery` Tokens:** Always strip non-alphanumeric symbols (`C++`, `C#`, `.NET`) before joining tokens with `|` for PostgreSQL `to_tsquery`.
 
 ## Self-Verification
 ```bash
-backend/.venv/bin/pytest backend/tests/test_expert_review.py backend/tests/test_ats_matching.py backend/tests/test_job_tracker.py backend/tests/test_analytics.py backend/tests/test_momo_payment.py -v
+backend/.venv/bin/pytest backend/tests/test_expert_review.py backend/tests/test_ats_matching.py backend/tests/test_high_scale_and_shortlist.py backend/tests/test_job_tracker.py backend/tests/test_analytics.py backend/tests/test_momo_payment.py -v
 python3 scripts/lint-skills.py --quiet
 ```

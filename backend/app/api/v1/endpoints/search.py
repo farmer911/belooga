@@ -15,10 +15,11 @@ async def search_candidates(
     key: Optional[str] = Query("", description="Keyword to search"),
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=50),
+    cursor: Optional[str] = Query(None, description="Opaque keyset cursor for O(1) deep pagination"),
     db: AsyncSession = Depends(get_db),
 ):
     """Search candidates using PostgreSQL plainto_tsquery full-text search against GIN search_vector (ADR-005)."""
-    return await CatalogsService(db).search_candidates(key=key, page=page, limit=limit)
+    return await CatalogsService(db).search_candidates(key=key, page=page, limit=limit, cursor=cursor)
 
 
 @router.get("/profile/search/suggest/", response_model=List[Dict[str, str]], tags=["Domain 6: Talent Discovery & Search"])
