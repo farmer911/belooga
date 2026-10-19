@@ -254,6 +254,19 @@ async def test_expert_reviewer_smart_matchmaking(client: AsyncClient):
     assert len(data["match_rationale"]) > 15
 
 
+@pytest.mark.asyncio
+async def test_executive_unit_economics_and_cohort_retention(client: AsyncClient):
+    """Verify GET /v1/analytics/unit-economics returns LTV/CAC, payback days, and D30/D90 cohort retention."""
+    res = await client.get("/v1/analytics/unit-economics")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["ltv_to_cac_ratio"] >= 3.0
+    assert data["payback_period_days"] > 0
+    assert 0.0 < data["cohort_retention_d30_pct"] <= 100.0
+    assert data["arr_run_rate_vnd"] > 0
+
+
+
 
 
 

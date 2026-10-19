@@ -38,3 +38,15 @@ class AnalyticsDashboardResponse(BaseModel):
     revenue_chart: List[RevenueSeriesPoint]
     funnel: List[FunnelStage]
     recent_transactions: List[TransactionRecord]
+
+
+class UnitEconomicsResponse(BaseModel):
+    ltv_vnd: float
+    cac_vnd: float
+    ltv_to_cac_ratio: float
+    payback_period_days: int
+    cohort_retention_d30_pct: float
+    cohort_retention_d90_pct: float
+    arr_run_rate_vnd: float
+    strategic_growth_insight: str
+

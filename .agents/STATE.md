@@ -16,11 +16,17 @@
 - Wave 5 (Expert): `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/services/expert_review_service.py`, `frontend/src/app/(public)/expert-review/page.tsx`
 
 ## Execution Checklist (Continuous until 06:20 AM)
-- [x] Wave 1 + Skill Sync #1: Candidate Profile Trust & Recruiter Readiness Score (BE + FE + Benchmark + Skill Update)
-- [x] Wave 2 + Skill Sync #2: 60s Video Pitch Script & STAR Interview Kit Generator (BE + FE + Benchmark + Skill Update)
-- [x] Wave 3 + Skill Sync #3: Career Upskill ROI & Salary Negotiation Simulator (BE + FE + Benchmark + Skill Update)
-- [x] Wave 4 + Skill Sync #4: Job Tracker Funnel Velocity & Offer Probability Analytics (BE + FE + Benchmark + Skill Update)
-- [x] Wave 5 + Skill Sync #5: Smart Expert Reviewer Matchmaking + Full 25-Scenario Benchmark & Continuous 06:20 AM Guard
+- [x] Wave 0 (`ddd7033`): 500k Dataset + Singleflight Cache + Keyset Pagination + Recruiter Shortlist Radar
+- [x] Wave 1 + Skill Sync #1 (`f39415f`): Candidate Profile Trust & Recruiter Readiness Score
+- [x] Wave 2 + Skill Sync #2 (`de0a540`): 60s Video Pitch Script & STAR Interview Kit Generator
+- [x] Wave 3 + Skill Sync #3 (`76fb618`): Career Upskill ROI & Salary Negotiation Simulator
+- [x] Wave 4 + Skill Sync #4 (`0bc5426`): Job Tracker Funnel Velocity & Offer Probability Analytics
+- [x] Wave 5 + Skill Sync #5 (`37f9cb1`): Smart Expert Reviewer Matchmaking + 25-Scenario 500k Benchmark
+- [x] Wave 6 + Skill Sync #6: Executive Cohort Retention & LTV/CAC Unit Economics Telemetry (`analytics.py` + FE)
+- [ ] Wave 7 (03:40–05:00 AM): Candidate Career Trajectory & Promotion Readiness Simulator (`timeline.py` + FE)
+- [ ] Wave 8 (05:00–06:20 AM): Final 500k Benchmark Audit, E2E Verification & Morning CTO Handover Report
+
+
 
 
 

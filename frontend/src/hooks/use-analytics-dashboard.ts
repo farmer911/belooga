@@ -46,6 +46,17 @@ export interface AnalyticsData {
   recent_transactions: TransactionRecord[];
 }
 
+export interface UnitEconomicsData {
+  ltv_vnd: number;
+  cac_vnd: number;
+  ltv_to_cac_ratio: number;
+  payback_period_days: number;
+  cohort_retention_d30_pct: number;
+  cohort_retention_d90_pct: number;
+  arr_run_rate_vnd: number;
+  strategic_growth_insight: string;
+}
+
 const DEFAULT_ANALYTICS: AnalyticsData = {
   overview: {
     total_users: 142,
@@ -91,5 +102,14 @@ export function useAnalyticsDashboard() {
     placeholderData: DEFAULT_ANALYTICS,
   });
 
-  return { data, isLoading, error: null };
+  const { data: unitEconomics = null } = useQuery<UnitEconomicsData>({
+    queryKey: ["analytics-unit-economics"],
+    queryFn: async () => {
+      const res = await apiClient.get<UnitEconomicsData>("/v1/analytics/unit-economics", { timeout: 3000 });
+      return res.data;
+    },
+  });
+
+  return { data, unitEconomics, isLoading, error: null };
 }
+

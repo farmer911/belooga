@@ -13,7 +13,7 @@ import { AnalyticsFunnelCard } from "@/components/features/analytics/analytics-f
 import { AnalyticsTransactionsTable } from "@/components/features/analytics/analytics-transactions-table";
 
 export default function AnalyticsDashboardPage() {
-  const { data, isLoading } = useAnalyticsDashboard();
+  const { data, unitEconomics, isLoading } = useAnalyticsDashboard();
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "ALL">("7D");
 
   return (
@@ -87,6 +87,30 @@ export default function AnalyticsDashboardPage() {
             {/* Top KPI Metrics Row */}
             <AnalyticsKpiCards overview={data.overview} />
 
+            {/* Unit Economics & Cohort Retention Telemetry Banner */}
+            {unitEconomics && (
+              <div
+                data-testid="unit-economics-banner"
+                className="rounded-xl border border-teal-200 bg-teal-50/40 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs"
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-bold text-teal-900">SaaS Unit Economics:</span>
+                  <Badge className="bg-teal-600 text-white border-none text-[11px]">
+                    LTV/CAC: {unitEconomics.ltv_to_cac_ratio}x
+                  </Badge>
+                  <Badge variant="outline" className="bg-white border-teal-200 text-teal-800 text-[11px]">
+                    Payback: {unitEconomics.payback_period_days} ngày
+                  </Badge>
+                  <Badge variant="outline" className="bg-white border-emerald-200 text-emerald-700 text-[11px]">
+                    Retention D30: {unitEconomics.cohort_retention_d30_pct}% · D90: {unitEconomics.cohort_retention_d90_pct}%
+                  </Badge>
+                </div>
+                <p className="text-[11px] font-medium text-slate-700">
+                  {unitEconomics.strategic_growth_insight}
+                </p>
+              </div>
+            )}
+
             {/* Middle Grid: Revenue Charts & PLG Funnel */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div className="lg:col-span-7">
@@ -102,6 +126,7 @@ export default function AnalyticsDashboardPage() {
           </>
         )}
       </main>
+
 
       {/* Terminal Status Bar */}
       <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">

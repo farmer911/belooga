@@ -487,6 +487,15 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-25", "name": "Smart Expert Reviewer Matchmaking Engine", **bm25})
 
+        # BM-26: Executive SaaS Unit Economics & Cohort Retention Telemetry
+        bm26 = await run_concurrent_load(
+            total_requests=500,
+            concurrency=100,
+            worker_fn=lambda i: _get_status(client, "/v1/analytics/unit-economics"),
+        )
+        results_table.append({"id": "BM-26", "name": "SaaS Unit Economics & Cohort Retention Telemetry", **bm26})
+
+
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")
     print("-" * 116)
     total_reqs = 0

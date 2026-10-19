@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 61 (59 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 62 (60 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -55,6 +55,7 @@
 | `GET` | `/health` | `health_check` | Public | `backend/app/main.py` | Health Probe |
 | `GET` | `/v1` | `api_root` | Public | `backend/app/main.py` | Root |
 | `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
+| `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
 | `POST` | `/v1/auth/login/` | `login` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/logout/` | `logout` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/auth/me/` | `get_current_session_user` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |

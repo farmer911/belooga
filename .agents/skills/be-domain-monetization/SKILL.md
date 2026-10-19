@@ -27,6 +27,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | required |
 | `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | public |
+| `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | public |
 | `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | public |
 | `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | public |
 | `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | public |
