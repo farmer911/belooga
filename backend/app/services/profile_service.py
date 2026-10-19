@@ -82,23 +82,17 @@ class ProfileService:
         self, username: str, current_user: Optional[AuthenticatedUser]
     ) -> Dict[str, Any]:
         clean_username = username.lower().strip()
-        row = await self.profile_repo.get_profile_with_identity(clean_username)
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Candidate @{username} not found",
-            )
-
         is_owner = current_user is not None and (
             current_user.username.lower() == clean_username or current_user.role == "admin"
         )
-        if row.is_hidden and not is_owner:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Candidate @{username} not found",
-            )
 
         async def _compute() -> Dict[str, Any]:
+            row = await self.profile_repo.get_profile_with_identity(clean_username)
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Candidate @{username} not found",
+                )
             profile_id = row.id
             jobs = await self.profile_repo.get_jobs(profile_id)
             education = await self.profile_repo.get_education(profile_id)
@@ -139,6 +133,7 @@ class ProfileService:
 
             return {
                 "username": row.username,
+                "_is_hidden": bool(row.is_hidden),
                 "trust_score": total,
                 "readiness_tier": tier,
                 "recruiter_conversion_multiplier": multiplier,
@@ -175,7 +170,13 @@ class ProfileService:
                 "next_boost_action": next_action,
             }
 
-        return await profile_cache.get_or_set(f"trust:{clean_username}", ttl_seconds=45, loader=_compute)
+        data = await profile_cache.get_or_set(f"trust:{clean_username}", ttl_seconds=45, loader=_compute)
+        if data.get("_is_hidden") and not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Candidate @{username} not found",
+            )
+        return data
 
     async def update_candidate_profile(
         self, username: str, payload: ProfileUpdate, current_user: AuthenticatedUser
@@ -192,6 +193,7 @@ class ProfileService:
             await self.profile_repo.update_profile(profile.id, **update_dict)
             await self.db.commit()
             await profile_cache.invalidate_prefix(f"trust:{clean_username}")
+            await profile_cache.invalidate_prefix(f"trajectory:{clean_username}")
 
         return {"message": "Profile updated successfully"}
 
@@ -228,4 +230,5 @@ class ProfileService:
         await self.db.commit()
         await profile_cache.invalidate_prefix(f"trust:{clean_username}")
         return {"message": f"Skill '{clean_name}' removed"}
+
 

@@ -154,11 +154,11 @@ class TimelineService:
 
     async def get_career_trajectory(self, username: str) -> CareerTrajectoryResponse:
         uname = username.lower().strip()
-        profile = await self.profile_repo.get_by_username(uname)
-        if not profile or bool(getattr(profile, "is_hidden", False)):
-            raise HTTPException(status_code=404, detail="Candidate not found")
 
         async def _compute() -> Dict[str, Any]:
+            profile = await self.profile_repo.get_by_username(uname)
+            if not profile or bool(getattr(profile, "is_hidden", False)):
+                raise HTTPException(status_code=404, detail="Candidate not found")
             jobs = await self.timeline_repo.list_jobs_by_username(uname)
             edus = await self.timeline_repo.list_education_by_username(uname)
             text_blob = f"{profile.headline or ''} {profile.bio or ''}".lower()
@@ -191,4 +191,5 @@ class TimelineService:
 
         cached = await platform_cache.get_or_set(f"trajectory:{uname}", ttl_seconds=60, loader=_compute)
         return CareerTrajectoryResponse(**cached)
+
 
