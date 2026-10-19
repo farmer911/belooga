@@ -457,6 +457,17 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-22", "name": "60s Video Pitch & STAR Interview Kit (800 Burst)", **bm22})
 
+        # BM-23: Career Upskill ROI & Salary Negotiation Simulator Matrix
+        bm23 = await run_concurrent_load(
+            total_requests=800,
+            concurrency=160,
+            worker_fn=lambda i: _get_status(
+                client,
+                f"/v1/catalogs/career-roi?tech_stack={stacks[i % 4]}&level={levels[(i // 4) % 4]}&location=Remote",
+            ),
+        )
+        results_table.append({"id": "BM-23", "name": "Career Upskill ROI & Negotiation Simulator", **bm23})
+
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")
     print("-" * 116)
     total_reqs = 0

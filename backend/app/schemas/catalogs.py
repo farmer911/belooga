@@ -41,3 +41,23 @@ class SalaryBenchmarkResponse(BaseModel):
     market_demand: str
     growth_rate_yoy: str
 
+
+class UpskillRoiItem(BaseModel):
+    skill: str
+    salary_premium_pct: str
+    monthly_delta_vnd: int
+    learning_weeks: int
+    roi_score: float
+
+
+class CareerRoiResponse(BaseModel):
+    tech_stack: str
+    level: str
+    location: str
+    current_median_vnd: int
+    projected_upskill_vnd: int
+    annual_comp_gain_vnd: int
+    upskill_recommendations: List[UpskillRoiItem]
+    negotiation_leverage_script: str
+
+

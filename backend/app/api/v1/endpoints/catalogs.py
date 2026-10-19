@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas.catalogs import SalaryBenchmarkResponse
+from app.schemas.catalogs import CareerRoiResponse, SalaryBenchmarkResponse
 from app.services.catalogs_service import CatalogsService
 
 router = APIRouter()
@@ -50,4 +50,16 @@ async def get_salary_benchmark(
 ):
     """Programmatic SEO & Market Radar Engine delegating to CatalogsService."""
     return CatalogsService(db).get_salary_benchmark(role, tech_stack, level, location)
+
+
+@router.get("/catalogs/career-roi", response_model=CareerRoiResponse, tags=["Domain 7: Master Catalogs"])
+async def get_career_upskill_roi(
+    tech_stack: str = Query("Golang", description="Primary tech stack"),
+    level: str = Query("Senior", description="Experience level"),
+    location: str = Query("Ho Chi Minh", description="Work location"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Calculate Career Upskill ROI & Salary Negotiation Leverage Script."""
+    return CatalogsService(db).get_career_roi(tech_stack, level, location)
+
 

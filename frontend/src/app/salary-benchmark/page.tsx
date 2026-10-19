@@ -30,18 +30,44 @@ interface SalaryBenchmarkData {
   top_paid_skills: SalarySkill[];
 }
 
+interface CareerRoiData {
+  current_median_vnd: number;
+  projected_upskill_vnd: number;
+  annual_comp_gain_vnd: number;
+  upskill_recommendations: Array<{
+    skill: string;
+    salary_premium_pct: string;
+    monthly_delta_vnd: number;
+    learning_weeks: number;
+    roi_score: number;
+  }>;
+  negotiation_leverage_script: string;
+}
+
 export default function SalaryBenchmarkPage() {
   const [techStack, setTechStack] = useState<string>("Golang");
   const [level, setLevel] = useState<string>("Senior");
   const [location, setLocation] = useState<string>("Ho Chi Minh");
 
+  const queryStack = techStack.split(" ")[0];
+  const queryLevel = level.split(" ")[0];
+
   const { data: benchmark } = useQuery<SalaryBenchmarkData>({
     queryKey: ["salary-benchmark", techStack, level, location],
     queryFn: async () => {
-      const queryStack = techStack.split(" ")[0];
-      const queryLevel = level.split(" ")[0];
       const res = await apiClient.get<SalaryBenchmarkData>(
         `/v1/catalogs/salary-benchmark?tech_stack=${encodeURIComponent(queryStack)}&level=${encodeURIComponent(queryLevel)}&location=${encodeURIComponent(location)}`,
+        { timeout: 3000 }
+      );
+      return res.data;
+    },
+  });
+
+  const { data: careerRoi } = useQuery<CareerRoiData>({
+    queryKey: ["career-upskill-roi", techStack, level, location],
+    queryFn: async () => {
+      const res = await apiClient.get<CareerRoiData>(
+        `/v1/catalogs/career-roi?tech_stack=${encodeURIComponent(queryStack)}&level=${encodeURIComponent(queryLevel)}&location=${encodeURIComponent(location)}`,
         { timeout: 3000 }
       );
       return res.data;
@@ -168,6 +194,25 @@ export default function SalaryBenchmarkPage() {
             <SkillPremiumRadar skills={skills} techStack={techStack} />
           </div>
         </div>
+
+        {careerRoi && (
+          <div
+            data-testid="career-upskill-roi-card"
+            className="p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-2.5"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold text-typography-main uppercase tracking-wider">
+                Mô Phỏng ROI Nâng Cấp Kỹ Năng & Kịch Bản Đàm Phán Lương
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                +{(careerRoi.annual_comp_gain_vnd / 1_000_000).toFixed(0)}M VNĐ / Năm
+              </span>
+            </div>
+            <p className="text-xs text-typography-heading bg-teal-50/50 border border-teal-200 rounded-lg p-2.5">
+              {careerRoi.negotiation_leverage_script}
+            </p>
+          </div>
+        )}
       </main>
 
       {/* Terminal Status Bar */}
@@ -181,3 +226,4 @@ export default function SalaryBenchmarkPage() {
     </div>
   );
 }
+

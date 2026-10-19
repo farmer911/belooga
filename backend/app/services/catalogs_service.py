@@ -235,3 +235,39 @@ class CatalogsService:
             "market_demand": "VERY_HIGH" if multiplier > 1.1 else "HIGH",
             "growth_rate_yoy": "+18.5%",
         }
+
+    def get_career_roi(
+        self, tech_stack: str, level: str, location: str
+    ) -> Dict[str, Any]:
+        bench = self.get_salary_benchmark("backend", tech_stack, level, location)
+        median = bench["p50_salary_vnd"]
+        recommendations = []
+        for idx, sk in enumerate(bench["top_paid_skills"][:3]):
+            pct_num = int(sk["salary_premium"].replace("+", "").replace("%", ""))
+            delta = int(median * (pct_num / 100.0))
+            weeks = 4 + idx * 2
+            recommendations.append({
+                "skill": sk["name"],
+                "salary_premium_pct": sk["salary_premium"],
+                "monthly_delta_vnd": delta,
+                "learning_weeks": weeks,
+                "roi_score": round((delta / 1_000_000) / weeks, 2),
+            })
+        top_delta = recommendations[0]["monthly_delta_vnd"] if recommendations else int(median * 0.2)
+        projected = median + top_delta
+        top_skill_name = recommendations[0]["skill"] if recommendations else tech_stack
+        return {
+            "tech_stack": tech_stack,
+            "level": level,
+            "location": location,
+            "current_median_vnd": median,
+            "projected_upskill_vnd": projected,
+            "annual_comp_gain_vnd": top_delta * 12,
+            "upskill_recommendations": recommendations,
+            "negotiation_leverage_script": (
+                f"Based on Belooga's 2026 Market Radar for {level} {tech_stack} in {location}, "
+                f"combining {tech_stack} with production {top_skill_name} commands a P75 package of "
+                f"{projected:,} VND/month (+{top_delta * 12:,} VND/year)."
+            ),
+        }
+

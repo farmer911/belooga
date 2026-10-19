@@ -213,3 +213,18 @@ async def test_interview_kit_and_video_pitch_script_generator(client: AsyncClien
     assert len(data["closing_questions_for_hiring_manager"]) >= 2
 
 
+@pytest.mark.asyncio
+async def test_career_upskill_roi_and_negotiation_simulator(client: AsyncClient):
+    """Verify GET /v1/catalogs/career-roi computes upskill compensation delta and negotiation leverage script."""
+    res = await client.get("/v1/catalogs/career-roi?tech_stack=Golang&level=Senior&location=Ho%20Chi%20Minh")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["tech_stack"] == "Golang"
+    assert data["projected_upskill_vnd"] > data["current_median_vnd"]
+    assert data["annual_comp_gain_vnd"] >= 12 * (data["projected_upskill_vnd"] - data["current_median_vnd"])
+    assert len(data["upskill_recommendations"]) >= 3
+    assert "monthly_delta_vnd" in data["upskill_recommendations"][0]
+    assert len(data["negotiation_leverage_script"]) > 20
+
+
+
