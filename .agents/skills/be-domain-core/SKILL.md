@@ -18,6 +18,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `GET` | `/v1/auth/me/` | `get_current_session_user` | required |
 | `POST` | `/v1/auth/logout/` | `logout` | public |
 | `GET` | `/v1/profile/{username}` | `get_candidate_public_profile` | optional |
+| `GET` | `/v1/profile/{username}/trust-score` | `get_candidate_trust_score` | optional |
 | `PATCH` | `/v1/profile/{username}` | `update_candidate_profile` | required |
 | `POST` | `/v1/profile/{username}/skills/` | `add_candidate_skill` | required |
 | `DELETE` | `/v1/profile/{username}/skills/{skill_name}/` | `remove_candidate_skill` | required |
@@ -48,13 +49,15 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 2. **IDOR & PII Privacy (`profile.py`):** All user mutations must enforce `verify_profile_owner(current_user, target_username)`. Hidden profiles (`is_hidden = True`) return 404 (`NotFoundException`) to non-owners via optional auth `Depends(get_optional_current_user)` (`app.core.security`); redact PII (`email`, `phone`, `resume_url`) for public viewers. `ProfileRepository.get_by_username_with_details(username)` eager-loads `user`, `skills`, `job_experiences`, and `education_experiences`.
 3. **Timeline Locking (`timeline.py`):** Reorder endpoints must lock all candidate rows via `with_for_update()`, validate 1-to-1 ID set equality (400 on mismatch), and `await db.commit()`.
 4. **Non-Blocking Media & Path Safety (`media.py`):** Run all disk I/O, chunk assembly, and ReportLab `doc.build()` inside `asyncio.to_thread`. Reject `..` path traversal in upload IDs with 400.
+5. **Candidate Trust & Recruiter Readiness Score (`GET /v1/profile/{username}/trust-score`):** Enforces `is_hidden` privacy guard (`404` for non-owners), caches 4-pillar readiness telemetry via `AsyncTieredCache` (`profile_cache`, 45s TTL), and invalidates `trust:{username}` on profile or skill mutations.
 
 ## Known Traps
-- **Hidden profile leakage (C-01/C-02):** Timeline list and video-status endpoints must respect `is_hidden` when tightening privacy rules.
+- **Hidden profile leakage (C-01/C-02):** Timeline list, trust-score, and video-status endpoints must respect `is_hidden` when tightening privacy rules.
 - **Argument order:** `verify_profile_owner` takes `(current_user, target_username)`. Swapping arguments raises `AttributeError`.
 
 ## Self-Verification
 ```bash
-backend/.venv/bin/pytest backend/tests/test_auth_family_rotation.py backend/tests/test_profile_privacy_and_pii.py backend/tests/test_timeline_reorder.py backend/tests/test_media_traversal.py backend/tests/test_idor_guards.py -v
+backend/.venv/bin/pytest backend/tests/test_auth_family_rotation.py backend/tests/test_profile_privacy_and_pii.py backend/tests/test_timeline_reorder.py backend/tests/test_media_traversal.py backend/tests/test_idor_guards.py backend/tests/test_high_scale_and_shortlist.py -v
 python3 scripts/lint-skills.py --quiet
 ```
+

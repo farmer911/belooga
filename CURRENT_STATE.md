@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 56 (54 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 57 (55 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -100,6 +100,7 @@
 | `PATCH` | `/v1/profile/{username}/resume/` | `upload_resume` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `POST` | `/v1/profile/{username}/skills/` | `add_candidate_skill` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `DELETE` | `/v1/profile/{username}/skills/{skill_name}/` | `remove_candidate_skill` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
+| `GET` | `/v1/profile/{username}/trust-score` | `get_candidate_trust_score` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | Public | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |

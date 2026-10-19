@@ -16,8 +16,9 @@
 - Wave 5 (Expert): `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/services/expert_review_service.py`, `frontend/src/app/(public)/expert-review/page.tsx`
 
 ## Execution Checklist (Continuous until 06:20 AM)
-- [ ] Wave 1 + Skill Sync #1: Candidate Profile Trust & Recruiter Readiness Score (BE + FE + Benchmark + Skill Update)
+- [x] Wave 1 + Skill Sync #1: Candidate Profile Trust & Recruiter Readiness Score (BE + FE + Benchmark + Skill Update)
 - [ ] Wave 2 + Skill Sync #2: 60s Video Pitch Script & STAR Interview Kit Generator (BE + FE + Benchmark + Skill Update)
 - [ ] Wave 3 + Skill Sync #3: Career Upskill ROI & Salary Negotiation Simulator (BE + FE + Benchmark + Skill Update)
 - [ ] Wave 4 + Skill Sync #4: Job Tracker Funnel Velocity & Offer Probability Analytics (BE + FE + Benchmark + Skill Update)
 - [ ] Wave 5 + Skill Sync #5: Smart Expert Reviewer Matchmaking + Full 25-Scenario Benchmark & Continuous 06:20 AM Guard
+

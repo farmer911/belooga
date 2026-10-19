@@ -142,3 +142,53 @@ async def test_talent_market_pulse_telemetry(client: AsyncClient):
     assert len(data["skill_scarcity_index"]) >= 3
     assert "skill" in data["skill_scarcity_index"][0]
     assert "demand_To_supply_ratio" in data["skill_scarcity_index"][0] or "scarcity_score" in data["skill_scarcity_index"][0]
+
+
+@pytest.mark.asyncio
+async def test_candidate_profile_trust_score_and_privacy(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Verify GET /v1/profile/{username}/trust-score computes 4-pillar trust score and enforces is_hidden 404."""
+    suffix = uuid.uuid4().hex[:6]
+    uid_pub = uuid.uuid4()
+    pid_pub = uuid.uuid4()
+    u_pub = f"trust_pub_{suffix}"
+
+    uid_hid = uuid.uuid4()
+    pid_hid = uuid.uuid4()
+    u_hid = f"trust_hid_{suffix}"
+
+    await db_session.execute(
+        text(
+            "INSERT INTO identities (id, email, password_hash, role, status) "
+            "VALUES (:u1, :e1, 'h', 'candidate', 'active'), (:u2, :e2, 'h', 'candidate', 'active')"
+        ),
+        {"u1": uid_pub, "e1": f"{u_pub}@test.com", "u2": uid_hid, "e2": f"{u_hid}@test.com"},
+    )
+    await db_session.execute(
+        text(
+            "INSERT INTO candidate_profiles "
+            "(id, identity_id, username, first_name, last_name, headline, bio, location, seeking_status, video_pitch_url, is_hidden) "
+            "VALUES "
+            "(:p1, :u1, :un1, 'Linh', 'Principal', 'Principal Staff Engineer', "
+            "'Built distributed PostgreSQL and Golang microservices at scale with 99.99% SLA.', "
+            "'Ho Chi Minh City', 'Actively Looking', '/uploads/videos/pitch.mp4', FALSE), "
+            "(:p2, :u2, :un2, 'Hidden', 'User', 'Engineer', 'Bio', 'Hanoi', 'Open', NULL, TRUE)"
+        ),
+        {"p1": pid_pub, "u1": uid_pub, "un1": u_pub, "p2": pid_hid, "u2": uid_hid, "un2": u_hid},
+    )
+    await db_session.commit()
+
+    res_pub = await client.get(f"/v1/profile/{u_pub}/trust-score")
+    assert res_pub.status_code == 200
+    body = res_pub.json()
+    assert body["username"] == u_pub
+    assert 0 <= body["trust_score"] <= 100
+    assert body["readiness_tier"] in ("Platinum Verified", "Gold Verified", "Silver Rising", "Starter Profile")
+    assert len(body["pillars"]) == 4
+    assert body["recruiter_conversion_multiplier"] >= 1.0
+    assert len(body["next_boost_action"]) > 5
+
+    res_hid = await client.get(f"/v1/profile/{u_hid}/trust-score")
+    assert res_hid.status_code == 404
+

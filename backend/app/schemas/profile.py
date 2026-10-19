@@ -67,3 +67,25 @@ class ProfileResponse(BaseModel):
     skills: List[str] = Field(default_factory=list)
     languages: List[Dict[str, Any]] = Field(default_factory=list)
     interests: List[str] = Field(default_factory=list)
+
+
+class TrustPillarItem(BaseModel):
+    """Individual pillar of the Candidate Trust & Recruiter Readiness Score."""
+
+    pillar: str
+    score: int
+    max_score: int
+    status: str
+    detail: str
+
+
+class ProfileTrustScoreResponse(BaseModel):
+    """Recruiter Readiness & Verification Trust Scorecard for a candidate profile."""
+
+    username: str
+    trust_score: int
+    readiness_tier: str
+    recruiter_conversion_multiplier: float
+    pillars: List[TrustPillarItem] = Field(default_factory=list)
+    next_boost_action: str
+

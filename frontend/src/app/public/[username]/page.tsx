@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Phone, Briefcase } from "lucide-react";
+import { Mail, Phone, Briefcase, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
 import { downloadCandidatePdf } from "@/services/media-upload.service";
@@ -17,6 +17,15 @@ import { VideoPitchCard } from "@/components/features/media/video-pitch-card";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { TimelineItemCard } from "@/components/features/timeline/timeline-item-card";
 import { EducationTimeline } from "@/components/features/timeline/education-timeline";
+
+interface TrustScoreResponse {
+  username: string;
+  trust_score: number;
+  readiness_tier: string;
+  recruiter_conversion_multiplier: number;
+  pillars: Array<{ pillar: string; score: number; max_score: number; status: string; detail: string }>;
+  next_boost_action: string;
+}
 
 export default function PublicCandidatePage() {
   const params = useParams();
@@ -33,6 +42,15 @@ export default function PublicCandidatePage() {
       return res.data;
     },
     enabled: Boolean(username),
+  });
+
+  const { data: trustData = null } = useQuery<TrustScoreResponse | null>({
+    queryKey: ["public-candidate-trust-score", username],
+    queryFn: async () => {
+      const res = await apiClient.get<TrustScoreResponse>(`/v1/profile/${username}/trust-score`);
+      return res.data;
+    },
+    enabled: Boolean(profile),
   });
 
   if (isLoading) {
@@ -76,6 +94,38 @@ export default function PublicCandidatePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Bio & Credentials (4 cols) */}
           <div className="lg:col-span-4 space-y-6">
+            {trustData && (
+              <div
+                data-testid="profile-trust-score-card"
+                className="bg-surface-card rounded-xl border border-surface-border p-5 shadow-sm space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-typography-main">
+                      {trustData.readiness_tier}
+                    </h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-extrabold border border-emerald-200">
+                    {trustData.trust_score}/100 Trust
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {trustData.pillars.map((p) => (
+                    <div key={p.pillar} className="bg-surface-page rounded-lg p-2 border border-surface-border">
+                      <p className="text-[10px] font-semibold text-slate-500 truncate">{p.pillar}</p>
+                      <p className="text-xs font-bold text-slate-800">
+                        {p.score}/{p.max_score} · {p.status}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[11px] text-emerald-700 font-semibold">
+                  {trustData.recruiter_conversion_multiplier}x Shortlist Conversion Index
+                </p>
+              </div>
+            )}
+
             <div className="bg-surface-card rounded-xl border border-surface-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-wider text-typography-main">Candidate Bio</h3>
               <p className="text-xs text-typography-body leading-relaxed">{profile.bio}</p>
