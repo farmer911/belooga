@@ -3,81 +3,42 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Search, Brain, Video, Wand2, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiClient } from "@/services/api-client";
+
+interface HomeTrendingData {
+  total_searchable_profiles: number;
+  video_verified_pct: number;
+  trending_queries: Array<{ keyword: string; demand_growth: string }>;
+}
 
 const STEPS = [
-  {
-    Icon: Brain,
-    title: "1. Prepare",
-    desc: "Brainstorm key talking points for your 30-second introduction video, highlighting your education, career milestones, and unique superpowers.",
-  },
-  {
-    Icon: Video,
-    title: "2. Record",
-    desc: "Using your laptop webcam or smartphone camera, record your pitch inside our built-in video studio in as many takes as you desire.",
-  },
-  {
-    Icon: Wand2,
-    title: "3. Get Creative",
-    desc: "Complete your profile timeline, arrange your career experiences with interactive reordering, and share your public CV with potential employers.",
-  },
+  { Icon: Brain, title: "1. Prepare", desc: "Brainstorm key talking points for your 30-second introduction video, highlighting your education, career milestones, and unique superpowers." },
+  { Icon: Video, title: "2. Record", desc: "Using your laptop webcam or smartphone camera, record your pitch inside our built-in video studio in as many takes as you desire." },
+  { Icon: Wand2, title: "3. Get Creative", desc: "Complete your profile timeline, arrange your career experiences with interactive reordering, and share your public CV with potential employers." },
 ];
 
 const SHOWCASE_CANDIDATES = [
-  {
-    name: "Jazmin Cole",
-    role: "Senior Product Designer",
-    img: "/images/home/Jazmin-1.jpg",
-    alt: "Jazmin",
-    modalTitle: "Jazmin — Elevator Pitch",
-    videoUrl: "/images/home/Jazmin-Pitch.mp4",
-  },
-  {
-    name: "Jeremy Tran",
-    role: "Full-Stack Software Engineer",
-    img: "/images/home/Jeremy-1.jpg",
-    alt: "Jeremy",
-    modalTitle: "Jeremy — Elevator Pitch",
-    videoUrl: "/images/home/Jeremy-Pitch.mp4",
-  },
-  {
-    name: "Rileigh Brooks",
-    role: "Growth Marketing Manager",
-    img: "/images/home/Rileigh-1.jpg",
-    alt: "Rileigh",
-    modalTitle: "Rileigh — Elevator Pitch",
-    videoUrl: "/images/home/Rileigh-Pitch.mp4",
-  },
+  { name: "Jazmin Cole", role: "Senior Product Designer", img: "/images/home/Jazmin-1.jpg", alt: "Jazmin", modalTitle: "Jazmin — Elevator Pitch", videoUrl: "/images/home/Jazmin-Pitch.mp4" },
+  { name: "Jeremy Tran", role: "Full-Stack Software Engineer", img: "/images/home/Jeremy-1.jpg", alt: "Jeremy", modalTitle: "Jeremy — Elevator Pitch", videoUrl: "/images/home/Jeremy-Pitch.mp4" },
+  { name: "Rileigh Brooks", role: "Growth Marketing Manager", img: "/images/home/Rileigh-1.jpg", alt: "Rileigh", modalTitle: "Rileigh — Elevator Pitch", videoUrl: "/images/home/Rileigh-Pitch.mp4" },
 ];
 
 const WALKTHROUGHS = [
-  {
-    title: "AVA'S PROFILE OVERVIEW",
-    modalTitle: "Ava's Profile Overview",
-    videoUrl: "/images/home/Ava_s_Video.mp4",
-    img: "/images/home/Ana.png",
-    desc: "Walk through Belooga's user-friendly video resume platform with Ava. See how seamlessly you can record, preview, and share your pitch with prospective employers in top tech companies.",
-    cta: "Watch Walkthrough",
-    reverse: false,
-  },
-  {
-    title: "INSPIRE YOUR RESUME",
-    modalTitle: "Inspire Your Resume",
-    videoUrl: "/images/home/Inspire_Your_Resume.mp4",
-    img: "/images/home/Inspire.png",
-    desc: "Regardless of your discipline, Belooga helps you articulate your personality and impact. Discover best practices for framing, audio, and storytelling in 30 seconds.",
-    cta: "Watch Guide",
-    reverse: true,
-  },
+  { title: "AVA'S PROFILE OVERVIEW", modalTitle: "Ava's Profile Overview", videoUrl: "/images/home/Ava_s_Video.mp4", img: "/images/home/Ana.png", desc: "Walk through Belooga's user-friendly video resume platform with Ava. See how seamlessly you can record, preview, and share your pitch with prospective employers in top tech companies.", cta: "Watch Walkthrough", reverse: false },
+  { title: "INSPIRE YOUR RESUME", modalTitle: "Inspire Your Resume", videoUrl: "/images/home/Inspire_Your_Resume.mp4", img: "/images/home/Inspire.png", desc: "Regardless of your discipline, Belooga helps you articulate your personality and impact. Discover best practices for framing, audio, and storytelling in 30 seconds.", cta: "Watch Guide", reverse: true },
 ];
 
 export default function HomePage() {
   const router = useRouter();
   const [searchKey, setSearchKey] = useState("");
-  const [activeModal, setActiveModal] = useState<{ isOpen: boolean; title: string; videoUrl?: string }>({
-    isOpen: false,
-    title: "",
+  const [activeModal, setActiveModal] = useState<{ isOpen: boolean; title: string; videoUrl?: string }>({ isOpen: false, title: "" });
+
+  const { data: pulse = null } = useQuery<HomeTrendingData | null>({
+    queryKey: ["home-trending-pulse"],
+    queryFn: async () => (await apiClient.get<HomeTrendingData>("/v1/profile/search/trending/")).data,
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -123,13 +84,25 @@ export default function HomePage() {
             </Button>
           </form>
 
+          {pulse && (
+            <div data-testid="home-market-pulse-ticker" className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-300">
+              <span className="font-semibold text-teal-300">{pulse.video_verified_pct}% Video-Verified Pool · Trending:</span>
+              {pulse.trending_queries.slice(0, 4).map((t) => (
+                <button
+                  key={t.keyword}
+                  type="button"
+                  onClick={() => router.push(`/search?key=${encodeURIComponent(t.keyword)}`)}
+                  className="px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition-colors cursor-pointer"
+                >
+                  {t.keyword} <span className="text-emerald-400 font-bold">{t.demand_growth}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <Link href="/search">
-              <Button size="lg" className="bg-brand-primary hover:bg-brand-hover text-white px-8">Find Talent</Button>
-            </Link>
-            <Link href="/register">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8">Create Candidate Profile</Button>
-            </Link>
+            <Link href="/search"><Button size="lg" className="bg-brand-primary hover:bg-brand-hover text-white px-8">Find Talent</Button></Link>
+            <Link href="/register"><Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8">Create Candidate Profile</Button></Link>
           </div>
         </div>
       </section>
@@ -144,9 +117,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {STEPS.map(({ Icon, title, desc }) => (
               <div key={title} className="bg-surface-page rounded-xl p-8 border border-surface-border shadow-sm text-center flex flex-col items-center space-y-4 hover:border-brand-primary transition-colors">
-                <div className="w-16 h-16 rounded-full bg-brand-primary/15 flex items-center justify-center text-brand-primary">
-                  <Icon className="w-8 h-8" />
-                </div>
+                <div className="w-16 h-16 rounded-full bg-brand-primary/15 flex items-center justify-center text-brand-primary"><Icon className="w-8 h-8" /></div>
                 <h3 className="text-xl font-bold text-typography-main">{title}</h3>
                 <p className="text-sm text-typography-body leading-relaxed">{desc}</p>
               </div>
@@ -154,12 +125,11 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-12">
-            <Link href="/register">
-              <Button size="lg" className="bg-brand-primary hover:bg-brand-hover text-white px-10">Get Started Now</Button>
-            </Link>
+            <Link href="/register"><Button size="lg" className="bg-brand-primary hover:bg-brand-hover text-white px-10">Get Started Now</Button></Link>
           </div>
         </div>
       </section>
+
 
       <section className="py-20 bg-surface-page border-b border-surface-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
