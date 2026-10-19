@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Send, CheckCircle2 } from "lucide-react";
+import { Send, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
 import { contactUsSchema, ContactUsValues } from "@/lib/schemas";
@@ -12,12 +12,29 @@ import { contactUsSchema, ContactUsValues } from "@/lib/schemas";
 const INPUT_CLS =
   "w-full px-3 py-2.5 border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
 
+const INQUIRY_TOPICS = [
+  {
+    label: "Recruiter Shortlist Access",
+    template: "We are hiring engineers and would like enterprise access to Belooga's 500k+ video-verified talent shortlist.",
+  },
+  {
+    label: "Video Pitch & Studio Support",
+    template: "I need help optimizing my 30-second video elevator pitch and WebRTC recording studio.",
+  },
+  {
+    label: "Expert Review & Billing",
+    template: "I have a question regarding my Expert CV Review order or MoMo QR pass.",
+  },
+];
+
 export default function ContactUsPage() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<ContactUsValues>({
     resolver: zodResolver(contactUsSchema),
@@ -30,10 +47,11 @@ export default function ContactUsPage() {
     },
     onSuccess: () => {
       setIsSuccess(true);
+      setErrorMsg(null);
       reset();
     },
     onError: () => {
-      alert("Failed to submit inquiry. Please try again.");
+      setErrorMsg("Failed to submit inquiry. Please try again.");
     },
   });
 
@@ -51,13 +69,37 @@ export default function ContactUsPage() {
           </p>
         </div>
 
-        <div className="bg-surface-card rounded-xl border border-surface-border p-8 shadow-sm max-w-2xl mx-auto">
+        <div className="bg-surface-card rounded-xl border border-surface-border p-8 shadow-sm max-w-2xl mx-auto space-y-5">
           {isSuccess && (
-            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3 text-emerald-800 text-sm">
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3 text-emerald-800 text-sm">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
               <span>Thank you! Your message has been received. Our team will get back to you within 24 hours.</span>
             </div>
           )}
+
+          {errorMsg && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium">
+              {errorMsg}
+            </div>
+          )}
+
+          <div data-testid="contact-topic-pills" className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-typography-muted flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-brand-primary" /> Quick Inquiry Topic
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {INQUIRY_TOPICS.map((t) => (
+                <button
+                  key={t.label}
+                  type="button"
+                  onClick={() => setValue("message", t.template, { shouldValidate: true })}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-brand-primary/10 hover:text-brand-primary transition-colors"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <form onSubmit={onSubmit} noValidate data-testid="contact-form" className="space-y-5">
             <div className="space-y-1">

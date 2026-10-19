@@ -30,6 +30,6 @@
 - [x] Wave 11 + Skill Sync #11 (`66ee961`): Homepage Live 500k Talent Pool & Trending Skills Ticker (`page.tsx`)
 - [x] Wave 12 + Skill Sync #12 (`4def9c9`): Public CMS Career Jobs Singleflight Cache + Inline Application & ATS Pre-Check (`careers/page.tsx` + `BM-29` at 5,001 RPS)
 - [x] Wave 13 + Skill Sync #13 (`40a92ca`): Expert Catalog Singleflight Cache + Help Center FAQ Filter Bar (`help/page.tsx` + `BM-30` at 3,824 RPS)
-- [x] Wave 14 + Skill Sync #14: Blog Career Acceleration Conversion Funnel CTA (`blog/[slug]/page.tsx` + Ground-Truth Stack Sync)
-- [ ] Wave 15 (06:00–06:20 AM): Final 30-Scenario 500k Benchmark Sweep, `audit-truth.sh` Gate & Morning CTO Handover Report
-
+- [x] Wave 14 + Skill Sync #14 (`bf66b69`): Blog Career Acceleration Conversion Funnel CTA (`blog/[slug]/page.tsx` + Ground-Truth Stack Sync)
+- [x] Wave 15 + Skill Sync #15: Contact Us 1-Click Inquiry Topic Pills & Inline Error Banner (`contact-us/page.tsx`)
+- [ ] Final 06:20 AM Gate: Full 30-Scenario (`BM-01..BM-30`) 500k Benchmark, `audit-truth.sh` Gate & Morning CTO Handover Report
