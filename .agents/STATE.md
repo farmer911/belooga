@@ -28,5 +28,7 @@
 - [x] Wave 9 + Skill Sync #9 (`147cddc`): Candidate Workspace Live Trust & Readiness Copilot (`user/[username]/page.tsx`)
 - [x] Wave 10 + Skill Sync #10 (`1bf71dc`): Real-Time CV Studio ATS Readability & STAR Bullet Density Auditor (`cv-studio/page.tsx`)
 - [x] Wave 11 + Skill Sync #11 (`66ee961`): Homepage Live 500k Talent Pool & Trending Skills Ticker (`page.tsx`)
-- [x] Wave 12 + Skill Sync #12: Public CMS Career Jobs Singleflight Cache + Inline Application & ATS Pre-Check (`careers/page.tsx` + `BM-29` at 5,001 RPS)
-- [ ] Wave 13 (05:20–06:20 AM): 30-Scenario (`BM-30`) 500k Benchmark Audit, `audit-truth.sh`, & Morning CTO Handover Report
+- [x] Wave 12 + Skill Sync #12 (`4def9c9`): Public CMS Career Jobs Singleflight Cache + Inline Application & ATS Pre-Check (`careers/page.tsx` + `BM-29` at 5,001 RPS)
+- [x] Wave 13 + Skill Sync #13: Expert Catalog Singleflight Cache + Help Center FAQ Filter Bar (`help/page.tsx` + `BM-30`)
+- [ ] Wave 14 (05:40–06:20 AM): Full `audit-truth.sh` Gate, E2E Verification & Morning CTO Handover Report
+

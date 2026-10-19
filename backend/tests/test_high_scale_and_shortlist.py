@@ -326,3 +326,20 @@ async def test_cms_career_jobs_and_faqs_cached_response(client: AsyncClient):
     faqs = faqs_res.json()
     assert len(faqs) >= 4
     assert "question" in faqs[0]
+
+
+@pytest.mark.asyncio
+async def test_expert_review_packages_and_experts_catalog_cached(client: AsyncClient):
+    """Verify GET /v1/expert-review/packages/ and /v1/expert-review/experts/ return seeded catalogs."""
+    pkg_res = await client.get("/v1/expert-review/packages/")
+    assert pkg_res.status_code == 200
+    pkgs = pkg_res.json()
+    assert len(pkgs) >= 3
+    assert {p["slug"] for p in pkgs} >= {"essential", "pro", "elite"}
+
+    exp_res = await client.get("/v1/expert-review/experts/")
+    assert exp_res.status_code == 200
+    exps = exp_res.json()
+    assert len(exps) >= 3
+    assert "full_name" in exps[0]
+

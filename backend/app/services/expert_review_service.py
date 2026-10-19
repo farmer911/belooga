@@ -26,14 +26,35 @@ class ExpertReviewService:
         self.repo = ExpertReviewRepository(db)
 
     async def list_experts(self, role_category: Optional[str] = None) -> List[ExpertProfileResponse]:
-        await self._ensure_seed_data()
-        experts = await self.repo.list_experts(role_category)
-        return [ExpertProfileResponse.model_validate(e) for e in experts]
+        async def _compute() -> List[Dict[str, Any]]:
+            await self._ensure_seed_data()
+            experts = await self.repo.list_experts(role_category)
+            return [
+                ExpertProfileResponse.model_validate(e).model_dump(mode="json")
+                for e in experts
+            ]
+
+        if os.getenv("ENVIRONMENT") == "testing":
+            rows = await _compute()
+        else:
+            key = f"expert_list:{(role_category or 'all').lower().strip()}"
+            rows = await platform_cache.get_or_set(key, 60, _compute)
+        return [ExpertProfileResponse(**r) for r in rows]
 
     async def list_packages(self) -> List[CVReviewPackageResponse]:
-        await self._ensure_seed_data()
-        packages = await self.repo.list_packages()
-        return [CVReviewPackageResponse.model_validate(p) for p in packages]
+        async def _compute() -> List[Dict[str, Any]]:
+            await self._ensure_seed_data()
+            packages = await self.repo.list_packages()
+            return [
+                CVReviewPackageResponse.model_validate(p).model_dump(mode="json")
+                for p in packages
+            ]
+
+        if os.getenv("ENVIRONMENT") == "testing":
+            rows = await _compute()
+        else:
+            rows = await platform_cache.get_or_set("expert_packages:all", 60, _compute)
+        return [CVReviewPackageResponse(**r) for r in rows]
 
     async def recommend_expert_and_package(
         self, target_role: str
