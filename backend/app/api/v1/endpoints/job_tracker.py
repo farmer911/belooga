@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.schemas.job_tracker import (
+    JobPipelineAnalyticsResponse,
     TrackedJobCreateRequest,
     TrackedJobStatusUpdateRequest,
     TrackedJobResponse,
@@ -26,6 +27,18 @@ async def list_tracked_jobs(
     candidate_id = current_user.id if current_user else None
     service = JobTrackerService(db)
     return await service.list_tracked_jobs(candidate_identity_id=candidate_id)
+
+
+@router.get("/jobs/analytics", response_model=JobPipelineAnalyticsResponse)
+async def get_job_pipeline_analytics(
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Calculate Kanban funnel velocity, average ATS match score, and offer probability."""
+    candidate_id = current_user.id if current_user else None
+    service = JobTrackerService(db)
+    return await service.get_pipeline_analytics(candidate_identity_id=candidate_id)
+
 
 
 @router.post("/jobs/", response_model=TrackedJobResponse, status_code=status.HTTP_201_CREATED)

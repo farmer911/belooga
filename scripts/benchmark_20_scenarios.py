@@ -468,6 +468,14 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-23", "name": "Career Upskill ROI & Negotiation Simulator", **bm23})
 
+        # BM-24: Job Tracker Funnel Velocity & Offer Probability Analytics
+        bm24 = await run_concurrent_load(
+            total_requests=500,
+            concurrency=100,
+            worker_fn=lambda i: _get_status(client, "/v1/tracker/jobs/analytics"),
+        )
+        results_table.append({"id": "BM-24", "name": "Job Tracker Funnel Velocity & Offer Probability", **bm24})
+
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")
     print("-" * 116)
     total_reqs = 0

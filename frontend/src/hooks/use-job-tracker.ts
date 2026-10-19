@@ -29,6 +29,15 @@ export interface CreateTrackedJobPayload {
   notes?: string;
 }
 
+export interface JobPipelineAnalytics {
+  total_tracked: number;
+  stage_counts: Record<string, number>;
+  average_ats_match_score: number;
+  estimated_offer_probability_pct: number;
+  pipeline_velocity_status: string;
+  next_recommended_action: string;
+}
+
 export function useJobTracker() {
   const queryClient = useQueryClient();
 
@@ -40,17 +49,26 @@ export function useJobTracker() {
     },
   });
 
+  const { data: analytics = null, refetch: refetchAnalytics } = useQuery<JobPipelineAnalytics>({
+    queryKey: ["tracked-jobs-analytics"],
+    queryFn: async () => {
+      const response = await apiClient.get<JobPipelineAnalytics>("/v1/tracker/jobs/analytics");
+      return response.data;
+    },
+  });
+
   const error = rawError ? "Không thể tải danh sách ứng tuyển." : null;
 
   const fetchJobs = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
+    await Promise.all([refetch(), refetchAnalytics()]);
+  }, [refetch, refetchAnalytics]);
 
   const addJob = useCallback(async (payload: CreateTrackedJobPayload) => {
     const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
     queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => [response.data, ...prev]);
+    void refetchAnalytics();
     return response.data;
-  }, [queryClient]);
+  }, [queryClient, refetchAnalytics]);
 
   const moveStatus = useCallback(async (jobId: string, newStatus: KanbanStatus) => {
     queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
@@ -58,11 +76,12 @@ export function useJobTracker() {
     );
     try {
       await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}/status`, { status: newStatus });
+      void refetchAnalytics();
     } catch (err: unknown) {
       await refetch();
       throw err;
     }
-  }, [queryClient, refetch]);
+  }, [queryClient, refetch, refetchAnalytics]);
 
   const deleteJob = useCallback(async (jobId: string) => {
     queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
@@ -70,14 +89,16 @@ export function useJobTracker() {
     );
     try {
       await apiClient.delete(`/v1/tracker/jobs/${jobId}`);
+      void refetchAnalytics();
     } catch (err: unknown) {
       await refetch();
       throw err;
     }
-  }, [queryClient, refetch]);
+  }, [queryClient, refetch, refetchAnalytics]);
 
   return {
     jobs,
+    analytics,
     isLoading,
     error,
     fetchJobs,
@@ -86,3 +107,4 @@ export function useJobTracker() {
     deleteJob,
   };
 }
+

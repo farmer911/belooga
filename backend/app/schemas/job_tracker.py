@@ -1,7 +1,7 @@
 """Pydantic v2 DTO Schemas for Domain 11: Candidate Job Applications Tracker (Kanban)."""
 
 import uuid
-from typing import Optional
+from typing import Dict, Optional
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -34,3 +34,13 @@ class TrackedJobResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class JobPipelineAnalyticsResponse(BaseModel):
+    total_tracked: int
+    stage_counts: Dict[str, int]
+    average_ats_match_score: float
+    estimated_offer_probability_pct: float
+    pipeline_velocity_status: str
+    next_recommended_action: str
+

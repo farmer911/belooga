@@ -227,4 +227,18 @@ async def test_career_upskill_roi_and_negotiation_simulator(client: AsyncClient)
     assert len(data["negotiation_leverage_script"]) > 20
 
 
+@pytest.mark.asyncio
+async def test_job_tracker_funnel_velocity_and_offer_probability(client: AsyncClient):
+    """Verify GET /v1/tracker/jobs/analytics computes Kanban stage counts, ATS average, and offer probability."""
+    res = await client.get("/v1/tracker/jobs/analytics")
+    assert res.status_code == 200
+    data = res.json()
+    assert "total_tracked" in data
+    assert "stage_counts" in data
+    assert "INTERVIEW" in data["stage_counts"]
+    assert 0.0 <= data["estimated_offer_probability_pct"] <= 100.0
+    assert len(data["next_recommended_action"]) > 10
+
+
+
 

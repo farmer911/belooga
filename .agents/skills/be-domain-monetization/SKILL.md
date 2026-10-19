@@ -21,6 +21,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | optional |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
+| `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | optional |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | required |
@@ -36,13 +37,13 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 <!-- AUTO:END -->
 
 ## Rules
-1. **Expert Review & Job Tracker Ownership (`expert_review.py`, `job_tracker.py`):** Mutations require `Depends(get_current_user)` scoped to `current_user.id`. Validate Kanban status transitions (`TARGETING`, `TAILORED`, `APPLIED`, `INTERVIEW`, `OFFER`).
+1. **Expert Review & Job Tracker Ownership & Analytics (`expert_review.py`, `job_tracker.py`):** Mutations require `Depends(get_current_user)` scoped to `current_user.id`. Validate Kanban status transitions (`TARGETING`, `TAILORED`, `APPLIED`, `INTERVIEW`, `OFFER`). Register static sub-paths (`GET /v1/tracker/jobs/analytics`) before parameterized `/jobs/{job_id}` routes to prevent `405 Method Not Allowed` shadowing.
 2. **ATS Scan, Talent Shortlist, Market Pulse & Interview Kit (`ats_matching.py`):** `POST /v1/match/ats-scan`, `POST /v1/match/talent-shortlist`, and `POST /v1/match/interview-kit` use `get_current_user_optional` and enforce a hard `50,000` character payload cap (`HTTP 413` / Pydantic `max_length=50000`). Shortlist queries must use PostgreSQL GIN `search_vector @@ to_tsquery('english', ...)` and boost candidates with verified video pitches.
 3. **MoMo HMAC-SHA256 & Idempotency (`payments.py`):** Verify HMAC-SHA256 signatures on `POST /v1/payments/momo/ipn` (reject tampered payloads with 400) and handle duplicate IPN callbacks idempotently.
 4. **Analytics Coalescing (`analytics.py`):** Coalesce SQL `SUM`/`COUNT` aggregations to `0` and cache platform counts via `platform_cache.get_or_set`.
 
 ## Known Traps
-- **Router Prefixes:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`.
+- **Router Prefixes & Static Path Precedence:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`. Always place `/jobs/analytics` above `/jobs/{job_id}`.
 - **Sanitizing `to_tsquery` Tokens:** Always strip non-alphanumeric symbols (`C++`, `C#`, `.NET`) before joining tokens with `|` for PostgreSQL `to_tsquery`.
 
 ## Self-Verification

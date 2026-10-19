@@ -10,7 +10,7 @@ import { KanbanColumn } from "@/components/features/job-tracker/kanban-column";
 import { AddJobDialog } from "@/components/features/job-tracker/add-job-dialog";
 
 export default function JobTrackerKanbanPage() {
-  const { jobs, isLoading, addJob, moveStatus, deleteJob } = useJobTracker();
+  const { jobs, analytics, isLoading, addJob, moveStatus, deleteJob } = useJobTracker();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -69,6 +69,26 @@ export default function JobTrackerKanbanPage() {
           </Button>
         </div>
       </div>
+
+      {analytics && (
+        <div
+          data-testid="job-tracker-velocity-banner"
+          className="border-b border-surface-border bg-teal-50/40 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-bold text-brand-dark">
+              Xác Suất Nhận Offer: {analytics.estimated_offer_probability_pct}%
+            </span>
+            <span className="text-typography-muted">|</span>
+            <span className="text-typography-heading">
+              Điểm ATS Trung Bình: <strong>{analytics.average_ats_match_score}/100</strong>
+            </span>
+          </div>
+          <div className="text-[11px] font-medium text-emerald-800">
+            {analytics.next_recommended_action}
+          </div>
+        </div>
+      )}
 
       {/* Main Kanban Board (Horizontal Scroll Zero Dead-Space) */}
       <main className="flex-1 p-4 overflow-x-auto flex gap-3.5 min-h-[calc(100vh-140px)]">

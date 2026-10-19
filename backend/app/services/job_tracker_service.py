@@ -6,7 +6,11 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.job_tracker_repo import JobTrackerRepository
-from app.schemas.job_tracker import TrackedJobCreateRequest, TrackedJobResponse
+from app.schemas.job_tracker import (
+    JobPipelineAnalyticsResponse,
+    TrackedJobCreateRequest,
+    TrackedJobResponse,
+)
 
 VALID_STATUSES = {"TARGETING", "TAILORED", "APPLIED", "INTERVIEW", "OFFER"}
 
@@ -19,6 +23,48 @@ class JobTrackerService:
     async def list_tracked_jobs(self, candidate_identity_id: Optional[uuid.UUID] = None) -> List[TrackedJobResponse]:
         jobs = await self.repo.list_jobs(candidate_identity_id)
         return [TrackedJobResponse.model_validate(j) for j in jobs]
+
+    async def get_pipeline_analytics(
+        self, candidate_identity_id: Optional[uuid.UUID] = None
+    ) -> JobPipelineAnalyticsResponse:
+        jobs = await self.repo.list_jobs(candidate_identity_id)
+        counts = {s: 0 for s in VALID_STATUSES}
+        for j in jobs:
+            st = (j.status or "TARGETING").upper()
+            if st in counts:
+                counts[st] += 1
+
+        total = len(jobs)
+        avg_score = round(sum(j.match_score or 0 for j in jobs) / max(total, 1), 1) if total > 0 else 78.0
+        offer_prob = min(
+            98.0,
+            round(
+                (counts["OFFER"] * 45.0)
+                + (counts["INTERVIEW"] * 22.0)
+                + (counts["APPLIED"] * 8.0)
+                + (counts["TAILORED"] * 4.0)
+                + (avg_score * 0.25 if total > 0 else 18.0),
+                1,
+            ),
+        )
+        if counts["OFFER"] > 0 or counts["INTERVIEW"] >= 2:
+            velocity = "HIGH_MOMENTUM"
+            action = "Prepare STAR behavioral metrics and salary negotiation script for active interviews."
+        elif counts["TARGETING"] + counts["TAILORED"] > counts["APPLIED"]:
+            velocity = "NEEDS_OUTREACH"
+            action = "Convert tailored CVs into submitted applications and attach your 60s Video Pitch."
+        else:
+            velocity = "STEADY_PIPELINE"
+            action = "Scan 3 more target JDs in ATS Diagnostics to expand your high-match interview funnel."
+
+        return JobPipelineAnalyticsResponse(
+            total_tracked=total,
+            stage_counts=counts,
+            average_ats_match_score=avg_score,
+            estimated_offer_probability_pct=offer_prob,
+            pipeline_velocity_status=velocity,
+            next_recommended_action=action,
+        )
 
     async def add_tracked_job(
         self,
@@ -78,3 +124,4 @@ class JobTrackerService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: You do not own this tracked job.")
 
         await self.repo.delete_job(job)
+

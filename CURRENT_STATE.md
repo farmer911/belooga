@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 59 (57 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 60 (58 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -106,6 +106,7 @@
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | Public | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/users/exists/email/` | `check_email_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
