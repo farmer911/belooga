@@ -476,6 +476,17 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-24", "name": "Job Tracker Funnel Velocity & Offer Probability", **bm24})
 
+        # BM-25: Smart Expert Reviewer Matchmaking Engine
+        bm25 = await run_concurrent_load(
+            total_requests=500,
+            concurrency=100,
+            worker_fn=lambda i: _get_status(
+                client,
+                f"/v1/expert-review/recommend?target_role=Staff%20{stacks[i % 4]}%20Architect",
+            ),
+        )
+        results_table.append({"id": "BM-25", "name": "Smart Expert Reviewer Matchmaking Engine", **bm25})
+
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")
     print("-" * 116)
     total_reqs = 0

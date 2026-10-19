@@ -240,5 +240,20 @@ async def test_job_tracker_funnel_velocity_and_offer_probability(client: AsyncCl
     assert len(data["next_recommended_action"]) > 10
 
 
+@pytest.mark.asyncio
+async def test_expert_reviewer_smart_matchmaking(client: AsyncClient):
+    """Verify GET /v1/expert-review/recommend matches target role to optimal Senior Expert and package."""
+    res = await client.get("/v1/expert-review/recommend?target_role=Staff%20Backend%20Golang%20Engineer")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["target_role"] == "Staff Backend Golang Engineer"
+    assert data["match_confidence_pct"] >= 85
+    assert data["estimated_ats_lift_points"] >= 15
+    assert "full_name" in data["recommended_expert"]
+    assert "slug" in data["recommended_package"]
+    assert len(data["match_rationale"]) > 15
+
+
+
 
 

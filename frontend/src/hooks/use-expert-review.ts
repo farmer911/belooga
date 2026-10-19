@@ -63,6 +63,15 @@ export interface ReviewOrder {
   feedback?: ReviewFeedback;
 }
 
+export interface ExpertRecommendation {
+  target_role: string;
+  recommended_expert: ExpertProfile;
+  recommended_package: ReviewPackage;
+  match_confidence_pct: number;
+  estimated_ats_lift_points: number;
+  match_rationale: string;
+}
+
 export function useExpertReview() {
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
@@ -91,6 +100,17 @@ export function useExpertReview() {
     },
   });
 
+  const recommendationQuery = useQuery<ExpertRecommendation>({
+    queryKey: ["expert-review-recommendation", selectedCategory],
+    queryFn: async () => {
+      const roleHint = selectedCategory === "All" ? "Senior Backend Engineer" : `Senior ${selectedCategory} Engineer`;
+      const res = await apiClient.get<ExpertRecommendation>(
+        `/v1/expert-review/recommend?target_role=${encodeURIComponent(roleHint)}`
+      );
+      return res.data;
+    },
+  });
+
   const myOrdersQuery = useQuery<ReviewOrder[]>({
     queryKey: ["expert-review-my-orders"],
     queryFn: async () => {
@@ -102,6 +122,7 @@ export function useExpertReview() {
 
   const packages = packagesQuery.data ?? [];
   const experts = expertsQuery.data ?? [];
+  const recommendation = recommendationQuery.data ?? null;
   const myOrders = myOrdersQuery.data ?? [];
   const isLoading = packagesQuery.isLoading || expertsQuery.isLoading;
   const rawError = packagesQuery.error || expertsQuery.error;
@@ -155,6 +176,7 @@ export function useExpertReview() {
   return {
     experts,
     packages,
+    recommendation,
     myOrders,
     selectedCategory,
     isLoading,
@@ -173,3 +195,4 @@ export function useExpertReview() {
     refreshOrders: fetchMyOrders,
   };
 }
+

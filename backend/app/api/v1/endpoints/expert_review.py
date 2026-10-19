@@ -12,6 +12,7 @@ from app.schemas.expert_review import (
     CVReviewOrderCreateRequest,
     CVReviewOrderResponse,
     CVReviewPackageResponse,
+    ExpertMatchRecommendationResponse,
     ExpertProfileResponse,
     OrderCheckoutRequest,
 )
@@ -33,6 +34,16 @@ async def list_experts(
 async def list_packages(db: AsyncSession = Depends(get_db)):
     service = ExpertReviewService(db)
     return await service.list_packages()
+
+
+@router.get("/recommend", response_model=ExpertMatchRecommendationResponse)
+async def recommend_expert_reviewer(
+    target_role: str = Query("Senior Backend Engineer", description="Candidate target role"),
+    db: AsyncSession = Depends(get_db),
+):
+    service = ExpertReviewService(db)
+    return await service.recommend_expert_and_package(target_role=target_role)
+
 
 
 @router.post("/orders/", response_model=CVReviewOrderResponse, status_code=status.HTTP_201_CREATED)

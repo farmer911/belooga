@@ -84,3 +84,13 @@ class CVReviewOrderResponse(BaseModel):
     feedback: Optional[CVReviewFeedbackResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ExpertMatchRecommendationResponse(BaseModel):
+    target_role: str
+    recommended_expert: ExpertProfileResponse
+    recommended_package: CVReviewPackageResponse
+    match_confidence_pct: int
+    estimated_ats_lift_points: int
+    match_rationale: str
+

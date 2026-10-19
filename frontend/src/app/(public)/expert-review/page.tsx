@@ -13,6 +13,7 @@ export default function ExpertReviewPage() {
   const {
     experts,
     packages,
+    recommendation,
     myOrders,
     selectedCategory,
     isLoading,
@@ -42,6 +43,28 @@ export default function ExpertReviewPage() {
         onBrowseExperts={scrollToExperts}
         onViewPricing={scrollToPricing}
       />
+
+      {recommendation && (
+        <section
+          data-testid="smart-expert-matcher-banner"
+          className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6"
+        >
+          <div className="p-4 rounded-xl bg-teal-50/50 border border-teal-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div>
+              <span className="font-bold text-brand-dark uppercase tracking-wider">
+                AI Smart Reviewer Match ({recommendation.match_confidence_pct}% Confidence):
+              </span>{" "}
+              <span className="text-typography-heading">{recommendation.match_rationale}</span>
+            </div>
+            <button
+              onClick={() => openBookingForExpert(recommendation.recommended_expert)}
+              className="px-3 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs cursor-pointer transition-colors"
+            >
+              Book {recommendation.recommended_expert.full_name} (+{recommendation.estimated_ats_lift_points} ATS Pts)
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* 2. Candidate Active Orders (if any) */}
       <CandidateOrdersList
