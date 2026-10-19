@@ -298,6 +298,20 @@ async def test_candidate_career_trajectory_and_promotion_readiness(client: Async
     assert len(data["key_promotion_gaps"]) >= 2
 
 
+@pytest.mark.asyncio
+async def test_search_trending_insights_and_talent_pool_pulse(client: AsyncClient):
+    """Verify GET /v1/profile/search/trending/ returns talent pool pulse and trending query pills."""
+    res = await client.get("/v1/profile/search/trending/")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_searchable_profiles"] >= 1
+    assert data["video_verified_pct"] > 0
+    assert len(data["trending_queries"]) >= 4
+    assert "keyword" in data["trending_queries"][0]
+    assert "demand_growth" in data["trending_queries"][0]
+
+
+
 
 
 

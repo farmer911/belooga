@@ -503,6 +503,15 @@ async def main() -> None:
         )
         results_table.append({"id": "BM-27", "name": "Candidate Career Trajectory & Promotion Readiness", **bm27})
 
+        # BM-28: Live Search Trending Skills & Talent Pool Pulse
+        bm28 = await run_concurrent_load(
+            total_requests=500,
+            concurrency=100,
+            worker_fn=lambda i: _get_status(client, "/v1/profile/search/trending/"),
+        )
+        results_table.append({"id": "BM-28", "name": "Live Search Trending Skills & Talent Pool Pulse", **bm28})
+
+
 
 
     print(f"{'ID':<6} | {'Scenario Name':<50} | {'Reqs':>6} | {'CCU':>5} | {'RPS':>9} | {'p50(ms)':>7} | {'p95(ms)':>7} | {'p99(ms)':>7} | {'5xx':>3}")

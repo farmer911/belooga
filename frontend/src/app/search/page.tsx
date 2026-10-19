@@ -32,6 +32,13 @@ interface SearchResponseData {
   total_pages: number;
 }
 
+interface SearchTrendingData {
+  total_searchable_profiles: number;
+  video_verified_pct: number;
+  trending_queries: Array<{ keyword: string; demand_growth: string; category: string }>;
+  recruiter_tip: string;
+}
+
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,27 +56,18 @@ function SearchContent() {
 
   const { data = { results: [], total: 0, page: 1, total_pages: 1 }, isLoading } = useQuery<SearchResponseData>({
     queryKey: ["candidate-search", initialKey, initialPage],
-    queryFn: async () => {
-      const res = await apiClient.get<SearchResponseData>("/v1/profile/search/", {
-        params: {
-          key: initialKey.trim(),
-          page: initialPage,
-          limit: 9,
-        },
-      });
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<SearchResponseData>("/v1/profile/search/", { params: { key: initialKey.trim(), page: initialPage, limit: 9 } })).data,
   });
 
   const { data: suggestions = [] } = useQuery<SearchSuggestionItem[]>({
     queryKey: ["candidate-suggest", debouncedQuery],
-    queryFn: async () => {
-      const res = await apiClient.get<SearchSuggestionItem[]>(
-        `/v1/profile/search/suggest/?key=${encodeURIComponent(debouncedQuery)}`
-      );
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<SearchSuggestionItem[]>(`/v1/profile/search/suggest/?key=${encodeURIComponent(debouncedQuery)}`)).data,
     enabled: debouncedQuery.length >= 2,
+  });
+
+  const { data: trending = null } = useQuery<SearchTrendingData | null>({
+    queryKey: ["candidate-search-trending"],
+    queryFn: async () => (await apiClient.get<SearchTrendingData>("/v1/profile/search/trending/")).data,
   });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -99,10 +97,7 @@ function SearchContent() {
                   type="text"
                   data-testid="search-input"
                   value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
+                  onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
                   onFocus={() => setShowSuggestions(true)}
                   placeholder="Search by name, role, skill, or location..."
                   className="w-full pl-11 pr-4 py-3 bg-surface-page border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:bg-surface-card transition-all"
@@ -119,11 +114,7 @@ function SearchContent() {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => {
-                      setQuery(s.full_name);
-                      setShowSuggestions(false);
-                      router.push(`/public/${s.username}`);
-                    }}
+                    onClick={() => { setQuery(s.full_name); setShowSuggestions(false); router.push(`/public/${s.username}`); }}
                     className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-page transition-colors"
                   >
                     <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -136,7 +127,24 @@ function SearchContent() {
               </div>
             )}
           </div>
+
+          {trending && (
+            <div data-testid="search-trending-insights-bar" className="pt-2 flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-bold text-slate-600">Trending Skills ({trending.video_verified_pct}% Video Verified):</span>
+              {trending.trending_queries.map((t) => (
+                <button
+                  key={t.keyword}
+                  type="button"
+                  onClick={() => { setQuery(t.keyword); router.push(`/search?key=${encodeURIComponent(t.keyword)}&page=1`); }}
+                  className="px-2.5 py-1 rounded-full bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 font-semibold transition-colors cursor-pointer"
+                >
+                  {t.keyword} <span className="text-emerald-700 font-bold">{t.demand_growth}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
 
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs text-typography-muted">
@@ -145,16 +153,12 @@ function SearchContent() {
           </div>
 
           {isLoading ? (
-            <div className="py-20 flex justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
-            </div>
+            <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>
           ) : data.results.length === 0 ? (
             <div data-testid="search-empty-state" className="bg-surface-card rounded-xl p-12 text-center border border-surface-border space-y-3">
               <p className="text-lg font-bold text-typography-main">No candidates found</p>
               <p className="text-sm text-typography-muted">Try adjusting your search keyword or clearing filters.</p>
-              <Button variant="outline" size="sm" onClick={() => { setQuery(""); router.push("/search"); }}>
-                Reset Search
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setQuery(""); router.push("/search"); }}>Reset Search</Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -168,9 +172,7 @@ function SearchContent() {
                     <div className="start-content-video cursor-pointer relative">
                       <div className="modal-start"><div className="video-play-icon" /></div>
                       <img src={candidate.video_pitch_poster || "/images/home/matt-poster.png"} alt={candidate.full_name} className="w-full h-48 object-cover" />
-                      <div className="absolute bottom-2 right-2 bg-black/75 text-white px-2 py-0.5 rounded text-[11px] font-mono font-semibold">
-                        0:30 Pitch
-                      </div>
+                      <div className="absolute bottom-2 right-2 bg-black/75 text-white px-2 py-0.5 rounded text-[11px] font-mono font-semibold">0:30 Pitch</div>
                     </div>
                   </Link>
 
@@ -187,17 +189,13 @@ function SearchContent() {
                           <p data-testid="candidate-card-headline" className="text-xs text-typography-heading">{candidate.headline}</p>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-1.5 text-xs text-typography-muted pt-2">
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{candidate.location}</span>
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" /><span>{candidate.location}</span>
                       </div>
                     </div>
 
                     <div className="pt-3 border-t border-surface-divider flex items-center justify-between">
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-primary/15 text-brand-dark">
-                        {candidate.seeking_status}
-                      </span>
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-primary/15 text-brand-dark">{candidate.seeking_status}</span>
                       <Link href={`/public/${candidate.username}`}>
                         <Button size="sm" variant="outline" className="text-xs border-brand-primary text-brand-primary">View CV</Button>
                       </Link>
@@ -215,9 +213,7 @@ function SearchContent() {
                   key={p}
                   onClick={() => router.push(`/search?key=${encodeURIComponent(query)}&page=${p}`)}
                   className={`w-9 h-9 rounded-lg text-xs font-semibold ${
-                    p === data.page
-                      ? "bg-brand-primary text-white"
-                      : "bg-surface-card border border-surface-border text-typography-heading hover:bg-slate-50"
+                    p === data.page ? "bg-brand-primary text-white" : "bg-surface-card border border-surface-border text-typography-heading hover:bg-slate-50"
                   }`}
                 >
                   {p}
@@ -230,6 +226,7 @@ function SearchContent() {
     </div>
   );
 }
+
 
 export default function SearchPage() {
   return (

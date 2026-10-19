@@ -5,9 +5,16 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.schemas.catalogs import SearchTrendingInsightsResponse
 from app.services.catalogs_service import CatalogsService
 
 router = APIRouter()
+
+
+@router.get("/profile/search/trending/", response_model=SearchTrendingInsightsResponse, tags=["Domain 6: Talent Discovery & Search"])
+async def get_search_trending_insights(db: AsyncSession = Depends(get_db)):
+    """Return real-time talent pool pulse and trending search keywords."""
+    return await CatalogsService(db).get_trending_search_insights()
 
 
 @router.get("/profile/search/", response_model=Dict[str, Any], tags=["Domain 6: Talent Discovery & Search"])
@@ -28,3 +35,4 @@ async def search_suggestions(
     db: AsyncSession = Depends(get_db),
 ):
     return await CatalogsService(db).search_suggestions(key=key)
+

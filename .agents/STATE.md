@@ -23,8 +23,10 @@
 - [x] Wave 4 + Skill Sync #4 (`0bc5426`): Job Tracker Funnel Velocity & Offer Probability Analytics
 - [x] Wave 5 + Skill Sync #5 (`37f9cb1`): Smart Expert Reviewer Matchmaking + 25-Scenario 500k Benchmark
 - [x] Wave 6 + Skill Sync #6 (`4dfb143`): Executive Cohort Retention & LTV/CAC Unit Economics Telemetry (`analytics.py` + FE)
-- [x] Wave 7 + Skill Sync #7: Candidate Career Trajectory & Promotion Readiness Simulator (`timeline.py` + FE)
-- [ ] Wave 8 (03:40–06:20 AM): Continuous 27-Scenario 500k Benchmark Audit, E2E Verification & Morning CTO Handover Report
+- [x] Wave 7 + Skill Sync #7 (`d20c629`): Candidate Career Trajectory & Promotion Readiness Simulator (`timeline.py` + FE)
+- [x] Wave 8 + Skill Sync #8: Live Search Trending Skills & Talent Pool Pulse (`search.py` + FE `/search`)
+- [ ] Wave 9 (04:00–06:20 AM): Continuous 28-Scenario 500k Benchmark Audit, E2E Verification & Morning CTO Handover Report
+
 
 
 

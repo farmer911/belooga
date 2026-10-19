@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 63 (61 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 64 (62 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -86,6 +86,7 @@
 | `GET` | `/v1/profile/school/` | `suggest_schools` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/search/` | `search_candidates` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/profile/search/suggest/` | `search_suggestions` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/profile/search/trending/` | `get_search_trending_insights` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/profile/skills/` | `list_skills` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `POST` | `/v1/profile/{user_id}/report/` | `report_candidate_profile` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/profile/{username}` | `get_candidate_public_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |

@@ -61,3 +61,17 @@ class CareerRoiResponse(BaseModel):
     negotiation_leverage_script: str
 
 
+class SearchTrendingItem(BaseModel):
+    keyword: str
+    demand_growth: str
+    category: str
+
+
+class SearchTrendingInsightsResponse(BaseModel):
+    total_searchable_profiles: int
+    video_verified_pct: float
+    trending_queries: List[SearchTrendingItem]
+    recruiter_tip: str
+
+
+
