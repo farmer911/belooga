@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Zap, Target, RotateCcw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Zap, Target, RotateCcw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { apiClient } from "@/services/api-client";
 import { CVStudioSidebar } from "@/components/features/cv-studio/cv-studio-sidebar";
 import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studio-editor";
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
+
+interface MarketPulseResponse {
+  total_active_candidates: number;
+  video_pitch_adoption_rate: number;
+  skills: Array<{ skill: string; scarcity_index: number; median_salary_vnd: number }>;
+}
 
 const SAMPLE_CV_DATA: CVData = {
   fullName: "NGUYỄN VĂN AN",
@@ -48,6 +56,20 @@ export default function CVStudioPage() {
   const [marginSize, setMarginSize] = useState<number>(0.6);
   const [snapOnePage, setSnapOnePage] = useState<boolean>(true);
 
+  const { data: marketPulse = null } = useQuery<MarketPulseResponse | null>({
+    queryKey: ["cv-studio-market-pulse"],
+    queryFn: async () => (await apiClient.get<MarketPulseResponse>("/v1/match/market-pulse")).data,
+  });
+
+  const starAudit = useMemo(() => {
+    const allBullets = cvData.experience.flatMap((e) => e.bullets).filter((b) => b.trim().length > 0);
+    const quantified = allBullets.filter((b) => /\d+(?:%|ms|k|M|x|TPS|RPS|\+)/i.test(b) || /\d+/.test(b)).length;
+    const ratio = allBullets.length > 0 ? Math.round((quantified / allBullets.length) * 100) : 0;
+    const skillCount = cvData.skills.split(",").filter((s) => s.trim().length > 0).length;
+    const readability = Math.min(100, Math.round(ratio * 0.6 + Math.min(40, skillCount * 4)));
+    return { ratio, readability, skillCount };
+  }, [cvData]);
+
   const handleResetSample = () => {
     setCvData(SAMPLE_CV_DATA);
     setFontSize(10.0);
@@ -60,6 +82,12 @@ export default function CVStudioPage() {
     setLineHeight(1.25);
     setMarginSize(0.5);
     setSnapOnePage(true);
+  };
+
+  const handleInjectSkill = (skill: string) => {
+    if (!cvData.skills.toLowerCase().includes(skill.toLowerCase())) {
+      setCvData({ ...cvData, skills: `${cvData.skills}, ${skill}` });
+    }
   };
 
   return (
@@ -105,8 +133,43 @@ export default function CVStudioPage() {
         </div>
       </div>
 
+      {/* Real-time STAR Metric Density & 1-Click Market Keyword Injector */}
+      <div
+        data-testid="cv-studio-ats-density-bar"
+        className="border-b border-surface-border bg-teal-50/30 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[11px]"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-bold text-teal-900 flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+            Live ATS Auditor:
+          </span>
+          <Badge className="bg-teal-600 text-white border-none text-[10px]">
+            ATS Readability: {starAudit.readability}/100
+          </Badge>
+          <Badge variant="outline" className="bg-white border-teal-200 text-teal-800 text-[10px]">
+            STAR Metric Density: {starAudit.ratio}%
+          </Badge>
+        </div>
+        {marketPulse && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-slate-600 font-medium">+Chèn nhanh kỹ năng khan hiếm:</span>
+            {marketPulse.skills.slice(0, 4).map((s) => (
+              <button
+                key={s.skill}
+                type="button"
+                onClick={() => handleInjectSkill(s.skill)}
+                className="px-2 py-0.5 rounded bg-white hover:bg-teal-50 border border-teal-200 text-teal-800 font-semibold transition-colors cursor-pointer"
+              >
+                + {s.skill}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Main 3-Column Workspace */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
+
         {/* Left Column (3 cols): Layout & Typography Controls */}
         <CVStudioSidebar
           fontSize={fontSize}
