@@ -1,6 +1,6 @@
 ---
 name: belooga-qc-engineering
-description: Playwright E2E and visual tests in qc/. Use when writing or fixing specs under qc/tests, page objects in qc/pages, or playwright.config.ts. Not for backend pytest (be-service-*).
+description: Playwright E2E and visual tests in qc/. Use when writing or fixing specs under qc/tests, page objects in qc/pages, or playwright.config.ts. Not for backend pytest (be-domain-*).
 ---
 
 # Belooga QC & Automated Testing Engineering Guide

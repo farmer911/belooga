@@ -30,14 +30,14 @@ QUIET = "--quiet" in sys.argv
 
 SKILL_MAX_LINES = 200
 REF_MAX_LINES = 400
-DOMAIN_PREFIXES = ("be-service-", "fe-page-")
+DOMAIN_PREFIXES = ("be-service-", "fe-page-", "be-domain-", "fe-domain-")
 REQUIRED_DOMAIN_SECTIONS = ("## Current Reality", "## Known Traps", "## Self-Verification")
 SKILL_NAME_PREFIXES = (
     "be-", "fe-", "qc-", "belooga-", "ponytail", "tdd-", "clean-", "definition-",
     "engineering-", "legacy-", "systems-", "enterprise-", "architect-",
 )
 BARE_SKILL_RE = re.compile(
-    r"\b((?:fe-section|fe-page|be-service)-[a-z0-9-]+|[a-z]+-(?:reviewer-guide(?:lines)?|patterns-and-practices))\b"
+    r"\b((?:fe-section|fe-page|be-service|fe-domain|be-domain)-[a-z0-9-]+|[a-z]+-(?:reviewer-guide(?:lines)?|patterns-and-practices))\b"
 )
 COUNT_RE = re.compile(
     r"\b\d{1,3}\s+(?:active\s+|domain\s+|verified\s+)?"

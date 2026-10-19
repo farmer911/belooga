@@ -1,133 +1,53 @@
-# Belooga Skill Trigger Evaluation Dataset
+# Belooga Skill Trigger Evaluation Dataset (23 Consolidated Top-Tier S Skills)
 # 3 prompts per skill: 2 positive (should_trigger), 1 confusion negative (should_not_trigger)
 
-- skill: be-service-auth
+- skill: be-domain-core
   should_trigger:
-    - "Sửa logic refresh token family rotation khi hết hạn cookie"
-    - "Hash mật khẩu đăng ký ứng viên bằng Argon2 hoặc bcrypt"
+    - "Sửa logic refresh token family rotation, cập nhật bio profile ứng viên và khóa with_for_update khi reorder timeline"
+    - "Xử lý tải lên video chunk upload và xuất file PDF hồ sơ ứng viên bằng ReportLab"
   should_not_trigger:
-    - prompt: "Chỉnh sửa họ tên và bio trong profile ứng viên"
-      expected: be-service-profile
+    - prompt: "Sửa component video player và kéo thả timeline trên giao diện workspace"
+      expected: fe-domain-workspace
 
-- skill: be-service-profile
+- skill: be-domain-discovery
   should_trigger:
-    - "Cập nhật bio và headline của ứng viên qua API profile"
-    - "Ẩn hồ sơ ứng viên is_hidden và chặn truy cập public"
+    - "Tối ưu tìm kiếm ứng viên bằng TSVECTOR ts_rank và tra cứu danh mục kỹ năng, lương trong catalogs"
+    - "Thêm API gửi liên hệ contact inquiry và báo cáo hồ sơ vi phạm report profile"
   should_not_trigger:
-    - prompt: "Sửa endpoint thêm công việc trong lịch sử làm việc"
-      expected: be-service-timeline
+    - prompt: "Chỉnh sửa bộ lọc tìm kiếm và trang liên hệ contact us trên giao diện"
+      expected: fe-domain-public
 
-- skill: be-service-timeline
+- skill: be-domain-monetization
   should_trigger:
-    - "Thêm API sửa một mục kinh nghiệm làm việc"
-    - "Reorder education đang bị lost update khi kéo thả nhanh"
+    - "Sửa thuật toán chấm điểm ATS scan, quản lý Kanban job tracker và đặt lịch Expert CV Review trong backend"
+    - "Xác thực chữ ký HMAC-SHA256 cho webhook MoMo IPN và tổng hợp doanh thu tại /v1/analytics/dashboard"
   should_not_trigger:
-    - prompt: "Kéo thả timeline trên UI bị giật"
-      expected: fe-page-workspace
+    - prompt: "Sửa giao diện ATS scorecard, bảng Kanban và biểu đồ doanh thu trên frontend"
+      expected: fe-domain-career-tools
 
-- skill: be-service-search
+- skill: fe-domain-workspace
   should_trigger:
-    - "Kết quả tìm ứng viên xếp hạng sai"
-    - "Autocomplete gợi ý cả ứng viên đã ẩn"
+    - "Nút ghi hình pitch không tắt camera khi đóng modal WebRTC studio trên trang workspace"
+    - "Sửa form đăng nhập, đăng ký và trang cài đặt tài khoản /user/[username]/settings"
   should_not_trigger:
-    - prompt: "Thêm danh sách trường đại học vào gợi ý"
-      expected: be-service-catalogs
+    - prompt: "Sửa giao diện xem hồ sơ công khai của ứng viên cho recruiter"
+      expected: fe-domain-public
 
-- skill: be-service-catalogs
+- skill: fe-domain-public
   should_trigger:
-    - "Bổ sung danh mục kỹ năng skills taxonomy vào cơ sở dữ liệu"
-    - "Lookup danh sách trường học và công ty trong catalog"
-  should_not_trigger:
-    - prompt: "Tìm kiếm ứng viên theo từ khóa Python trên thanh search"
-      expected: be-service-search
-
-- skill: be-service-cms
-  should_trigger:
-    - "Thêm API gửi liên hệ contact inquiry từ khách hàng"
-    - "Endpoint báo cáo tài khoản vi phạm report profile"
-  should_not_trigger:
-    - prompt: "Chỉnh sửa trang liên hệ contact us trên giao diện"
-      expected: fe-page-cms-public
-
-- skill: be-service-media
-  should_trigger:
-    - "Xử lý tải lên video chunk upload và ghép file video pitch"
-    - "Xuất file PDF hồ sơ ứng viên bằng ReportLab"
-  should_not_trigger:
-    - prompt: "Sửa component video player trên giao diện workspace"
-      expected: fe-page-workspace
-
-- skill: be-service-expert-review
-  should_trigger:
-    - "Tạo đơn hàng đặt lịch review CV với chuyên gia"
-    - "Lưu đánh giá feedback và điểm số ATS cho đơn review CV"
-  should_not_trigger:
-    - prompt: "Sửa giao diện bảng giá dịch vụ review CV"
-      expected: fe-page-expert-review
-
-- skill: fe-page-home
-  should_trigger:
-    - "Sửa màu nút play video giới thiệu trên trang chủ"
-    - "Thêm mục các ứng viên nổi bật trên homepage"
-  should_not_trigger:
-    - prompt: "Chỉnh sửa bộ lọc địa điểm trên trang tìm kiếm talent"
-      expected: fe-page-search
-
-- skill: fe-page-search
-  should_trigger:
-    - "Sửa component hiển thị kết quả tìm kiếm ứng viên"
-    - "Bộ lọc kỹ năng và kinh nghiệm trên trang tìm kiếm talent"
+    - "Sửa nút play video trên trang chủ, bộ lọc trang /search và trang hồ sơ công khai /public/[username]"
+    - "Cập nhật nội dung FAQ, blog, careers và trang điều khoản sử dụng"
   should_not_trigger:
     - prompt: "Cải thiện tốc độ câu query ts_rank trên backend search"
-      expected: be-service-search
+      expected: be-domain-discovery
 
-- skill: fe-page-public-profile
+- skill: fe-domain-career-tools
   should_trigger:
-    - "Sửa giao diện xem hồ sơ công khai của ứng viên cho recruiter"
-    - "Nút tải file PDF resume trên trang public profile"
+    - "Sửa giao diện ATS diagnostics, hộp thoại thanh toán MoMo QR, CV Studio và bảng giá Expert Review"
+    - "Cập nhật bảng Kanban theo dõi việc làm tại /workspace/jobs và trang /admin/analytics"
   should_not_trigger:
-    - prompt: "Sửa form chỉnh sửa bio của chính ứng viên đăng nhập"
-      expected: fe-page-workspace
-
-- skill: fe-page-workspace
-  should_trigger:
-    - "Nút ghi hình pitch không tắt camera khi đóng modal"
-    - "Thêm card ngôn ngữ vào trang workspace"
-  should_not_trigger:
-    - prompt: "Trang hồ sơ public không hiện video"
-      expected: fe-page-public-profile
-
-- skill: fe-page-user-management
-  should_trigger:
-    - "Sửa form cập nhật thông tin cá nhân tại /user/[username]/update"
-    - "Đổi mật khẩu và cài đặt tài khoản tại /user/[username]/settings"
-  should_not_trigger:
-    - prompt: "Sửa form đăng ký tài khoản mới tại /register"
-      expected: fe-page-auth
-
-- skill: fe-page-auth
-  should_trigger:
-    - "Sửa form đăng nhập và xử lý lưu access token vào client state"
-    - "Giao diện khôi phục mật khẩu forgot-password"
-  should_not_trigger:
-    - prompt: "Kiểm tra xác thực JWT token trong backend FastAPI"
-      expected: be-service-auth
-
-- skill: fe-page-cms-public
-  should_trigger:
-    - "Sửa nội dung accordion câu hỏi thường gặp FAQ trên trang public"
-    - "Cập nhật trang điều khoản sử dụng và chính sách bảo mật"
-  should_not_trigger:
-    - prompt: "Thêm API lưu tin nhắn contact inquiry trong backend"
-      expected: be-service-cms
-
-- skill: fe-page-expert-review
-  should_trigger:
-    - "Sửa giao diện bảng giá và danh sách chuyên gia tại /expert-review"
-    - "Modal đặt lịch đánh giá CV và thanh toán dịch vụ review"
-  should_not_trigger:
-    - prompt: "Thêm bảng cv_review_orders trong cơ sở dữ liệu backend"
-      expected: be-service-expert-review
+    - prompt: "Sửa thuật toán tính điểm ATS và lưu đơn hàng trong cơ sở dữ liệu backend"
+      expected: be-domain-monetization
 
 - skill: belooga-backend-engineering
   should_trigger:
@@ -233,70 +153,6 @@
     - prompt: "Ghi nhận vi phạm quy chuẩn vào sổ vi phạm"
       expected: belooga-self-learn
 
-- skill: be-service-ats
-  should_trigger:
-    - "Sửa thuật toán chấm điểm ATS scan và trích xuất từ khóa JD trong backend"
-    - "Cập nhật ATSMatchingService kiểm tra STAR metric cho CV ứng viên"
-  should_not_trigger:
-    - prompt: "Sửa giao diện ATS scorecard tại trang /ats-diagnostics"
-      expected: fe-page-ats
-
-- skill: be-service-jobs
-  should_trigger:
-    - "Thêm API chuyển trạng thái cột Kanban cho ứng tuyển việc làm tại job_tracker.py"
-    - "Kiểm tra quyền sở hữu IDOR khi xóa job trong JobTrackerService"
-  should_not_trigger:
-    - prompt: "Sửa giao diện kéo thả cột Kanban tại /workspace/jobs"
-      expected: fe-page-jobs
-
-- skill: be-service-analytics
-  should_trigger:
-    - "Cập nhật câu query tổng hợp doanh thu GMV và conversion funnel trong AnalyticsService"
-    - "Sửa API /v1/analytics/dashboard trả về số liệu KPI executive"
-  should_not_trigger:
-    - prompt: "Sửa biểu đồ doanh thu trên trang /admin/analytics"
-      expected: fe-page-analytics
-
-- skill: be-service-payments
-  should_trigger:
-    - "Xác thực chữ ký HMAC-SHA256 cho webhook MoMo IPN tại payments.py"
-    - "Tạo mã QR thanh toán MoMo và kiểm tra idempotency đơn hàng"
-  should_not_trigger:
-    - prompt: "Sửa modal hiển thị mã QR MoMo trên frontend"
-      expected: fe-page-ats
-
-- skill: fe-page-ats
-  should_trigger:
-    - "Sửa giao diện chấm điểm ATS diagnostics và modal chia sẻ kết quả"
-    - "Cập nhật hộp thoại thanh toán MoMo QR trên trang /ats-diagnostics"
-  should_not_trigger:
-    - prompt: "Sửa thuật toán tính điểm ATS trong ATSMatchingService"
-      expected: be-service-ats
-
-- skill: fe-page-cv-studio
-  should_trigger:
-    - "Sửa giao diện chỉnh sửa CV trực tiếp và bản xem trước A4 tại /cv-studio"
-    - "Cập nhật biểu đồ radar kỹ năng và phân vị lương tại /salary-benchmark"
-  should_not_trigger:
-    - prompt: "Sửa API tra cứu mức lương trong catalogs.py"
-      expected: be-service-catalogs
-
-- skill: fe-page-jobs
-  should_trigger:
-    - "Sửa giao diện bảng Kanban theo dõi đơn ứng tuyển tại /workspace/jobs"
-    - "Thêm hộp thoại tạo công việc mới trong components/features/job-tracker/"
-  should_not_trigger:
-    - prompt: "Sửa endpoint PATCH /v1/tracker/jobs/{job_id}/status"
-      expected: be-service-jobs
-
-- skill: fe-page-analytics
-  should_trigger:
-    - "Sửa giao diện thẻ KPI và bảng giao dịch tại trang /admin/analytics"
-    - "Cập nhật hook use-analytics-dashboard.ts trên frontend"
-  should_not_trigger:
-    - prompt: "Sửa câu truy vấn SQL tính tổng doanh thu trong AnalyticsRepository"
-      expected: be-service-analytics
-
 - skill: investigate
   should_trigger:
     - "/investigate điều tra nguyên nhân gốc rễ lỗi và lập kế hoạch Option A/B vào STATE.md"
@@ -327,5 +183,4 @@
     - "Chạy script search.py tạo design system và kiểm tra tương phản dark mode"
   should_not_trigger:
     - prompt: "Sửa lỗi logic lưu access token trong Zustand store"
-      expected: fe-page-auth
-
+      expected: fe-domain-workspace

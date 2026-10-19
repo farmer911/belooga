@@ -19,20 +19,11 @@ description: Technical architecture and engineering guide for Belooga Backend (F
 
 ## 2. Domain Services Map
 
-| Domain | Router & Service Scope | Domain Skill |
+| Bounded Context | Routers & Services Scope | Domain Skill |
 |---|---|---|
-| **Identity & Sessions** | `auth.py`, `AuthService`, `IdentityRepository` | `be-service-auth` |
-| **Candidate Profile** | `profile.py`, `ProfileService`, `ProfileRepository` | `be-service-profile` |
-| **Career Timeline** | `timeline.py`, `TimelineService`, `TimelineRepository` | `be-service-timeline` |
-| **Media & PDF** | `media.py`, `MediaService`, `PdfGenerator` | `be-service-media` |
-| **Talent Search** | `search.py`, `CatalogsService`, `CatalogsRepository` | `be-service-search` |
-| **Master Catalogs** | `catalogs.py`, `CatalogsService` | `be-service-catalogs` |
-| **Public CMS & Abuse**| `cms.py`, `CmsService`, `CmsRepository` | `be-service-cms` |
-| **Expert CV Review** | `expert_review.py`, `ExpertReviewService`, `ExpertReviewRepository` | `be-service-expert-review` |
-| **ATS Diagnostics** | `ats_matching.py`, `ATSMatchingService`, `ATSMatchingRepository` | `be-service-ats` |
-| **Job Tracker Kanban**| `job_tracker.py`, `JobTrackerService`, `JobTrackerRepository` | `be-service-jobs` |
-| **Executive Analytics**| `analytics.py`, `AnalyticsService`, `AnalyticsRepository` | `be-service-analytics` |
-| **MoMo Payments** | `payments.py`, `PaymentService` | `be-service-payments` |
+| **Core Candidate (Auth, Profile, Timeline, Media)** | `auth.py`, `profile.py`, `timeline.py`, `media.py` (`AuthService`, `ProfileService`, `TimelineService`, `MediaService`, `PdfGenerator`) | `be-domain-core` |
+| **Discovery, Catalogs & Public CMS** | `search.py`, `catalogs.py`, `cms.py` (`CatalogsService`, `CmsService`) | `be-domain-discovery` |
+| **Monetization, Career Tools & Analytics** | `expert_review.py`, `ats_matching.py`, `job_tracker.py`, `analytics.py`, `payments.py` (`ExpertReviewService`, `ATSMatchingService`, `JobTrackerService`, `AnalyticsService`, `PaymentService`) | `be-domain-monetization` |
 
 ---
 

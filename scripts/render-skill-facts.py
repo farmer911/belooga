@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 render-skill-facts.py — Regenerate the <!-- AUTO:BEGIN --> ... <!-- AUTO:END --> block
-inside every be-service-* / fe-page-* SKILL.md from live source code.
+inside every be-domain-* / fe-domain-* SKILL.md from live source code.
 
 Humans and agents edit everything OUTSIDE the AUTO block. The block itself is owned
 by this script, so AS-IS facts (files, routes, auth, tests, test IDs) cannot drift.
@@ -22,51 +22,50 @@ EP_DIR = ROOT / "backend" / "app" / "api" / "v1" / "endpoints"
 FE = ROOT / "frontend" / "src"
 CHECK = "--check" in sys.argv
 
-# 100% coverage of all 12 backend router modules
+# 100% coverage of all 12 backend router modules across 3 Bounded-Context skills
 BACKEND = {
-    "be-service-auth": ["auth.py"],
-    "be-service-profile": ["profile.py"],
-    "be-service-timeline": ["timeline.py"],
-    "be-service-media": ["media.py"],
-    "be-service-search": ["search.py"],
-    "be-service-catalogs": ["catalogs.py"],
-    "be-service-cms": ["cms.py"],
-    "be-service-expert-review": ["expert_review.py"],
-    "be-service-ats": ["ats_matching.py"],
-    "be-service-jobs": ["job_tracker.py"],
-    "be-service-analytics": ["analytics.py"],
-    "be-service-payments": ["payments.py"],
+    "be-domain-core": ["auth.py", "profile.py", "timeline.py", "media.py"],
+    "be-domain-discovery": ["search.py", "catalogs.py", "cms.py"],
+    "be-domain-monetization": ["expert_review.py", "ats_matching.py", "job_tracker.py", "analytics.py", "payments.py"],
 }
 
 BACKEND_TESTS = {
-    "be-service-auth": ["test_auth_family_rotation.py"],
-    "be-service-profile": ["test_idor_guards.py", "test_profile_privacy_and_pii.py"],
-    "be-service-timeline": ["test_idor_guards.py", "test_timeline_reorder.py"],
-    "be-service-media": ["test_idor_guards.py", "test_media_traversal.py", "test_profile_privacy_and_pii.py"],
-    "be-service-search": ["test_catalogs_salary.py", "test_profile_privacy_and_pii.py"],
-    "be-service-catalogs": ["test_backend_foundation.py", "test_catalogs_salary.py"],
-    "be-service-cms": ["test_backend_foundation.py"],
-    "be-service-expert-review": ["test_expert_review.py"],
-    "be-service-ats": ["test_ats_matching.py"],
-    "be-service-jobs": ["test_job_tracker.py"],
-    "be-service-analytics": ["test_analytics.py"],
-    "be-service-payments": ["test_momo_payment.py"],
+    "be-domain-core": [
+        "test_auth_family_rotation.py",
+        "test_idor_guards.py",
+        "test_media_traversal.py",
+        "test_profile_privacy_and_pii.py",
+        "test_timeline_reorder.py",
+    ],
+    "be-domain-discovery": [
+        "test_backend_foundation.py",
+        "test_catalogs_salary.py",
+        "test_profile_privacy_and_pii.py",
+    ],
+    "be-domain-monetization": [
+        "test_analytics.py",
+        "test_ats_matching.py",
+        "test_expert_review.py",
+        "test_job_tracker.py",
+        "test_momo_payment.py",
+    ],
 }
 
-# 100% coverage of all 23 frontend page.tsx files
+# 100% coverage of all 23 frontend page.tsx files across 3 Bounded-Context skills
 FRONTEND = {
-    "fe-page-home": ["page.tsx"],
-    "fe-page-search": ["search/page.tsx"],
-    "fe-page-public-profile": ["public/[username]/page.tsx"],
-    "fe-page-workspace": ["user/[username]/page.tsx"],
-    "fe-page-user-management": ["user/[username]/update/page.tsx", "user/[username]/settings/page.tsx"],
-    "fe-page-auth": [
+    "fe-domain-workspace": [
+        "user/[username]/page.tsx",
+        "user/[username]/update/page.tsx",
+        "user/[username]/settings/page.tsx",
         "(auth)/login/page.tsx",
         "(auth)/register/page.tsx",
         "(auth)/forgot-password/page.tsx",
         "(auth)/callback/page.tsx",
     ],
-    "fe-page-cms-public": [
+    "fe-domain-public": [
+        "page.tsx",
+        "search/page.tsx",
+        "public/[username]/page.tsx",
         "(public)/blog/page.tsx",
         "(public)/blog/[slug]/page.tsx",
         "(public)/careers/page.tsx",
@@ -75,11 +74,14 @@ FRONTEND = {
         "(public)/privacy-policy/page.tsx",
         "(public)/terms-and-conditions/page.tsx",
     ],
-    "fe-page-expert-review": ["(public)/expert-review/page.tsx"],
-    "fe-page-ats": ["ats-diagnostics/page.tsx"],
-    "fe-page-cv-studio": ["cv-studio/page.tsx", "salary-benchmark/page.tsx"],
-    "fe-page-jobs": ["workspace/jobs/page.tsx"],
-    "fe-page-analytics": ["admin/analytics/page.tsx"],
+    "fe-domain-career-tools": [
+        "(public)/expert-review/page.tsx",
+        "ats-diagnostics/page.tsx",
+        "cv-studio/page.tsx",
+        "salary-benchmark/page.tsx",
+        "workspace/jobs/page.tsx",
+        "admin/analytics/page.tsx",
+    ],
 }
 
 BLOCK_RE = re.compile(r"<!-- AUTO:BEGIN -->.*?<!-- AUTO:END -->", re.S)

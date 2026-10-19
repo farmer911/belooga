@@ -58,30 +58,12 @@
 | **QC & Playwright Testing** | `qc/` | `belooga-qc-engineering` |
 | **Backend Code Review** | Backend PRs / diffs | `be-code-review` |
 | **Frontend Code Review** | Frontend PRs / diffs | `fe-code-review` |
-| **Backend: Auth & Session** | `api/v1/endpoints/auth.py` | `be-service-auth` |
-| **Backend: Candidate Profile**| `api/v1/endpoints/profile.py` | `be-service-profile` |
-| **Backend: Career Timeline** | `api/v1/endpoints/timeline.py` | `be-service-timeline` |
-| **Backend: Media & Video** | `api/v1/endpoints/media.py` | `be-service-media` |
-| **Backend: Candidate Search** | `api/v1/endpoints/search.py` | `be-service-search` |
-| **Backend: Catalogs** | `api/v1/endpoints/catalogs.py` | `be-service-catalogs` |
-| **Backend: CMS & Reports** | `api/v1/endpoints/cms.py` | `be-service-cms` |
-| **Backend: Expert CV Review** | `api/v1/endpoints/expert_review.py` | `be-service-expert-review` |
-| **Backend: ATS Diagnostics** | `api/v1/endpoints/ats_matching.py` | `be-service-ats` |
-| **Backend: Job Tracker Kanban**| `api/v1/endpoints/job_tracker.py` | `be-service-jobs` |
-| **Backend: Executive Analytics**| `api/v1/endpoints/analytics.py` | `be-service-analytics` |
-| **Backend: MoMo Payments** | `api/v1/endpoints/payments.py` | `be-service-payments` |
-| **Frontend: Homepage** | `app/page.tsx` | `fe-page-home` |
-| **Frontend: Talent Search** | `app/search/` | `fe-page-search` |
-| **Frontend: Public Profile** | `app/public/[username]/` | `fe-page-public-profile` |
-| **Frontend: Workspace Hub** | `app/user/[username]/` | `fe-page-workspace` |
-| **Frontend: Auth & Onboarding**| `app/(auth)/` | `fe-page-auth` |
-| **Frontend: User Settings** | `app/user/[username]/settings/`, `update/` | `fe-page-user-management` |
-| **Frontend: Public CMS** | `app/(public)/blog/`, `careers/`, `contact-us/`, `help/` | `fe-page-cms-public` |
-| **Frontend: Expert CV Review** | `app/(public)/expert-review/` | `fe-page-expert-review` |
-| **Frontend: ATS Diagnostics** | `app/ats-diagnostics/` | `fe-page-ats` |
-| **Frontend: CV Studio & Salary**| `app/cv-studio/`, `app/salary-benchmark/` | `fe-page-cv-studio` |
-| **Frontend: Job Tracker Kanban**| `app/workspace/jobs/` | `fe-page-jobs` |
-| **Frontend: Executive Analytics**| `app/admin/analytics/` | `fe-page-analytics` |
+| **Backend: Core (Auth, Profile, Timeline, Media)** | `auth.py`, `profile.py`, `timeline.py`, `media.py` | `be-domain-core` |
+| **Backend: Discovery (Search, Catalogs, CMS)** | `search.py`, `catalogs.py`, `cms.py` | `be-domain-discovery` |
+| **Backend: Monetization (Review, ATS, Jobs, Analytics, MoMo)** | `expert_review.py`, `ats_matching.py`, `job_tracker.py`, `analytics.py`, `payments.py` | `be-domain-monetization` |
+| **Frontend: Workspace, Studio & Auth** | `app/user/[username]/*`, `app/(auth)/*` | `fe-domain-workspace` |
+| **Frontend: Public, Search & CMS** | `app/page.tsx`, `app/search/`, `app/public/[username]/`, `app/(public)/*` | `fe-domain-public` |
+| **Frontend: Career Tools, ATS, Jobs & Analytics** | `app/(public)/expert-review/`, `app/ats-diagnostics/`, `app/cv-studio/`, `app/salary-benchmark/`, `app/workspace/jobs/`, `app/admin/analytics/` | `fe-domain-career-tools` |
 | **Code Review for Bloat** | PR review for over-engineering | `ponytail-review` |
 | **Repository Bloat Audit** | Whole-repo over-engineering scan | `ponytail-audit` |
 | **Technical Debt Ledger** | Track ponytail shortcuts | `ponytail-debt` |
@@ -90,15 +72,10 @@
 
 ## 3. Cross-Domain Impact Matrix
 
-When modifying a service or page, verify its downstream dependents:
-- **`be-service-media`:** Verify `fe-page-workspace` (WebRTC studio recording & chunk upload) and `fe-page-public-profile` (video playback).
-- **`be-service-timeline`:** Verify `fe-page-workspace` (drag-and-drop timeline) and `be-service-media` (ReportLab PDF generation).
-- **`be-service-profile`:** Verify `fe-page-search` (search vector synchronization) and `fe-page-workspace` (bio sync).
-- **`be-service-expert-review`:** Verify `fe-page-expert-review` (packages, booking modal, order lists).
-- **`be-service-ats` & `be-service-payments`:** Verify `fe-page-ats` (ATS scorecard & MoMo QR checkout modal).
-- **`be-service-catalogs`:** Verify `fe-page-cv-studio` (`/salary-benchmark` percentiles) and `fe-page-workspace` (skills autocomplete).
-- **`be-service-jobs`:** Verify `fe-page-jobs` (`/workspace/jobs` Kanban board).
-- **`be-service-analytics`:** Verify `fe-page-analytics` (`/admin/analytics` KPI & revenue dashboard).
+When modifying a backend bounded context, verify its downstream frontend dependents:
+- **`be-domain-core`:** Verify `fe-domain-workspace` (WebRTC studio, timeline DnD, auth, settings) and `fe-domain-public` (`/public/[username]` video & PDF).
+- **`be-domain-discovery`:** Verify `fe-domain-public` (`/search`, `/contact-us`, `/careers`) and `fe-domain-career-tools` (`/salary-benchmark`).
+- **`be-domain-monetization`:** Verify `fe-domain-career-tools` (`/expert-review`, `/ats-diagnostics`, `/workspace/jobs`, `/admin/analytics`, MoMo QR checkout).
 
 ---
 

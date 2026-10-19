@@ -42,7 +42,7 @@ Every mistake or operational discovery must be analyzed and resolved across all 
 | **Band-Aid / Deception / Anti-Pattern** | `scripts/trust-benchmark.py` or `scripts/audit-truth.sh` | Encode an AST or regex detector so future commits fail automatically. |
 | **Code Bloat / Type Evasion Improvement** | `.agents/ratchet.json` | Run `python3 scripts/ratchet.py --update` to lock in the lower baseline. |
 | **New Route / Table / Schema Added** | `.agents/skills/*/SKILL.md` & `CURRENT_STATE.md` | Run `python3 scripts/generate-current-state.py --allow-dirty && python3 scripts/render-skill-facts.py --write`. |
-| **Domain-Specific Trap** | `.agents/skills/{be-service-*,fe-page-*}/SKILL.md` | Add a 1-2 line bullet under `## Known Traps` (keep skill <= 200 lines). |
+| **Domain-Specific Trap** | `.agents/skills/{be-domain-*,fe-domain-*}/SKILL.md` | Add a 1-2 line bullet under `## Known Traps` (keep skill <= 200 lines). |
 | **Business / UX / Human Insight** | `.agents/PRODUCT_THESIS.md` | Add insight and evict/compress old lines to stay <= 120 lines. |
 | **Severe Hallucination / UI Distortion** | `docs/VIOLATIONS_REGISTER.md` | Append `[VIOLATION-XXX]` with the 5-step breakdown. |
 

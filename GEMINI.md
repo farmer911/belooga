@@ -34,8 +34,8 @@ Always-on project instruction for Gemini / Antigravity agent.
 ## 5. Task Routing
 - **Forensic Investigation & Plan (`/investigate`):** Skill `investigate` (read-only trace + Option A/B trade-off + writes `.agents/STATE.md` & halts).
 - **Supervisor & Product Challenge:** Skill `belooga-supervisor` + `.agents/PRODUCT_THESIS.md`.
-- **Backend API / DB:** Skill `belooga-backend-engineering` (routes to `be-service-*`), test with `backend/.venv/bin/pytest backend/tests/`.
-- **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to `fe-page-*`), test with `cd frontend && bun x tsc --noEmit`.
+- **Backend API / DB:** Skill `belooga-backend-engineering` (routes to `be-domain-*`), test with `backend/.venv/bin/pytest backend/tests/`.
+- **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to `fe-domain-*`), test with `cd frontend && bun x tsc --noEmit`.
 - **E2E / Visual QC:** Skill `belooga-qc-engineering`, run `cd qc && bun run test:e2e`.
 - **Agile Planning & PR Delivery:** Skill `belooga-senior-agile-workflow`, task breakdown with standalone engine at `../beloga-agent-kanban` (CLI: `bun run agent`).
 - **Quality Gate / PR:** Workflow `.agents/workflows/definition-of-done.md`.
