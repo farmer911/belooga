@@ -22,7 +22,7 @@ export default function BlogListPage() {
     {
       slug: "optimizing-candidate-experience",
       title: "Reinventing the Modern Candidate Discovery Experience",
-      excerpt: "Behind the scenes of Belooga's design system and architectural evolution to Next.js 14 and FastAPI.",
+      excerpt: "Behind the scenes of Belooga's design system and architectural evolution to Next.js 16.3.8, PostgreSQL 16 GIN, and FastAPI.",
       date: "September 2026",
       image: "/images/blog/blog-1.jpg",
       author: "Engineering Team"

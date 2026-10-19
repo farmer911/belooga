@@ -64,6 +64,36 @@ export default async function BlogPostPage({
             <li><strong>Direction (20-30s):</strong> Clarify the kind of mission and engineering culture you want to join next.</li>
           </ul>
         </div>
+
+        {/* Career Acceleration Conversion Funnel CTA */}
+        <div
+          data-testid="blog-career-tools-cta"
+          className="rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        >
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+              Put This Guide Into Action
+            </span>
+            <h3 className="text-base font-extrabold">
+              Audit Your Resume & Generate Your 60s Pitch Script Instantly
+            </h3>
+            <p className="text-xs text-slate-300">
+              Run our free ATS CV-to-JD diagnostic scanner or book a 1-on-1 review with a Senior Engineering Leader.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Link href="/ats-diagnostics">
+              <Button size="sm" className="bg-brand-primary hover:bg-brand-hover text-white text-xs">
+                Run ATS Scan
+              </Button>
+            </Link>
+            <Link href="/expert-review">
+              <Button size="sm" variant="outline" className="border-slate-600 text-white hover:bg-slate-700 text-xs">
+                Expert Review
+              </Button>
+            </Link>
+          </div>
+        </div>
       </article>
     </div>
   );
