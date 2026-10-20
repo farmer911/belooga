@@ -1,6 +1,7 @@
 """Thin Controller for Domain 13: MoMo Payments & Escrow."""
 
 from fastapi import APIRouter, status
+from app.modules.payments import PaymentService
 from app.schemas.payments import (
     MomoCreatePaymentRequest,
     MomoCreatePaymentResponse,
@@ -8,7 +9,6 @@ from app.schemas.payments import (
     MomoIpnResponse,
     OrderStatusResponse,
 )
-from app.services.payment_service import PaymentService
 
 router = APIRouter(prefix="/payments/momo", tags=["Domain 13: MoMo Payments & Escrow"])
 

@@ -18,5 +18,5 @@
 - [x] Module 8/12 (`ats_matching`): `backend/app/modules/ats_matching/` + Push
 - [x] Module 9/12 (`expert_review`): `backend/app/modules/expert_review/` + Push
 - [x] Module 10/12 (`job_tracker`): `backend/app/modules/job_tracker/` + Push
-- [ ] Module 11/12 (`payments`): `backend/app/modules/payments/` + Push
+- [x] Module 11/12 (`payments`): `backend/app/modules/payments/` + Push
 - [ ] Module 12/12 (`analytics`): `backend/app/modules/analytics/` + Final 12-Module AST Lock + Push
