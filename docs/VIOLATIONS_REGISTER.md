@@ -50,6 +50,17 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-005] Lỗi `ModuleNotFoundError: No module named 'yaml'` trên GitHub Actions CI khi chạy `scripts/lint-skills.py`
+* **Where (Sai ở đâu):** `scripts/lint-skills.py:24` (`import yaml`) và `.github/workflows/ci.yml:81`.
+* **How & Why (Sai như thế nào):** Trên máy local `python3` đã cài sẵn `PyYAML`, nhưng trên GitHub Actions (`ubuntu-latest` / `actions/setup-python@v5`), môi trường `python3` hệ thống hoàn toàn sạch. Khi CI chạy `python3 scripts/lint-skills.py --quiet` sau bước `audit-truth.sh`, script bị crash với `ModuleNotFoundError: No module named 'yaml'`. Ngoài ra, Agent không kiểm tra `gh run list` sau khi push.
+* **Minimal Fix (Sửa làm sao):**
+  1. Bổ sung stdlib parser fallback trong `scripts/lint-skills.py` (`try: import yaml except ModuleNotFoundError: yaml = None`) hỗ trợ cả multiline YAML frontmatter (`>-`, `|`) và `triggers.yaml`.
+  2. Bổ sung `pyyaml` vào bước cài đặt dependency trong `.github/workflows/ci.yml`.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Nâng cấp `scripts/trust-benchmark.py` để chạy `lint-skills.py` và `ratchet.py` với cờ cô lập `python3 -I -S` (vô hiệu hóa toàn bộ `site-packages` bên thứ ba), đảm bảo mọi gate script chạy 100% bằng Python Standard Library.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**

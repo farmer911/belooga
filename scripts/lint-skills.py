@@ -21,7 +21,11 @@ import json
 import re
 import sys
 from pathlib import Path
-import yaml
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    yaml = None
 
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS = ROOT / ".agents"
@@ -111,8 +115,20 @@ def check_frontmatter_yaml(path, text):
         add("ERROR", path, "unclosed YAML frontmatter block")
         return None
     try:
-        data = yaml.safe_load(parts[1])
-        if not isinstance(data, dict):
+        if yaml is not None:
+            data = yaml.safe_load(parts[1])
+        else:
+            data = {}
+            cur_key = None
+            for line in parts[1].strip().splitlines():
+                if line.startswith((" ", "\t")) and cur_key:
+                    data[cur_key] = (data[cur_key] + " " + line.strip()).strip()
+                elif ":" in line:
+                    k, v = line.split(":", 1)
+                    cur_key = k.strip()
+                    val = v.strip().strip("\"'")
+                    data[cur_key] = "" if val in (">", ">-", "|", "|-") else val
+        if not isinstance(data, dict) or not data:
             add("ERROR", path, "YAML frontmatter must parse to a key-value mapping")
             return None
         return data
@@ -261,8 +277,12 @@ def check_ecosystem_coverage():
 
     trig_path = AGENTS / "evals" / "triggers.yaml"
     if trig_path.exists():
-        trig_data = yaml.safe_load(trig_path.read_text(encoding="utf-8")) or []
-        trig_skills = {item.get("skill") for item in trig_data if isinstance(item, dict)}
+        trig_raw = trig_path.read_text(encoding="utf-8")
+        if yaml is not None:
+            trig_data = yaml.safe_load(trig_raw) or []
+            trig_skills = {item.get("skill") for item in trig_data if isinstance(item, dict)}
+        else:
+            trig_skills = set(re.findall(r"^\s*-\s*skill:\s*(\S+)", trig_raw, re.M))
         for sk in sorted(existing_skills - trig_skills):
             add("ERROR", trig_path, f"skill `{sk}` missing from triggers.yaml evaluation dataset")
 

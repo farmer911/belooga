@@ -136,7 +136,7 @@ for p in BE_APP.rglob("*.py"):
                         )
 
 # --- 5. RATCHET & SIZE DISCIPLINE ---
-r_proc = subprocess.run([sys.executable, str(ROOT / "scripts" / "ratchet.py")], capture_output=True, text=True)
+r_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "ratchet.py")], capture_output=True, text=True)
 if r_proc.returncode != 0:
     for line in r_proc.stdout.splitlines():
         if "WORSE" in line:
@@ -150,9 +150,9 @@ if not state_md.exists() or len(state_md.read_text().splitlines()) > 50:
 if not thesis_md.exists() or len(thesis_md.read_text().splitlines()) > 120:
     violations["6. Memory Cap & Skill SSOT"].append(".agents/PRODUCT_THESIS.md missing or exceeds 120-line cap")
 
-l_proc = subprocess.run([sys.executable, str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True)
+l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True)
 if l_proc.returncode != 0:
-    violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors")
+    violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors (or failed stdlib -I -S isolation check)")
 
 # --- RENDER VISUAL BENCHMARK SCORECARD ---
 print("=" * 78)
