@@ -1,19 +1,20 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (`BEL-515`):** Research, Benchmark, Challenge, and Apply gRPC / ConnectRPC / Binary Framing & Multiplexed RPC Batching concepts where they **provably improve performance** in Belooga:
-  1. **Supervisor Architectural Verdict:** Prove via empirical benchmark (`scripts/benchmark-rpc-and-serialization.py`) why **Loopback Network gRPC between internal monolith modules is an anti-pattern** (~675x slower than in-process Python calls), while **ConnectRPC-style Multiplexed Batch RPC (`POST /v1/rpc/batch`) + Binary Protobuf-Varint Framing (`application/x-protobuf`) + Shared Bundle Hydration** delivers a massive real-world speedup.
-  2. **Eliminate Duplicate SQL & HTTP Waterfall on Profile/Workspace:** Refactor `ProfileService.get_candidate_trust_score` and `TimelineService.get_career_trajectory` to compute directly from the shared `pub_profile:{username}` bundle (cutting SQL queries per profile load from **14 down to 7**, and **0** on warm cache), and replace the 3-request sequential waterfall in `frontend/src/app/public/[username]/page.tsx` with `POST /v1/rpc/batch`.
-  3. **Implement ConnectRPC-Style Multiplexed Batch & Binary Framing Engine (`backend/app/core/rpc.py`, mounted at `/v1/rpc`):**
-     - `POST /v1/rpc/batch`: Executes multiple RPC procedures concurrently in **1 HTTP round-trip**.
-     - Supports both compact JSON (`application/json`) and **Protobuf-style Binary Varint Wire Framing (`application/x-protobuf`)** via content negotiation.
+- **Task (`BEL-516`):** Evaluate, Benchmark, and Apply **Kafka (Partitioned Event Streaming, Consumer Groups, DLQ)** & **Kubernetes (Liveness/Readiness Probes, Graceful Lifespan Drain, HPA Manifests)** to Belooga without JVM/infrastructure bloat:
+  1. **Supervisor Challenge & Benchmark (`scripts/benchmark-event-stream-and-k8s.py`):**
+     - Reject deploying a 2GB JVM Kafka/Zookeeper cluster (violates 80/20 YAGNI), while adopting **Kafka's Partitioned Event Log + Consumer Group + Dead-Letter Queue (DLQ)** pattern via `backend/app/core/events.py`.
+     - Fix `backend/app/main.py`'s empty `lifespan` and static `/health` by adding **Kubernetes Liveness (`/health/live`)**, **Readiness (`/health/ready`)**, graceful shutdown drain, and `k8s/deployment-and-hpa.yaml`.
+  2. **TDD Verification (`backend/tests/test_event_stream_and_k8s_probes.py`):**
+     - Test partitioned event publishing (`partition = crc32(key) % num_partitions`), per-key ordering, Consumer Group offset tracking, Dead-Letter Queue (DLQ) isolation on failing handlers, `/v1/events/status`, `/health/live`, and `/health/ready`.
 
 ## Pre-Mortem Risks
-- Keep all `backend/app/**/*.py` <= 300 lines and frontend `page.tsx` <= 241 lines.
+- Keep all `backend/app/**/*.py` <= 300 lines.
+- Ensure background event workers drain cleanly without leaking tasks across pytest tests.
 
 ## Execution Checklist
-- [x] Build & run empirical benchmark (`scripts/benchmark-rpc-and-serialization.py`)
-- [x] Write TDD Red/Green test suite (`backend/tests/test_rpc_and_dossier_optimization.py`)
-- [x] Implement `backend/app/core/rpc.py` (`/v1/rpc/batch` + Protobuf varint binary wire codec) & mount in `backend/app/main.py`
-- [x] Optimize `ProfileService.get_candidate_trust_score` & `TimelineService.get_career_trajectory` to reuse shared bundle & wire `POST /v1/rpc/batch` in `public/[username]/page.tsx`
-- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #23, and merge into `main`
+- [x] Build & run empirical benchmark (`scripts/benchmark-event-stream-and-k8s.py`)
+- [x] Write TDD Red/Green test suite (`backend/tests/test_event_stream_and_k8s_probes.py`)
+- [x] Implement `backend/app/core/events.py` (Partitioned Event Stream, Consumer Groups, DLQ, `/v1/events/status` & `/v1/events/publish`)
+- [x] Upgrade `backend/app/main.py` (`/health/live`, `/health/ready`, Graceful Lifespan Drain) & add `k8s/deployment-and-hpa.yaml`
+- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #24, and merge into `main`
