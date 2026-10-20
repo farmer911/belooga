@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.modules.catalogs import CatalogsService
 from app.schemas.catalogs import CareerRoiResponse, SalaryBenchmarkResponse
-from app.services.catalogs_service import CatalogsService
 
 router = APIRouter()
 

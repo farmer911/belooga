@@ -12,7 +12,7 @@
 - [x] Module 2/12 (`auth`): `backend/app/modules/auth/` (decouple `ProfileRepository`) + Push
 - [x] Module 3/12 (`timeline`): `backend/app/modules/timeline/` (decouple `ProfileRepository`) + Push
 - [x] Module 4/12 (`media`): `backend/app/modules/media/` (decouple `ProfileRepository`) + Push
-- [ ] Module 5/12 (`catalogs`): `backend/app/modules/catalogs/` + Push
+- [x] Module 5/12 (`catalogs`): `backend/app/modules/catalogs/` + Push
 - [ ] Module 6/12 (`search`): `backend/app/modules/search/` (dedicated `SearchService`/`SearchRepository`) + Push
 - [ ] Module 7/12 (`cms`): `backend/app/modules/cms/` + Push
 - [ ] Module 8/12 (`ats_matching`): `backend/app/modules/ats_matching/` + Push
