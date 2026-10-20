@@ -10,7 +10,7 @@ import uuid
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.identity import Identity, RefreshSession
+from app.models.identity import Identity, PasswordResetToken, RefreshSession
 
 
 class IdentityRepository:
@@ -123,3 +123,43 @@ class IdentityRepository:
             .values(revoked_at=datetime.now(timezone.utc))
         )
         await self.db.execute(stmt)
+
+    async def create_password_reset_token(
+        self, identity_id: uuid.UUID, token_hash: str, expires_at: datetime
+    ) -> PasswordResetToken:
+        reset_row = PasswordResetToken(
+            id=uuid.uuid4(),
+            identity_id=identity_id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+        self.db.add(reset_row)
+        await self.db.flush()
+        return reset_row
+
+    async def get_reset_token_for_update(self, token_hash: str):
+        query = text("""
+            SELECT id, identity_id, expires_at, used_at
+            FROM password_reset_tokens
+            WHERE token_hash = :hash
+            FOR UPDATE
+        """)
+        res = await self.db.execute(query, {"hash": token_hash})
+        return res.fetchone()
+
+    async def mark_reset_token_used_and_rotate_password(
+        self, token_id: uuid.UUID, identity_id: uuid.UUID, new_password_hash: str
+    ) -> None:
+        now = datetime.now(timezone.utc)
+        await self.db.execute(
+            update(PasswordResetToken).where(PasswordResetToken.id == token_id).values(used_at=now)
+        )
+        await self.db.execute(
+            update(Identity).where(Identity.id == identity_id).values(password_hash=new_password_hash, updated_at=now)
+        )
+        await self.db.execute(
+            update(RefreshSession)
+            .where(RefreshSession.identity_id == identity_id, RefreshSession.revoked_at.is_(None))
+            .values(revoked_at=now)
+        )
+

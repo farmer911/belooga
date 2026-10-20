@@ -12,8 +12,11 @@ from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.schemas.auth import (
     CheckAvailabilityResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     LoginRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserProfileDTO,
 )
@@ -88,3 +91,20 @@ async def logout(
 ):
     refresh_token = request.cookies.get("belooga_refresh_token")
     return await AuthService(db).logout(refresh_token, response)
+
+
+@router.post("/auth/forgot-password/", response_model=ForgotPasswordResponse, tags=["Domain 1: Identity & Sessions"])
+async def request_password_reset(
+    payload: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService(db).request_password_reset(payload)
+
+
+@router.post("/auth/reset-password/", response_model=dict[str, str], tags=["Domain 1: Identity & Sessions"])
+async def reset_password(
+    payload: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService(db).reset_password(payload)
+

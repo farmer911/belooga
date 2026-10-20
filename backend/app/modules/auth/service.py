@@ -26,8 +26,11 @@ from app.modules.auth.repository import IdentityRepository
 from app.modules.profile import ProfileService
 from app.schemas.auth import (
     CheckAvailabilityResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     LoginRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserProfileDTO,
 )
@@ -225,3 +228,37 @@ class AuthService:
             await self.db.commit()
         response.delete_cookie("belooga_refresh_token", httponly=True, samesite="lax", secure=IS_PRODUCTION)
         return {"message": "Successfully logged out"}
+
+    async def request_password_reset(self, payload: ForgotPasswordRequest) -> ForgotPasswordResponse:
+        identity = await self.identity_repo.get_by_email(payload.email)
+        raw_token: Optional[str] = None
+        if identity:
+            raw_token = generate_refresh_token()
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+            await self.identity_repo.create_password_reset_token(
+                identity_id=identity.id,
+                token_hash=hash_token(raw_token),
+                expires_at=expires_at,
+            )
+            await self.db.commit()
+        return ForgotPasswordResponse(
+            message="If the email is registered, a password recovery token has been issued.",
+            reset_token=raw_token,
+        )
+
+    async def reset_password(self, payload: ResetPasswordRequest) -> dict[str, str]:
+        row = await self.identity_repo.get_reset_token_for_update(hash_token(payload.token.strip()))
+        now = datetime.now(timezone.utc)
+        if not row or row.used_at is not None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or already used reset token")
+        exp = row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=timezone.utc)
+        if exp < now:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password reset token has expired")
+        await self.identity_repo.mark_reset_token_used_and_rotate_password(
+            token_id=row.id,
+            identity_id=row.identity_id,
+            new_password_hash=get_password_hash(payload.new_password),
+        )
+        await self.db.commit()
+        return {"message": "Password has been reset successfully"}
+

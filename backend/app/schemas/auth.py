@@ -33,3 +33,18 @@ class TokenResponse(BaseModel):
 class CheckAvailabilityResponse(BaseModel):
     exists: bool
     available: bool
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+    reset_token: Optional[str] = None
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=8)
+    new_password: str = Field(..., min_length=8)
+

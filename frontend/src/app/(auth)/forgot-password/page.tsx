@@ -4,12 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Mail, ArrowLeft, CheckCircle2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { forgotPasswordSchema, ForgotPasswordFormValues } from "@/lib/schemas";
+import { apiClient } from "@/services/api-client";
+
+interface ForgotPasswordResponse {
+  message: string;
+  reset_token?: string | null;
+}
 
 export default function ForgotPasswordPage() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [resetToken, setResetToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [resetComplete, setResetComplete] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -19,8 +30,30 @@ export default function ForgotPasswordPage() {
     defaultValues: { email: "" },
   });
 
-  const onSubmit = handleSubmit(({ email }) => {
-    setSubmittedEmail(email);
+  const forgotMutation = useMutation({
+    mutationFn: async (values: ForgotPasswordFormValues) => {
+      const res = await apiClient.post<ForgotPasswordResponse>("/v1/auth/forgot-password/", values);
+      return { email: values.email, data: res.data };
+    },
+    onSuccess: ({ email, data }) => {
+      setSubmittedEmail(email);
+      if (data.reset_token) setResetToken(data.reset_token);
+    },
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<{ message: string }>("/v1/auth/reset-password/", {
+        token: resetToken,
+        new_password: newPassword,
+      });
+      return res.data;
+    },
+    onSuccess: () => setResetComplete(true),
+  });
+
+  const onSubmit = handleSubmit((values) => {
+    forgotMutation.mutate(values);
   });
 
   return (
@@ -29,20 +62,55 @@ export default function ForgotPasswordPage() {
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold text-typography-main">Reset Your Password</h1>
           <p className="text-sm text-typography-muted">
-            Enter your registered email address and we&apos;ll send you instructions to reset your password.
+            Enter your registered email address and we&apos;ll issue a single-use recovery token.
           </p>
         </div>
 
-        {submittedEmail ? (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center space-y-2">
+        {resetComplete ? (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center space-y-2" data-testid="password-reset-success">
             <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-            <p className="text-sm font-semibold text-emerald-800">Recovery Email Sent</p>
-            <p className="text-xs text-emerald-700">
-              Check your inbox at <strong>{submittedEmail}</strong> for instructions to reset your account password.
-            </p>
+            <p className="text-sm font-semibold text-emerald-800">Password Updated</p>
+            <p className="text-xs text-emerald-700">Your password has been rotated and active sessions revoked.</p>
+          </div>
+        ) : submittedEmail ? (
+          <div className="space-y-4" data-testid="reset-password-form">
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center space-y-2">
+              <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+              <p className="text-sm font-semibold text-emerald-800">Recovery Token Issued</p>
+              <p className="text-xs text-emerald-700">
+                Enter your recovery token for <strong>{submittedEmail}</strong> and choose a new password.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Paste recovery token"
+                value={resetToken}
+                onChange={(e) => setResetToken(e.target.value)}
+                className="w-full px-3 py-2 bg-surface-card border border-surface-border rounded-lg text-xs"
+              />
+              <input
+                type="password"
+                placeholder="New password (min 8 chars)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-surface-card border border-surface-border rounded-lg text-xs"
+              />
+              {resetMutation.isError && (
+                <p className="text-[11px] text-red-600">Invalid, expired, or already used recovery token.</p>
+              )}
+              <Button
+                type="button"
+                disabled={resetMutation.isPending || resetToken.length < 8 || newPassword.length < 8}
+                onClick={() => resetMutation.mutate()}
+                className="w-full bg-brand-primary hover:bg-brand-hover text-white py-2.5 gap-1.5"
+              >
+                <KeyRound className="w-4 h-4" /> Confirm New Password
+              </Button>
+            </div>
           </div>
         ) : (
-          <form onSubmit={onSubmit} noValidate className="space-y-4">
+          <form onSubmit={onSubmit} noValidate className="space-y-4" data-testid="forgot-password-form">
             <div className="space-y-1">
               <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">
                 Email Address
@@ -61,8 +129,12 @@ export default function ForgotPasswordPage() {
               {errors.email && <p className="text-[11px] text-red-600">{errors.email.message}</p>}
             </div>
 
-            <Button type="submit" className="w-full bg-brand-primary hover:bg-brand-hover text-white py-2.5">
-              Send Reset Link
+            <Button
+              type="submit"
+              disabled={forgotMutation.isPending}
+              className="w-full bg-brand-primary hover:bg-brand-hover text-white py-2.5"
+            >
+              {forgotMutation.isPending ? "Issuing Token..." : "Send Reset Link"}
             </Button>
           </form>
         )}
