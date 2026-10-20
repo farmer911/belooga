@@ -1,7 +1,7 @@
 """Authentication service (Vertical Module: auth).
 
 Business domain service orchestrating login, registration, JWT issuance,
-and refresh token family rotation with replay attack mitigation.
+OAuth SSO linking, password recovery, and refresh token family rotation.
 Communicates with the `profile` module strictly via its public facade (`ProfileService`).
 """
 
@@ -32,6 +32,7 @@ from app.schemas.auth import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     LoginRequest,
+    OAuthCallbackRequest,
     RegisterRequest,
     ResetPasswordRequest,
     TokenResponse,
@@ -72,15 +73,34 @@ class AuthService:
         self.identity_repo = IdentityRepository(db)
         self.profile_facade = ProfileService(db)
 
+    async def _issue_session(
+        self, user_dto: UserProfileDTO, response: Response, family_id: Optional[uuid.UUID] = None
+    ) -> TokenResponse:
+        raw_refresh = generate_refresh_token()
+        expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        await self.identity_repo.create_refresh_session(
+            identity_id=user_dto.id,
+            family_id=family_id or uuid.uuid4(),
+            token_hash=hash_token(raw_refresh),
+            expires_at=expires_at,
+        )
+        await self.db.commit()
+        access_token = create_access_token({
+            "sub": str(user_dto.id),
+            "username": user_dto.username,
+            "email": user_dto.email,
+            "role": user_dto.role,
+        })
+        _set_refresh_cookie(response, raw_refresh)
+        return TokenResponse(access_token=access_token, token_type="bearer", user=user_dto)
+
     async def check_email_availability(self, email: str) -> CheckAvailabilityResponse:
         existing = await self.identity_repo.get_by_email(email)
-        exists = existing is not None
-        return CheckAvailabilityResponse(exists=exists, available=not exists)
+        return CheckAvailabilityResponse(exists=existing is not None, available=existing is None)
 
     async def check_username_availability(self, username: str) -> CheckAvailabilityResponse:
         existing = await self.profile_facade.get_by_username(username)
-        exists = existing is not None
-        return CheckAvailabilityResponse(exists=exists, available=not exists)
+        return CheckAvailabilityResponse(exists=existing is not None, available=existing is None)
 
     async def register_user(self, payload: RegisterRequest, response: Response) -> TokenResponse:
         clean_email = payload.email.lower().strip()
@@ -92,9 +112,6 @@ class AuthService:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username is already taken")
 
         identity_id = uuid.uuid4()
-        profile_id = uuid.uuid4()
-        family_id = uuid.uuid4()
-
         await self.identity_repo.create_identity(
             identity_id=identity_id,
             email=clean_email,
@@ -103,34 +120,18 @@ class AuthService:
             status="active",
         )
         await self.profile_facade.create_initial_profile(
-            profile_id=profile_id,
+            profile_id=uuid.uuid4(),
             identity_id=identity_id,
             username=clean_username,
             first_name=payload.first_name,
             last_name=payload.last_name,
         )
-
-        raw_refresh = generate_refresh_token()
-        expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        await self.identity_repo.create_refresh_session(
-            identity_id=identity_id,
-            family_id=family_id,
-            token_hash=hash_token(raw_refresh),
-            expires_at=expires_at,
-        )
-        await self.db.commit()
-
-        access_token = create_access_token({
-            "sub": str(identity_id), "username": clean_username, "email": clean_email, "role": "candidate"
-        })
-        _set_refresh_cookie(response, raw_refresh)
-
         user_dto = UserProfileDTO(
             id=identity_id, email=clean_email, username=clean_username,
             first_name=payload.first_name.strip(), last_name=payload.last_name.strip(),
             role="candidate", avatar_url="/images/avatar.jpg",
         )
-        return TokenResponse(access_token=access_token, token_type="bearer", user=user_dto)
+        return await self._issue_session(user_dto, response)
 
     async def login(self, payload: LoginRequest, response: Response) -> TokenResponse:
         clean_email = payload.email.lower().strip()
@@ -141,22 +142,40 @@ class AuthService:
         if user_row.status == "suspended":
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account has been suspended")
 
-        raw_refresh = generate_refresh_token()
-        expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        await self.identity_repo.create_refresh_session(
-            identity_id=user_row.id,
-            family_id=uuid.uuid4(),
-            token_hash=hash_token(raw_refresh),
-            expires_at=expires_at,
-        )
-        await self.db.commit()
+        return await self._issue_session(_build_user_dto(user_row), response)
 
-        access_token = create_access_token({
-            "sub": str(user_row.id), "username": user_row.username, "email": user_row.email, "role": user_row.role
-        })
-        _set_refresh_cookie(response, raw_refresh)
-        user_dto = _build_user_dto(user_row)
-        return TokenResponse(access_token=access_token, token_type="bearer", user=user_dto)
+    async def oauth_callback(self, payload: OAuthCallbackRequest, response: Response) -> TokenResponse:
+        provider = payload.provider.lower().strip()
+        puid = hash_token(f"{provider}:{payload.code.strip()}")[:32]
+        user_row = await self.identity_repo.get_identity_by_social_account(provider, puid)
+
+        if not user_row and payload.email:
+            user_row = await self.identity_repo.get_identity_with_profile_by_email(payload.email)
+
+        if user_row:
+            await self.identity_repo.link_social_account(user_row.id, provider, puid)
+            return await self._issue_session(_build_user_dto(user_row), response)
+
+        identity_id = uuid.uuid4()
+        clean_email = (payload.email or f"oauth_{puid[:10]}@belooga.com").lower().strip()
+        clean_username = f"user_{puid[:10]}"
+        await self.identity_repo.create_identity(
+            identity_id=identity_id, email=clean_email, password_hash="", role="candidate", status="active"
+        )
+        await self.profile_facade.create_initial_profile(
+            profile_id=uuid.uuid4(),
+            identity_id=identity_id,
+            username=clean_username,
+            first_name=payload.first_name or "Belooga",
+            last_name=payload.last_name or "Candidate",
+        )
+        await self.identity_repo.link_social_account(identity_id, provider, puid)
+        user_dto = UserProfileDTO(
+            id=identity_id, email=clean_email, username=clean_username,
+            first_name=payload.first_name or "Belooga", last_name=payload.last_name or "Candidate",
+            role="candidate", avatar_url="/images/avatar.jpg",
+        )
+        return await self._issue_session(user_dto, response)
 
     async def refresh_tokens(
         self, refresh_token: Optional[str], response: Response
@@ -164,16 +183,13 @@ class AuthService:
         if not refresh_token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing from cookies")
 
-        token_hash_val = hash_token(refresh_token)
-        session_row = await self.identity_repo.get_refresh_session_for_update(token_hash_val)
+        session_row = await self.identity_repo.get_refresh_session_for_update(hash_token(refresh_token))
         if not session_row:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
         now = datetime.now(timezone.utc)
         if session_row.revoked_at is not None:
-            revoked_at = session_row.revoked_at
-            if revoked_at.tzinfo is None:
-                revoked_at = revoked_at.replace(tzinfo=timezone.utc)
+            revoked_at = session_row.revoked_at if session_row.revoked_at.tzinfo else session_row.revoked_at.replace(tzinfo=timezone.utc)
             if (now - revoked_at).total_seconds() > 15:
                 await self.identity_repo.revoke_family(session_row.family_id)
                 await self.db.commit()
@@ -183,16 +199,13 @@ class AuthService:
                 )
                 revoked_resp.delete_cookie("belooga_refresh_token", httponly=True, samesite="lax", secure=IS_PRODUCTION)
                 return revoked_resp
-            else:
-                await self.db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token was recently refreshed. Please retry with current session.",
-                )
+            await self.db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token was recently refreshed. Please retry with current session.",
+            )
 
-        expires_at = session_row.expires_at
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        expires_at = session_row.expires_at if session_row.expires_at.tzinfo else session_row.expires_at.replace(tzinfo=timezone.utc)
         if expires_at < now:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired")
 
@@ -201,23 +214,7 @@ class AuthService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive or suspended")
 
         await self.identity_repo.revoke_session(session_row.id)
-        new_raw_refresh = generate_refresh_token()
-        new_expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        await self.identity_repo.create_refresh_session(
-            identity_id=session_row.identity_id,
-            family_id=session_row.family_id,
-            token_hash=hash_token(new_raw_refresh),
-            expires_at=new_expires_at,
-        )
-        await self.db.commit()
-
-        username = user_row.username or ""
-        access_token = create_access_token({
-            "sub": str(user_row.id), "username": username, "email": user_row.email, "role": user_row.role
-        })
-        _set_refresh_cookie(response, new_raw_refresh)
-        user_dto = _build_user_dto(user_row)
-        return TokenResponse(access_token=access_token, token_type="bearer", user=user_dto)
+        return await self._issue_session(_build_user_dto(user_row), response, family_id=session_row.family_id)
 
     async def get_current_session_user(self, user_id: uuid.UUID) -> UserProfileDTO:
         row = await self.identity_repo.get_identity_with_profile_by_id(user_id)
@@ -237,11 +234,10 @@ class AuthService:
         raw_token: Optional[str] = None
         if identity:
             raw_token = generate_refresh_token()
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
             await self.identity_repo.create_password_reset_token(
                 identity_id=identity.id,
                 token_hash=hash_token(raw_token),
-                expires_at=expires_at,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
             )
             await self.db.commit()
         return ForgotPasswordResponse(
@@ -287,5 +283,3 @@ class AuthService:
         await self.db.commit()
         response.delete_cookie("belooga_refresh_token", httponly=True, samesite="lax", secure=IS_PRODUCTION)
         return {"message": "Account permanently deleted"}
-
-

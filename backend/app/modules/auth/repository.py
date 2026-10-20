@@ -10,7 +10,7 @@ import uuid
 from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.identity import Identity, PasswordResetToken, RefreshSession
+from app.models.identity import Identity, PasswordResetToken, RefreshSession, SocialAccount
 
 
 class IdentityRepository:
@@ -171,5 +171,37 @@ class IdentityRepository:
 
     async def delete_identity(self, identity_id: uuid.UUID) -> None:
         await self.db.execute(delete(Identity).where(Identity.id == identity_id))
+
+    async def get_identity_by_social_account(self, provider: str, provider_user_id: str):
+        query = text("""
+            SELECT i.id, i.email, i.role, i.status,
+                   p.username, p.first_name, p.last_name, p.avatar_url
+            FROM social_accounts s
+            JOIN identities i ON i.id = s.identity_id
+            LEFT JOIN candidate_profiles p ON p.identity_id = i.id
+            WHERE s.provider = :provider AND s.provider_user_id = :puid
+            LIMIT 1
+        """)
+        res = await self.db.execute(query, {"provider": provider.lower().strip(), "puid": provider_user_id})
+        return res.fetchone()
+
+    async def link_social_account(
+        self, identity_id: uuid.UUID, provider: str, provider_user_id: str
+    ) -> None:
+        query = text("""
+            INSERT INTO social_accounts (id, identity_id, provider, provider_user_id)
+            VALUES (:id, :uid, :provider, :puid)
+            ON CONFLICT (provider, provider_user_id) DO NOTHING
+        """)
+        await self.db.execute(
+            query,
+            {
+                "id": uuid.uuid4(),
+                "uid": identity_id,
+                "provider": provider.lower().strip(),
+                "puid": provider_user_id,
+            },
+        )
+
 
 

@@ -221,3 +221,45 @@ async def test_password_recovery_token_issuance_and_single_use_reset(
     assert "access_token" in login_res.json()
 
 
+@pytest.mark.asyncio
+async def test_oauth_sso_callback_links_social_account_and_issues_session(
+    client: AsyncClient,
+    test_candidate_a: dict,
+    db_session: AsyncSession,
+):
+    """
+    BEL-503: Verify POST /v1/auth/oauth/callback/ exchanges OAuth code, links
+    social_accounts row idempotently, and auto-provisions new OAuth identities.
+    """
+    email = test_candidate_a["email"]
+    uid = test_candidate_a["id"]
+    code = f"google_auth_code_{uuid.uuid4().hex[:8]}"
+
+    # 1. Link OAuth provider to existing identity by email
+    res1 = await client.post(
+        "/v1/auth/oauth/callback/",
+        json={"provider": "google", "code": code, "email": email},
+    )
+    assert res1.status_code == 200
+    data1 = res1.json()
+    assert "access_token" in data1
+    assert data1["user"]["username"] == test_candidate_a["username"]
+
+    # Verify social_accounts record exists in DB
+    sa_res = await db_session.execute(
+        text("SELECT provider, provider_user_id FROM social_accounts WHERE identity_id = :uid"),
+        {"uid": uid},
+    )
+    sa_row = sa_res.fetchone()
+    assert sa_row is not None and sa_row.provider == "google"
+
+    # 2. Idempotent repeat login with same provider + code
+    res2 = await client.post(
+        "/v1/auth/oauth/callback/",
+        json={"provider": "google", "code": code},
+    )
+    assert res2.status_code == 200
+    assert res2.json()["user"]["id"] == str(uid)
+
+
+
