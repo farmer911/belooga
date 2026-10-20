@@ -5,6 +5,7 @@ safe directory reassembly, path traversal defense, and PDF resume generation.
 """
 
 import asyncio
+import json
 import logging
 import os
 import shutil
@@ -14,6 +15,7 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import invalidate_candidate_cache
 from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.media.repository import MediaRepository
 from app.modules.notifications import NotificationService
@@ -65,12 +67,8 @@ class MediaService:
         avatar_url = f"http://localhost:8000/uploads/avatars/{safe_filename}"
         await self.media_repo.update_avatar_url(profile.id, avatar_url)
         await self.db.commit()
-
-        return {
-            "avatar_url": avatar_url,
-            "filename": safe_filename,
-            "message": "Avatar uploaded and updated successfully",
-        }
+        await invalidate_candidate_cache(clean_username)
+        return {"avatar_url": avatar_url, "filename": safe_filename, "message": "Avatar uploaded and updated successfully"}
 
     async def upload_resume(
         self, username: str, file: UploadFile, current_user: AuthenticatedUser
@@ -90,12 +88,8 @@ class MediaService:
         resume_url = f"http://localhost:8000/uploads/resumes/{safe_filename}"
         await self.media_repo.update_resume_url(profile.id, resume_url)
         await self.db.commit()
-
-        return {
-            "resume_url": resume_url,
-            "filename": file.filename or safe_filename,
-            "message": "Resume PDF uploaded successfully",
-        }
+        await invalidate_candidate_cache(clean_username)
+        return {"resume_url": resume_url, "filename": file.filename or safe_filename, "message": "Resume PDF uploaded successfully"}
 
     async def delete_resume(self, username: str, current_user: AuthenticatedUser) -> Dict[str, str]:
         verify_profile_owner(current_user, username)
@@ -106,6 +100,7 @@ class MediaService:
 
         await self.media_repo.update_resume_url(profile.id, None)
         await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
         return {"message": "Resume PDF removed successfully"}
 
     async def generate_candidate_pdf(
@@ -212,6 +207,7 @@ class MediaService:
             auto_commit=False,
         )
         await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
 
         return {
             "status": "completed",
@@ -237,8 +233,6 @@ class MediaService:
     async def get_cv_studio_draft(
         self, username: str, current_user: Optional[AuthenticatedUser] = None
     ) -> Dict[str, Any]:
-        import json
-
         clean_username = username.lower().strip()
         row = await self.media_repo.get_candidate_for_pdf(clean_username)
         if not row:
@@ -277,8 +271,6 @@ class MediaService:
     async def save_cv_studio_draft(
         self, username: str, payload: CVStudioDraftPayload, current_user: AuthenticatedUser
     ) -> Dict[str, Any]:
-        import json
-
         verify_profile_owner(current_user, username)
         clean_username = username.lower().strip()
         profile = await self.profile_facade.get_by_username(clean_username)
@@ -293,5 +285,6 @@ class MediaService:
             summary=payload.summary,
         )
         await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
         return data
 

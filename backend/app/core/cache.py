@@ -1,12 +1,12 @@
-"""Two-Tier Async Cache (L1 Bounded Memory + L2 Redis) with Singleflight Stampede Protection."""
+"""Two-Tier Async Cache (L1 Bounded LRU + L2 Redis) with Singleflight & Stale-While-Revalidate (SWR)."""
 
 import asyncio
+from collections import OrderedDict
 import json
 import logging
 import os
 import time
-from collections import OrderedDict
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
 
 import redis.asyncio as aioredis
 
@@ -14,18 +14,50 @@ logger = logging.getLogger(__name__)
 
 
 class AsyncTieredCache:
-    """High-concurrency L1/L2 cache with singleflight request coalescing for 10k-25k CCU bursts."""
+    """High-concurrency L1/L2 cache with Singleflight coalescing and Stale-While-Revalidate (SWR)."""
 
-    def __init__(self, namespace: str = "belooga", l1_max_size: int = 2048):
+    def __init__(self, namespace: str = "belooga", l1_max_size: int = 4096):
         self.namespace = namespace
         self.l1_max_size = l1_max_size
-        self._l1: OrderedDict[str, tuple[float, Any]] = OrderedDict()
-        self._inflight: dict[str, asyncio.Future[Any]] = {}
+        # Maps full_key -> (fresh_until_monotonic, stale_until_monotonic, value)
+        self._l1: OrderedDict[str, Tuple[float, float, Any]] = OrderedDict()
+        self._inflight: Dict[str, asyncio.Future[Any]] = {}
         self._redis: Optional[aioredis.Redis] = None
         self._redis_disabled_until: float = 0.0
+        self._metrics: Dict[str, int] = {
+            "l1_hits": 0,
+            "l2_hits": 0,
+            "stale_swr_hits": 0,
+            "misses": 0,
+            "coalesced_requests": 0,
+            "invalidations": 0,
+        }
 
     def _full_key(self, key: str) -> str:
         return f"{self.namespace}:{key}"
+
+    def get_stats(self) -> Dict[str, Any]:
+        total_lookups = (
+            self._metrics["l1_hits"]
+            + self._metrics["l2_hits"]
+            + self._metrics["stale_swr_hits"]
+            + self._metrics["misses"]
+            + self._metrics["coalesced_requests"]
+        )
+        effective_hits = (
+            self._metrics["l1_hits"]
+            + self._metrics["l2_hits"]
+            + self._metrics["stale_swr_hits"]
+            + self._metrics["coalesced_requests"]
+        )
+        hit_ratio = round((effective_hits / total_lookups) * 100.0, 2) if total_lookups > 0 else 100.0
+        return {
+            **self._metrics,
+            "l1_entries": len(self._l1),
+            "l1_max_size": self.l1_max_size,
+            "inflight_keys": len(self._inflight),
+            "hit_ratio_pct": hit_ratio,
+        }
 
     async def _get_redis(self) -> Optional[aioredis.Redis]:
         if os.getenv("ENVIRONMENT") == "testing":
@@ -50,59 +82,77 @@ class AsyncTieredCache:
                 return None
         return self._redis
 
-    def _l1_get(self, full_key: str) -> tuple[bool, Any]:
+    def _l1_get(self, full_key: str) -> Tuple[bool, Any]:
+        """Return (is_fresh_hit, value). Used by callers and tests checking fresh L1 state."""
         entry = self._l1.get(full_key)
         if entry is None:
             return False, None
-        expires_at, val = entry
-        if time.monotonic() >= expires_at:
+        fresh_until, stale_until, val = entry
+        now = time.monotonic()
+        if now >= stale_until:
             self._l1.pop(full_key, None)
             return False, None
+        if now >= fresh_until:
+            return False, val
         self._l1.move_to_end(full_key)
         return True, val
 
-    def _l1_set(self, full_key: str, value: Any, ttl_seconds: int) -> None:
-        self._l1[full_key] = (time.monotonic() + ttl_seconds, value)
+    def _l1_lookup_with_swr(self, full_key: str) -> Tuple[str, Any]:
+        """Return ('FRESH' | 'STALE' | 'MISS', value)."""
+        entry = self._l1.get(full_key)
+        if entry is None:
+            return "MISS", None
+        fresh_until, stale_until, val = entry
+        now = time.monotonic()
+        if now < fresh_until:
+            self._l1.move_to_end(full_key)
+            return "FRESH", val
+        if now < stale_until:
+            return "STALE", val
+        self._l1.pop(full_key, None)
+        return "MISS", None
+
+    def _l1_set(
+        self, full_key: str, value: Any, ttl_seconds: int, stale_ttl_seconds: int = 30
+    ) -> None:
+        now = time.monotonic()
+        fresh_until = now + max(1, ttl_seconds)
+        stale_until = fresh_until + max(0, stale_ttl_seconds)
+        self._l1[full_key] = (fresh_until, stale_until, value)
         self._l1.move_to_end(full_key)
         while len(self._l1) > self.l1_max_size:
             self._l1.popitem(last=False)
 
-    async def get_or_set(
+    async def _populate_singleflight(
         self,
-        key: str,
+        full_key: str,
         ttl_seconds: int,
+        stale_ttl_seconds: int,
         loader: Callable[[], Awaitable[Any]],
-        l1_ttl_seconds: Optional[int] = None,
+        l1_ttl_seconds: Optional[int],
+        fut: asyncio.Future[Any],
+        check_l2: bool = True,
     ) -> Any:
-        full_key = self._full_key(key)
-        hit, val = self._l1_get(full_key)
-        if hit:
-            return val
-
-        inflight = self._inflight.get(full_key)
-        if inflight is not None:
-            return await asyncio.shield(inflight)
-
-        loop = asyncio.get_running_loop()
-        fut: asyncio.Future[Any] = loop.create_future()
-        self._inflight[full_key] = fut
-
         try:
             r_client = await self._get_redis()
-            if r_client is not None:
+            if check_l2 and r_client is not None:
                 try:
                     raw = await r_client.get(full_key)
                     if raw is not None:
                         loaded = json.loads(raw)
-                        self._l1_set(full_key, loaded, min(ttl_seconds, l1_ttl_seconds or 10))
-                        fut.set_result(loaded)
+                        effective_l1 = min(ttl_seconds, l1_ttl_seconds or 15)
+                        self._l1_set(full_key, loaded, effective_l1, stale_ttl_seconds)
+                        self._metrics["l2_hits"] += 1
+                        if not fut.done():
+                            fut.set_result(loaded)
                         return loaded
                 except Exception as exc:
                     self._redis_disabled_until = time.monotonic() + 10.0
                     logger.debug("Redis read fallback to DB loader: %s", exc)
 
             result = await loader()
-            self._l1_set(full_key, result, min(ttl_seconds, l1_ttl_seconds or ttl_seconds))
+            effective_l1 = min(ttl_seconds, l1_ttl_seconds or ttl_seconds)
+            self._l1_set(full_key, result, effective_l1, stale_ttl_seconds)
 
             if r_client is not None:
                 try:
@@ -111,7 +161,8 @@ class AsyncTieredCache:
                     self._redis_disabled_until = time.monotonic() + 10.0
                     logger.debug("Redis write skipped: %s", exc)
 
-            fut.set_result(result)
+            if not fut.done():
+                fut.set_result(result)
             return result
         except Exception as exc:
             if not fut.done():
@@ -120,7 +171,55 @@ class AsyncTieredCache:
         finally:
             self._inflight.pop(full_key, None)
 
+    async def get_or_set(
+        self,
+        key: str,
+        ttl_seconds: int,
+        loader: Callable[[], Awaitable[Any]],
+        l1_ttl_seconds: Optional[int] = None,
+        stale_ttl_seconds: int = 30,
+        force_cache: bool = False,
+    ) -> Any:
+        full_key = self._full_key(key)
+        status, val = self._l1_lookup_with_swr(full_key)
+        if status == "FRESH":
+            self._metrics["l1_hits"] += 1
+            return val
+
+        if status == "STALE":
+            self._metrics["stale_swr_hits"] += 1
+            if full_key not in self._inflight:
+                loop = asyncio.get_running_loop()
+                bg_fut: asyncio.Future[Any] = loop.create_future()
+                self._inflight[full_key] = bg_fut
+                asyncio.create_task(
+                    self._populate_singleflight(
+                        full_key,
+                        ttl_seconds,
+                        stale_ttl_seconds,
+                        loader,
+                        l1_ttl_seconds,
+                        bg_fut,
+                        check_l2=False,
+                    )
+                )
+            return val
+
+        inflight = self._inflight.get(full_key)
+        if inflight is not None:
+            self._metrics["coalesced_requests"] += 1
+            return await asyncio.shield(inflight)
+
+        self._metrics["misses"] += 1
+        loop = asyncio.get_running_loop()
+        fut: asyncio.Future[Any] = loop.create_future()
+        self._inflight[full_key] = fut
+        return await self._populate_singleflight(
+            full_key, ttl_seconds, stale_ttl_seconds, loader, l1_ttl_seconds, fut, check_l2=True
+        )
+
     async def invalidate_prefix(self, prefix: str = "") -> None:
+        self._metrics["invalidations"] += 1
         target = self._full_key(prefix)
         keys_to_drop = [k for k in self._l1 if k.startswith(target)]
         for k in keys_to_drop:
@@ -140,3 +239,13 @@ class AsyncTieredCache:
 
 
 platform_cache = AsyncTieredCache(namespace="belooga_v1", l1_max_size=4096)
+
+
+async def invalidate_candidate_cache(username: str) -> None:
+    """Unified cross-module cache invalidation for candidate profile, trust, trajectory, and search."""
+    clean = username.lower().strip()
+    await platform_cache.invalidate_prefix(f"pub_profile:{clean}")
+    await platform_cache.invalidate_prefix(f"trust:{clean}")
+    await platform_cache.invalidate_prefix(f"trajectory:{clean}")
+    await platform_cache.invalidate_prefix("search:")
+    await platform_cache.invalidate_prefix("suggest:")

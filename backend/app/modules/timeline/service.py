@@ -11,7 +11,7 @@ import uuid
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache import platform_cache
+from app.core.cache import invalidate_candidate_cache, platform_cache
 from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.profile import ProfileService
 from app.modules.timeline.repository import TimelineRepository
@@ -67,6 +67,7 @@ class TimelineService:
             display_order=next_order,
         )
         await self.db.commit()
+        await invalidate_candidate_cache(username)
         return {"id": str(item_id), "display_order": next_order, "message": "Job experience added"}
 
     async def delete_job_experience(
@@ -78,6 +79,7 @@ class TimelineService:
         if not await self.timeline_repo.delete_job(profile.id, target_uuid):
             raise HTTPException(status_code=404, detail=detail)
         await self.db.commit()
+        await invalidate_candidate_cache(username)
         return {"message": "Job experience deleted"}
 
     async def reorder_job_experiences(
@@ -92,6 +94,7 @@ class TimelineService:
             for item in payload.orders:
                 await self.timeline_repo.update_job_order(profile.id, uuid.UUID(str(item.id)), item.order)
             await self.db.commit()
+            await invalidate_candidate_cache(username)
         except Exception:
             await self.db.rollback()
             raise
@@ -119,6 +122,7 @@ class TimelineService:
             display_order=next_order,
         )
         await self.db.commit()
+        await invalidate_candidate_cache(username)
         return {"id": str(item_id), "display_order": next_order, "message": "Education added successfully"}
 
     async def delete_education(
@@ -130,6 +134,7 @@ class TimelineService:
         if not await self.timeline_repo.delete_education(profile.id, target_uuid):
             raise HTTPException(status_code=404, detail=detail)
         await self.db.commit()
+        await invalidate_candidate_cache(username)
         return {"message": "Education experience deleted"}
 
     async def reorder_education_experiences(
@@ -144,6 +149,7 @@ class TimelineService:
             for item in payload.orders:
                 await self.timeline_repo.update_education_order(profile.id, uuid.UUID(str(item.id)), item.order)
             await self.db.commit()
+            await invalidate_candidate_cache(username)
         except Exception:
             await self.db.rollback()
             raise

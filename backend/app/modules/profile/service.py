@@ -11,12 +11,12 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache import AsyncTieredCache
+from app.core.cache import invalidate_candidate_cache, platform_cache
 from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.profile.repository import ProfileRepository
 from app.schemas.profile import ProfileUpdate
 
-profile_cache = AsyncTieredCache(namespace="profile", l1_max_size=1024)
+profile_cache = platform_cache
 
 
 class ProfileService:
@@ -244,9 +244,7 @@ class ProfileService:
         if update_dict:
             await self.profile_repo.update_profile(profile.id, **update_dict)
             await self.db.commit()
-            await profile_cache.invalidate_prefix(f"pub_profile:{clean_username}")
-            await profile_cache.invalidate_prefix(f"trust:{clean_username}")
-            await profile_cache.invalidate_prefix(f"trajectory:{clean_username}")
+            await invalidate_candidate_cache(clean_username)
 
         return {"message": "Profile updated successfully"}
 
@@ -265,8 +263,7 @@ class ProfileService:
 
         await self.profile_repo.add_skill(profile.id, clean_name)
         await self.db.commit()
-        await profile_cache.invalidate_prefix(f"pub_profile:{clean_username}")
-        await profile_cache.invalidate_prefix(f"trust:{clean_username}")
+        await invalidate_candidate_cache(clean_username)
         return {"message": f"Skill '{clean_name}' added successfully"}
 
     async def remove_candidate_skill(
@@ -282,6 +279,5 @@ class ProfileService:
 
         await self.profile_repo.remove_skill(profile.id, clean_name)
         await self.db.commit()
-        await profile_cache.invalidate_prefix(f"pub_profile:{clean_username}")
-        await profile_cache.invalidate_prefix(f"trust:{clean_username}")
+        await invalidate_candidate_cache(clean_username)
         return {"message": f"Skill '{clean_name}' removed"}
