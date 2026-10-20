@@ -67,13 +67,23 @@ class CatalogsService:
         return [item for item in catalog if clean in item["name"].lower()]
 
     async def suggest_companies(self, name: str) -> List[Dict[str, str]]:
-        return self._filter_catalog(COMPANIES_CATALOG, name)
+        db_items = await self.catalogs_repo.suggest_companies(name)
+        fallback = self._filter_catalog(COMPANIES_CATALOG, name)
+        seen = {i["name"].lower() for i in db_items}
+        return db_items + [f for f in fallback if f["name"].lower() not in seen]
 
     async def suggest_schools(self, name: str) -> List[Dict[str, str]]:
-        return self._filter_catalog(SCHOOLS_CATALOG, name)
+        db_items = await self.catalogs_repo.suggest_schools(name)
+        fallback = self._filter_catalog(SCHOOLS_CATALOG, name)
+        seen = {i["name"].lower() for i in db_items}
+        return db_items + [f for f in fallback if f["name"].lower() not in seen]
 
     async def suggest_locations(self, name: str) -> List[Dict[str, str]]:
-        return self._filter_catalog(LOCATIONS_CATALOG, name)
+        db_items = await self.catalogs_repo.suggest_locations(name)
+        fallback = self._filter_catalog(LOCATIONS_CATALOG, name)
+        seen = {i["name"].lower() for i in db_items}
+        return db_items + [f for f in fallback if f["name"].lower() not in seen]
+
 
     def get_salary_benchmark(
         self, role: str, tech_stack: str, level: str, location: str

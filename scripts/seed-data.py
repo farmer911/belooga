@@ -216,6 +216,27 @@ async def seed(db_url: str):
         )
         print("  [+] Hidden candidate 'hidden_jane' seeded (is_hidden=TRUE)")
 
+        # 8. Seed Master Catalogs (catalog_companies, catalog_schools, catalog_locations)
+        for c_name, c_logo in [
+            ("Stripe Inc.", "/images/logo.svg"),
+            ("Airbnb", "/images/logo.svg"),
+            ("Google", "/images/logo.svg"),
+            ("Meta", "/images/logo.svg"),
+            ("Apple", "/images/logo.svg"),
+            ("Belooga", "/images/logo-big.png"),
+        ]:
+            await conn.execute(
+                text("INSERT INTO catalog_companies (name, logo_url) VALUES (:n, :l) ON CONFLICT (name) DO NOTHING"),
+                {"n": c_name, "l": c_logo},
+            )
+        for s_name in ["Stanford University", "MIT", "UC Berkeley", "Harvard University", "Carnegie Mellon University"]:
+            await conn.execute(
+                text("INSERT INTO catalog_schools (name, logo_url) VALUES (:n, '/images/logo.svg') ON CONFLICT (name) DO NOTHING"),
+                {"n": s_name},
+            )
+        print("  [+] Master catalogs (companies & schools) seeded")
+
+
     print("[*] Database seeded successfully!")
 
 
