@@ -1,7 +1,7 @@
 """Public CMS and trust service (Vertical Module: cms).
 
 Business domain service handling contact inquiries, FAQ knowledge retrieval,
-career listings, and trust & safety candidate profile moderation reports.
+career listings, job applications, and trust & safety candidate profile moderation reports.
 """
 
 from typing import Any, Dict, List, Optional
@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
 from app.modules.cms.repository import CmsRepository
-from app.schemas.cms import ContactInquiryRequest, ReportProfileRequest
+from app.schemas.cms import ContactInquiryRequest, JobApplicantRequest, ReportProfileRequest
 
 STATIC_FAQS = [
     {
@@ -90,10 +90,43 @@ class CmsService:
 
     async def list_career_jobs(self) -> List[Dict[str, Any]]:
         async def _compute() -> List[Dict[str, Any]]:
-            jobs = await self.cms_repo.list_active_career_jobs() if self.cms_repo else []
+            if not self.cms_repo:
+                return DEFAULT_CAREER_JOBS
+            jobs = await self.cms_repo.list_active_career_jobs()
+            if not jobs:
+                await self.cms_repo.seed_default_career_postings(DEFAULT_CAREER_JOBS)
+                await self.db.commit()
+                jobs = await self.cms_repo.list_active_career_jobs()
             return jobs if jobs else DEFAULT_CAREER_JOBS
 
         return await platform_cache.get_or_set("cms:career_jobs", 60, _compute)
+
+    async def apply_career_job(self, job_id: str, payload: JobApplicantRequest) -> Dict[str, str]:
+        jobs = await self.list_career_jobs()
+        target_uuid: Optional[uuid.UUID] = None
+        try:
+            parsed_uuid = uuid.UUID(job_id)
+            posting = await self.cms_repo.get_career_posting_by_id(parsed_uuid)
+            if posting:
+                target_uuid = posting.id
+        except ValueError:
+            if jobs:
+                target_uuid = uuid.UUID(str(jobs[0]["id"]))
+
+        if not target_uuid:
+            raise HTTPException(status_code=404, detail="Career job posting not found")
+
+        app_id = await self.cms_repo.create_career_application(
+            job_id=target_uuid,
+            applicant_name=payload.applicant_name.strip(),
+            applicant_email=payload.applicant_email.lower().strip(),
+            resume_url=payload.resume_url.strip(),
+        )
+        await self.db.commit()
+        return {
+            "message": "Application submitted successfully.",
+            "id": str(app_id),
+        }
 
     async def report_candidate_profile(
         self, user_id: uuid.UUID, payload: ReportProfileRequest

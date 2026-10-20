@@ -27,6 +27,7 @@ async def seed(db_url: str):
     engine = create_async_engine(db_url, echo=False)
 
     async with engine.begin() as conn:
+        await conn.execute(text("DELETE FROM identities WHERE email LIKE '%@test.com'"))
         # 1. Admin Identity
         admin_pass_hash = get_password_hash("AdminSecret123!")
         res = await conn.execute(

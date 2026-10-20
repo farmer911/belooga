@@ -22,6 +22,7 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | public |
 | `GET` | `/v1/faqs` | `get_faqs` | public |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | public |
+| `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | public |
 | `POST` | `/v1/profile/{user_id}/report/` | `report_candidate_profile` | public |
 
 - Router: `backend/app/api/v1/endpoints/search.py`, `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/api/v1/endpoints/cms.py`

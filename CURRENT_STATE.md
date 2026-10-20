@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 69 (67 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 70 (68 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -64,6 +64,7 @@
 | `POST` | `/v1/auth/refresh/` | `refresh_tokens` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/reset-password/` | `reset_password` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/catalogs/career-roi` | `get_career_upskill_roi` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/catalogs/salary-benchmark` | `get_salary_benchmark` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
@@ -233,6 +234,6 @@ pytest-asyncio>=0.23.0
 | **Account Settings (`/user/[username]/settings`)** | Authenticated password rotation (`POST /v1/users/{username}/password/`) and cascading account deletion (`DELETE /v1/users/{username}/`) with `verify_profile_owner` IDOR guard. | Multi-factor authentication (TOTP/WebAuthn) enrollment. | ✅ OPERATIONAL |
 | **OAuth SSO Callback (`/callback`)** | OAuth authorization code exchange (`POST /v1/auth/oauth/callback/`) and idempotent `social_accounts` identity linking. | Multi-provider PKCE verifier state rotation. | ✅ OPERATIONAL |
 | **Master Catalogs (`catalogs.py`)** | PostgreSQL `catalog_companies`, `catalog_schools`, `catalog_locations`, and `skills` queried with GIN trigram indexes (`gin_trgm_ops`). | Admin taxonomy curation bulk import API. | ✅ OPERATIONAL |
-| **Public CMS Careers & FAQs (`cms.py`)** | FAQs and career postings served via in-memory dictionaries (fallback from `career_postings`). | Dynamic administrative CMS dashboard for FAQ management and job applicant tracking. | ⚠️ IN-MEMORY CMS |
+| **Public CMS Careers & FAQs (`cms.py`)** | PostgreSQL `career_postings` & `career_applications` persistence (`POST /v1/career/jobs/{job_id}/apply/`) with Singleflight cache. | Administrative applicant pipeline review dashboard. | ✅ OPERATIONAL |
 | **WebRTC Video Studio (`page.tsx`)** | Real MediaRecorder studio with camera/mic selectors, VU meter canvas, speech teleprompter. Test hook gated by `NEXT_PUBLIC_E2E`. | Headless audio/video worker isolation and WebM-to-MP4 server transcoding pipeline. | ✅ OPERATIONAL |
 | **Candidate Profile Privacy & PII (`profile.py`)** | `is_hidden=TRUE` returns 404 to unauthorized visitors; email/phone concealed (`None`) for public callers. | RBAC permission scopes for verified enterprise recruiters. | ✅ ENFORCED |

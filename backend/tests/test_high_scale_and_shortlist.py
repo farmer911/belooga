@@ -343,3 +343,42 @@ async def test_expert_review_packages_and_experts_catalog_cached(client: AsyncCl
     assert len(exps) >= 3
     assert "full_name" in exps[0]
 
+
+@pytest.mark.asyncio
+async def test_career_job_application_persisted_in_database(
+    client: AsyncClient,
+    db_session: AsyncSession,
+):
+    """
+    BEL-505: Verify GET /v1/career/jobs/ returns DB-backed career_postings rows and
+    POST /v1/career/jobs/{job_id}/apply/ persists applicant records into career_applications.
+    """
+    jobs_res = await client.get("/v1/career/jobs/")
+    assert jobs_res.status_code == 200
+    jobs = jobs_res.json()
+    assert len(jobs) >= 1
+    first_job_id = jobs[0]["id"]
+
+    applicant_email = f"applicant_{uuid.uuid4().hex[:6]}@belooga.com"
+    apply_res = await client.post(
+        f"/v1/career/jobs/{first_job_id}/apply/",
+        json={
+            "applicant_name": "Elena Rostova",
+            "applicant_email": applicant_email,
+            "resume_url": "/uploads/resumes/elena_cv.pdf",
+        },
+    )
+    assert apply_res.status_code == 201
+    app_data = apply_res.json()
+    assert "id" in app_data
+
+    # Verify record persisted in career_applications table
+    row_res = await db_session.execute(
+        text("SELECT applicant_name, applicant_email FROM career_applications WHERE id = :aid"),
+        {"aid": uuid.UUID(app_data["id"])},
+    )
+    row = row_res.fetchone()
+    assert row is not None
+    assert row.applicant_email == applicant_email
+
+

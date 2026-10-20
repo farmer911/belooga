@@ -32,10 +32,10 @@ export default function CareersPage() {
 
   const applyMutation = useMutation({
     mutationFn: async (job: CareerJobItem) => {
-      const res = await apiClient.post("/v1/contact/", {
-        name: applicantName.trim() || "Belooga Candidate",
-        email: applicantEmail.trim() || "candidate@belooga.com",
-        message: `[Role Application: ${job.title} (${job.department})] ${pitchNote.trim() || "Submitting Belooga video pitch profile."}`,
+      const res = await apiClient.post(`/v1/career/jobs/${job.id}/apply/`, {
+        applicant_name: applicantName.trim() || "Belooga Candidate",
+        applicant_email: applicantEmail.trim() || "candidate@belooga.com",
+        resume_url: pitchNote.trim() || "/uploads/resumes/belooga_pitch_profile.pdf",
       });
       return res.data;
     },
