@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
-from sqlalchemy import select, text, update
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.identity import Identity, PasswordResetToken, RefreshSession
@@ -154,6 +154,12 @@ class IdentityRepository:
         await self.db.execute(
             update(PasswordResetToken).where(PasswordResetToken.id == token_id).values(used_at=now)
         )
+        await self.rotate_password_and_revoke_sessions(identity_id, new_password_hash)
+
+    async def rotate_password_and_revoke_sessions(
+        self, identity_id: uuid.UUID, new_password_hash: str
+    ) -> None:
+        now = datetime.now(timezone.utc)
         await self.db.execute(
             update(Identity).where(Identity.id == identity_id).values(password_hash=new_password_hash, updated_at=now)
         )
@@ -162,4 +168,8 @@ class IdentityRepository:
             .where(RefreshSession.identity_id == identity_id, RefreshSession.revoked_at.is_(None))
             .values(revoked_at=now)
         )
+
+    async def delete_identity(self, identity_id: uuid.UUID) -> None:
+        await self.db.execute(delete(Identity).where(Identity.id == identity_id))
+
 

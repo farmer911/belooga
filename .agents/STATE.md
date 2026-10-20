@@ -10,7 +10,7 @@
 
 ## 5-Feature PR Execution Checklist
 - [x] **Feature 1 (`BEL-501`):** Password Recovery (`password_reset_tokens` DB endpoints + `/forgot-password` UI + PR #1)
-- [ ] **Feature 2 (`BEL-502`):** Account Settings (`POST /v1/users/{username}/password/`, `DELETE /v1/users/{username}/` + `/user/[username]/settings` UI + PR #2)
+- [x] **Feature 2 (`BEL-502`):** Account Settings (`POST /v1/users/{username}/password/`, `DELETE /v1/users/{username}/` + `/user/[username]/settings` UI + PR #2)
 - [ ] **Feature 3 (`BEL-503`):** OAuth SSO Callback (`social_accounts` exchange `POST /v1/auth/oauth/callback/` + `/callback` UI + PR #3)
 - [ ] **Feature 4 (`BEL-504`):** PostgreSQL Master Catalogs (`catalog_companies`, `catalog_schools`, `catalog_locations` DB queries & seed + PR #4)
 - [ ] **Feature 5 (`BEL-505`):** Public CMS Careers & Applications (`career_postings` & `career_applications` `POST /v1/career/jobs/{job_id}/apply/` + `/careers` UI + PR #5)

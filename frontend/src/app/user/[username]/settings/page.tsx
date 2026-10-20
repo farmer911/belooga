@@ -5,9 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Lock, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { passwordChangeSchema, PasswordFormValues } from "@/lib/schemas";
+import { apiClient } from "@/services/api-client";
+import { useAuthStore } from "@/store/auth-store";
 
 const INPUT_CLS =
   "w-full px-3 py-2 border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
@@ -16,6 +19,7 @@ export default function AccountSettingsPage() {
   const params = useParams();
   const username = params.username as string;
   const router = useRouter();
+  const logout = useAuthStore((s) => s.logout);
   const [passwordChanged, setPasswordChanged] = useState(false);
 
   const {
@@ -28,10 +32,34 @@ export default function AccountSettingsPage() {
     defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
 
-  const onPasswordSubmit = handleSubmit(() => {
-    setPasswordChanged(true);
-    setTimeout(() => setPasswordChanged(false), 3000);
-    reset();
+  const passwordMutation = useMutation({
+    mutationFn: async (values: PasswordFormValues) => {
+      const res = await apiClient.post<{ message: string }>(`/v1/users/${username}/password/`, {
+        current_password: values.currentPassword,
+        new_password: values.newPassword,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      setPasswordChanged(true);
+      setTimeout(() => setPasswordChanged(false), 3000);
+      reset();
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.delete<{ message: string }>(`/v1/users/${username}/`);
+      return res.data;
+    },
+    onSuccess: () => {
+      logout();
+      router.push("/");
+    },
+  });
+
+  const onPasswordSubmit = handleSubmit((values) => {
+    passwordMutation.mutate(values);
   });
 
   return (
@@ -62,6 +90,12 @@ export default function AccountSettingsPage() {
             </div>
           )}
 
+          {passwordMutation.isError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+              Current password is incorrect or session is unauthorized.
+            </div>
+          )}
+
           <form onSubmit={onPasswordSubmit} noValidate className="space-y-4 pt-2" data-testid="settings-password-form">
             <h3 className="text-base font-bold text-typography-main flex items-center gap-2">
               <Lock className="w-4 h-4 text-brand-primary" /> Change Password
@@ -86,8 +120,12 @@ export default function AccountSettingsPage() {
               </div>
             </div>
 
-            <Button type="submit" className="bg-brand-primary hover:bg-brand-hover text-white">
-              Update Password
+            <Button
+              type="submit"
+              disabled={passwordMutation.isPending}
+              className="bg-brand-primary hover:bg-brand-hover text-white"
+            >
+              {passwordMutation.isPending ? "Updating..." : "Update Password"}
             </Button>
           </form>
 
@@ -104,16 +142,17 @@ export default function AccountSettingsPage() {
             <Button
               type="button"
               variant="destructive"
+              disabled={deleteAccountMutation.isPending}
               data-testid="settings-delete-account-btn"
               className="gap-2 bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {
                 if (confirm("Are you sure you want to permanently delete your Belooga account?")) {
-                  alert("Account deletion cascade triggered. Redirecting to home.");
-                  router.push("/");
+                  deleteAccountMutation.mutate();
                 }
               }}
             >
-              <Trash2 className="w-4 h-4" /> Delete Account
+              <Trash2 className="w-4 h-4" />
+              {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
             </Button>
           </div>
         </div>

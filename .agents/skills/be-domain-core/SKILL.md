@@ -19,6 +19,8 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `POST` | `/v1/auth/logout/` | `logout` | public |
 | `POST` | `/v1/auth/forgot-password/` | `request_password_reset` | public |
 | `POST` | `/v1/auth/reset-password/` | `reset_password` | public |
+| `POST` | `/v1/users/{username}/password/` | `change_user_password` | required |
+| `DELETE` | `/v1/users/{username}/` | `delete_user_account` | required |
 | `GET` | `/v1/profile/{username}` | `get_candidate_public_profile` | optional |
 | `GET` | `/v1/profile/{username}/trust-score` | `get_candidate_trust_score` | optional |
 | `PATCH` | `/v1/profile/{username}` | `update_candidate_profile` | required |

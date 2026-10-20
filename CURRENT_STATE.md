@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 66 (64 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 68 (66 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -118,6 +118,8 @@
 | `GET` | `/v1/users/exists/email/` | `check_email_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/users/exists/username/` | `check_username_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/users/register/` | `register_user` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
+| `DELETE` | `/v1/users/{username}/` | `delete_user_account` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
+| `POST` | `/v1/users/{username}/password/` | `change_user_password` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 
 ---
 
@@ -227,7 +229,7 @@ pytest-asyncio>=0.23.0
 | Component / Flow | AS-IS (Current Production Reality) | TO-BE (Target Architecture) | Gap Status |
 |---|---|---|---|
 | **Password Recovery (`/forgot-password`)** | Single-use SHA-256 recovery token vault in `password_reset_tokens` (`FOR UPDATE` lock + session revocation). | SMTP/Transactional email delivery provider integration. | ✅ OPERATIONAL |
-| **Account Settings (`/user/[username]/settings`)** | Client-side mock UI for password rotation and account deletion danger zone. | Dedicated backend mutation endpoints for password rotation and cascading account deletion. | ⚠️ UI STUB |
+| **Account Settings (`/user/[username]/settings`)** | Authenticated password rotation (`POST /v1/users/{username}/password/`) and cascading account deletion (`DELETE /v1/users/{username}/`) with `verify_profile_owner` IDOR guard. | Multi-factor authentication (TOTP/WebAuthn) enrollment. | ✅ OPERATIONAL |
 | **OAuth SSO Callback (`/callback`)** | Route shell with static redirect. | OAuth authorization code exchange and social account link in `social_accounts` table. | ⚠️ ROUTE STUB |
 | **Master Catalogs (`catalogs.py`)** | `skills` queried from database; `company`, `school`, `location` served via in-memory dictionaries. | Query `catalog_companies`, `catalog_schools`, `catalog_locations` database tables with fuzzy trigram index. | ⚠️ IN-MEMORY CATALOG |
 | **Public CMS Careers & FAQs (`cms.py`)** | FAQs and career postings served via in-memory dictionaries (fallback from `career_postings`). | Dynamic administrative CMS dashboard for FAQ management and job applicant tracking. | ⚠️ IN-MEMORY CMS |
