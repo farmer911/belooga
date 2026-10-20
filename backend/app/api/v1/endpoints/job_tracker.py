@@ -7,13 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
+from app.modules.job_tracker import JobTrackerService
 from app.schemas.job_tracker import (
     JobPipelineAnalyticsResponse,
     TrackedJobCreateRequest,
     TrackedJobStatusUpdateRequest,
     TrackedJobResponse,
 )
-from app.services.job_tracker_service import JobTrackerService
 
 router = APIRouter(prefix="/tracker", tags=["Domain 11: Candidate Job Tracker & Kanban"])
 
