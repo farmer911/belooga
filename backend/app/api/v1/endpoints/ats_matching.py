@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user_optional
+from app.modules.ats_matching import ATSMatchingService
 from app.schemas.ats_matching import (
     ATSScanRequest,
     ATSScanResponse,
@@ -15,7 +16,6 @@ from app.schemas.ats_matching import (
     TalentShortlistRequest,
     TalentShortlistResponse,
 )
-from app.services.ats_matching_service import ATSMatchingService
 
 router = APIRouter(prefix="/match", tags=["Domain 10: ATS Diagnostics & JD Matching"])
 
