@@ -25,6 +25,7 @@ from app.core.security import (
     verify_profile_owner,
 )
 from app.modules.auth.repository import IdentityRepository
+from app.modules.notifications import NotificationService
 from app.modules.profile import ProfileService
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -235,9 +236,12 @@ class AuthService:
         if identity:
             raw_token = generate_refresh_token()
             await self.identity_repo.create_password_reset_token(
-                identity_id=identity.id,
-                token_hash=hash_token(raw_token),
-                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+                identity.id, hash_token(raw_token), datetime.now(timezone.utc) + timedelta(minutes=30)
+            )
+            await NotificationService(self.db).dispatch_event(
+                identity.id, "AUTH_PASSWORD_RESET", "Password Recovery Link Issued",
+                "Use the secure token link below within 30 minutes to reset your Belooga password.",
+                f"/forgot-password?token={raw_token}&email={identity.email}", True, "security", identity.email, False,
             )
             await self.db.commit()
         return ForgotPasswordResponse(
@@ -254,9 +258,7 @@ class AuthService:
         if exp < now:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password reset token has expired")
         await self.identity_repo.mark_reset_token_used_and_rotate_password(
-            token_id=row.id,
-            identity_id=row.identity_id,
-            new_password_hash=get_password_hash(payload.new_password),
+            row.id, row.identity_id, get_password_hash(payload.new_password)
         )
         await self.db.commit()
         return {"message": "Password has been reset successfully"}
@@ -269,8 +271,12 @@ class AuthService:
         if not identity or not verify_password(payload.current_password, identity.password_hash):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
         await self.identity_repo.rotate_password_and_revoke_sessions(
-            identity_id=current_user.id,
-            new_password_hash=get_password_hash(payload.new_password),
+            current_user.id, get_password_hash(payload.new_password)
+        )
+        await NotificationService(self.db).dispatch_event(
+            current_user.id, "AUTH_PASSWORD_CHANGED", "Security Alert: Password Updated",
+            "Your account password was changed and active sessions were rotated.",
+            f"/user/{username}/settings", True, "security", identity.email, False,
         )
         await self.db.commit()
         return {"message": "Password updated successfully"}
