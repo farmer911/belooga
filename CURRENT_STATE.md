@@ -7,7 +7,7 @@
 
 ## 1. Database Schema Truth (`backend/initdb.sql`)
 
-**Total Tables: 31** (Verified directly from PostgreSQL table creation statements)
+**Total Tables: 33** (Verified directly from PostgreSQL table creation statements)
 
 | # | Table Name | Purpose / Category |
 |---|---|---|
@@ -42,12 +42,14 @@
 | 29 | `job_descriptions` | Domain 10: Target Job Descriptions & Extracted Keywords |
 | 30 | `resume_jd_matches` | Domain 10: ATS Compatibility Scores & Match Audits |
 | 31 | `candidate_job_applications_tracker` | Domain 11: Candidate Job Application Kanban Tracker |
+| 32 | `notifications` | Domain 12: In-App Notifications & Transactional Email Deep-Link Outbox |
+| 33 | `notification_preferences` | Domain 12: Per-Identity Email & In-App Notification Preferences |
 
 ---
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 70 (68 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 75 (73 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -82,6 +84,11 @@
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `POST` | `/v1/media/upload/complete` | `complete_chunked_video_upload` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
+| `GET` | `/v1/notifications/` | `list_my_notifications` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/notifications.py` | Domain 12: Notifications & Email Outbox |
+| `GET` | `/v1/notifications/preferences/` | `get_notification_preferences` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/notifications.py` | Domain 12: Notifications & Email Outbox |
+| `PATCH` | `/v1/notifications/preferences/` | `update_notification_preferences` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/notifications.py` | Domain 12: Notifications & Email Outbox |
+| `POST` | `/v1/notifications/read-all/` | `mark_all_notifications_read` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/notifications.py` | Domain 12: Notifications & Email Outbox |
+| `PATCH` | `/v1/notifications/{notification_id}/read/` | `mark_notification_read` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/notifications.py` | Domain 12: Notifications & Email Outbox |
 | `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |

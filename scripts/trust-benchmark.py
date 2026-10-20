@@ -96,6 +96,7 @@ REQUIRED_VERTICAL_MODULES = {
     "profile", "auth", "timeline", "media",
     "catalogs", "search", "cms", "ats_matching",
     "expert_review", "job_tracker", "payments", "analytics",
+    "notifications",
 }
 MODULES_DIR = BE_APP / "modules"
 if MODULES_DIR.exists():

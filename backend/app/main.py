@@ -14,6 +14,7 @@ from app.api.v1.endpoints.ats_matching import router as ats_matching_router
 from app.api.v1.endpoints.job_tracker import router as job_tracker_router
 from app.api.v1.endpoints.analytics import router as analytics_router
 from app.api.v1.endpoints.payments import router as payments_router
+from app.api.v1.endpoints.notifications import router as notifications_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,6 +60,7 @@ app.include_router(ats_matching_router, prefix="/v1")
 app.include_router(job_tracker_router, prefix="/v1")
 app.include_router(analytics_router, prefix="/v1")
 app.include_router(payments_router, prefix="/v1")
+app.include_router(notifications_router, prefix="/v1")
 
 @app.get("/health", tags=["Health Probe"])
 async def health_check():
