@@ -42,6 +42,11 @@ async def get_blog_post_detail(slug: str, db: AsyncSession = Depends(get_db)):
     return await CmsService(db).get_blog_post_by_slug(slug)
 
 
+@router.get("/seo/sitemap-data", response_model=Dict[str, Any], tags=["Domain 8: Public CMS & Moderation"])
+async def get_seo_sitemap_data(db: AsyncSession = Depends(get_db)):
+    return await CmsService(db).get_seo_sitemap_data()
+
+
 @router.get("/career/jobs/", response_model=List[Dict[str, Any]], tags=["Domain 8: Public CMS & Moderation"])
 async def list_career_jobs(db: AsyncSession = Depends(get_db)):
     return await CmsService(db).list_career_jobs()

@@ -52,6 +52,8 @@ export function CVStudioPreview({
           {/* Zoom controls */}
           <div className="flex items-center bg-surface-page border border-surface-border rounded-lg px-2 py-0.5 text-[11px] text-typography-heading gap-1.5">
             <button
+              type="button"
+              aria-label="Zoom out CV preview"
               onClick={() => setZoom((z) => Math.max(70, z - 10))}
               className="hover:text-brand-primary px-1 font-bold cursor-pointer"
               title="Thu nhỏ"
@@ -60,6 +62,8 @@ export function CVStudioPreview({
             </button>
             <span className="w-9 text-center font-mono text-typography-main font-semibold">{zoom}%</span>
             <button
+              type="button"
+              aria-label="Zoom in CV preview"
               onClick={() => setZoom((z) => Math.min(130, z + 10))}
               className="hover:text-brand-primary px-1 font-bold cursor-pointer"
               title="Phóng to"
