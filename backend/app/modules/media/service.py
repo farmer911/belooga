@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.media.repository import MediaRepository
+from app.modules.notifications import NotificationService
 from app.modules.profile import ProfileService
 from app.schemas.media import CompleteUploadRequest
 from app.services.media_transcoder import (
@@ -200,6 +201,16 @@ class MediaService:
         await self.media_repo.update_video_pitch_url(profile.id, video_url)
         if poster_url:
             await self.media_repo.upsert_pitch_poster(profile.id, poster_url)
+        await NotificationService(self.db).dispatch_event(
+            identity_id=current_user.id,
+            event_type="VIDEO_PITCH_READY",
+            title="Your Video Pitch Is Live",
+            message="Your streaming MP4 video pitch and poster thumbnail have been published to your profile.",
+            deep_link=f"/user/{clean_username}?pitch=ready",
+            send_email=False,
+            category="general",
+            auto_commit=False,
+        )
         await self.db.commit()
 
         return {

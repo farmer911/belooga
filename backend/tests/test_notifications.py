@@ -94,3 +94,84 @@ async def test_notification_preferences_and_email_deeplink_engine(
     read_all = await client.post("/v1/notifications/read-all/", headers=headers_a)
     assert read_all.status_code == 200
     assert read_all.json()["unread_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_domain_event_triggers_create_notifications_and_email_deeplinks(
+    client: AsyncClient,
+    test_candidate_a: dict,
+):
+    """
+    BEL-507: Verify that domain mutations (Auth password recovery, Expert CV Review order & checkout,
+    and Job Tracker INTERVIEW stage) automatically emit notifications with email deep-links.
+    """
+    headers_a = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+
+    # 1. Trigger Forgot Password -> should emit AUTH_PASSWORD_RESET with deep_link="/forgot-password?token=..."
+    fp_res = await client.post(
+        "/v1/auth/forgot-password/",
+        json={"email": test_candidate_a["email"]},
+    )
+    assert fp_res.status_code == 200
+
+    # 2. Trigger Expert Review Order & Checkout -> should emit EXPERT_REVIEW_ORDERED and EXPERT_ORDER_PAID
+    ord_res = await client.post(
+        "/v1/expert-review/orders/",
+        json={
+            "package_slug": "pro",
+            "resume_url": "https://belooga.com/cv/test.pdf",
+            "target_role": "Staff Backend Engineer",
+            "target_companies": "Stripe",
+        },
+        headers=headers_a,
+    )
+    assert ord_res.status_code == 201
+    order_id = ord_res.json()["id"]
+
+    pay_res = await client.post(
+        f"/v1/expert-review/orders/{order_id}/checkout/",
+        json={"payment_method": "card"},
+        headers=headers_a,
+    )
+    assert pay_res.status_code == 200
+
+    # 3. Trigger Job Tracker move to INTERVIEW -> should emit JOB_INTERVIEW_STAGE
+    job_res = await client.post(
+        "/v1/tracker/jobs/",
+        json={
+            "company_name": "Anthropic",
+            "position_title": "AI Systems Engineer",
+            "status": "APPLIED",
+            "match_score": 92,
+        },
+        headers=headers_a,
+    )
+    assert job_res.status_code == 201
+    job_id = job_res.json()["id"]
+
+    move_res = await client.patch(
+        f"/v1/tracker/jobs/{job_id}/status",
+        json={"status": "INTERVIEW"},
+        headers=headers_a,
+    )
+    assert move_res.status_code == 200
+
+    # 4. Verify all emitted notifications and their deep-links via GET /v1/notifications/
+    notif_res = await client.get("/v1/notifications/", headers=headers_a)
+    assert notif_res.status_code == 200
+    items = notif_res.json()["items"]
+    event_types = {item["event_type"]: item for item in items}
+
+    assert "AUTH_PASSWORD_RESET" in event_types
+    assert event_types["AUTH_PASSWORD_RESET"]["deep_link"].startswith("/forgot-password?token=")
+    assert event_types["AUTH_PASSWORD_RESET"]["email_sent"] is True
+
+    assert "EXPERT_REVIEW_ORDERED" in event_types
+    assert f"order_id={order_id}" in event_types["EXPERT_REVIEW_ORDERED"]["deep_link"]
+
+    assert "EXPERT_ORDER_PAID" in event_types
+    assert event_types["EXPERT_ORDER_PAID"]["email_sent"] is True
+
+    assert "JOB_INTERVIEW_STAGE" in event_types
+    assert f"highlight={job_id}" in event_types["JOB_INTERVIEW_STAGE"]["deep_link"]
+

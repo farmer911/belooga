@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cache import platform_cache
 from app.models.expert_review import CVReviewFeedback
 from app.modules.expert_review.repository import ExpertReviewRepository
+from app.modules.notifications import NotificationService
 from app.schemas.expert_review import (
     CVReviewFeedbackResponse,
     CVReviewOrderCreateRequest,
@@ -132,6 +133,15 @@ class ExpertReviewService:
             order_status="pending_payment",
         )
         full_order = await self.repo.get_order_by_id(order.id)
+        await NotificationService(self.db).dispatch_event(
+            identity_id=candidate_identity_id,
+            event_type="EXPERT_REVIEW_ORDERED",
+            title=f"Expert CV Review Order Created ({package.name})",
+            message=f"Your CV review order for {payload.target_role} has been created and awaits checkout.",
+            deep_link=f"/expert-review?order_id={order.id}",
+            send_email=True,
+            category="order",
+        )
         return self._serialize_order(full_order)
 
     async def checkout_order(
@@ -152,6 +162,15 @@ class ExpertReviewService:
             order_id=order_id, new_status="paid", payment_reference=payment_ref
         )
         full_order = await self.repo.get_order_by_id(updated_order.id)
+        await NotificationService(self.db).dispatch_event(
+            identity_id=candidate_identity_id,
+            event_type="EXPERT_ORDER_PAID",
+            title="Expert CV Review Payment Confirmed",
+            message=f"Payment reference {payment_ref} verified. Your senior reviewer is now auditing your CV.",
+            deep_link=f"/expert-review?order_id={order_id}&status=paid",
+            send_email=True,
+            category="order",
+        )
         return self._serialize_order(full_order)
 
     async def list_my_orders(self, candidate_identity_id: uuid.UUID) -> List[CVReviewOrderResponse]:

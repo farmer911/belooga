@@ -33,7 +33,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | public |
 
 - Router: `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/api/v1/endpoints/ats_matching.py`, `backend/app/api/v1/endpoints/job_tracker.py`, `backend/app/api/v1/endpoints/analytics.py`, `backend/app/api/v1/endpoints/payments.py`
-- Service: `backend/app/modules/analytics/service.py`, `backend/app/modules/ats_matching/service.py`, `backend/app/modules/expert_review/service.py`, `backend/app/modules/job_tracker/service.py`, `backend/app/modules/payments/service.py`
+- Service: `backend/app/modules/analytics/service.py`, `backend/app/modules/ats_matching/service.py`, `backend/app/modules/expert_review/service.py`, `backend/app/modules/job_tracker/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/payments/service.py`
 - Repository: `backend/app/modules/analytics/repository.py`, `backend/app/modules/ats_matching/repository.py`, `backend/app/modules/expert_review/repository.py`, `backend/app/modules/job_tracker/repository.py`, `backend/app/modules/payments/repository.py`
 - Tests: `backend/tests/test_analytics.py`, `backend/tests/test_ats_matching.py`, `backend/tests/test_expert_review.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_job_tracker.py`, `backend/tests/test_momo_payment.py`
 <!-- AUTO:END -->

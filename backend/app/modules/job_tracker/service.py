@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
 from app.modules.job_tracker.repository import JobTrackerRepository
+from app.modules.notifications import NotificationService
 from app.schemas.job_tracker import (
     JobPipelineAnalyticsResponse,
     TrackedJobCreateRequest,
@@ -121,6 +122,17 @@ class JobTrackerService:
 
         updated = await self.repo.update_status(job, status_val)
         await platform_cache.invalidate_prefix("tracker_analytics:")
+        target_uid = candidate_identity_id or job.candidate_identity_id
+        if target_uid and status_val in ("INTERVIEW", "OFFER"):
+            await NotificationService(self.db).dispatch_event(
+                identity_id=target_uid,
+                event_type="JOB_INTERVIEW_STAGE",
+                title=f"{status_val.title()} Stage Reached at {job.company_name}",
+                message=f"Congratulations on advancing to {status_val} for {job.position_title}. Open your Kanban board to prepare.",
+                deep_link=f"/workspace/jobs?highlight={job.id}",
+                send_email=True,
+                category="career",
+            )
         return TrackedJobResponse.model_validate(updated)
 
     async def remove_job(self, job_id: uuid.UUID, candidate_identity_id: Optional[uuid.UUID] = None) -> None:

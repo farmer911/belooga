@@ -13,5 +13,5 @@
 
 ## 3-PR Execution Checklist
 - [x] **PR 1 (`BEL-506`):** Core Notification Engine (`notifications` & `notification_preferences` tables, `app/modules/notifications/`, `/v1/notifications/*` API, TDD `test_notifications.py`)
-- [ ] **PR 2 (`BEL-507`):** Domain Event Triggers (Auth reset/password, Expert Review order/checkout, MoMo IPN, Job Kanban Interview/Offer, Career Apply, Video Pitch ready + TDD tests)
+- [x] **PR 2 (`BEL-507`):** Domain Event Triggers (Auth reset/password, Expert Review order/checkout, MoMo IPN, Job Kanban Interview/Offer, Career Apply, Video Pitch ready + TDD tests)
 - [ ] **PR 3 (`BEL-508`):** Frontend Header Bell (`notification-bell.tsx`), Settings Email Preferences UI (`settings/page.tsx`), & Deep-Link Landing (`forgot-password/page.tsx`)
