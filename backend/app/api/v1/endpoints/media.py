@@ -16,8 +16,8 @@ UPLOAD_ID_REGEX = re.compile(r"^upload_\d+_[a-zA-Z0-9]+$")
 
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
+from app.modules.media import MediaService
 from app.schemas.media import ChunkUploadResponse, CompleteUploadRequest
-from app.services.media_service import MediaService
 
 router = APIRouter()
 
