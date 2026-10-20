@@ -89,3 +89,53 @@ async def test_cv_studio_draft_load_and_cloud_save_with_idor_guard(
     )
     assert idor_res.status_code == 403
 
+
+@pytest.mark.asyncio
+async def test_analytics_time_range_and_expert_order_feedback_scorecard(
+    client: AsyncClient,
+    test_candidate_a: dict,
+):
+    """
+    BEL-511: Verify GET /v1/analytics/dashboard?range=30D scales telemetry by range
+    and GET /v1/expert-review/orders/{order_id}/feedback/ returns a live scorecard for paid orders.
+    """
+    headers_a = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+
+    # 1. Create and checkout an expert review order
+    ord_res = await client.post(
+        "/v1/expert-review/orders/",
+        json={
+            "package_slug": "pro",
+            "resume_url": "https://belooga.com/cv/alex.pdf",
+            "target_role": "Principal Backend Engineer",
+            "target_companies": "Stripe, Datadog",
+        },
+        headers=headers_a,
+    )
+    assert ord_res.status_code == 201
+    order_id = ord_res.json()["id"]
+
+    pay_res = await client.post(
+        f"/v1/expert-review/orders/{order_id}/checkout/",
+        json={"payment_method": "card"},
+        headers=headers_a,
+    )
+    assert pay_res.status_code == 200
+
+    # 2. Fetch live Expert Review Feedback Scorecard for the paid order
+    fb_res = await client.get(
+        f"/v1/expert-review/orders/{order_id}/feedback/",
+        headers=headers_a,
+    )
+    assert fb_res.status_code == 200
+    fb = fb_res.json()
+    assert fb["order_id"] == order_id
+    assert fb["score_overall"] >= 80
+    assert len(fb["strengths"]) >= 2
+
+    # 3. Verify Analytics Dashboard supports ?range=7D vs ?range=30D
+    dash_7d = (await client.get("/v1/analytics/dashboard?range=7D")).json()
+    dash_30d = (await client.get("/v1/analytics/dashboard?range=30D")).json()
+    assert dash_30d["overview"]["total_gmv"] > dash_7d["overview"]["total_gmv"]
+
+

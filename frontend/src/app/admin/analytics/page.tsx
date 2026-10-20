@@ -13,8 +13,8 @@ import { AnalyticsFunnelCard } from "@/components/features/analytics/analytics-f
 import { AnalyticsTransactionsTable } from "@/components/features/analytics/analytics-transactions-table";
 
 export default function AnalyticsDashboardPage() {
-  const { data, unitEconomics, isLoading } = useAnalyticsDashboard();
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "ALL">("7D");
+  const { data, unitEconomics, isLoading } = useAnalyticsDashboard(timeRange);
 
   return (
     <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
