@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user
+from app.modules.expert_review import ExpertReviewService
 from app.schemas.expert_review import (
     CVReviewFeedbackResponse,
     CVReviewOrderCreateRequest,
@@ -16,7 +17,6 @@ from app.schemas.expert_review import (
     ExpertProfileResponse,
     OrderCheckoutRequest,
 )
-from app.services.expert_review_service import ExpertReviewService
 
 router = APIRouter(prefix="/expert-review", tags=["Domain 9: Expert CV Review & Monetization"])
 
