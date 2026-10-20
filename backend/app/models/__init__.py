@@ -53,6 +53,10 @@ from app.models.ats_matching import (
 from app.models.job_tracker import (
     CandidateJobApplicationTracker,
 )
+from app.models.notifications import (
+    Notification,
+    NotificationPreference,
+)
 
 __all__ = [
     "Base",
@@ -88,4 +92,6 @@ __all__ = [
     "JobDescription",
     "ResumeJDMatch",
     "CandidateJobApplicationTracker",
+    "Notification",
+    "NotificationPreference",
 ]

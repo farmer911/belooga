@@ -43,11 +43,16 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | required |
 | `POST` | `/v1/media/upload/complete` | `complete_chunked_video_upload` | required |
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | public |
+| `GET` | `/v1/notifications/` | `list_my_notifications` | required |
+| `PATCH` | `/v1/notifications/{notification_id}/read/` | `mark_notification_read` | required |
+| `POST` | `/v1/notifications/read-all/` | `mark_all_notifications_read` | required |
+| `GET` | `/v1/notifications/preferences/` | `get_notification_preferences` | required |
+| `PATCH` | `/v1/notifications/preferences/` | `update_notification_preferences` | required |
 
-- Router: `backend/app/api/v1/endpoints/auth.py`, `backend/app/api/v1/endpoints/profile.py`, `backend/app/api/v1/endpoints/timeline.py`, `backend/app/api/v1/endpoints/media.py`
-- Service: `backend/app/modules/auth/service.py`, `backend/app/modules/media/service.py`, `backend/app/modules/profile/service.py`, `backend/app/modules/timeline/service.py`, `backend/app/services/media_transcoder.py`, `backend/app/services/pdf_generator.py`
-- Repository: `backend/app/modules/auth/repository.py`, `backend/app/modules/media/repository.py`, `backend/app/modules/profile/repository.py`, `backend/app/modules/timeline/repository.py`
-- Tests: `backend/tests/test_auth_family_rotation.py`, `backend/tests/test_idor_guards.py`, `backend/tests/test_media_traversal.py`, `backend/tests/test_profile_privacy_and_pii.py`, `backend/tests/test_timeline_reorder.py`
+- Router: `backend/app/api/v1/endpoints/auth.py`, `backend/app/api/v1/endpoints/profile.py`, `backend/app/api/v1/endpoints/timeline.py`, `backend/app/api/v1/endpoints/media.py`, `backend/app/api/v1/endpoints/notifications.py`
+- Service: `backend/app/modules/auth/service.py`, `backend/app/modules/media/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/profile/service.py`, `backend/app/modules/timeline/service.py`, `backend/app/services/media_transcoder.py`, `backend/app/services/pdf_generator.py`
+- Repository: `backend/app/modules/auth/repository.py`, `backend/app/modules/media/repository.py`, `backend/app/modules/notifications/repository.py`, `backend/app/modules/profile/repository.py`, `backend/app/modules/timeline/repository.py`
+- Tests: `backend/tests/test_auth_family_rotation.py`, `backend/tests/test_idor_guards.py`, `backend/tests/test_media_traversal.py`, `backend/tests/test_notifications.py`, `backend/tests/test_profile_privacy_and_pii.py`, `backend/tests/test_timeline_reorder.py`
 <!-- AUTO:END -->
 
 ## Rules

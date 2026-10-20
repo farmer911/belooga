@@ -273,6 +273,8 @@ def main():
         "job_descriptions": "Domain 10: Target Job Descriptions & Extracted Keywords",
         "resume_jd_matches": "Domain 10: ATS Compatibility Scores & Match Audits",
         "candidate_job_applications_tracker": "Domain 11: Candidate Job Application Kanban Tracker",
+        "notifications": "Domain 12: In-App Notifications & Transactional Email Deep-Link Outbox",
+        "notification_preferences": "Domain 12: Per-Identity Email & In-App Notification Preferences",
     }
 
     for idx, t in enumerate(tables, 1):

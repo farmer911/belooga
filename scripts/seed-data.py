@@ -27,6 +27,36 @@ async def seed(db_url: str):
     engine = create_async_engine(db_url, echo=False)
 
     async with engine.begin() as conn:
+        await conn.execute(
+            text("""
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+                    event_type VARCHAR(64) NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    message TEXT NOT NULL,
+                    deep_link VARCHAR(512) NOT NULL DEFAULT '/',
+                    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                    send_email BOOLEAN NOT NULL DEFAULT FALSE,
+                    email_sent BOOLEAN NOT NULL DEFAULT FALSE,
+                    email_subject VARCHAR(255),
+                    email_deeplink_url TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+            """)
+        )
+        await conn.execute(
+            text("""
+                CREATE TABLE IF NOT EXISTS notification_preferences (
+                    identity_id UUID PRIMARY KEY REFERENCES identities(id) ON DELETE CASCADE,
+                    email_security_alerts BOOLEAN NOT NULL DEFAULT TRUE,
+                    email_order_updates BOOLEAN NOT NULL DEFAULT TRUE,
+                    email_career_matches BOOLEAN NOT NULL DEFAULT TRUE,
+                    in_app_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+            """)
+        )
         await conn.execute(text("DELETE FROM identities WHERE email LIKE '%@test.com'"))
         # 1. Admin Identity
         admin_pass_hash = get_password_hash("AdminSecret123!")
