@@ -1,46 +1,58 @@
-# Agent Router & Execution Protocol
+# Agent Router, Architecture Mindmap & Execution Protocol
 
-> **Purpose:** Routes tasks through the Adversarial Production Supervisor (`belooga-supervisor`), domain skills, automated truth synchronization, and the Anti-Deception Trust Benchmark.
+> **Purpose:** Routes every engineering task through the Adversarial Production Supervisor (`belooga-supervisor`), domain skills, empirical benchmarking, automated truth synchronization, and the Anti-Deception Trust Benchmark.
 
 ---
 
-## 1. Closed-Loop Execution Pipeline
+## 1. Master Agent Execution & Continuous Evolution Diagram
 
-```
-[USER IDEA / TASK / BUG REPORT]
-                │
-                ▼
-1. SUPERVISOR CHALLENGE & RESEARCH FIRST (`belooga-supervisor`):
-   - Zero sycophancy: challenge weak ROI, bloat, or contradictions first.
-   - Research order: `graphify` -> `CURRENT_STATE.md` -> `.agents/PRODUCT_THESIS.md` -> Domain `SKILL.md`.
-   - If touching >= 3 files or API/DB contracts: write hypothesis, risks & checklist in `.agents/STATE.md` (<= 50 lines).
-                │
-                ▼
-2. SCOPED IMPLEMENTATION (`tdd-workflow` + Default `ponytail`):
-   - TDD Red-first. Preserve clean layering (`router -> service -> repository`, < 300 lines/file).
-   - Compress 200-line code into 50 lines automatically without asking permission.
-                │
-                ▼
-3. AUTOMATED KNOWLEDGE SYNC & VERIFICATION:
-   - Sync SSOT & Skills: `python3 scripts/generate-current-state.py --allow-dirty && python3 scripts/render-skill-facts.py --write`
-   - Anti-Deception Benchmark: `python3 scripts/trust-benchmark.py`
-   - Master SSOT & Test Suite: `bash scripts/audit-truth.sh`
-                │
-                ▼
-4. ADVERSARIAL CODE REVIEW & 5-STEP SELF-LEARN:
-   - Frontend changes ➔ `fe-code-review` | Backend changes ➔ `be-code-review`
-   - Any bug/regression/lesson ➔ `belooga-self-learn` (promote lesson into script guard + update `SKILL.md` / `.agents/PRODUCT_THESIS.md`).
-                │
-                ▼
-5. DEFINITION OF DONE SIGN-OFF:
-   - Lock improved metrics: `python3 scripts/ratchet.py --update` (if better)
-   - Run `python3 scripts/lint-skills.py --quiet && python3 scripts/trust-benchmark.py`
-   - Output concise empirical proof block with unedited benchmark & test logs.
+```mermaid
+flowchart TD
+    Req["User Request / New Tech Idea / Bug Report"] --> Step1["1. Supervisor Challenge & Research Gate (belooga-supervisor)\n• Query graphify -> CURRENT_STATE.md -> PRODUCT_THESIS.md -> Domain SKILL.md\n• Evaluate ROI, blast radius & 10x-100x scalability before coding"]
+    Step1 --> Step2["2. Agile Branching & Stateful Memory (belooga-senior-agile-workflow)\n• Checkout feature/BEL-<id>-<slug>\n• Write hypothesis, risks & checklist in .agents/STATE.md (<= 50 lines)"]
+    Step2 --> Step3["3. Empirical Benchmark & TDD Implementation (tdd-workflow + ponytail)\n• Compare candidate solutions via scripts/benchmark-*.py\n• Follow strict FE/BE layered pipeline & <= 300 lines/file cap"]
+    Step3 --> Step4["4. Automated SSOT Sync & Verification Gates (definition-of-done)\n• generate-current-state.py + render-skill-facts.py --write\n• lint-skills.py + trust-benchmark.py + audit-truth.sh"]
+    Step4 --> Step5["5. Adversarial Review, 5-Step Self-Learn & PR Merge (belooga-self-learn)\n• Run be-code-review / fe-code-review\n• Codify new patterns & traps into SKILL.md -> Open & Merge GitHub PR"]
 ```
 
 ---
 
-## 2. Intent-Based Skill Routing Matrix
+## 2. Full-Stack Platform Architecture & Scalability Mindmap
+
+```mermaid
+flowchart LR
+    subgraph FE["Frontend (Next.js 16 + React 19 + Bun)"]
+        SEO["SSR SEO & Metadata\n(robots.ts, sitemap.ts, OG)"]
+        RQ["State & Validation\n(TanStack Query + RHF + Zod)"]
+        SW["Service Worker & PWA (sw.js)\n• Cache-First Static Shell\n• SWR Public Catalog Cache\n• Offline Mutation Outbox\n• Native Web Push & Deep-Link"]
+    end
+
+    subgraph GW_RPC["Edge & Transport Layer"]
+        GW["Pure-ASGI API Gateway (gateway.py)\n• Bounded LRU GCRA Rate Limit\n• Route-Tiered RPM Policies\n• ETag 304 & Idempotency-Key"]
+        RPC["ConnectRPC Batch Engine (rpc.py)\n• POST /v1/rpc/batch\n• Protobuf-Varint Binary Framing\n• Shared Profile Bundle Hydration"]
+    end
+
+    subgraph CORE["Domain Service, Cache & Event Stream Layer"]
+        SVC["Domain Services (modules/*/service.py)\n• Atomic Unit-of-Work Commit\n• IDOR Ownership Verification"]
+        CACHE["Two-Tier SWR Cache (cache.py)\n• L1 In-Memory LRU + L2 Redis\n• Per-Key Singleflight Lock\n• Mutation Cache Invalidation"]
+        EVT["Kafka-Semantics Event Stream (events.py)\n• 4 CRC32 Partitions + Offsets\n• Micro-Batch Async Worker + DLQ"]
+    end
+
+    subgraph DATA_OPS["PostgreSQL 16 & Kubernetes Runtime"]
+        PG["Single-Roundtrip SQL (PostgreSQL 16)\n• json_agg / ARRAY Dossier Hydration\n• Atomic Writeable CTE & Bulk CASE\n• GIN TSVECTOR + Composite B-Tree Indexes"]
+        K8S["Kubernetes HPA & Probes (k8s/)\n• /health/live & /health/ready\n• Lifespan Drain + 2..10 Replicas"]
+    end
+
+    FE --> GW --> RPC --> SVC
+    SVC --> CACHE
+    SVC --> EVT
+    SVC --> PG
+    K8S -.-> GW
+```
+
+---
+
+## 3. Intent-Based Skill Routing Matrix
 
 | Scope / Department | Target Path | Skill |
 | :--- | :--- | :--- |
@@ -70,16 +82,13 @@
 
 ---
 
-## 3. Cross-Domain Impact Matrix
+## 4. Cross-Domain Impact Matrix & Merge Conditions
 
 When modifying a backend bounded context, verify its downstream frontend dependents:
 - **`be-domain-core`:** Verify `fe-domain-workspace` (WebRTC studio, timeline DnD, auth, settings) and `fe-domain-public` (`/public/[username]` video & PDF).
 - **`be-domain-discovery`:** Verify `fe-domain-public` (`/search`, `/contact-us`, `/careers`) and `fe-domain-career-tools` (`/salary-benchmark`).
 - **`be-domain-monetization`:** Verify `fe-domain-career-tools` (`/expert-review`, `/ats-diagnostics`, `/workspace/jobs`, `/admin/analytics`, MoMo QR checkout).
 
----
-
-## 4. Merge Conditions
 Merge only when:
 1. `python3 scripts/trust-benchmark.py` achieves **100% Trust Score (0 violations)**.
 2. CI passes all verification gates: `bash scripts/audit-truth.sh`.
