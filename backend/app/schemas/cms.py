@@ -50,3 +50,19 @@ class JobApplicantRequest(BaseModel):
     applicant_name: str = Field(..., min_length=1, max_length=255)
     applicant_email: EmailStr
     resume_url: str = Field(..., min_length=1)
+
+
+class BlogPostResponse(BaseModel):
+    """CMS editorial blog article response."""
+
+    slug: str
+    title: str
+    excerpt: str
+    date: str
+    image: str
+    author: str
+    category: str = "Career Insights"
+    read_time_minutes: int = 4
+    content: list[str] = Field(default_factory=list)
+    key_takeaways: list[str] = Field(default_factory=list)
+

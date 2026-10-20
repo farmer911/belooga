@@ -1,17 +1,20 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task:** Implement Enterprise Notification & Transactional Email Deep-Link System (Option B) across 3 sequential PR commits (`BEL-506` -> `BEL-508`):
-  1. `notifications` + `notification_preferences` tables & vertical module `app/modules/notifications/`.
-  2. 7 Domain Event Triggers (Auth, Expert Review, MoMo IPN, ATS/CMS, Job Kanban, Video Pitch) with Email Deep-Links.
-  3. Header Notification Bell UI (`notification-bell.tsx`), Settings Email Preference Toggles, and `/forgot-password?token=` Deep-Link landing.
+- **Task:** Full-Stack Parity (Zero UI-Only Features), SEO + Lighthouse Optimization, and Backend/Edge API Gateway across 5 sequential PRs (`BEL-509` -> `BEL-513`):
+  1. `BEL-509`: CMS Blog Full-Stack (`blog_posts` table + `GET /v1/blog/posts/`, `GET /v1/blog/posts/{slug}/` + FE wiring).
+  2. `BEL-510`: CV Studio Persistence & Interactive Sidebar (`GET/PUT /v1/profile/{username}/cv-draft/` + server PDF export + toggleable sections).
+  3. `BEL-511`: Executive Analytics `?range=7D|30D|ALL` + Real DB Order Ledger + Expert Review Feedback Scorecard viewer.
+  4. `BEL-512`: Dynamic SEO (`sitemap.ts`, `robots.ts`, route `layout.tsx` metadata, JSON-LD) & Lighthouse CLS/LCP/A11y optimization.
+  5. `BEL-513`: Backend API Gateway (`app/core/gateway.py` Rate-Limiting, `X-Request-ID`, Security Headers, `GET /v1/gateway/status`, Nginx Edge Gateway & Next.js `/api/v1` proxy).
 
 ## Pre-Mortem Risks
-- **Open-Redirect Guard:** Validate `deep_link` matches `^/[a-zA-Z0-9_\-\?=&/.@%]*$` before storing or building `email_deeplink_url`.
-- **Non-Blocking Email Outbox:** Run email dispatch via `asyncio.to_thread` so zero blocking I/O occurs on the async event loop.
-- **File Size & Ratchet Caps:** Keep all backend `.py` <= 300 lines and frontend `page.tsx` <= 241 lines (`settings/page.tsx` is 167 lines; extract preferences organism if needed).
+- **File Line Caps:** Keep all backend `.py` <= 300 lines and frontend `page.tsx` <= 241 lines (`cv-studio/page.tsx` is 211 lines; extract helpers/hooks).
+- **Test Compatibility:** Rate-Limiter in `app/core/gateway.py` must allow high burst in `ENVIRONMENT=testing` unless explicitly tested via `X-Test-Rate-Limit` header.
 
-## 3-PR Execution Checklist
-- [x] **PR 1 (`BEL-506`):** Core Notification Engine (`notifications` & `notification_preferences` tables, `app/modules/notifications/`, `/v1/notifications/*` API, TDD `test_notifications.py`)
-- [x] **PR 2 (`BEL-507`):** Domain Event Triggers (Auth reset/password, Expert Review order/checkout, MoMo IPN, Job Kanban Interview/Offer, Career Apply, Video Pitch ready + TDD tests)
-- [x] **PR 3 (`BEL-508`):** Frontend Header Bell (`notification-bell.tsx`), Settings Email Preferences UI (`settings/page.tsx`), & Deep-Link Landing (`forgot-password/page.tsx`)
+## 5-PR Execution Checklist
+- [x] **PR 1 (`BEL-509`):** Blog CMS Full-Stack (`blog_posts` table + `/v1/blog/posts/*` + `/blog` & `/blog/[slug]` FE integration)
+- [ ] **PR 2 (`BEL-510`):** CV Studio Cloud Draft Persistence (`GET/PUT /v1/profile/{username}/cv-draft/`) & Interactive Section Reordering
+- [ ] **PR 3 (`BEL-511`):** Analytics `?range=7D|30D|ALL` Dynamic Querying + Expert Review Feedback Scorecard Integration
+- [ ] **PR 4 (`BEL-512`):** SEO Engine (`sitemap.ts`, `robots.ts`, OpenGraph/JSON-LD, Route Metadata) & Lighthouse Optimization
+- [ ] **PR 5 (`BEL-513`):** Backend API Gateway Middleware (`app/core/gateway.py`, `GET /v1/gateway/status`) + Nginx Edge Gateway & Next.js Proxy

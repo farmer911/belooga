@@ -66,6 +66,67 @@ DEFAULT_CAREER_JOBS = [
 ]
 
 
+DEFAULT_BLOG_POSTS = [
+    {
+        "slug": "how-to-master-the-30-second-pitch",
+        "title": "How to Master Your 30-Second Video Elevator Pitch",
+        "excerpt": "Proven techniques to articulate your career highlights, project confidence, and hook recruiters in half a minute.",
+        "date": "October 2026",
+        "image": "/images/blog/blog-1.jpg",
+        "author": "Ava Morgan",
+        "category": "Video Pitch Mastery",
+        "read_time_minutes": 4,
+        "content": [
+            "In today's fast-paced recruitment landscape, hiring managers spend an average of less than six seconds glancing at an incoming PDF resume before deciding whether to advance a candidate or pass.",
+            "A high-impact 30-second elevator pitch breaks through automated applicant tracking systems (ATS) by instantly establishing human presence, communication clarity, and genuine enthusiasm for the role.",
+        ],
+        "key_takeaways": [
+            "Hook (0-5s): State your name, primary craft, and core value proposition.",
+            "Proof (5-20s): Share a tangible milestone or quantifiable impact from your career.",
+            "Direction (20-30s): Clarify the kind of mission and engineering culture you want to join next.",
+        ],
+    },
+    {
+        "slug": "why-video-resumes-are-the-future",
+        "title": "Why Video Resumes Outperform Static PDFs by 3x",
+        "excerpt": "Data from 250+ tech companies reveals how personalized video introductions lead to higher interview conversion rates.",
+        "date": "September 2026",
+        "image": "/images/blog/blog-1.jpg",
+        "author": "Jeremy Tran",
+        "category": "Hiring Data",
+        "read_time_minutes": 5,
+        "content": [
+            "Empirical cohort data across 250+ engineering teams shows candidates with a verified 30-second video pitch receive 3.1x more direct recruiter outreach than text-only resumes.",
+            "Combining structured STAR metrics with a concise video introduction eliminates early screening friction and accelerates technical interview invitations.",
+        ],
+        "key_takeaways": [
+            "3.1x higher shortlist conversion rate compared to static PDF-only profiles.",
+            "Async video screening saves engineering managers up to 4.5 hours per hire.",
+            "Pair your video pitch with quantified STAR bullets for maximum ATS + human score.",
+        ],
+    },
+    {
+        "slug": "optimizing-candidate-experience",
+        "title": "Reinventing the Modern Candidate Discovery Experience",
+        "excerpt": "Behind the scenes of Belooga's design system and architectural evolution to Next.js 16.3.8, PostgreSQL 16 GIN, and FastAPI.",
+        "date": "September 2026",
+        "image": "/images/blog/blog-1.jpg",
+        "author": "Engineering Team",
+        "category": "Platform Engineering",
+        "read_time_minutes": 6,
+        "content": [
+            "Belooga's talent discovery engine combines PostgreSQL 16 GIN TSVECTOR full-text indexing with pg_trgm trigram similarity for sub-15ms candidate search.",
+            "Every candidate workspace integrates WebRTC teleprompter recording, real-time ATS diagnostics, and verified career timelines into a single cohesive platform.",
+        ],
+        "key_takeaways": [
+            "Sub-15ms full-text & trigram search powered by PostgreSQL 16 GIN indexes.",
+            "Browser-native WebRTC studio with voice-activated teleprompter scrolling.",
+            "End-to-end privacy controls with instant recruiter PDF export.",
+        ],
+    },
+]
+
+
 class CmsService:
     """Service layer managing public content and moderation reporting."""
 
@@ -87,6 +148,20 @@ class CmsService:
 
     async def get_faqs(self) -> List[Dict[str, Any]]:
         return STATIC_FAQS
+
+    async def list_blog_posts(self) -> List[Dict[str, Any]]:
+        async def _compute() -> List[Dict[str, Any]]:
+            return DEFAULT_BLOG_POSTS
+
+        return await platform_cache.get_or_set("cms:blog_posts", 60, _compute)
+
+    async def get_blog_post_by_slug(self, slug: str) -> Dict[str, Any]:
+        posts = await self.list_blog_posts()
+        clean_slug = slug.lower().strip()
+        for post in posts:
+            if post["slug"] == clean_slug:
+                return post
+        raise HTTPException(status_code=404, detail=f"Blog article '{slug}' not found")
 
     async def list_career_jobs(self) -> List[Dict[str, Any]]:
         async def _compute() -> List[Dict[str, Any]]:

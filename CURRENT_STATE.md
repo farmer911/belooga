@@ -49,7 +49,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 75 (73 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 77 (75 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -65,6 +65,8 @@
 | `POST` | `/v1/auth/oauth/callback/` | `oauth_callback` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/refresh/` | `refresh_tokens` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/reset-password/` | `reset_password` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
+| `GET` | `/v1/blog/posts/` | `list_blog_posts` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/blog/posts/{slug}/` | `get_blog_post_detail` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/catalogs/career-roi` | `get_career_upskill_roi` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
