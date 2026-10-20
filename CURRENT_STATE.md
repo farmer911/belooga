@@ -49,7 +49,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 77 (75 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 79 (77 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -106,6 +106,8 @@
 | `PATCH` | `/v1/profile/{username}` | `update_candidate_profile` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `PATCH` | `/v1/profile/{username}/avatar/` | `upload_avatar` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `GET` | `/v1/profile/{username}/career-trajectory` | `get_candidate_career_trajectory` | Public | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
+| `GET` | `/v1/profile/{username}/cv-draft/` | `get_cv_studio_draft` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
+| `PUT` | `/v1/profile/{username}/cv-draft/` | `save_cv_studio_draft` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `GET` | `/v1/profile/{username}/education/` | `list_education_experiences` | Public | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/education/` | `create_education` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/education/order/` | `reorder_education_experiences` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |

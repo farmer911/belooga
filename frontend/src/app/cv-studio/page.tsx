@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Zap, Target, RotateCcw, Sparkles } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Zap, Target, RotateCcw, Sparkles, CloudUpload, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/services/api-client";
+import { useAuthStore } from "@/store/auth-store";
 import { CVStudioSidebar } from "@/components/features/cv-studio/cv-studio-sidebar";
 import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studio-editor";
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
@@ -50,15 +51,41 @@ const SAMPLE_CV_DATA: CVData = {
 };
 
 export default function CVStudioPage() {
+  const user = useAuthStore((s) => s.user);
+  const activeUsername = user?.username || "alexnguyen";
   const [cvData, setCvData] = useState<CVData>(SAMPLE_CV_DATA);
   const [fontSize, setFontSize] = useState<number>(10.0);
   const [lineHeight, setLineHeight] = useState<number>(1.3);
   const [marginSize, setMarginSize] = useState<number>(0.6);
   const [snapOnePage, setSnapOnePage] = useState<boolean>(true);
+  const [savedCloud, setSavedCloud] = useState(false);
 
   const { data: marketPulse = null } = useQuery<MarketPulseResponse | null>({
     queryKey: ["cv-studio-market-pulse"],
     queryFn: async () => (await apiClient.get<MarketPulseResponse>("/v1/match/market-pulse")).data,
+  });
+
+  const saveDraftMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.put(`/v1/profile/${activeUsername}/cv-draft/`, {
+        full_name: cvData.fullName,
+        email: cvData.email,
+        phone: cvData.phone,
+        headline: cvData.headline,
+        summary: cvData.summary,
+        skills: cvData.skills,
+        font_size: fontSize,
+        line_height: lineHeight,
+        margin_size: marginSize,
+        snap_one_page: snapOnePage,
+        experience: cvData.experience,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      setSavedCloud(true);
+      setTimeout(() => setSavedCloud(false), 2500);
+    },
   });
 
   const starAudit = useMemo(() => {
@@ -122,10 +149,18 @@ export default function CVStudioPage() {
             <Zap className="w-3 h-3" aria-hidden="true" />
             <span>Tự Động Tối Ưu Lề</span>
           </button>
+          <button
+            type="button"
+            data-testid="btn-save-cv-cloud"
+            disabled={saveDraftMutation.isPending}
+            onClick={() => saveDraftMutation.mutate()}
+            className="px-2.5 py-1 bg-surface-card hover:bg-surface-page text-typography-heading rounded-md border border-surface-border transition-colors text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+          >
+            {savedCloud ? <Check className="w-3 h-3 text-emerald-600" /> : <CloudUpload className="w-3 h-3 text-brand-primary" />}
+            <span>{savedCloud ? "Đã Lưu Cloud" : "Lưu Bản Nháp Cloud"}</span>
+          </button>
           <Link href="/ats-diagnostics">
-            <Button
-              className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs flex items-center gap-1"
-            >
+            <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs flex items-center gap-1">
               <Target className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Sang Quét ATS</span>
             </Button>
@@ -146,7 +181,7 @@ export default function CVStudioPage() {
           <Badge className="bg-teal-600 text-white border-none text-[10px]">
             ATS Readability: {starAudit.readability}/100
           </Badge>
-          <Badge variant="outline" className="bg-white border-teal-200 text-teal-800 text-[10px]">
+          <Badge variant="outline" className="bg-surface-card border-teal-200 text-teal-800 text-[10px]">
             STAR Metric Density: {starAudit.ratio}%
           </Badge>
         </div>
@@ -158,7 +193,7 @@ export default function CVStudioPage() {
                 key={s.skill}
                 type="button"
                 onClick={() => handleInjectSkill(s.skill)}
-                className="px-2 py-0.5 rounded bg-white hover:bg-teal-50 border border-teal-200 text-teal-800 font-semibold transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded bg-surface-card hover:bg-teal-50 border border-teal-200 text-teal-800 font-semibold transition-colors cursor-pointer"
               >
                 + {s.skill}
               </button>
@@ -169,8 +204,6 @@ export default function CVStudioPage() {
 
       {/* Main 3-Column Workspace */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
-
-        {/* Left Column (3 cols): Layout & Typography Controls */}
         <CVStudioSidebar
           fontSize={fontSize}
           setFontSize={setFontSize}
@@ -181,14 +214,7 @@ export default function CVStudioPage() {
           snapOnePage={snapOnePage}
           setSnapOnePage={setSnapOnePage}
         />
-
-        {/* Center Column (4 cols): STAR Form Content Editor */}
-        <CVStudioEditor
-          cvData={cvData}
-          onChange={setCvData}
-        />
-
-        {/* Right Column (5 cols): Live Vector A4 Paper Preview */}
+        <CVStudioEditor cvData={cvData} onChange={setCvData} />
         <CVStudioPreview
           cvData={cvData}
           fontSize={fontSize}
@@ -198,7 +224,6 @@ export default function CVStudioPage() {
         />
       </main>
 
-      {/* Terminal Status Bar */}
       <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div>Hệ điều hành soạn thảo CV: <strong className="text-typography-main">Belooga Pro CV Engine</strong> (Chuẩn Vector A4)</div>
         <div className="flex items-center gap-2">

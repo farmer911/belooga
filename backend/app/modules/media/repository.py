@@ -72,3 +72,33 @@ class MediaRepository:
         """)
         res = await self.db.execute(query, {"username": username.lower().strip()})
         return res.fetchone()
+
+    async def get_cv_studio_draft(self, profile_id: uuid.UUID) -> Optional[str]:
+        query = text("""
+            SELECT file_url FROM profile_media
+            WHERE profile_id = :pid AND category = 'cv_studio_draft'
+            LIMIT 1
+        """)
+        res = await self.db.execute(query, {"pid": profile_id})
+        row = res.fetchone()
+        return row.file_url if row else None
+
+    async def upsert_cv_studio_draft(
+        self, profile_id: uuid.UUID, draft_json: str, headline: str, summary: str
+    ) -> None:
+        query = text("""
+            INSERT INTO profile_media (id, profile_id, category, file_url, mime_type, file_size_bytes)
+            VALUES (gen_random_uuid(), :pid, 'cv_studio_draft', :djson, 'application/json', :sz)
+            ON CONFLICT (profile_id, category) DO UPDATE
+            SET file_url = :djson, file_size_bytes = :sz, updated_at = NOW()
+        """)
+        await self.db.execute(
+            query, {"pid": profile_id, "djson": draft_json, "sz": len(draft_json.encode("utf-8"))}
+        )
+        stmt = (
+            update(CandidateProfile)
+            .where(CandidateProfile.id == profile_id)
+            .values(headline=headline, bio=summary)
+        )
+        await self.db.execute(stmt)
+

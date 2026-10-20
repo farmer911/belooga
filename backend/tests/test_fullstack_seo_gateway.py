@@ -26,3 +26,66 @@ async def test_cms_blog_posts_list_and_slug_detail(client: AsyncClient):
 
     missing_res = await client.get("/v1/blog/posts/unknown-article-slug/")
     assert missing_res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_cv_studio_draft_load_and_cloud_save_with_idor_guard(
+    client: AsyncClient,
+    test_candidate_a: dict,
+    test_candidate_b: dict,
+):
+    """
+    BEL-510: Verify GET /v1/profile/{username}/cv-draft/ loads candidate profile data into CV Studio
+    and PUT /v1/profile/{username}/cv-draft/ persists cloud draft updates with IDOR protection.
+    """
+    username_a = test_candidate_a["username"]
+    headers_a = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+    headers_b = {"Authorization": f"Bearer {test_candidate_b['token']}"}
+
+    # 1. Load initial CV Studio draft from candidate profile
+    get_res = await client.get(f"/v1/profile/{username_a}/cv-draft/", headers=headers_a)
+    assert get_res.status_code == 200
+    initial_draft = get_res.json()
+    assert "full_name" in initial_draft
+    assert "headline" in initial_draft
+    assert "experience" in initial_draft
+
+    # 2. Save updated CV Studio draft to cloud
+    payload = {
+        "full_name": "Alex Nguyen Staff",
+        "email": test_candidate_a["email"],
+        "phone": "+84 909 111 222",
+        "headline": "Principal Distributed Systems Architect",
+        "summary": "Architected high-throughput payment gateways handling 45,000 RPS with 99.99% SLA.",
+        "skills": "Golang, Rust, PostgreSQL 16, Kubernetes, Redis",
+        "font_size": 9.8,
+        "line_height": 1.25,
+        "margin_size": 0.55,
+        "snap_one_page": True,
+        "experience": [
+            {
+                "company": "Belooga Cloud",
+                "role": "Principal Architect",
+                "period": "2024 - Present",
+                "bullets": ["Reduced p99 API latency by 62% across 12 microservices."],
+            }
+        ],
+    }
+    put_res = await client.put(
+        f"/v1/profile/{username_a}/cv-draft/",
+        json=payload,
+        headers=headers_a,
+    )
+    assert put_res.status_code == 200
+    saved = put_res.json()
+    assert saved["headline"] == "Principal Distributed Systems Architect"
+    assert saved["font_size"] == 9.8
+
+    # 3. IDOR check: Candidate B cannot overwrite Candidate A's CV Studio draft
+    idor_res = await client.put(
+        f"/v1/profile/{username_a}/cv-draft/",
+        json=payload,
+        headers=headers_b,
+    )
+    assert idor_res.status_code == 403
+

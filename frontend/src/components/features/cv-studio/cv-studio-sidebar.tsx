@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { ListOrdered, SlidersHorizontal } from "lucide-react";
+import React, { useState } from "react";
+import { ListOrdered, SlidersHorizontal, ArrowUp, ArrowDown } from "lucide-react";
 
 interface CVStudioSidebarProps {
   fontSize: number;
@@ -14,6 +14,15 @@ interface CVStudioSidebarProps {
   setSnapOnePage: (snap: boolean) => void;
 }
 
+const DEFAULT_SECTIONS = [
+  "Thông tin liên hệ",
+  "Tóm tắt sự nghiệp",
+  "Kinh nghiệm làm việc",
+  "Dự án tiêu biểu",
+  "Kỹ năng chuyên môn",
+  "Học vấn & Bằng cấp",
+];
+
 export function CVStudioSidebar({
   fontSize,
   setFontSize,
@@ -24,6 +33,16 @@ export function CVStudioSidebar({
   snapOnePage,
   setSnapOnePage,
 }: CVStudioSidebarProps) {
+  const [sections, setSections] = useState<string[]>(DEFAULT_SECTIONS);
+
+  const moveSection = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= sections.length) return;
+    const next = [...sections];
+    [next[index], next[target]] = [next[target], next[index]];
+    setSections(next);
+  };
+
   return (
     <aside className="lg:col-span-3 border-r border-surface-border bg-surface-card p-4 space-y-4 overflow-y-auto text-xs">
       <div>
@@ -32,17 +51,34 @@ export function CVStudioSidebar({
           <span>Cấu Trúc Các Mục</span>
         </h4>
         <div className="space-y-1">
-          {["Thông tin liên hệ", "Tóm tắt sự nghiệp", "Kinh nghiệm làm việc", "Dự án tiêu biểu", "Kỹ năng chuyên môn", "Học vấn & Bằng cấp"].map(
-            (sec, i) => (
-              <div
-                key={i}
-                className="p-2 rounded-lg bg-surface-page border border-surface-border hover:border-brand-primary flex items-center justify-between text-typography-heading cursor-move transition-colors"
-              >
-                <span>{sec}</span>
-                <span className="text-typography-muted">::</span>
+          {sections.map((sec, i) => (
+            <div
+              key={sec}
+              className="p-2 rounded-lg bg-surface-page border border-surface-border hover:border-brand-primary flex items-center justify-between text-typography-heading transition-colors"
+            >
+              <span>{sec}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-label={`Move ${sec} up`}
+                  disabled={i === 0}
+                  onClick={() => moveSection(i, -1)}
+                  className="p-0.5 rounded hover:bg-surface-divider disabled:opacity-30 cursor-pointer"
+                >
+                  <ArrowUp className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move ${sec} down`}
+                  disabled={i === sections.length - 1}
+                  onClick={() => moveSection(i, 1)}
+                  className="p-0.5 rounded hover:bg-surface-divider disabled:opacity-30 cursor-pointer"
+                >
+                  <ArrowDown className="w-3 h-3" />
+                </button>
               </div>
-            )
-          )}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -59,6 +95,7 @@ export function CVStudioSidebar({
           </div>
           <input
             type="range"
+            aria-label="Font size in points"
             min="9.0"
             max="12.0"
             step="0.2"
@@ -75,6 +112,7 @@ export function CVStudioSidebar({
           </div>
           <input
             type="range"
+            aria-label="Line height"
             min="1.15"
             max="1.50"
             step="0.05"
@@ -91,6 +129,7 @@ export function CVStudioSidebar({
           </div>
           <input
             type="range"
+            aria-label="Page margin in inches"
             min="0.5"
             max="1.0"
             step="0.05"
