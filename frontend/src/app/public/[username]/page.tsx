@@ -43,23 +43,29 @@ export default function PublicCandidatePage() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
 
-  const { data: profile = null, isLoading } = useQuery<CandidateProfile | null>({
-    queryKey: ["public-candidate-profile", username],
-    queryFn: async () => (await apiClient.get<CandidateProfile>(`/v1/profile/${username}`)).data,
+  const { data: dossier, isLoading } = useQuery({
+    queryKey: ["public-candidate-dossier-rpc", username],
+    queryFn: async () => {
+      const { data } = await apiClient.post<{ results: Array<{ id: string; status: number; data?: unknown }> }>("/v1/rpc/batch", {
+        calls: [
+          { id: "prof", method: "profile.get", params: { username } },
+          { id: "trust", method: "profile.trustScore", params: { username } },
+          { id: "traj", method: "profile.trajectory", params: { username } },
+        ],
+      });
+      const map = Object.fromEntries((data.results || []).map((r) => [r.id, r]));
+      if (map.prof?.status !== 200) throw new Error("Candidate not found");
+      return {
+        profile: (map.prof.data as CandidateProfile) || null,
+        trustData: map.trust?.status === 200 ? (map.trust.data as TrustScoreResponse) : null,
+        trajectory: map.traj?.status === 200 ? (map.traj.data as CareerTrajectoryResponse) : null,
+      };
+    },
     enabled: Boolean(username),
   });
-
-  const { data: trustData = null } = useQuery<TrustScoreResponse | null>({
-    queryKey: ["public-candidate-trust-score", username],
-    queryFn: async () => (await apiClient.get<TrustScoreResponse>(`/v1/profile/${username}/trust-score`)).data,
-    enabled: Boolean(profile),
-  });
-
-  const { data: trajectory = null } = useQuery<CareerTrajectoryResponse | null>({
-    queryKey: ["public-candidate-trajectory", username],
-    queryFn: async () => (await apiClient.get<CareerTrajectoryResponse>(`/v1/profile/${username}/career-trajectory`)).data,
-    enabled: Boolean(profile),
-  });
+  const profile = dossier?.profile ?? null;
+  const trustData = dossier?.trustData ?? null;
+  const trajectory = dossier?.trajectory ?? null;
 
   if (isLoading) {
     return (

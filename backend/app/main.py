@@ -4,6 +4,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.gateway import APIGatewayMiddleware, router as gateway_router
+from app.core.rpc import router as rpc_router
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.profile import router as profile_router
 from app.api.v1.endpoints.timeline import router as timeline_router
@@ -68,6 +69,7 @@ app.include_router(analytics_router, prefix="/v1")
 app.include_router(payments_router, prefix="/v1")
 app.include_router(notifications_router, prefix="/v1")
 app.include_router(gateway_router, prefix="/v1")
+app.include_router(rpc_router, prefix="/v1")
 
 @app.get("/health", tags=["Health Probe"])
 async def health_check():

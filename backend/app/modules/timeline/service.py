@@ -159,12 +159,12 @@ class TimelineService:
         uname = username.lower().strip()
 
         async def _compute() -> Dict[str, Any]:
-            profile = await self.profile_facade.get_by_username(uname)
-            if not profile or bool(getattr(profile, "is_hidden", False)):
+            bundle = await self.profile_facade.get_raw_profile_bundle(uname)
+            if bool(bundle.get("is_hidden", False)):
                 raise HTTPException(status_code=404, detail="Candidate not found")
-            jobs = await self.timeline_repo.list_jobs_by_username(uname)
-            edus = await self.timeline_repo.list_education_by_username(uname)
-            text_blob = f"{profile.headline or ''} {profile.bio or ''}".lower()
+            jobs = bundle.get("job_experiences") or []
+            edus = bundle.get("education_experiences") or []
+            text_blob = f"{bundle.get('headline') or ''} {bundle.get('bio') or ''}".lower()
             if any(k in text_blob for k in ("principal", "staff", "architect", "director", "vp", "cto")):
                 cur_lvl, nxt_lvl = "Staff / Principal", "Distinguished / VP Engineering"
             elif any(k in text_blob for k in ("senior", "lead", "sr.", "manager")):
@@ -176,10 +176,10 @@ class TimelineService:
 
             exp_count = len(jobs)
             tenure = round(max(1.5, exp_count * 1.8 + (2.0 if "senior" in text_blob or "staff" in text_blob else 0.5)), 1)
-            readiness = min(96, 58 + exp_count * 8 + (10 if edus else 0) + (12 if getattr(profile, "video_pitch_url", None) else 0))
+            readiness = min(96, 58 + exp_count * 8 + (10 if edus else 0) + (12 if bundle.get("video_pitch_url") else 0))
             velocity = "Accelerated Fast-Track" if readiness >= 75 else "Steady Progression"
             return CareerTrajectoryResponse(
-                username=profile.username,
+                username=bundle["username"],
                 current_inferred_level=cur_lvl,
                 next_target_level=nxt_lvl,
                 promotion_readiness_pct=readiness,

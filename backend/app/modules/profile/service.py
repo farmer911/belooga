@@ -64,13 +64,11 @@ class ProfileService:
         )
 
     # --- Domain 2 Endpoints ---
-    async def get_candidate_public_profile(
-        self, username: str, current_user: Optional[AuthenticatedUser]
-    ) -> Dict[str, Any]:
+    async def get_raw_profile_bundle(self, username: str) -> Dict[str, Any]:
         clean_username = username.lower().strip()
-        is_owner = current_user is not None and (
-            current_user.username.lower() == clean_username or current_user.role == "admin"
-        )
+        session_key = f"bundle:{clean_username}"
+        if session_key in self.db.info:
+            return self.db.info[session_key]
 
         async def _load_bundle() -> Dict[str, Any]:
             row = await self.profile_repo.get_profile_with_identity(clean_username)
@@ -118,13 +116,22 @@ class ProfileService:
             bundle = await profile_cache.get_or_set(
                 f"pub_profile:{clean_username}", ttl_seconds=30, loader=_load_bundle
             )
+        self.db.info[session_key] = bundle
+        return bundle
 
+    async def get_candidate_public_profile(
+        self, username: str, current_user: Optional[AuthenticatedUser]
+    ) -> Dict[str, Any]:
+        clean_username = username.lower().strip()
+        is_owner = current_user is not None and (
+            current_user.username.lower() == clean_username or current_user.role == "admin"
+        )
+        bundle = await self.get_raw_profile_bundle(username)
         if bundle.get("is_hidden") and not is_owner:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Candidate @{username} not found",
             )
-
         return {
             **bundle,
             "email": bundle.get("_raw_email") if is_owner else None,
@@ -140,31 +147,27 @@ class ProfileService:
         )
 
         async def _compute() -> Dict[str, Any]:
-            row = await self.profile_repo.get_profile_with_identity(clean_username)
-            if not row:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Candidate @{username} not found",
-                )
-            profile_id = row.id
-            jobs = await self.profile_repo.get_jobs(profile_id)
-            education = await self.profile_repo.get_education(profile_id)
-            skills = await self.profile_repo.get_skills(profile_id)
+            bundle = await self.get_raw_profile_bundle(username)
+            jobs = bundle.get("job_experiences") or []
+            education = bundle.get("education_experiences") or []
+            skills = bundle.get("skills") or []
+            headline = bundle.get("headline") or ""
+            bio = bundle.get("bio") or ""
 
-            has_video = bool(row.video_pitch_url)
+            has_video = bool(bundle.get("video_pitch_url"))
             video_pts = 35 if has_video else 0
 
             job_count = len(jobs)
             exp_pts = min(25, job_count * 10 + (5 if any(len(j.get("description") or "") >= 60 for j in jobs) else 0))
 
-            bio_text = f"{row.headline or ''} {row.bio or ''}"
+            bio_text = f"{headline} {bio}"
             effective_skill_cnt = max(
                 len(skills),
                 sum(1 for tok in ("go", "python", "react", "postgres", "kubernetes", "aws", "typescript", "java") if tok in bio_text.lower()),
             )
             skill_pts = min(20, effective_skill_cnt * 4)
 
-            bio_pts = min(20, (8 if len(row.bio or "") >= 40 else 3) + (6 if row.headline else 0) + (6 if education else 2))
+            bio_pts = min(20, (8 if len(bio) >= 40 else 3) + (6 if headline else 0) + (6 if education else 2))
             total = min(100, video_pts + exp_pts + skill_pts + bio_pts)
             tier = (
                 "Platinum Verified" if total >= 85
@@ -184,8 +187,8 @@ class ProfileService:
             )
 
             return {
-                "username": row.username,
-                "_is_hidden": bool(row.is_hidden),
+                "username": bundle["username"],
+                "_is_hidden": bool(bundle.get("is_hidden")),
                 "trust_score": total,
                 "readiness_tier": tier,
                 "recruiter_conversion_multiplier": multiplier,
