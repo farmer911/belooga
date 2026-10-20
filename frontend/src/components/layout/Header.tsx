@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { EcosystemMenu } from "@/components/layout/ecosystem-menu";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 
 export function Header() {
@@ -66,6 +67,7 @@ export function Header() {
 
           {isAuthenticated && user ? (
             <div className="hidden sm:flex items-center gap-3">
+              <NotificationBell />
               <Link
                 href={`/user/${user.username}`}
                 className="flex items-center gap-2 text-sm font-medium text-typography-main hover:text-brand-primary"

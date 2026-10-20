@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Lock, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationPreferencesCard } from "@/components/features/profile/notification-preferences-card";
 import { passwordChangeSchema, PasswordFormValues } from "@/lib/schemas";
 import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
@@ -128,6 +129,8 @@ export default function AccountSettingsPage() {
               {passwordMutation.isPending ? "Updating..." : "Update Password"}
             </Button>
           </form>
+
+          <NotificationPreferencesCard />
 
           <div className="pt-8 border-t border-surface-divider space-y-4">
             <div className="space-y-1">

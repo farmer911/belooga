@@ -175,3 +175,54 @@ async def test_domain_event_triggers_create_notifications_and_email_deeplinks(
     assert "JOB_INTERVIEW_STAGE" in event_types
     assert f"highlight={job_id}" in event_types["JOB_INTERVIEW_STAGE"]["deep_link"]
 
+
+@pytest.mark.asyncio
+async def test_password_change_notification_and_bell_contract(
+    client: AsyncClient,
+):
+    """
+    BEL-508: Verify runtime password rotation notification (/user/{username}/settings deep-link)
+    and Header NotificationBell / NotificationPreferencesCard contract.
+    """
+    from pathlib import Path
+    import uuid
+
+    suffix = uuid.uuid4().hex[:6]
+    username_a = f"notif_usr_{suffix}"
+    reg_res = await client.post(
+        "/v1/users/register/",
+        json={
+            "email": f"{username_a}@belooga.com",
+            "username": username_a,
+            "password": "TestPassword123!",
+            "first_name": "Notif",
+            "last_name": "Tester",
+        },
+    )
+    assert reg_res.status_code == 201
+    headers_a = {"Authorization": f"Bearer {reg_res.json()['access_token']}"}
+
+    pw_res = await client.post(
+        f"/v1/users/{username_a}/password/",
+        json={
+            "current_password": "TestPassword123!",
+            "new_password": "NewSecurePassword456!",
+        },
+        headers=headers_a,
+    )
+    assert pw_res.status_code == 200
+
+    notif_res = await client.get("/v1/notifications/", headers=headers_a)
+    assert notif_res.status_code == 200
+    items = notif_res.json()["items"]
+    pw_notif = next((i for i in items if i["event_type"] == "AUTH_PASSWORD_CHANGED"), None)
+    assert pw_notif is not None
+    assert pw_notif["deep_link"] == f"/user/{username_a}/settings"
+    assert pw_notif["email_sent"] is True
+
+    root = Path(__file__).resolve().parents[2]
+    assert (root / "frontend/src/components/layout/notification-bell.tsx").exists()
+    assert (root / "frontend/src/components/features/profile/notification-preferences-card.tsx").exists()
+
+
+
