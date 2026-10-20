@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -15,9 +16,15 @@ interface ForgotPasswordResponse {
   reset_token?: string | null;
 }
 
-export default function ForgotPasswordPage() {
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-  const [resetToken, setResetToken] = useState("");
+function ForgotPasswordContent() {
+  const searchParams = useSearchParams();
+  const deepLinkToken = searchParams.get("token") || "";
+  const deepLinkEmail = searchParams.get("email") || "";
+
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(
+    deepLinkToken ? deepLinkEmail || "your account" : null,
+  );
+  const [resetToken, setResetToken] = useState(deepLinkToken);
   const [newPassword, setNewPassword] = useState("");
   const [resetComplete, setResetComplete] = useState(false);
 
@@ -27,7 +34,7 @@ export default function ForgotPasswordPage() {
     formState: { errors },
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: "" },
+    defaultValues: { email: deepLinkEmail },
   });
 
   const forgotMutation = useMutation({
@@ -146,5 +153,13 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[calc(100vh-64px)] bg-surface-page" />}>
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }

@@ -41,6 +41,8 @@ class AuthenticatedUser(BaseModel):
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    if not hashed_password or not hashed_password.startswith("$"):
+        return False
     return password_hash_helper.verify(plain_password, hashed_password)
 
 
