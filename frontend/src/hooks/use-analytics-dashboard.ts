@@ -92,11 +92,11 @@ const DEFAULT_ANALYTICS: AnalyticsData = {
   ],
 };
 
-export function useAnalyticsDashboard() {
+export function useAnalyticsDashboard(timeRange: "7D" | "30D" | "ALL" = "7D") {
   const { data = DEFAULT_ANALYTICS, isLoading } = useQuery<AnalyticsData>({
-    queryKey: ["analytics-dashboard"],
+    queryKey: ["analytics-dashboard", timeRange],
     queryFn: async () => {
-      const res = await apiClient.get<AnalyticsData>("/v1/analytics/dashboard", { timeout: 3000 });
+      const res = await apiClient.get<AnalyticsData>(`/v1/analytics/dashboard?range=${timeRange}`, { timeout: 3000 });
       return res.data;
     },
     placeholderData: DEFAULT_ANALYTICS,

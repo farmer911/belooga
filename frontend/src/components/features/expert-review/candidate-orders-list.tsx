@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Clock, CheckCircle2, FileText, CreditCard, ChevronRight, AlertCircle } from "lucide-react";
 import { ReviewOrder, ReviewFeedback } from "@/hooks/use-expert-review";
+import { apiClient } from "@/services/api-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -88,11 +89,20 @@ export function CandidateOrdersList({ orders, onPayOrder }: CandidateOrdersListP
                   </Button>
                 )}
 
-                {order.feedback && (
+                {(order.feedback || order.order_status !== "pending_payment") && (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setSelectedFeedback(order.feedback!)}
+                    onClick={async () => {
+                      if (order.feedback) {
+                        setSelectedFeedback(order.feedback);
+                      } else {
+                        const res = await apiClient.get<ReviewFeedback>(
+                          `/v1/expert-review/orders/${order.id}/feedback/`
+                        );
+                        setSelectedFeedback(res.data);
+                      }
+                    }}
                     className="border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white gap-1"
                   >
                     <span>View Report</span>

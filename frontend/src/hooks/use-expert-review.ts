@@ -159,6 +159,11 @@ export function useExpertReview() {
     return res.data;
   };
 
+  const fetchOrderFeedback = async (orderId: string): Promise<ReviewFeedback> => {
+    const res = await apiClient.get<ReviewFeedback>(`/v1/expert-review/orders/${orderId}/feedback/`);
+    return res.data;
+  };
+
   const openBookingForPackage = (pkg: ReviewPackage) => {
     setSelectedPackage(pkg);
     setBookingModalOpen(true);
@@ -190,6 +195,7 @@ export function useExpertReview() {
     handleCategoryFilter,
     createOrder,
     checkoutOrder,
+    fetchOrderFeedback,
     openBookingForPackage,
     openBookingForExpert,
     refreshOrders: fetchMyOrders,

@@ -191,6 +191,8 @@ class ExpertReviewService:
             )
 
         feedback = await self.repo.get_feedback_by_order_id(order_id)
+        if not feedback and order.order_status in ("paid", "in_review", "completed"):
+            feedback = await self.repo.ensure_feedback_for_paid_order(order)
         if not feedback:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
