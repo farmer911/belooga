@@ -1,19 +1,19 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (`BEL-514`):** Audit, Benchmark, Demo, and Upgrade Backend API Gateway (`app/core/gateway.py`) and Multi-Tier Caching (`app/core/cache.py` + domain services):
-  1. **Gateway Flaws Fixed:** Replace `BaseHTTPMiddleware` (streaming buffer bug + task-group overhead) with Pure ASGI Middleware (`__call__(scope, receive, send)`), replace unbounded `defaultdict(deque)` IP memory leak with Bounded LRU Token-Bucket/GCRA + Route-Tiered policies (`auth_strict`, `mutation`, `chunk_upload`, `public_read`), add `413 Payload Too Large` guard, `Idempotency-Key` replay cache, and HTTP `ETag`/`If-None-Match` (`304 Not Modified`) + `Cache-Control`.
-  2. **Cache Flaws Fixed:** Fix split-brain `profile_cache` vs `platform_cache` invalidation bug across `ProfileService`, `TimelineService`, and `MediaService`; upgrade `AsyncTieredCache` with Stale-While-Revalidate (SWR), Singleflight Coalescing, and real-time hit/miss telemetry; cache hot read endpoints in `CatalogsService` and `CmsService`.
-  3. **Empirical Benchmark Demo:** `scripts/benchmark-gateway-cache.py` + artifact `gateway_and_cache_benchmark.md`.
+- **Task (`BEL-515`):** Research, Benchmark, Challenge, and Apply gRPC / ConnectRPC / Binary Framing & Multiplexed RPC Batching concepts where they **provably improve performance** in Belooga:
+  1. **Supervisor Architectural Verdict:** Prove via empirical benchmark (`scripts/benchmark-rpc-and-serialization.py`) why **Loopback Network gRPC between internal monolith modules is an anti-pattern** (~675x slower than in-process Python calls), while **ConnectRPC-style Multiplexed Batch RPC (`POST /v1/rpc/batch`) + Binary Protobuf-Varint Framing (`application/x-protobuf`) + Shared Bundle Hydration** delivers a massive real-world speedup.
+  2. **Eliminate Duplicate SQL & HTTP Waterfall on Profile/Workspace:** Refactor `ProfileService.get_candidate_trust_score` and `TimelineService.get_career_trajectory` to compute directly from the shared `pub_profile:{username}` bundle (cutting SQL queries per profile load from **14 down to 7**, and **0** on warm cache), and replace the 3-request sequential waterfall in `frontend/src/app/public/[username]/page.tsx` with `POST /v1/rpc/batch`.
+  3. **Implement ConnectRPC-Style Multiplexed Batch & Binary Framing Engine (`backend/app/core/rpc.py`, mounted at `/v1/rpc`):**
+     - `POST /v1/rpc/batch`: Executes multiple RPC procedures concurrently in **1 HTTP round-trip**.
+     - Supports both compact JSON (`application/json`) and **Protobuf-style Binary Varint Wire Framing (`application/x-protobuf`)** via content negotiation.
 
 ## Pre-Mortem Risks
-- Keep all `backend/app/**/*.py` strictly <= 300 lines.
-- Ensure `ENVIRONMENT=testing` compatibility across existing backend pytest cases while allowing explicit cache/gateway testing.
+- Keep all `backend/app/**/*.py` <= 300 lines and frontend `page.tsx` <= 241 lines.
 
 ## Execution Checklist
-- [x] Build & run empirical benchmark script (`scripts/benchmark-gateway-cache.py`) comparing Gateway & Cache architectures
-- [x] Write TDD Red/Green test suite (`backend/tests/test_gateway_and_cache_optimization.py`)
-- [x] Upgrade `backend/app/core/cache.py` (L1 LRU + L2 Redis + Singleflight + SWR + Telemetry + `invalidate_candidate_cache`)
-- [x] Upgrade `backend/app/core/gateway.py` (Pure ASGI + Bounded LRU Token-Bucket + Route Tiers + 413 Guard + Idempotency-Key + ETag 304)
-- [x] Fix split-brain cache invalidation in `profile/service.py`, `timeline/service.py`, `media/service.py` & wire `catalogs/service.py`, `cms/service.py`
-- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #22, and merge into `main`
+- [x] Build & run empirical benchmark (`scripts/benchmark-rpc-and-serialization.py`)
+- [x] Write TDD Red/Green test suite (`backend/tests/test_rpc_and_dossier_optimization.py`)
+- [x] Implement `backend/app/core/rpc.py` (`/v1/rpc/batch` + Protobuf varint binary wire codec) & mount in `backend/app/main.py`
+- [x] Optimize `ProfileService.get_candidate_trust_score` & `TimelineService.get_career_trajectory` to reuse shared bundle & wire `POST /v1/rpc/batch` in `public/[username]/page.tsx`
+- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #23, and merge into `main`
