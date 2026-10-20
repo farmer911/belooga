@@ -19,7 +19,7 @@ from app.schemas.timeline import (
     JobExperienceResponse,
     ReorderRequest,
 )
-from app.services.timeline_service import TimelineService
+from app.modules.timeline import TimelineService
 
 router = APIRouter()
 

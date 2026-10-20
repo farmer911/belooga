@@ -10,7 +10,7 @@
 ## 12-Module Vertical Refactoring & Push Checklist (Option B2)
 - [x] Module 1/12 (`profile`): `backend/app/modules/profile/` + Public Profile Facade + Push
 - [x] Module 2/12 (`auth`): `backend/app/modules/auth/` (decouple `ProfileRepository`) + Push
-- [ ] Module 3/12 (`timeline`): `backend/app/modules/timeline/` (decouple `ProfileRepository`) + Push
+- [x] Module 3/12 (`timeline`): `backend/app/modules/timeline/` (decouple `ProfileRepository`) + Push
 - [ ] Module 4/12 (`media`): `backend/app/modules/media/` (decouple `ProfileRepository`) + Push
 - [ ] Module 5/12 (`catalogs`): `backend/app/modules/catalogs/` + Push
 - [ ] Module 6/12 (`search`): `backend/app/modules/search/` (dedicated `SearchService`/`SearchRepository`) + Push
