@@ -1,22 +1,51 @@
+"use client";
+
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiClient } from "@/services/api-client";
+import type { BlogPostDTO } from "../page";
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const titleMap: Record<string, string> = {
-    "how-to-master-the-30-second-pitch": "How to Master Your 30-Second Video Elevator Pitch",
-    "why-video-resumes-are-the-future": "Why Video Resumes Outperform Static PDFs by 3x",
-    "optimizing-candidate-experience": "Reinventing the Modern Candidate Discovery Experience"
-  };
-  const formattedTitle = titleMap[slug] || slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+const TITLE_MAP: Record<string, string> = {
+  "how-to-master-the-30-second-pitch": "How to Master Your 30-Second Video Elevator Pitch",
+  "why-video-resumes-are-the-future": "Why Video Resumes Outperform Static PDFs by 3x",
+  "optimizing-candidate-experience": "Reinventing the Modern Candidate Discovery Experience",
+};
+
+export default function BlogPostPage() {
+  const params = useParams();
+  const slug = (params.slug as string) || "how-to-master-the-30-second-pitch";
+
+  const { data: article } = useQuery<BlogPostDTO>({
+    queryKey: ["cms-blog-post", slug],
+    queryFn: async () => (await apiClient.get<BlogPostDTO>(`/v1/blog/posts/${slug}/`)).data,
+    enabled: Boolean(slug),
+  });
+
+  const formattedTitle =
+    article?.title ||
+    TITLE_MAP[slug] ||
+    slug
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  const paragraphs = article?.content?.length
+    ? article.content
+    : [
+        "In today's fast-paced recruitment landscape, hiring managers spend an average of less than six seconds glancing at an incoming PDF resume before deciding whether to advance a candidate or pass.",
+        "A high-impact 30-second elevator pitch breaks through the automated applicant tracking systems (ATS) by instantly establishing human presence, communication clarity, and genuine enthusiasm for the role.",
+      ];
+
+  const takeaways = article?.key_takeaways?.length
+    ? article.key_takeaways
+    : [
+        "Hook (0-5s): State your name, primary craft, and core value proposition.",
+        "Proof (5-20s): Share a tangible milestone or quantifiable impact from your career.",
+        "Direction (20-30s): Clarify the kind of mission and engineering culture you want to join next.",
+      ];
 
   return (
     <div className="min-h-screen bg-surface-page py-16">
@@ -31,11 +60,11 @@ export default async function BlogPostPage({
         <div className="space-y-4">
           <div className="flex items-center gap-4 text-xs text-typography-muted">
             <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" /> October 2026
+              <Calendar className="w-3.5 h-3.5" /> {article?.date || "October 2026"}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <User className="w-3.5 h-3.5" /> Belooga Editorial Team
+              <User className="w-3.5 h-3.5" /> {article?.author || "Belooga Editorial Team"}
             </span>
           </div>
 
@@ -45,23 +74,24 @@ export default async function BlogPostPage({
         </div>
 
         <img
-          src="/images/blog/blog-1.jpg"
+          src={article?.image || "/images/blog/blog-1.jpg"}
           alt={formattedTitle}
+          width={800}
+          height={320}
           className="w-full h-80 object-cover rounded-lg"
         />
 
         <div className="prose max-w-none text-sm text-typography-heading space-y-4 leading-relaxed">
-          <p>
-            In today's fast-paced recruitment landscape, hiring managers spend an average of less than six seconds glancing at an incoming PDF resume before deciding whether to advance a candidate or pass.
-          </p>
-          <p>
-            A high-impact 30-second elevator pitch breaks through the automated applicant tracking systems (ATS) by instantly establishing human presence, communication clarity, and genuine enthusiasm for the role.
-          </p>
-          <h2 className="text-xl font-bold text-typography-main pt-4">The Three Pillars of an Effective Pitch</h2>
+          {paragraphs.map((p, idx) => (
+            <p key={idx}>{p}</p>
+          ))}
+          <h2 className="text-xl font-bold text-typography-main pt-4">
+            The Three Pillars of an Effective Pitch
+          </h2>
           <ul className="list-disc pl-5 space-y-2">
-            <li><strong>Hook (0-5s):</strong> State your name, primary craft, and core value proposition.</li>
-            <li><strong>Proof (5-20s):</strong> Share a tangible milestone or quantifiable impact from your career.</li>
-            <li><strong>Direction (20-30s):</strong> Clarify the kind of mission and engineering culture you want to join next.</li>
+            {takeaways.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
           </ul>
         </div>
 

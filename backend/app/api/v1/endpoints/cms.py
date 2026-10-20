@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.modules.cms import CmsService
 from app.schemas.cms import (
+    BlogPostResponse,
     ContactInquiryRequest,
     ContactInquiryResponse,
     JobApplicantRequest,
@@ -29,6 +30,16 @@ async def submit_contact_inquiry(
 @router.get("/faqs", response_model=List[Dict[str, Any]], tags=["Domain 8: Public CMS & Moderation"])
 async def get_faqs():
     return await CmsService().get_faqs()
+
+
+@router.get("/blog/posts/", response_model=List[BlogPostResponse], tags=["Domain 8: Public CMS & Moderation"])
+async def list_blog_posts(db: AsyncSession = Depends(get_db)):
+    return await CmsService(db).list_blog_posts()
+
+
+@router.get("/blog/posts/{slug}/", response_model=BlogPostResponse, tags=["Domain 8: Public CMS & Moderation"])
+async def get_blog_post_detail(slug: str, db: AsyncSession = Depends(get_db)):
+    return await CmsService(db).get_blog_post_by_slug(slug)
 
 
 @router.get("/career/jobs/", response_model=List[Dict[str, Any]], tags=["Domain 8: Public CMS & Moderation"])
