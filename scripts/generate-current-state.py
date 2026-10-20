@@ -395,7 +395,7 @@ def main():
     lines.append("| Component / Flow | AS-IS (Current Production Reality) | TO-BE (Target Architecture) | Gap Status |")
     lines.append("|---|---|---|---|")
     lines.append("| **Password Recovery (`/forgot-password`)** | Single-use SHA-256 recovery token vault in `password_reset_tokens` (`FOR UPDATE` lock + session revocation). | SMTP/Transactional email delivery provider integration. | ✅ OPERATIONAL |")
-    lines.append("| **Account Settings (`/user/[username]/settings`)** | Client-side mock UI for password rotation and account deletion danger zone. | Dedicated backend mutation endpoints for password rotation and cascading account deletion. | ⚠️ UI STUB |")
+    lines.append("| **Account Settings (`/user/[username]/settings`)** | Authenticated password rotation (`POST /v1/users/{username}/password/`) and cascading account deletion (`DELETE /v1/users/{username}/`) with `verify_profile_owner` IDOR guard. | Multi-factor authentication (TOTP/WebAuthn) enrollment. | ✅ OPERATIONAL |")
     lines.append("| **OAuth SSO Callback (`/callback`)** | Route shell with static redirect. | OAuth authorization code exchange and social account link in `social_accounts` table. | ⚠️ ROUTE STUB |")
     lines.append("| **Master Catalogs (`catalogs.py`)** | `skills` queried from database; `company`, `school`, `location` served via in-memory dictionaries. | Query `catalog_companies`, `catalog_schools`, `catalog_locations` database tables with fuzzy trigram index. | ⚠️ IN-MEMORY CATALOG |")
     lines.append("| **Public CMS Careers & FAQs (`cms.py`)** | FAQs and career postings served via in-memory dictionaries (fallback from `career_postings`). | Dynamic administrative CMS dashboard for FAQ management and job applicant tracking. | ⚠️ IN-MEMORY CMS |")

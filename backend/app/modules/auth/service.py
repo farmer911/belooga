@@ -16,15 +16,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
     REFRESH_TOKEN_EXPIRE_DAYS,
+    AuthenticatedUser,
     create_access_token,
     generate_refresh_token,
     get_password_hash,
     hash_token,
     verify_password,
+    verify_profile_owner,
 )
 from app.modules.auth.repository import IdentityRepository
 from app.modules.profile import ProfileService
 from app.schemas.auth import (
+    ChangePasswordRequest,
     CheckAvailabilityResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
@@ -261,4 +264,28 @@ class AuthService:
         )
         await self.db.commit()
         return {"message": "Password has been reset successfully"}
+
+    async def change_user_password(
+        self, username: str, payload: ChangePasswordRequest, current_user: AuthenticatedUser
+    ) -> dict[str, str]:
+        verify_profile_owner(current_user, username)
+        identity = await self.identity_repo.get_by_id(current_user.id)
+        if not identity or not verify_password(payload.current_password, identity.password_hash):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+        await self.identity_repo.rotate_password_and_revoke_sessions(
+            identity_id=current_user.id,
+            new_password_hash=get_password_hash(payload.new_password),
+        )
+        await self.db.commit()
+        return {"message": "Password updated successfully"}
+
+    async def delete_user_account(
+        self, username: str, current_user: AuthenticatedUser, response: Response
+    ) -> dict[str, str]:
+        verify_profile_owner(current_user, username)
+        await self.identity_repo.delete_identity(current_user.id)
+        await self.db.commit()
+        response.delete_cookie("belooga_refresh_token", httponly=True, samesite="lax", secure=IS_PRODUCTION)
+        return {"message": "Account permanently deleted"}
+
 
