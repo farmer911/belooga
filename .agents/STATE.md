@@ -1,20 +1,19 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task:** Full-Stack Parity (Zero UI-Only Features), SEO + Lighthouse Optimization, and Backend/Edge API Gateway across 5 sequential PRs (`BEL-509` -> `BEL-513`):
-  1. `BEL-509`: CMS Blog Full-Stack (`blog_posts` table + `GET /v1/blog/posts/`, `GET /v1/blog/posts/{slug}/` + FE wiring).
-  2. `BEL-510`: CV Studio Persistence & Interactive Sidebar (`GET/PUT /v1/profile/{username}/cv-draft/` + server PDF export + toggleable sections).
-  3. `BEL-511`: Executive Analytics `?range=7D|30D|ALL` + Real DB Order Ledger + Expert Review Feedback Scorecard viewer.
-  4. `BEL-512`: Dynamic SEO (`sitemap.ts`, `robots.ts`, route `layout.tsx` metadata, JSON-LD) & Lighthouse CLS/LCP/A11y optimization.
-  5. `BEL-513`: Backend API Gateway (`app/core/gateway.py` Rate-Limiting, `X-Request-ID`, Security Headers, `GET /v1/gateway/status`, Nginx Edge Gateway & Next.js `/api/v1` proxy).
+- **Task (`BEL-514`):** Audit, Benchmark, Demo, and Upgrade Backend API Gateway (`app/core/gateway.py`) and Multi-Tier Caching (`app/core/cache.py` + domain services):
+  1. **Gateway Flaws Fixed:** Replace `BaseHTTPMiddleware` (streaming buffer bug + task-group overhead) with Pure ASGI Middleware (`__call__(scope, receive, send)`), replace unbounded `defaultdict(deque)` IP memory leak with Bounded LRU Token-Bucket/GCRA + Route-Tiered policies (`auth_strict`, `mutation`, `chunk_upload`, `public_read`), add `413 Payload Too Large` guard, `Idempotency-Key` replay cache, and HTTP `ETag`/`If-None-Match` (`304 Not Modified`) + `Cache-Control`.
+  2. **Cache Flaws Fixed:** Fix split-brain `profile_cache` vs `platform_cache` invalidation bug across `ProfileService`, `TimelineService`, and `MediaService`; upgrade `AsyncTieredCache` with Stale-While-Revalidate (SWR), Singleflight Coalescing, and real-time hit/miss telemetry; cache hot read endpoints in `CatalogsService` and `CmsService`.
+  3. **Empirical Benchmark Demo:** `scripts/benchmark-gateway-cache.py` + artifact `gateway_and_cache_benchmark.md`.
 
 ## Pre-Mortem Risks
-- **File Line Caps:** Keep all backend `.py` <= 300 lines and frontend `page.tsx` <= 241 lines (`cv-studio/page.tsx` is 211 lines; extract helpers/hooks).
-- **Test Compatibility:** Rate-Limiter in `app/core/gateway.py` must allow high burst in `ENVIRONMENT=testing` unless explicitly tested via `X-Test-Rate-Limit` header.
+- Keep all `backend/app/**/*.py` strictly <= 300 lines.
+- Ensure `ENVIRONMENT=testing` compatibility across existing backend pytest cases while allowing explicit cache/gateway testing.
 
-## 5-PR Execution Checklist
-- [x] **PR 1 (`BEL-509`):** Blog CMS Full-Stack (`blog_posts` table + `/v1/blog/posts/*` + `/blog` & `/blog/[slug]` FE integration)
-- [x] **PR 2 (`BEL-510`):** CV Studio Cloud Draft Persistence (`GET/PUT /v1/profile/{username}/cv-draft/`) & Interactive Section Reordering
-- [x] **PR 3 (`BEL-511`):** Analytics `?range=7D|30D|ALL` Dynamic Querying + Expert Review Feedback Scorecard Integration
-- [x] **PR 4 (`BEL-512`):** SEO Engine (`sitemap.ts`, `robots.ts`, OpenGraph/JSON-LD, Route Metadata) & Lighthouse Optimization
-- [x] **PR 5 (`BEL-513`):** Backend API Gateway Middleware (`app/core/gateway.py`, `GET /v1/gateway/status`) + Nginx Edge Gateway & Next.js Proxy
+## Execution Checklist
+- [x] Build & run empirical benchmark script (`scripts/benchmark-gateway-cache.py`) comparing Gateway & Cache architectures
+- [x] Write TDD Red/Green test suite (`backend/tests/test_gateway_and_cache_optimization.py`)
+- [x] Upgrade `backend/app/core/cache.py` (L1 LRU + L2 Redis + Singleflight + SWR + Telemetry + `invalidate_candidate_cache`)
+- [x] Upgrade `backend/app/core/gateway.py` (Pure ASGI + Bounded LRU Token-Bucket + Route Tiers + 413 Guard + Idempotency-Key + ETag 304)
+- [x] Fix split-brain cache invalidation in `profile/service.py`, `timeline/service.py`, `media/service.py` & wire `catalogs/service.py`, `cms/service.py`
+- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #22, and merge into `main`

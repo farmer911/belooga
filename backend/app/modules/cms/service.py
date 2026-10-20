@@ -164,24 +164,27 @@ class CmsService:
         raise HTTPException(status_code=404, detail=f"Blog article '{slug}' not found")
 
     async def get_seo_sitemap_data(self) -> Dict[str, Any]:
-        usernames = await self.cms_repo.list_public_usernames_for_seo() if self.cms_repo else ["alexnguyen"]
-        posts = await self.list_blog_posts()
-        return {
-            "public_usernames": usernames,
-            "blog_slugs": [p["slug"] for p in posts],
-            "static_routes": [
-                "/",
-                "/search",
-                "/expert-review",
-                "/ats-diagnostics",
-                "/cv-studio",
-                "/salary-benchmark",
-                "/careers",
-                "/blog",
-                "/help",
-                "/contact-us",
-            ],
-        }
+        async def _compute() -> Dict[str, Any]:
+            usernames = await self.cms_repo.list_public_usernames_for_seo() if self.cms_repo else ["alexnguyen"]
+            posts = await self.list_blog_posts()
+            return {
+                "public_usernames": usernames,
+                "blog_slugs": [p["slug"] for p in posts],
+                "static_routes": [
+                    "/",
+                    "/search",
+                    "/expert-review",
+                    "/ats-diagnostics",
+                    "/cv-studio",
+                    "/salary-benchmark",
+                    "/careers",
+                    "/blog",
+                    "/help",
+                    "/contact-us",
+                ],
+            }
+
+        return await platform_cache.get_or_set("cms:seo_sitemap", 120, _compute)
 
     async def list_career_jobs(self) -> List[Dict[str, Any]]:
         async def _compute() -> List[Dict[str, Any]]:
