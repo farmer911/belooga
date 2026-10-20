@@ -92,7 +92,10 @@ rel = lambda p: str(p.relative_to(ROOT))
 
 def find_module(dotted):
     p = ROOT / "backend" / (dotted.replace(".", "/") + ".py")
-    return p if p.exists() else None
+    if p.exists():
+        return p
+    init_p = ROOT / "backend" / dotted.replace(".", "/") / "service.py"
+    return init_p if init_p.exists() else None
 
 
 def backend_facts(skill_name, modules):
@@ -110,7 +113,7 @@ def backend_facts(skill_name, modules):
                     if kw.arg == "prefix" and isinstance(kw.value, ast.Constant):
                         router_prefix = kw.value.value
         for n in ast.walk(tree):
-            if isinstance(n, ast.ImportFrom) and n.module and n.module.startswith("app.services"):
+            if isinstance(n, ast.ImportFrom) and n.module and n.module.startswith(("app.services", "app.modules")):
                 m = find_module(n.module)
                 if m:
                     services.add(m)
@@ -129,13 +132,15 @@ def backend_facts(skill_name, modules):
                     out.append(f"| `{d.func.attr.upper()}` | `/v1{router_prefix}{d.args[0].value}` | `{n.name}` | {auth} |")
     for s in list(services):
         s_txt = s.read_text(encoding="utf-8")
-        for m in re.findall(r"from (app\.services\.\w+) import", s_txt):
+        if (s.parent / "repository.py").exists():
+            repos.add(s.parent / "repository.py")
+        for m in re.findall(r"from (app\.(?:services|modules)\.[\w.]+) import", s_txt):
             p = find_module(m)
-            if p:
+            if p and p.name != "repository.py":
                 services.add(p)
-        for m in re.findall(r"from (app\.repositories\.\w+) import", s_txt):
+        for m in re.findall(r"from (app\.(?:repositories|modules)\.[\w.]+) import", s_txt):
             p = find_module(m)
-            if p:
+            if p and (p.name.endswith("_repo.py") or p.name == "repository.py"):
                 repos.add(p)
     tests = [
         ROOT / "backend" / "tests" / t

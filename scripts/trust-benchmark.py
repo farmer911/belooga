@@ -80,12 +80,34 @@ for p in BE_APP.rglob("*.py"):
             elif len(n.body) == 1 and isinstance(n.body[0], ast.Pass):
                 violations["2. Error Transparency (No Pass)"].append(f"{rel}:{n.lineno} -> silent 'except ...: pass' band-aid")
 
-# --- 3. LAYER PURITY (NO BAND-AIDS IN ROUTERS OR PAGES) ---
+# --- 3. LAYER PURITY & MODULAR MONOLITH BOUNDARIES ---
 for p in (BE_APP / "api" / "v1" / "endpoints").rglob("*.py"):
     txt = p.read_text(encoding="utf-8")
     rel = p.relative_to(ROOT)
     if re.search(r"\b(db\.execute|session\.execute|select\(|text\()\b", txt):
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> direct DB query inside router (must use Service/Repo)")
+    if re.search(r"from\s+app\.(?:repositories|modules\.\w+\.repository)\s+import", txt):
+        violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> router imports repository directly (must use Module Facade/Service)")
+
+MODULES_DIR = BE_APP / "modules"
+if MODULES_DIR.exists():
+    for mod_dir in sorted(p for p in MODULES_DIR.iterdir() if p.is_dir() and not p.name.startswith("__")):
+        mod_name = mod_dir.name
+        for req_f in ("__init__.py", "service.py", "repository.py"):
+            if not (mod_dir / req_f).exists():
+                violations["3. Layer Purity (No Band-Aids)"].append(f"backend/app/modules/{mod_name}/{req_f} missing in vertical slice")
+        for py_f in mod_dir.rglob("*.py"):
+            py_txt = py_f.read_text(encoding="utf-8")
+            py_rel = py_f.relative_to(ROOT)
+            for other_mod in re.findall(r"from\s+app\.modules\.(\w+)\.repository\s+import", py_txt):
+                if other_mod != mod_name:
+                    violations["3. Layer Purity (No Band-Aids)"].append(
+                        f"{py_rel} -> cross-module private repository import from '{other_mod}' (must use app.modules.{other_mod} facade)"
+                    )
+            if re.search(r"from\s+app\.repositories\.\w+\s+import", py_txt):
+                violations["3. Layer Purity (No Band-Aids)"].append(
+                    f"{py_rel} -> vertical module imports legacy horizontal app.repositories directly"
+                )
 
 for p in FE_SRC.rglob("*"):
     if p.suffix not in (".ts", ".tsx"):

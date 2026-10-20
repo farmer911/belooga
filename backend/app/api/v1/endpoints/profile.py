@@ -18,7 +18,7 @@ from app.schemas.profile import (
     SkillAdd,
     SkillResponse,
 )
-from app.services.profile_service import ProfileService
+from app.modules.profile import ProfileService
 
 router = APIRouter()
 

@@ -1,35 +1,22 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task:** 5-Wave High-ROI Full-Stack (FE + BE) Feature Sprint + 5 Iterative Benchmark & Skill Evolution Loops (Continuous Overnight Execution until 06:20 AM).
-- **Pushback Guard:** Rejected `999,999,999+` unvalidated features per `PRODUCT_THESIS.md` (80/20 YAGNI) and `ratchet.json` (`<= 300` lines/file). Replaced with 5 high-conversion FE+BE features across all 3 bounded contexts, each backed by TDD, 500k-row benchmark, and skill SSOT sync.
+- **Task:** Option B2 — Refactor `backend/app/` into **12 Self-Contained Vertical-Slice Modules** under `backend/app/modules/<domain>/` (`__init__.py` Public Facade, `service.py`, `repository.py`), enforce AST Modular Boundary Guards in `scripts/trust-benchmark.py`, and **`git commit` + `git push origin main` after every single completed module (1/12 -> 12/12)**.
 
 ## Pre-Mortem Risks
-- **File Bloat & Ratchet Violation:** Keep every BE/FE file `<= 300` lines (`fe_max_page_lines <= 245`), `fe_arbitrary_hex = 0`, `fe_structural_emoji = 0`, `fe_any = 0`.
-- **Event-Loop & 500k DB Load:** Cache all new read/compute endpoints via `platform_cache` (`app/core/cache.py`) and bound all SQL queries.
+- **Cross-Module Private Imports:** Forbid `from app.modules.<other>.repository import ...` via AST check in `scripts/trust-benchmark.py`. Cross-module calls must go through `app.modules.<other>` public facade.
+- **SSOT & CI Compatibility:** Keep `scripts/render-skill-facts.py`, `scripts/lint-skills.py` (`python3 -I -S`), and `CURRENT_STATE.md` 100% synchronized on every push.
 
-## Target Files
-- Wave 1 (Core): `backend/app/api/v1/endpoints/profile.py`, `backend/app/services/profile_service.py`, `frontend/src/app/public/[username]/page.tsx`
-- Wave 2 (ATS): `backend/app/api/v1/endpoints/ats_matching.py`, `backend/app/services/ats_matching_service.py`, `frontend/src/components/features/ats-diagnostics/ats-scorecard.tsx`
-- Wave 3 (Catalogs): `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/services/catalogs_service.py`, `frontend/src/app/salary-benchmark/page.tsx`
-- Wave 4 (Tracker): `backend/app/api/v1/endpoints/job_tracker.py`, `backend/app/services/job_tracker_service.py`, `frontend/src/app/workspace/jobs/page.tsx`
-- Wave 5 (Expert): `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/services/expert_review_service.py`, `frontend/src/app/(public)/expert-review/page.tsx`
-
-## Execution Checklist (Continuous until 06:20 AM)
-- [x] Wave 0 (`ddd7033`): 500k Dataset + Singleflight Cache + Keyset Pagination + Recruiter Shortlist Radar
-- [x] Wave 1 + Skill Sync #1 (`f39415f`): Candidate Profile Trust & Recruiter Readiness Score
-- [x] Wave 2 + Skill Sync #2 (`de0a540`): 60s Video Pitch Script & STAR Interview Kit Generator
-- [x] Wave 3 + Skill Sync #3 (`76fb618`): Career Upskill ROI & Salary Negotiation Simulator
-- [x] Wave 4 + Skill Sync #4 (`0bc5426`): Job Tracker Funnel Velocity & Offer Probability Analytics
-- [x] Wave 5 + Skill Sync #5 (`37f9cb1`): Smart Expert Reviewer Matchmaking + 25-Scenario 500k Benchmark
-- [x] Wave 6 + Skill Sync #6 (`4dfb143`): Executive Cohort Retention & LTV/CAC Unit Economics Telemetry (`analytics.py` + FE)
-- [x] Wave 7 + Skill Sync #7 (`d20c629`): Candidate Career Trajectory & Promotion Readiness Simulator (`timeline.py` + FE)
-- [x] Wave 8 + Skill Sync #8 (`7622e52`): Live Search Trending Skills & Talent Pool Pulse (`search.py` + FE `/search`)
-- [x] Wave 9 + Skill Sync #9 (`147cddc`): Candidate Workspace Live Trust & Readiness Copilot (`user/[username]/page.tsx`)
-- [x] Wave 10 + Skill Sync #10 (`1bf71dc`): Real-Time CV Studio ATS Readability & STAR Bullet Density Auditor (`cv-studio/page.tsx`)
-- [x] Wave 11 + Skill Sync #11 (`66ee961`): Homepage Live 500k Talent Pool & Trending Skills Ticker (`page.tsx`)
-- [x] Wave 12 + Skill Sync #12 (`4def9c9`): Public CMS Career Jobs Singleflight Cache + Inline Application & ATS Pre-Check (`careers/page.tsx` + `BM-29` at 5,001 RPS)
-- [x] Wave 13 + Skill Sync #13 (`40a92ca`): Expert Catalog Singleflight Cache + Help Center FAQ Filter Bar (`help/page.tsx` + `BM-30` at 3,824 RPS)
-- [x] Wave 14 + Skill Sync #14 (`bf66b69`): Blog Career Acceleration Conversion Funnel CTA (`blog/[slug]/page.tsx` + Ground-Truth Stack Sync)
-- [x] Wave 15 + Skill Sync #15 (`1a614c8`): Contact Us 1-Click Inquiry Topic Pills & Inline Error Banner (`contact-us/page.tsx`)
-- [x] Final 06:20 AM Gate: Full 30-Scenario (`BM-01..BM-30`) 500k Benchmark, `audit-truth.sh` Gate & Morning CTO Handover Report
+## 12-Module Vertical Refactoring & Push Checklist (Option B2)
+- [x] Module 1/12 (`profile`): `backend/app/modules/profile/` + Public Profile Facade + Push
+- [ ] Module 2/12 (`auth`): `backend/app/modules/auth/` (decouple `ProfileRepository`) + Push
+- [ ] Module 3/12 (`timeline`): `backend/app/modules/timeline/` (decouple `ProfileRepository`) + Push
+- [ ] Module 4/12 (`media`): `backend/app/modules/media/` (decouple `ProfileRepository`) + Push
+- [ ] Module 5/12 (`catalogs`): `backend/app/modules/catalogs/` + Push
+- [ ] Module 6/12 (`search`): `backend/app/modules/search/` (dedicated `SearchService`/`SearchRepository`) + Push
+- [ ] Module 7/12 (`cms`): `backend/app/modules/cms/` + Push
+- [ ] Module 8/12 (`ats_matching`): `backend/app/modules/ats_matching/` + Push
+- [ ] Module 9/12 (`expert_review`): `backend/app/modules/expert_review/` + Push
+- [ ] Module 10/12 (`job_tracker`): `backend/app/modules/job_tracker/` + Push
+- [ ] Module 11/12 (`payments`): `backend/app/modules/payments/` + Push
+- [ ] Module 12/12 (`analytics`): `backend/app/modules/analytics/` + Final 12-Module AST Lock + Push
