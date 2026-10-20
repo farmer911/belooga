@@ -25,8 +25,8 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 | `POST` | `/v1/profile/{user_id}/report/` | `report_candidate_profile` | public |
 
 - Router: `backend/app/api/v1/endpoints/search.py`, `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/api/v1/endpoints/cms.py`
-- Service: `backend/app/modules/catalogs/service.py`, `backend/app/modules/search/service.py`, `backend/app/services/cms_service.py`
-- Repository: `backend/app/modules/catalogs/repository.py`, `backend/app/modules/search/repository.py`, `backend/app/repositories/cms_repo.py`
+- Service: `backend/app/modules/catalogs/service.py`, `backend/app/modules/cms/service.py`, `backend/app/modules/search/service.py`
+- Repository: `backend/app/modules/catalogs/repository.py`, `backend/app/modules/cms/repository.py`, `backend/app/modules/search/repository.py`
 - Tests: `backend/tests/test_backend_foundation.py`, `backend/tests/test_catalogs_salary.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_profile_privacy_and_pii.py`
 <!-- AUTO:END -->
 

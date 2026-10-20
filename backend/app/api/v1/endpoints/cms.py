@@ -6,13 +6,13 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.modules.cms import CmsService
 from app.schemas.cms import (
     ContactInquiryRequest,
     ContactInquiryResponse,
     ReportProfileRequest,
     ReportProfileResponse,
 )
-from app.services.cms_service import CmsService
 
 router = APIRouter()
 

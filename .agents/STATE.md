@@ -14,7 +14,7 @@
 - [x] Module 4/12 (`media`): `backend/app/modules/media/` (decouple `ProfileRepository`) + Push
 - [x] Module 5/12 (`catalogs`): `backend/app/modules/catalogs/` + Push
 - [x] Module 6/12 (`search`): `backend/app/modules/search/` (dedicated `SearchService`/`SearchRepository`) + Push
-- [ ] Module 7/12 (`cms`): `backend/app/modules/cms/` + Push
+- [x] Module 7/12 (`cms`): `backend/app/modules/cms/` + Push
 - [ ] Module 8/12 (`ats_matching`): `backend/app/modules/ats_matching/` + Push
 - [ ] Module 9/12 (`expert_review`): `backend/app/modules/expert_review/` + Push
 - [ ] Module 10/12 (`job_tracker`): `backend/app/modules/job_tracker/` + Push

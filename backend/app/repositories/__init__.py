@@ -1,17 +1,23 @@
-"""Repositories module for Belooga database access layer."""
+"""Repositories package shim (Vertical module repositories live in `app.modules.<domain>.repository`)."""
 
-from app.repositories.catalogs_repo import CatalogsRepository
-from app.repositories.cms_repo import CmsRepository
-from app.repositories.identity_repo import IdentityRepository
-from app.repositories.media_repo import MediaRepository
-from app.repositories.profile_repo import ProfileRepository
-from app.repositories.timeline_repo import TimelineRepository
+from importlib import import_module
+from typing import Any
 
-__all__ = [
-    "IdentityRepository",
-    "ProfileRepository",
-    "TimelineRepository",
-    "MediaRepository",
-    "CatalogsRepository",
-    "CmsRepository",
-]
+_LAZY_MAP = {
+    "IdentityRepository": ("app.modules.auth.repository", "IdentityRepository"),
+    "ProfileRepository": ("app.modules.profile.repository", "ProfileRepository"),
+    "TimelineRepository": ("app.modules.timeline.repository", "TimelineRepository"),
+    "MediaRepository": ("app.modules.media.repository", "MediaRepository"),
+    "CatalogsRepository": ("app.modules.catalogs.repository", "CatalogsRepository"),
+    "SearchRepository": ("app.modules.search.repository", "SearchRepository"),
+    "CmsRepository": ("app.modules.cms.repository", "CmsRepository"),
+}
+
+__all__ = list(_LAZY_MAP.keys())
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY_MAP:
+        mod_path, attr = _LAZY_MAP[name]
+        return getattr(import_module(mod_path), attr)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
