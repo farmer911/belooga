@@ -13,6 +13,7 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.events import event_stream
 from app.modules.notifications.repository import NotificationRepository
 from app.schemas.notifications import (
     NotificationItemDTO,
@@ -122,6 +123,11 @@ class NotificationService:
         )
         if auto_commit:
             await self.db.commit()
+        event_stream.publish(
+            event_type=event_type,
+            partition_key=str(identity_id),
+            payload={"title": title, "deep_link": clean_link, "email_sent": email_sent},
+        )
         return NotificationItemDTO.model_validate(notif).model_dump(mode="json")
 
     async def list_notifications(self, identity_id: uuid.UUID) -> NotificationListResponse:
