@@ -19,6 +19,7 @@ class ATSMatchingRepository:
         raw_text: str,
         company_name: Optional[str] = None,
         skills_extracted: Optional[List[str]] = None,
+        commit: bool = True,
     ) -> JobDescription:
         jd = JobDescription(
             company_name=company_name,
@@ -27,8 +28,11 @@ class ATSMatchingRepository:
             skills_extracted=skills_extracted or [],
         )
         self.db.add(jd)
-        await self.db.commit()
-        await self.db.refresh(jd)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(jd)
+        else:
+            await self.db.flush()
         return jd
 
     async def create_match_record(
@@ -76,7 +80,8 @@ class ATSMatchingRepository:
             WITH matched_pool AS MATERIALIZED (
                 SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.bio,
                        p.location, p.seeking_status, p.avatar_url, p.video_pitch_url,
-                       p.created_at, p.search_vector
+                       p.created_at,
+                       ts_rank_cd(p.search_vector, to_tsquery('english', :ts_q)) AS ts_rank
                 FROM candidate_profiles p
                 WHERE p.is_hidden = FALSE
                   AND p.search_vector @@ to_tsquery('english', :ts_q)
@@ -86,24 +91,15 @@ class ATSMatchingRepository:
             )
             SELECT id, username, first_name, last_name, headline, bio,
                    location, seeking_status, avatar_url, video_pitch_url,
-                   ts_rank_cd(search_vector, to_tsquery('english', :ts_q)) AS ts_rank
+                   ts_rank,
+                   COUNT(*) OVER() AS total_window_count
             FROM matched_pool
             ORDER BY
                 (CASE WHEN video_pitch_url IS NOT NULL THEN 0.35 ELSE 0.0 END +
                  CASE WHEN seeking_status = 'Actively Looking' THEN 0.20 ELSE 0.0 END +
-                 ts_rank_cd(search_vector, to_tsquery('english', :ts_q))) DESC,
+                 ts_rank) DESC,
                 created_at DESC
             LIMIT :limit
-        """)
-        count_query = text(f"""
-            SELECT COUNT(*) FROM (
-                SELECT 1 FROM candidate_profiles p
-                WHERE p.is_hidden = FALSE
-                  AND p.search_vector @@ to_tsquery('english', :ts_q)
-                  {video_clause}
-                  {loc_clause}
-                LIMIT 1000
-            ) capped
         """)
         params: Dict[str, Any] = {"ts_q": ts_expr, "limit": limit}
         if location_filter:
@@ -111,8 +107,7 @@ class ATSMatchingRepository:
 
         res = await self.db.execute(query, params)
         rows = [dict(r._mapping) for r in res.fetchall()]
-        cnt_res = await self.db.execute(count_query, params)
-        total_matched = int(cnt_res.scalar() or len(rows))
+        total_matched = int(rows[0]["total_window_count"]) if rows else 0
         return rows, total_matched
 
     async def get_market_pulse_stats(self) -> Dict[str, int]:

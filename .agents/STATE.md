@@ -1,22 +1,24 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (`BEL-517`):** Research, Design, and Implement Production Service Worker & PWA Architecture on Frontend (`frontend/public/sw.js`, `frontend/public/manifest.webmanifest`, `frontend/src/components/providers/service-worker-provider.tsx`, and integration with `layout.tsx`, `notification-bell.tsx`, and `cv-studio/page.tsx`):
-  1. **Supervisor Guardrails (Zero Auth/PII Leak & Zero 206 Video Range Crash):**
-     - Never cache requests carrying `Authorization` headers, `/v1/auth/*`, `/v1/payments/*`, or HTTP `206 Partial Content` video range streams.
-  2. **5 High-ROI Service Worker Features Applied:**
-     - **SWR Public API Cache (`belooga-api-swr-v1`):** Instant offline/flaky-network resilience for `/v1/catalogs/*`, `/v1/blog/posts/*`, `/v1/faqs`, `/v1/careers/jobs/`, `/v1/profile/search/trending/`.
-     - **Static Asset Cache-First (`belooga-static-v1`):** Instant repeat-visit loading for `/images/*` & static assets.
-     - **Offline Mutation Outbox & Auto-Replay (`QUEUE_OFFLINE_MUTATION` / `FLUSH_OUTBOX`):** Protects `/cv-studio` cloud draft saves when offline and auto-syncs upon reconnect.
-     - **Native Notification & Deep-Link Click Handler (`push` / `notificationclick`):** Opens/focuses deep-link URLs from OS notifications, wired into `NotificationBell`.
-     - **PWA Manifest (`manifest.webmanifest`):** App shortcuts & installability metadata in `layout.tsx`.
+- **Task (`BEL-518`):** Full Backend Flow Standardization (`Gateway -> Router -> Service -> Repository -> EventStream/Cache`) & PostgreSQL 16 SQL / Index Optimization:
+  1. **Add Missing Composite B-Tree Indexes (`backend/alembic/versions/0004_optimize_indexes_and_sql.py` + `database.py`):**
+     - Index `notifications (identity_id, is_read, created_at DESC)`, `cv_review_orders (candidate_identity_id, created_at DESC)`, `cv_review_orders (order_status, created_at DESC)`, `candidate_job_applications_tracker (candidate_identity_id, created_at DESC)`, `resume_jd_matches (candidate_identity_id, created_at DESC)`.
+  2. **Consolidate Multi-Roundtrip SQL Queries into Single-Roundtrip PostgreSQL 16 Queries:**
+     - `ProfileRepository.get_full_profile_bundle`: **7 sequential SQL queries -> 1 single `json_agg`/`ARRAY` SQL query**.
+     - `ProfileRepository.add_skill` / `remove_skill`: **3/2 queries -> 1 atomic CTE / `DELETE USING` query**.
+     - `TimelineRepository.bulk_update_job_orders` / `bulk_update_education_orders`: **`N` loop `UPDATE` queries -> 1 bulk `CASE` `UPDATE` query**.
+     - `AnalyticsRepository.get_dashboard_aggregates`: **4 separate queries + service-layer raw SQL -> 1 single scalar query in repository**.
+     - `ATSMatchingRepository.find_shortlist_candidates`: **2 GIN index scans -> 1 scan with `COUNT(*) OVER()` window function**.
+     - `NotificationRepository.mark_read`: **2 queries (`SELECT` + `UPDATE`) -> 1 `UPDATE ... RETURNING`**.
+  3. **Empirical SQL Benchmark (`scripts/benchmark-sql-optimization.py`) & TDD (`backend/tests/test_sql_and_flow_optimization.py`).**
 
 ## Pre-Mortem Risks
-- Keep all frontend `page.tsx` <= 241 lines, `fe_arbitrary_hex == 0`, `fe_structural_emoji == 0`.
+- Keep all `backend/app/**/*.py` <= 300 lines.
 
 ## Execution Checklist
-- [x] Create `frontend/public/sw.js` (Cache-First static, SWR public APIs, Auth/206 bypass, Offline Outbox replay, Push & Deep-link `notificationclick`)
-- [x] Create `frontend/public/manifest.webmanifest` and link in `frontend/src/app/layout.tsx`
-- [x] Create `frontend/src/components/providers/service-worker-provider.tsx` (SW registration, offline/sync banner, outbox queue helper, native notification trigger)
-- [x] Wire SW Native Desktop Notification toggle into `NotificationBell` & Offline Outbox fallback into `cv-studio/page.tsx`
-- [x] Verify TypeScript (`bun x tsc --noEmit`), backend pytest, `trust-benchmark.py`, `audit-truth.sh`, open PR #25, and merge into `main`
+- [x] Create Alembic migration `0004_optimize_indexes_and_sql.py` & apply composite indexes to PostgreSQL
+- [x] Upgrade `profile/repository.py`, `timeline/repository.py`, `analytics/repository.py`, `ats_matching/repository.py`, `notifications/repository.py`
+- [x] Standardize service flow (`profile/service.py`, `timeline/service.py`, `analytics/service.py`, `ats_matching/service.py`, `gateway.py`)
+- [x] Run empirical SQL benchmark (`scripts/benchmark-sql-optimization.py`) & TDD test suite (`backend/tests/test_sql_and_flow_optimization.py`)
+- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #26, and merge into `main`

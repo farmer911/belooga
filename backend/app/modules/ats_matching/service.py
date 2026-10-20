@@ -121,6 +121,7 @@ class ATSMatchingService:
             raw_text=request.jd_text,
             company_name=request.company_name,
             skills_extracted=jd_skills,
+            commit=False,
         )
         match_record = await self.repo.create_match_record(
             job_description_id=jd_record.id,

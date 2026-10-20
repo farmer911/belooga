@@ -57,6 +57,14 @@ async def seed(db_url: str):
                 )
             """)
         )
+        for idx_sql in (
+            "CREATE INDEX IF NOT EXISTS idx_notifications_identity_unread_created ON notifications (identity_id, is_read, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_cv_review_orders_candidate_created ON cv_review_orders (candidate_identity_id, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_cv_review_orders_status_created ON cv_review_orders (order_status, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_job_tracker_candidate_created ON candidate_job_applications_tracker (candidate_identity_id, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_resume_jd_matches_candidate_created ON resume_jd_matches (candidate_identity_id, created_at DESC)",
+        ):
+            await conn.execute(text(idx_sql))
         await conn.execute(text("DELETE FROM identities WHERE email LIKE '%@test.com'"))
         # 1. Admin Identity
         admin_pass_hash = get_password_hash("AdminSecret123!")

@@ -7,7 +7,7 @@ including pessimistic row-level locking for reorder operations.
 from typing import Any, Dict, List, Optional
 import uuid
 
-from sqlalchemy import delete, func, select, text, update
+from sqlalchemy import case, delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.timeline import EducationExperience, JobExperience
@@ -96,6 +96,22 @@ class TimelineRepository:
         )
         await self.db.execute(stmt)
 
+    async def bulk_update_job_orders(
+        self, profile_id: uuid.UUID, order_pairs: List[tuple[uuid.UUID, int]]
+    ) -> None:
+        if not order_pairs:
+            return
+        whens = {item_id: order_val for item_id, order_val in order_pairs}
+        stmt = (
+            update(JobExperience)
+            .where(
+                JobExperience.profile_id == profile_id,
+                JobExperience.id.in_(list(whens.keys())),
+            )
+            .values(display_order=case(whens, value=JobExperience.id))
+        )
+        await self.db.execute(stmt)
+
     async def list_education_by_username(self, username: str) -> List[Dict[str, Any]]:
         query = text("""
             SELECT e.id, e.school_name, e.degree_name, e.gpa, e.from_date_month, e.from_date_year,
@@ -170,5 +186,21 @@ class TimelineRepository:
             update(EducationExperience)
             .where(EducationExperience.id == item_id, EducationExperience.profile_id == profile_id)
             .values(display_order=display_order)
+        )
+        await self.db.execute(stmt)
+
+    async def bulk_update_education_orders(
+        self, profile_id: uuid.UUID, order_pairs: List[tuple[uuid.UUID, int]]
+    ) -> None:
+        if not order_pairs:
+            return
+        whens = {item_id: order_val for item_id, order_val in order_pairs}
+        stmt = (
+            update(EducationExperience)
+            .where(
+                EducationExperience.profile_id == profile_id,
+                EducationExperience.id.in_(list(whens.keys())),
+            )
+            .values(display_order=case(whens, value=EducationExperience.id))
         )
         await self.db.execute(stmt)

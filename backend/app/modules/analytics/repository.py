@@ -1,11 +1,7 @@
 """Repository Layer for Domain 12: Executive Analytics & Unit Economics (Vertical Module: analytics)."""
 
-from sqlalchemy import func, select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.ats_matching import ResumeJDMatch
-from app.models.identity import Identity
-from app.models.job_tracker import CandidateJobApplicationTracker
 
 
 class AnalyticsRepository:
@@ -13,9 +9,16 @@ class AnalyticsRepository:
         self.db = db
 
     async def get_platform_counts(self) -> tuple[int, int, int]:
-        total_users = (await self.db.execute(select(func.count(Identity.id)))).scalar_one_or_none() or 0
-        total_scans = (await self.db.execute(select(func.count(ResumeJDMatch.id)))).scalar_one_or_none() or 0
-        active_jobs = (
-            await self.db.execute(select(func.count(CandidateJobApplicationTracker.id)))
-        ).scalar_one_or_none() or 0
-        return total_users, total_scans, active_jobs
+        """Single-roundtrip scalar subquery counting identities, ATS scans, and job trackers in 1 DB hop."""
+        res = await self.db.execute(
+            text("""
+                SELECT
+                    (SELECT COUNT(*) FROM identities) AS total_users,
+                    (SELECT COUNT(*) FROM resume_jd_matches) AS total_scans,
+                    (SELECT COUNT(*) FROM candidate_job_applications_tracker) AS active_jobs
+            """)
+        )
+        row = res.mappings().first()
+        if not row:
+            return 0, 0, 0
+        return int(row["total_users"] or 0), int(row["total_scans"] or 0), int(row["active_jobs"] or 0)

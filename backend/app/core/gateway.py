@@ -21,6 +21,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.cache import platform_cache
 from app.core.database import get_db
+from app.core.events import event_stream
 
 DEFAULT_RATE_LIMIT_RPM = 600
 AUTH_STRICT_RPM = 30
@@ -282,10 +283,12 @@ async def get_gateway_status(db: AsyncSession = Depends(get_db)):
             "idempotency_keys_cached": len(_idempotency_store),
         },
         "cache_metrics": platform_cache.get_stats(),
+        "event_stream_metrics": event_stream.get_status(),
         "upstreams": {
             "postgres": "connected",
             "postgres_latency_ms": db_latency_ms,
             "cache": "active",
+            "event_stream": "active",
             "edge_proxy": "nginx-reverse-proxy",
         },
     }
