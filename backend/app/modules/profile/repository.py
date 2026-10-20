@@ -72,6 +72,63 @@ class ProfileRepository:
         res = await self.db.execute(query, {"username": username.lower().strip()})
         return res.fetchone()
 
+    async def get_full_profile_bundle(self, username: str) -> Optional[Dict[str, Any]]:
+        """Single-roundtrip PostgreSQL 16 query hydrating profile, jobs, education, skills, media, languages & interests."""
+        query = text("""
+            SELECT
+                p.id, p.identity_id, p.username, p.first_name, p.last_name,
+                p.headline, p.bio, p.location, p.phone, p.employment_status,
+                p.seeking_status, p.avatar_url, p.video_pitch_url, p.resume_url,
+                p.is_hidden, p.is_fresh, p.created_at,
+                i.email,
+                (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'id', CAST(j.id AS text), 'title', j.title, 'company_name', j.company_name,
+                        'from_date_month', j.from_date_month, 'from_date_year', j.from_date_year,
+                        'currently_work_here', j.currently_work_here,
+                        'to_date_month', j.to_date_month, 'to_date_year', j.to_date_year,
+                        'description', j.description, 'logo_url', j.logo_url, 'display_order', j.display_order
+                    ) ORDER BY j.display_order ASC, j.from_date_year DESC NULLS LAST), '[]'::json)
+                    FROM job_experiences j WHERE j.profile_id = p.id
+                ) AS jobs_json,
+                (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'id', CAST(e.id AS text), 'school_name', e.school_name, 'degree_name', e.degree_name,
+                        'gpa', e.gpa, 'from_date_month', e.from_date_month, 'from_date_year', e.from_date_year,
+                        'currently_work_here', e.currently_work_here,
+                        'to_date_month', e.to_date_month, 'to_date_year', e.to_date_year,
+                        'description', e.description, 'logo_url', e.logo_url, 'display_order', e.display_order
+                    ) ORDER BY e.display_order ASC), '[]'::json)
+                    FROM education_experiences e WHERE e.profile_id = p.id
+                ) AS education_json,
+                ARRAY(
+                    SELECT s.name FROM skills s
+                    JOIN profile_skills ps ON ps.skill_id = s.id
+                    WHERE ps.profile_id = p.id ORDER BY s.name ASC
+                ) AS skills_arr,
+                (
+                    SELECT pm.file_url FROM profile_media pm
+                    WHERE pm.profile_id = p.id AND pm.category = 'pitch_poster' LIMIT 1
+                ) AS video_pitch_poster,
+                (
+                    SELECT COALESCE(json_agg(json_build_object('name', l.name, 'proficiency', pl.proficiency) ORDER BY l.name ASC), '[]'::json)
+                    FROM languages l JOIN profile_languages pl ON pl.language_id = l.id
+                    WHERE pl.profile_id = p.id
+                ) AS languages_json,
+                ARRAY(
+                    SELECT intr.name FROM interests intr
+                    JOIN profile_interests pi ON pi.interest_id = intr.id
+                    WHERE pi.profile_id = p.id ORDER BY intr.name ASC
+                ) AS interests_arr
+            FROM candidate_profiles p
+            JOIN identities i ON i.id = p.identity_id
+            WHERE p.username = :username
+            LIMIT 1
+        """)
+        res = await self.db.execute(query, {"username": username.lower().strip()})
+        row = res.mappings().first()
+        return dict(row) if row else None
+
     async def get_jobs(self, profile_id: uuid.UUID) -> List[Dict[str, Any]]:
         query = text("""
             SELECT id, title, company_name, from_date_month, from_date_year,
@@ -151,29 +208,26 @@ class ProfileRepository:
     async def add_skill(self, profile_id: uuid.UUID, skill_name: str) -> None:
         clean_name = skill_name.strip()
         await self.db.execute(
-            text("INSERT INTO skills (id, name) VALUES (:id, :name) ON CONFLICT (name) DO NOTHING"),
-            {"id": uuid.uuid4(), "name": clean_name},
+            text("""
+                WITH upserted_skill AS (
+                    INSERT INTO skills (id, name) VALUES (:id, :name)
+                    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                    RETURNING id
+                )
+                INSERT INTO profile_skills (profile_id, skill_id)
+                SELECT :pid, id FROM upserted_skill
+                ON CONFLICT DO NOTHING
+            """),
+            {"id": uuid.uuid4(), "name": clean_name, "pid": profile_id},
         )
-        skill_res = await self.db.execute(
-            text("SELECT id FROM skills WHERE name = :name"),
-            {"name": clean_name},
-        )
-        s_row = skill_res.fetchone()
-        if s_row:
-            await self.db.execute(
-                text("INSERT INTO profile_skills (profile_id, skill_id) VALUES (:pid, :sid) ON CONFLICT DO NOTHING"),
-                {"pid": profile_id, "sid": s_row.id},
-            )
 
     async def remove_skill(self, profile_id: uuid.UUID, skill_name: str) -> None:
         clean_name = skill_name.strip()
-        skill_res = await self.db.execute(
-            text("SELECT id FROM skills WHERE name = :name"),
-            {"name": clean_name},
+        await self.db.execute(
+            text("""
+                DELETE FROM profile_skills ps
+                USING skills s
+                WHERE ps.profile_id = :pid AND ps.skill_id = s.id AND s.name = :name
+            """),
+            {"pid": profile_id, "name": clean_name},
         )
-        s_row = skill_res.fetchone()
-        if s_row:
-            await self.db.execute(
-                text("DELETE FROM profile_skills WHERE profile_id = :pid AND skill_id = :sid"),
-                {"pid": profile_id, "sid": s_row.id},
-            )

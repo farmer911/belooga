@@ -71,43 +71,35 @@ class ProfileService:
             return self.db.info[session_key]
 
         async def _load_bundle() -> Dict[str, Any]:
-            row = await self.profile_repo.get_profile_with_identity(clean_username)
+            row = await self.profile_repo.get_full_profile_bundle(clean_username)
             if not row:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Candidate @{username} not found",
                 )
-            profile_id = row.id
-            jobs = await self.profile_repo.get_jobs(profile_id)
-            education = await self.profile_repo.get_education(profile_id)
-            skills = await self.profile_repo.get_skills(profile_id)
-            video_pitch_poster = await self.profile_repo.get_pitch_poster(profile_id)
-            languages = await self.profile_repo.get_languages(profile_id)
-            interests = await self.profile_repo.get_interests(profile_id)
-
             return {
-                "id": str(row.id),
-                "username": row.username,
-                "first_name": row.first_name,
-                "last_name": row.last_name,
-                "full_name": f"{row.first_name} {row.last_name}",
-                "_raw_email": row.email,
-                "headline": row.headline,
-                "bio": row.bio,
-                "location": row.location,
-                "_raw_phone": row.phone,
-                "avatar_url": row.avatar_url or "/images/avatar.jpg",
-                "video_pitch_url": row.video_pitch_url,
-                "video_pitch_poster": video_pitch_poster,
-                "resume_url": row.resume_url or f"http://localhost:8000/v1/profile/{clean_username}/pdf/",
-                "seeking_status": row.seeking_status,
-                "employment_status": row.employment_status,
-                "is_hidden": bool(row.is_hidden),
-                "job_experiences": jobs,
-                "education_experiences": education,
-                "skills": skills,
-                "languages": languages,
-                "interests": interests,
+                "id": str(row["id"]),
+                "username": row["username"],
+                "first_name": row["first_name"],
+                "last_name": row["last_name"],
+                "full_name": f"{row['first_name']} {row['last_name']}",
+                "_raw_email": row["email"],
+                "headline": row["headline"],
+                "bio": row["bio"],
+                "location": row["location"],
+                "_raw_phone": row["phone"],
+                "avatar_url": row["avatar_url"] or "/images/avatar.jpg",
+                "video_pitch_url": row["video_pitch_url"],
+                "video_pitch_poster": row["video_pitch_poster"],
+                "resume_url": row["resume_url"] or f"http://localhost:8000/v1/profile/{clean_username}/pdf/",
+                "seeking_status": row["seeking_status"],
+                "employment_status": row["employment_status"],
+                "is_hidden": bool(row["is_hidden"]),
+                "job_experiences": list(row["jobs_json"] or []),
+                "education_experiences": list(row["education_json"] or []),
+                "skills": list(row["skills_arr"] or []),
+                "languages": list(row["languages_json"] or []),
+                "interests": list(row["interests_arr"] or []),
             }
 
         if os.getenv("ENVIRONMENT") == "testing":

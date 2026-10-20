@@ -91,8 +91,8 @@ class TimelineService:
             if not profile:
                 raise HTTPException(status_code=404, detail="Candidate not found")
             await self.timeline_repo.lock_jobs_for_update(profile.id)
-            for item in payload.orders:
-                await self.timeline_repo.update_job_order(profile.id, uuid.UUID(str(item.id)), item.order)
+            pairs = [(uuid.UUID(str(item.id)), item.order) for item in payload.orders]
+            await self.timeline_repo.bulk_update_job_orders(profile.id, pairs)
             await self.db.commit()
             await invalidate_candidate_cache(username)
         except Exception:
@@ -146,8 +146,8 @@ class TimelineService:
             if not profile:
                 raise HTTPException(status_code=404, detail="Candidate not found")
             await self.timeline_repo.lock_education_for_update(profile.id)
-            for item in payload.orders:
-                await self.timeline_repo.update_education_order(profile.id, uuid.UUID(str(item.id)), item.order)
+            pairs = [(uuid.UUID(str(item.id)), item.order) for item in payload.orders]
+            await self.timeline_repo.bulk_update_education_orders(profile.id, pairs)
             await self.db.commit()
             await invalidate_candidate_cache(username)
         except Exception:

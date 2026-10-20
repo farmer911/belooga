@@ -105,17 +105,17 @@ class NotificationRepository:
         return int(res.scalar() or 0)
 
     async def mark_read(self, notification_id: uuid.UUID, identity_id: uuid.UUID) -> Optional[Notification]:
-        stmt = select(Notification).where(
-            Notification.id == notification_id,
-            Notification.identity_id == identity_id,
+        stmt = (
+            update(Notification)
+            .where(
+                Notification.id == notification_id,
+                Notification.identity_id == identity_id,
+            )
+            .values(is_read=True)
+            .returning(Notification)
         )
         res = await self.db.execute(stmt)
-        notif = res.scalar_one_or_none()
-        if not notif:
-            return None
-        notif.is_read = True
-        await self.db.flush()
-        return notif
+        return res.scalar_one_or_none()
 
     async def mark_all_read(self, identity_id: uuid.UUID) -> None:
         stmt = (
