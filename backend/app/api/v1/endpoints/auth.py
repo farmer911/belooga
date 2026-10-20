@@ -17,7 +17,7 @@ from app.schemas.auth import (
     TokenResponse,
     UserProfileDTO,
 )
-from app.services.auth_service import AuthService
+from app.modules.auth import AuthService
 
 router = APIRouter()
 
