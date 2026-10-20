@@ -7,6 +7,14 @@ description: Standard operating procedure for autonomous AI coding agents acting
 
 > **Core Philosophy:** A true Senior Engineer never writes code in isolation or pushes unreviewed changes to `main`. Every task follows structured Agile planning, testable Acceptance Criteria, git feature branching, Pull Request review, and rigorous verification gates.
 
+```mermaid
+flowchart LR
+    P1["Phase 1: Ticket & STATE.md\n(BEL-<id>, AC, Risks)"] --> P2["Phase 2: Feature Branch\n(feature/BEL-<id>-<slug>)"]
+    P2 --> P3["Phase 3: TDD & Benchmark\n(Red -> Green -> Ponytail)"]
+    P3 --> P4["Phase 4: SSOT & PR\n(audit-truth.sh + gh pr create)"]
+    P4 --> P5["Phase 5: Review & Merge\n(Subagent Review + gh pr merge)"]
+```
+
 ---
 
 ## 1. Phase 1: Agile Planning & Task Breakdown

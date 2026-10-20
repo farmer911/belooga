@@ -3,17 +3,40 @@ name: belooga-backend-engineering
 description: Technical architecture and engineering guide for Belooga Backend (FastAPI, Python 3.12+, SQLAlchemy 2.0 Async, PostgreSQL 16). Use when developing backend features across multiple domains or understanding system-wide backend invariants. Not for frontend components (belooga-frontend-engineering) or writing tests (tdd-workflow).
 ---
 
-# Belooga Backend Engineering Architecture
+# Belooga Backend Engineering Architecture & Pipeline Protocol
 
-> **Architecture:** Modular Monolith using FastAPI, SQLAlchemy 2.0 Async (`asyncpg`), Alembic, and PostgreSQL 16.
+> **Architecture:** High-Throughput Modular Monolith using Pure-ASGI API Gateway, ConnectRPC Batch Multiplexer, Two-Tier L1/L2 SWR Cache, Kafka-Semantics Partitioned Event Stream, SQLAlchemy 2.0 Async (`asyncpg`), and PostgreSQL 16.
 
 ---
 
-## 1. Clean 4-Layer Backend Architecture
-- **Routers (`app/api/v1/endpoints/`):** Thin controllers handling HTTP request parsing, auth injection (`get_current_user`), calling domain services, and returning Pydantic response models. Zero raw SQL or direct commits.
-- **Services (`app/services/`):** Business logic, validation, ownership enforcement, transaction coordination, and non-blocking delegations (`asyncio.to_thread`).
-- **Repositories (`app/repositories/`):** Encapsulated database operations, queries, and row-level locks (`with_for_update()`).
-- **Models & Schemas:** Declarative ORM models in `app/models/`, Pydantic DTOs in `app/schemas/`, and migrations in `backend/alembic/versions/`. Active schema and endpoints: see `CURRENT_STATE.md`.
+## 1. Standardized End-to-End Backend Pipeline Flow
+
+```mermaid
+flowchart LR
+    Client["Client / Next.js SSR"] --> GW["Layer 0: Pure-ASGI Gateway\n(backend/app/core/gateway.py)"]
+    GW --> Router["Layer 1: REST Router & RPC Batch\n(endpoints/*.py & core/rpc.py)"]
+    Router --> Service["Layer 2: Domain Service\n(modules/*/service.py)"]
+    Service --> Cache["Two-Tier SWR Cache\n(backend/app/core/cache.py)"]
+    Service --> Events["Partitioned Event Stream\n(backend/app/core/events.py)"]
+    Service --> Repo["Layer 3: Single-Roundtrip Repo\n(modules/*/repository.py)"]
+    Repo --> PG[("PostgreSQL 16\nGIN + Composite B-Tree")]
+```
+
+1. **Layer 0 — Pure-ASGI API Gateway (`backend/app/core/gateway.py`):**
+   - Zero-copy `__call__(scope, receive, send)` middleware (never use `BaseHTTPMiddleware`).
+   - Enforces Bounded LRU Token-Bucket (GCRA) rate limiting with route tiers (`AUTH_STRICT_RPM=30`, `MUTATION_RPM=180`, `DEFAULT_RATE_LIMIT_RPM=600`, `CHUNK_UPLOAD_RPM=2400`), `413 Payload Too Large` guard, `Idempotency-Key` replay cache, `ETag` `304 Not Modified`, and unified control-plane telemetry (`/v1/gateway/*`).
+2. **Layer 1 — Routers & ConnectRPC Batch Multiplexer (`backend/app/api/v1/endpoints/`, `backend/app/core/rpc.py`):**
+   - Thin controllers handling HTTP request parsing, auth injection (`get_current_user`), calling domain services, and returning Pydantic DTOs. Zero raw SQL or direct commits.
+   - Multi-widget views use `/v1/rpc/*` batching (`asyncio.gather` + shared profile bundle hydration + optional binary Protobuf-Varint framing `application/x-belooga-rpc-bin`).
+3. **Layer 2 — Domain Services, SWR Cache & Event Stream (`backend/app/modules/*/service.py`):**
+   - **Unit-of-Work Commit:** Services coordinate business rules, use `await db.flush()` for intermediate entities, and execute a single atomic `await db.commit()` per mutation.
+   - **Two-Tier L1/L2 SWR Cache (`backend/app/core/cache.py`):** Read-heavy public endpoints use `platform_cache.get_or_set_swr(key, ttl, stale_ttl, loader)`; mutations MUST call `invalidate_candidate_cache(username)` after `db.commit()`.
+   - **Kafka-Semantics Partitioned Event Stream (`backend/app/core/events.py`):** Post-commit side effects (notifications, audit logs, analytics) publish via `await event_stream.publish(topic, key, payload)` into CRC32-partitioned queues with micro-batch drain and Dead-Letter Queue (`dlq`).
+4. **Layer 3 — Single-Roundtrip PostgreSQL 16 Repositories (`backend/app/modules/*/repository.py`):**
+   - **Zero `N+1` Queries:** Consolidate multi-table reads into a single SQL round-trip using `json_agg(json_build_object(...))` and `ARRAY(SELECT ...)` (e.g., `ProfileRepository.get_full_profile_bundle`).
+   - **Atomic Writeable CTEs & Bulk `CASE` Updates:** Use `WITH upserted AS (...) INSERT ... ON CONFLICT DO NOTHING` for tag upserts (`add_skill`), `UPDATE ... RETURNING *` for state transitions (`mark_read`), `COUNT(*) OVER()` window functions for paginated search, and bulk `CASE` `UPDATE` for timeline drag-and-drop (`bulk_update_job_orders`).
+5. **Layer 4 — Kubernetes Probes & Graceful Lifespan Drain (`backend/app/main.py`):**
+   - `GET /health/live` checks event-loop responsiveness with zero DB queries; `GET /health/ready` verifies PostgreSQL, SWR Cache, and Event Stream readiness; FastAPI `lifespan` drains all partitions cleanly on `SIGTERM`.
 
 ---
 
@@ -29,15 +52,19 @@ description: Technical architecture and engineering guide for Belooga Backend (F
 
 ## 3. System-Wide Invariants
 1. **Async Event Loop Non-Blocking:** All synchronous disk I/O, chunk reassembly, and ReportLab PDF builds (`doc.build()`) must execute via `asyncio.to_thread`.
-2. **PostgreSQL GIN Search (ADR-005):** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)`. Never mix with `OR ILIKE`.
+2. **PostgreSQL GIN Search (ADR-005) & Composite B-Tree Indexes:** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` (never mix with `OR ILIKE`). Every foreign-key + sort query (`identity_id`, `is_read`, `order_status`, `created_at DESC`) must be backed by a composite B-Tree index in `backend/alembic/versions/0004_optimize_indexes_and_sql.py`.
 3. **IDOR & Ownership Protection:** All mutation endpoints must authenticate caller and enforce `verify_profile_owner(current_user, target_username)`.
-4. **Pessimistic Locking:** Timeline reorders and token family rotations must acquire row-level locks via `with_for_update()` and conclude with an explicit `await db.commit()`.
+4. **Pessimistic Locking & Bulk Reorder:** Timeline reorders and token family rotations must acquire row-level locks via `with_for_update()`, perform a single bulk `CASE` `UPDATE`, and conclude with an explicit `await db.commit()`.
 
 ---
 
-## 4. Self-Verification
+## 4. Self-Verification & Empirical Benchmarks
 ```bash
 backend/.venv/bin/pytest backend/tests/ -v
+backend/.venv/bin/python3 scripts/benchmark-gateway-cache.py
+backend/.venv/bin/python3 scripts/benchmark-rpc-and-serialization.py
+backend/.venv/bin/python3 scripts/benchmark-event-stream-and-k8s.py
+backend/.venv/bin/python3 scripts/benchmark-sql-optimization.py
 bash scripts/audit-truth.sh
 python3 scripts/lint-skills.py --quiet
 ```

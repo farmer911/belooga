@@ -1,24 +1,18 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (`BEL-518`):** Full Backend Flow Standardization (`Gateway -> Router -> Service -> Repository -> EventStream/Cache`) & PostgreSQL 16 SQL / Index Optimization:
-  1. **Add Missing Composite B-Tree Indexes (`backend/alembic/versions/0004_optimize_indexes_and_sql.py` + `database.py`):**
-     - Index `notifications (identity_id, is_read, created_at DESC)`, `cv_review_orders (candidate_identity_id, created_at DESC)`, `cv_review_orders (order_status, created_at DESC)`, `candidate_job_applications_tracker (candidate_identity_id, created_at DESC)`, `resume_jd_matches (candidate_identity_id, created_at DESC)`.
-  2. **Consolidate Multi-Roundtrip SQL Queries into Single-Roundtrip PostgreSQL 16 Queries:**
-     - `ProfileRepository.get_full_profile_bundle`: **7 sequential SQL queries -> 1 single `json_agg`/`ARRAY` SQL query**.
-     - `ProfileRepository.add_skill` / `remove_skill`: **3/2 queries -> 1 atomic CTE / `DELETE USING` query**.
-     - `TimelineRepository.bulk_update_job_orders` / `bulk_update_education_orders`: **`N` loop `UPDATE` queries -> 1 bulk `CASE` `UPDATE` query**.
-     - `AnalyticsRepository.get_dashboard_aggregates`: **4 separate queries + service-layer raw SQL -> 1 single scalar query in repository**.
-     - `ATSMatchingRepository.find_shortlist_candidates`: **2 GIN index scans -> 1 scan with `COUNT(*) OVER()` window function**.
-     - `NotificationRepository.mark_read`: **2 queries (`SELECT` + `UPDATE`) -> 1 `UPDATE ... RETURNING`**.
-  3. **Empirical SQL Benchmark (`scripts/benchmark-sql-optimization.py`) & TDD (`backend/tests/test_sql_and_flow_optimization.py`).**
+- **Task (`BEL-519`):** Codify Agent Operating Workflows, Mermaid Architecture/Mindmap Diagrams, and Continuous Scalable Tech Adoption Protocols across `.agents/ROUTER.md` and `.agents/skills/*/SKILL.md`:
+  1. `.agents/ROUTER.md`: Add Master Agent Execution Pipeline Diagram + Full-Stack Platform Architecture & Scalability Mindmap.
+  2. `.agents/skills/belooga-backend-engineering/SKILL.md`: Codify 5-Layer Backend Pipeline (`Pure-ASGI Gateway -> Router/RPC Batch -> Service/SWR Cache/Event Stream -> Single-Roundtrip SQL 16 Repo -> K8s Probes`) + benchmark suite.
+  3. `.agents/skills/belooga-frontend-engineering/SKILL.md`: Codify Frontend Data, ConnectRPC Batch, SEO & Service Worker (`sw.js`) flow diagram and security guardrails.
+  4. `.agents/skills/belooga-self-learn/SKILL.md`, `belooga-supervisor/SKILL.md`, `belooga-senior-agile-workflow/SKILL.md`: Codify Continuous Learning, Empirical A/B Benchmarking & 10x–100x Scalability Adoption Loop diagrams.
 
 ## Pre-Mortem Risks
-- Keep all `backend/app/**/*.py` <= 300 lines.
+- Keep all `SKILL.md` files <= 200 lines and zero `lint-skills.py` errors/warnings.
 
 ## Execution Checklist
-- [x] Create Alembic migration `0004_optimize_indexes_and_sql.py` & apply composite indexes to PostgreSQL
-- [x] Upgrade `profile/repository.py`, `timeline/repository.py`, `analytics/repository.py`, `ats_matching/repository.py`, `notifications/repository.py`
-- [x] Standardize service flow (`profile/service.py`, `timeline/service.py`, `analytics/service.py`, `ats_matching/service.py`, `gateway.py`)
-- [x] Run empirical SQL benchmark (`scripts/benchmark-sql-optimization.py`) & TDD test suite (`backend/tests/test_sql_and_flow_optimization.py`)
-- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #26, and merge into `main`
+- [x] Update `.agents/ROUTER.md` with execution flowchart & full-stack scalability mindmap
+- [x] Update `belooga-backend-engineering/SKILL.md` & `belooga-frontend-engineering/SKILL.md` with pipeline diagrams
+- [x] Update `belooga-self-learn/SKILL.md`, `belooga-supervisor/SKILL.md`, `belooga-senior-agile-workflow/SKILL.md`
+- [x] Update `feature_mindmap.md` artifact with full `BEL-501..BEL-519` mindmap & agent workflow diagrams
+- [x] Verify `lint-skills.py`, `trust-benchmark.py`, `audit-truth.sh`, open PR #27, and merge into `main`
