@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
+from app.core.gateway import APIGatewayMiddleware, router as gateway_router
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.profile import router as profile_router
 from app.api.v1.endpoints.timeline import router as timeline_router
@@ -28,6 +30,10 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan
 )
+
+# API Gateway & Compression Middlewares
+app.add_middleware(GZipMiddleware, minimum_size=500)
+app.add_middleware(APIGatewayMiddleware)
 
 # CORS Configuration
 app.add_middleware(
@@ -61,6 +67,7 @@ app.include_router(job_tracker_router, prefix="/v1")
 app.include_router(analytics_router, prefix="/v1")
 app.include_router(payments_router, prefix="/v1")
 app.include_router(notifications_router, prefix="/v1")
+app.include_router(gateway_router, prefix="/v1")
 
 @app.get("/health", tags=["Health Probe"])
 async def health_check():

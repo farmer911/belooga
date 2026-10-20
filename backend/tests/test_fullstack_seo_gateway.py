@@ -162,4 +162,45 @@ async def test_seo_sitemap_feed_and_lighthouse_metadata_contracts(client: AsyncC
     assert "openGraph" in layout_txt
 
 
+@pytest.mark.asyncio
+async def test_api_gateway_headers_rate_limiting_and_edge_proxy(client: AsyncClient):
+    """
+    BEL-513: Verify Dual-Layer API Gateway middleware (X-Request-ID, X-Process-Time-Ms,
+    X-RateLimit-*, Security Headers, 429 rate-limit enforcement, GET /v1/gateway/status)
+    and Nginx / Next.js Edge Reverse-Proxy configuration.
+    """
+    from pathlib import Path
+
+    # 1. Verify Gateway telemetry endpoint and response headers
+    gw_res = await client.get("/v1/gateway/status")
+    assert gw_res.status_code == 200
+    assert gw_res.headers.get("x-gateway-service") == "belooga-api-gateway"
+    assert "x-request-id" in gw_res.headers
+    assert "x-process-time-ms" in gw_res.headers
+    assert "x-ratelimit-limit" in gw_res.headers
+    assert gw_res.headers.get("x-content-type-options") == "nosniff"
+    assert gw_res.headers.get("x-frame-options") == "DENY"
+
+    gw_data = gw_res.json()
+    assert gw_data["status"] == "healthy"
+    assert gw_data["upstreams"]["postgres"] == "connected"
+
+    # 2. Verify sliding-window rate-limiting enforcement (429 Too Many Requests)
+    rl_headers = {"X-Test-Rate-Limit": "2", "X-Forwarded-For": "203.0.113.99"}
+    r1 = await client.get("/health", headers=rl_headers)
+    r2 = await client.get("/health", headers=rl_headers)
+    r3 = await client.get("/health", headers=rl_headers)
+    assert r1.status_code == 200
+    assert r2.status_code == 200
+    assert r3.status_code == 429
+    assert "retry-after" in r3.headers
+
+    # 3. Verify Edge Reverse-Proxy Gateway files exist
+    root = Path(__file__).resolve().parents[2]
+    assert (root / "nginx/gateway.conf").exists()
+    next_cfg = (root / "frontend/next.config.ts").read_text()
+    assert "rewrites" in next_cfg
+
+
+
 
