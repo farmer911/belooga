@@ -10,6 +10,7 @@ from app.modules.cms import CmsService
 from app.schemas.cms import (
     ContactInquiryRequest,
     ContactInquiryResponse,
+    JobApplicantRequest,
     ReportProfileRequest,
     ReportProfileResponse,
 )
@@ -33,6 +34,16 @@ async def get_faqs():
 @router.get("/career/jobs/", response_model=List[Dict[str, Any]], tags=["Domain 8: Public CMS & Moderation"])
 async def list_career_jobs(db: AsyncSession = Depends(get_db)):
     return await CmsService(db).list_career_jobs()
+
+
+@router.post("/career/jobs/{job_id}/apply/", response_model=ContactInquiryResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 8: Public CMS & Moderation"])
+async def apply_career_job(
+    job_id: str,
+    payload: JobApplicantRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    return await CmsService(db).apply_career_job(job_id, payload)
+
 
 
 @router.post("/profile/{user_id}/report/", response_model=ReportProfileResponse, tags=["Domain 8: Public CMS & Moderation"])
