@@ -96,3 +96,18 @@ async def test_event_stream_api_endpoints_and_k8s_liveness_readiness_probes():
     assert "/health/live" in k8s_yaml
     assert "/health/ready" in k8s_yaml
     assert "HorizontalPodAutoscaler" in k8s_yaml
+
+    # 5. Verify Frontend Service Worker (sw.js) and PWA Manifest exist and enforce security bypasses
+    repo_root = os.path.join(os.path.dirname(__file__), "..", "..")
+    sw_path = os.path.join(repo_root, "frontend", "public", "sw.js")
+    manifest_path = os.path.join(repo_root, "frontend", "public", "manifest.webmanifest")
+    assert os.path.exists(sw_path)
+    assert os.path.exists(manifest_path)
+    with open(sw_path, "r", encoding="utf-8") as f:
+        sw_code = f.read()
+    assert "belooga-static-v1" in sw_code
+    assert "belooga-api-swr-v1" in sw_code
+    assert "QUEUE_OFFLINE_MUTATION" in sw_code
+    assert "notificationclick" in sw_code
+    assert 'request.headers.get("Authorization")' in sw_code
+    assert 'request.headers.get("Range")' in sw_code

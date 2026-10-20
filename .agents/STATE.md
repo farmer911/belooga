@@ -1,20 +1,22 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (`BEL-516`):** Evaluate, Benchmark, and Apply **Kafka (Partitioned Event Streaming, Consumer Groups, DLQ)** & **Kubernetes (Liveness/Readiness Probes, Graceful Lifespan Drain, HPA Manifests)** to Belooga without JVM/infrastructure bloat:
-  1. **Supervisor Challenge & Benchmark (`scripts/benchmark-event-stream-and-k8s.py`):**
-     - Reject deploying a 2GB JVM Kafka/Zookeeper cluster (violates 80/20 YAGNI), while adopting **Kafka's Partitioned Event Log + Consumer Group + Dead-Letter Queue (DLQ)** pattern via `backend/app/core/events.py`.
-     - Fix `backend/app/main.py`'s empty `lifespan` and static `/health` by adding **Kubernetes Liveness (`/health/live`)**, **Readiness (`/health/ready`)**, graceful shutdown drain, and `k8s/deployment-and-hpa.yaml`.
-  2. **TDD Verification (`backend/tests/test_event_stream_and_k8s_probes.py`):**
-     - Test partitioned event publishing (`partition = crc32(key) % num_partitions`), per-key ordering, Consumer Group offset tracking, Dead-Letter Queue (DLQ) isolation on failing handlers, `/v1/events/status`, `/health/live`, and `/health/ready`.
+- **Task (`BEL-517`):** Research, Design, and Implement Production Service Worker & PWA Architecture on Frontend (`frontend/public/sw.js`, `frontend/public/manifest.webmanifest`, `frontend/src/components/providers/service-worker-provider.tsx`, and integration with `layout.tsx`, `notification-bell.tsx`, and `cv-studio/page.tsx`):
+  1. **Supervisor Guardrails (Zero Auth/PII Leak & Zero 206 Video Range Crash):**
+     - Never cache requests carrying `Authorization` headers, `/v1/auth/*`, `/v1/payments/*`, or HTTP `206 Partial Content` video range streams.
+  2. **5 High-ROI Service Worker Features Applied:**
+     - **SWR Public API Cache (`belooga-api-swr-v1`):** Instant offline/flaky-network resilience for `/v1/catalogs/*`, `/v1/blog/posts/*`, `/v1/faqs`, `/v1/careers/jobs/`, `/v1/profile/search/trending/`.
+     - **Static Asset Cache-First (`belooga-static-v1`):** Instant repeat-visit loading for `/images/*` & static assets.
+     - **Offline Mutation Outbox & Auto-Replay (`QUEUE_OFFLINE_MUTATION` / `FLUSH_OUTBOX`):** Protects `/cv-studio` cloud draft saves when offline and auto-syncs upon reconnect.
+     - **Native Notification & Deep-Link Click Handler (`push` / `notificationclick`):** Opens/focuses deep-link URLs from OS notifications, wired into `NotificationBell`.
+     - **PWA Manifest (`manifest.webmanifest`):** App shortcuts & installability metadata in `layout.tsx`.
 
 ## Pre-Mortem Risks
-- Keep all `backend/app/**/*.py` <= 300 lines.
-- Ensure background event workers drain cleanly without leaking tasks across pytest tests.
+- Keep all frontend `page.tsx` <= 241 lines, `fe_arbitrary_hex == 0`, `fe_structural_emoji == 0`.
 
 ## Execution Checklist
-- [x] Build & run empirical benchmark (`scripts/benchmark-event-stream-and-k8s.py`)
-- [x] Write TDD Red/Green test suite (`backend/tests/test_event_stream_and_k8s_probes.py`)
-- [x] Implement `backend/app/core/events.py` (Partitioned Event Stream, Consumer Groups, DLQ, `/v1/events/status` & `/v1/events/publish`)
-- [x] Upgrade `backend/app/main.py` (`/health/live`, `/health/ready`, Graceful Lifespan Drain) & add `k8s/deployment-and-hpa.yaml`
-- [x] Verify `trust-benchmark.py`, `audit-truth.sh`, open PR #24, and merge into `main`
+- [x] Create `frontend/public/sw.js` (Cache-First static, SWR public APIs, Auth/206 bypass, Offline Outbox replay, Push & Deep-link `notificationclick`)
+- [x] Create `frontend/public/manifest.webmanifest` and link in `frontend/src/app/layout.tsx`
+- [x] Create `frontend/src/components/providers/service-worker-provider.tsx` (SW registration, offline/sync banner, outbox queue helper, native notification trigger)
+- [x] Wire SW Native Desktop Notification toggle into `NotificationBell` & Offline Outbox fallback into `cv-studio/page.tsx`
+- [x] Verify TypeScript (`bun x tsc --noEmit`), backend pytest, `trust-benchmark.py`, `audit-truth.sh`, open PR #25, and merge into `main`

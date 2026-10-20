@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
+import { queueOfflineMutation } from "@/components/providers/service-worker-provider";
 import { CVStudioSidebar } from "@/components/features/cv-studio/cv-studio-sidebar";
 import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studio-editor";
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
@@ -67,7 +68,7 @@ export default function CVStudioPage() {
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.put(`/v1/profile/${activeUsername}/cv-draft/`, {
+      const payload = {
         full_name: cvData.fullName,
         email: cvData.email,
         phone: cvData.phone,
@@ -79,8 +80,12 @@ export default function CVStudioPage() {
         margin_size: marginSize,
         snap_one_page: snapOnePage,
         experience: cvData.experience,
-      });
-      return res.data;
+      };
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        queueOfflineMutation({ url: `/v1/profile/${activeUsername}/cv-draft/`, method: "PUT", body: payload });
+        return payload;
+      }
+      return (await apiClient.put(`/v1/profile/${activeUsername}/cv-draft/`, payload)).data;
     },
     onSuccess: () => {
       setSavedCloud(true);
@@ -98,17 +103,11 @@ export default function CVStudioPage() {
   }, [cvData]);
 
   const handleResetSample = () => {
-    setCvData(SAMPLE_CV_DATA);
-    setFontSize(10.0);
-    setLineHeight(1.3);
-    setMarginSize(0.6);
+    setCvData(SAMPLE_CV_DATA); setFontSize(10.0); setLineHeight(1.3); setMarginSize(0.6);
   };
 
   const handleAutoFit = () => {
-    setFontSize(9.6);
-    setLineHeight(1.25);
-    setMarginSize(0.5);
-    setSnapOnePage(true);
+    setFontSize(9.6); setLineHeight(1.25); setMarginSize(0.5); setSnapOnePage(true);
   };
 
   const handleInjectSkill = (skill: string) => {
