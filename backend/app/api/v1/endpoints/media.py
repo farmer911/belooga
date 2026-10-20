@@ -17,7 +17,7 @@ UPLOAD_ID_REGEX = re.compile(r"^upload_\d+_[a-zA-Z0-9]+$")
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.media import MediaService
-from app.schemas.media import ChunkUploadResponse, CompleteUploadRequest
+from app.schemas.media import CVStudioDraftPayload, ChunkUploadResponse, CompleteUploadRequest
 
 router = APIRouter()
 
@@ -95,3 +95,23 @@ async def get_video_transcoding_status(
     db: AsyncSession = Depends(get_db),
 ):
     return await MediaService(db).get_video_transcoding_status(username)
+
+
+@router.get("/profile/{username}/cv-draft/", response_model=CVStudioDraftPayload, tags=["Domain 4: Media & Uploads"])
+async def get_cv_studio_draft(
+    username: str,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    return await MediaService(db).get_cv_studio_draft(username, current_user)
+
+
+@router.put("/profile/{username}/cv-draft/", response_model=CVStudioDraftPayload, tags=["Domain 4: Media & Uploads"])
+async def save_cv_studio_draft(
+    username: str,
+    payload: CVStudioDraftPayload,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await MediaService(db).save_cv_studio_draft(username, payload, current_user)
+

@@ -47,3 +47,25 @@ class MediaResponse(BaseModel):
     mime_type: Optional[str] = None
     file_size_bytes: Optional[int] = None
     message: Optional[str] = None
+
+
+class CVStudioExperienceItem(BaseModel):
+    company: str
+    role: str
+    period: str
+    bullets: list[str] = Field(default_factory=list)
+
+
+class CVStudioDraftPayload(BaseModel):
+    full_name: str
+    email: str = ""
+    phone: str = ""
+    headline: str
+    summary: str = ""
+    skills: str = ""
+    font_size: float = 10.0
+    line_height: float = 1.3
+    margin_size: float = 0.6
+    snap_one_page: bool = True
+    experience: list[CVStudioExperienceItem] = Field(default_factory=list)
+

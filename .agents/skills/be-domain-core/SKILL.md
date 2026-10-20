@@ -43,6 +43,8 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | required |
 | `POST` | `/v1/media/upload/complete` | `complete_chunked_video_upload` | required |
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | public |
+| `GET` | `/v1/profile/{username}/cv-draft/` | `get_cv_studio_draft` | optional |
+| `PUT` | `/v1/profile/{username}/cv-draft/` | `save_cv_studio_draft` | required |
 | `GET` | `/v1/notifications/` | `list_my_notifications` | required |
 | `PATCH` | `/v1/notifications/{notification_id}/read/` | `mark_notification_read` | required |
 | `POST` | `/v1/notifications/read-all/` | `mark_all_notifications_read` | required |

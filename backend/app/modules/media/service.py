@@ -18,7 +18,7 @@ from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.media.repository import MediaRepository
 from app.modules.notifications import NotificationService
 from app.modules.profile import ProfileService
-from app.schemas.media import CompleteUploadRequest
+from app.schemas.media import CVStudioDraftPayload, CompleteUploadRequest
 from app.services.media_transcoder import (
     AVATARS_DIR,
     RESUMES_DIR,
@@ -233,3 +233,65 @@ class MediaService:
             "poster_url": current_poster,
             "duration_seconds": 30,
         }
+
+    async def get_cv_studio_draft(
+        self, username: str, current_user: Optional[AuthenticatedUser] = None
+    ) -> Dict[str, Any]:
+        import json
+
+        clean_username = username.lower().strip()
+        row = await self.media_repo.get_candidate_for_pdf(clean_username)
+        if not row:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        saved_json = await self.media_repo.get_cv_studio_draft(row.id)
+        if saved_json:
+            return json.loads(saved_json)
+
+        jobs = await self.profile_facade.get_jobs(row.id)
+        skills = await self.profile_facade.get_skills(row.id)
+        exp_items = [
+            {
+                "company": j.get("company_name") or "Technology Corp",
+                "role": j.get("title") or "Software Engineer",
+                "period": f"{j.get('from_date_year', 2022)} - {'Present' if j.get('currently_work_here') else j.get('to_date_year', 2025)}",
+                "bullets": [b.strip() for b in (j.get("description") or "").split("\n") if b.strip()]
+                or ["Delivered production systems with measurable latency and throughput gains."],
+            }
+            for j in jobs
+        ]
+        return {
+            "full_name": f"{row.first_name or ''} {row.last_name or ''}".strip() or clean_username,
+            "email": row.email or "",
+            "phone": row.phone or "",
+            "headline": row.headline or "Senior Software Engineer",
+            "summary": row.bio or "",
+            "skills": ", ".join(skills) if skills else "Python, FastAPI, PostgreSQL, Next.js",
+            "font_size": 10.0,
+            "line_height": 1.3,
+            "margin_size": 0.6,
+            "snap_one_page": True,
+            "experience": exp_items,
+        }
+
+    async def save_cv_studio_draft(
+        self, username: str, payload: CVStudioDraftPayload, current_user: AuthenticatedUser
+    ) -> Dict[str, Any]:
+        import json
+
+        verify_profile_owner(current_user, username)
+        clean_username = username.lower().strip()
+        profile = await self.profile_facade.get_by_username(clean_username)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        data = payload.model_dump()
+        await self.media_repo.upsert_cv_studio_draft(
+            profile_id=profile.id,
+            draft_json=json.dumps(data, ensure_ascii=False),
+            headline=payload.headline,
+            summary=payload.summary,
+        )
+        await self.db.commit()
+        return data
+

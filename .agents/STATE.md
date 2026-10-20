@@ -14,7 +14,7 @@
 
 ## 5-PR Execution Checklist
 - [x] **PR 1 (`BEL-509`):** Blog CMS Full-Stack (`blog_posts` table + `/v1/blog/posts/*` + `/blog` & `/blog/[slug]` FE integration)
-- [ ] **PR 2 (`BEL-510`):** CV Studio Cloud Draft Persistence (`GET/PUT /v1/profile/{username}/cv-draft/`) & Interactive Section Reordering
+- [x] **PR 2 (`BEL-510`):** CV Studio Cloud Draft Persistence (`GET/PUT /v1/profile/{username}/cv-draft/`) & Interactive Section Reordering
 - [ ] **PR 3 (`BEL-511`):** Analytics `?range=7D|30D|ALL` Dynamic Querying + Expert Review Feedback Scorecard Integration
 - [ ] **PR 4 (`BEL-512`):** SEO Engine (`sitemap.ts`, `robots.ts`, OpenGraph/JSON-LD, Route Metadata) & Lighthouse Optimization
 - [ ] **PR 5 (`BEL-513`):** Backend API Gateway Middleware (`app/core/gateway.py`, `GET /v1/gateway/status`) + Nginx Edge Gateway & Next.js Proxy
