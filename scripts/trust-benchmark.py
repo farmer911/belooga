@@ -88,9 +88,19 @@ for p in (BE_APP / "api" / "v1" / "endpoints").rglob("*.py"):
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> direct DB query inside router (must use Service/Repo)")
     if re.search(r"from\s+app\.(?:repositories|modules\.\w+\.repository)\s+import", txt):
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> router imports repository directly (must use Module Facade/Service)")
+    if re.search(r"from\s+app\.services\.\w+\s+import", txt):
+        violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> router imports legacy app.services shim (must import from app.modules.<domain>)")
 
+REQUIRED_VERTICAL_MODULES = {
+    "profile", "auth", "timeline", "media",
+    "catalogs", "search", "cms", "ats_matching",
+    "expert_review", "job_tracker", "payments", "analytics",
+}
 MODULES_DIR = BE_APP / "modules"
 if MODULES_DIR.exists():
+    found_mods = {p.name for p in MODULES_DIR.iterdir() if p.is_dir() and not p.name.startswith("__")}
+    for missing_mod in sorted(REQUIRED_VERTICAL_MODULES - found_mods):
+        violations["3. Layer Purity (No Band-Aids)"].append(f"backend/app/modules/{missing_mod}/ missing from 12-module vertical architecture")
     for mod_dir in sorted(p for p in MODULES_DIR.iterdir() if p.is_dir() and not p.name.startswith("__")):
         mod_name = mod_dir.name
         for req_f in ("__init__.py", "service.py", "repository.py"):

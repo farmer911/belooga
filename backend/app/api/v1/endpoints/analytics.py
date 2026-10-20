@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.modules.analytics import AnalyticsService
 from app.schemas.analytics import AnalyticsDashboardResponse, UnitEconomicsResponse
-from app.services.analytics_service import AnalyticsService
 
 router = APIRouter(prefix="/analytics", tags=["Executive Analytics & Revenue"])
 
