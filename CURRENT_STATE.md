@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 68 (66 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 69 (67 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -60,6 +60,7 @@
 | `POST` | `/v1/auth/login/` | `login` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/logout/` | `logout` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/auth/me/` | `get_current_session_user` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
+| `POST` | `/v1/auth/oauth/callback/` | `oauth_callback` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/refresh/` | `refresh_tokens` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/reset-password/` | `reset_password` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
@@ -230,7 +231,7 @@ pytest-asyncio>=0.23.0
 |---|---|---|---|
 | **Password Recovery (`/forgot-password`)** | Single-use SHA-256 recovery token vault in `password_reset_tokens` (`FOR UPDATE` lock + session revocation). | SMTP/Transactional email delivery provider integration. | ✅ OPERATIONAL |
 | **Account Settings (`/user/[username]/settings`)** | Authenticated password rotation (`POST /v1/users/{username}/password/`) and cascading account deletion (`DELETE /v1/users/{username}/`) with `verify_profile_owner` IDOR guard. | Multi-factor authentication (TOTP/WebAuthn) enrollment. | ✅ OPERATIONAL |
-| **OAuth SSO Callback (`/callback`)** | Route shell with static redirect. | OAuth authorization code exchange and social account link in `social_accounts` table. | ⚠️ ROUTE STUB |
+| **OAuth SSO Callback (`/callback`)** | OAuth authorization code exchange (`POST /v1/auth/oauth/callback/`) and idempotent `social_accounts` identity linking. | Multi-provider PKCE verifier state rotation. | ✅ OPERATIONAL |
 | **Master Catalogs (`catalogs.py`)** | `skills` queried from database; `company`, `school`, `location` served via in-memory dictionaries. | Query `catalog_companies`, `catalog_schools`, `catalog_locations` database tables with fuzzy trigram index. | ⚠️ IN-MEMORY CATALOG |
 | **Public CMS Careers & FAQs (`cms.py`)** | FAQs and career postings served via in-memory dictionaries (fallback from `career_postings`). | Dynamic administrative CMS dashboard for FAQ management and job applicant tracking. | ⚠️ IN-MEMORY CMS |
 | **WebRTC Video Studio (`page.tsx`)** | Real MediaRecorder studio with camera/mic selectors, VU meter canvas, speech teleprompter. Test hook gated by `NEXT_PUBLIC_E2E`. | Headless audio/video worker isolation and WebM-to-MP4 server transcoding pipeline. | ✅ OPERATIONAL |

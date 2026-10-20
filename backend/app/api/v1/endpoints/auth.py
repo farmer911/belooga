@@ -16,6 +16,7 @@ from app.schemas.auth import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     LoginRequest,
+    OAuthCallbackRequest,
     RegisterRequest,
     ResetPasswordRequest,
     TokenResponse,
@@ -128,5 +129,15 @@ async def delete_user_account(
     db: AsyncSession = Depends(get_db),
 ):
     return await AuthService(db).delete_user_account(username, current_user, response)
+
+
+@router.post("/auth/oauth/callback/", response_model=TokenResponse, tags=["Domain 1: Identity & Sessions"])
+async def oauth_callback(
+    payload: OAuthCallbackRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService(db).oauth_callback(payload, response)
+
 
 
