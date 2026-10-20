@@ -3,6 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ServiceWorkerProvider } from "@/components/providers/service-worker-provider";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://belooga.com";
 
@@ -26,6 +27,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     url: SITE_URL,
@@ -101,6 +103,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-surface-page text-typography-main transition-colors duration-200">
         <QueryProvider>
+          <ServiceWorkerProvider />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

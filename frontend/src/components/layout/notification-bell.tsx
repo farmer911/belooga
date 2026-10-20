@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck, Mail, ExternalLink } from "lucide-react";
+import { Bell, CheckCheck, Mail, ExternalLink, BellRing } from "lucide-react";
 import { apiClient } from "@/services/api-client";
+import { triggerDesktopNotification } from "@/components/providers/service-worker-provider";
 
 export interface NotificationDTO {
   id: string;
@@ -100,16 +101,33 @@ export function NotificationBell() {
             <span className="text-xs font-bold uppercase tracking-wider text-typography-main">
               Notifications ({unreadCount} unread)
             </span>
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                data-testid="notification-read-all-btn"
-                onClick={() => markAllReadMutation.mutate()}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-primary hover:underline cursor-pointer"
+                data-testid="notification-desktop-push-btn"
+                onClick={() => {
+                  const latest = items[0];
+                  triggerDesktopNotification(
+                    latest?.title || "Belooga Desktop Alerts Active",
+                    latest?.message || "Service Worker push notifications are enabled for your career alerts.",
+                    latest?.deep_link || "/workspace/jobs"
+                  );
+                }}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-typography-muted hover:text-brand-primary cursor-pointer"
               >
-                <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+                <BellRing className="w-3.5 h-3.5" /> Push
               </button>
-            )}
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  data-testid="notification-read-all-btn"
+                  onClick={() => markAllReadMutation.mutate()}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-primary hover:underline cursor-pointer"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto divide-y divide-surface-border">

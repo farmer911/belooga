@@ -1,0 +1,48 @@
+{
+  "name": "Belooga — Talent Discovery & Video Elevator Pitch Platform",
+  "short_name": "Belooga",
+  "description": "Connect with verified top-tier talent via 0:30 video elevator pitches, structured career timelines, ATS diagnostics, and authentic credentials.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/images/logo-big.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo-big.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Talent Search",
+      "short_name": "Search",
+      "description": "Discover verified candidates with video elevator pitches",
+      "url": "/search"
+    },
+    {
+      "name": "CV Studio",
+      "short_name": "CV Studio",
+      "description": "Edit and export your ATS-ready 1-page resume",
+      "url": "/cv-studio"
+    },
+    {
+      "name": "ATS Diagnostics",
+      "short_name": "ATS Scan",
+      "description": "Run CV-to-JD semantic match scoring",
+      "url": "/ats-diagnostics"
+    },
+    {
+      "name": "Job Tracker",
+      "short_name": "Jobs",
+      "description": "Manage your job application pipeline",
+      "url": "/workspace/jobs"
+    }
+  ]
+}
