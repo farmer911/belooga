@@ -1,22 +1,16 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task:** Option B2 — Refactor `backend/app/` into **12 Self-Contained Vertical-Slice Modules** under `backend/app/modules/<domain>/` (`__init__.py` Public Facade, `service.py`, `repository.py`), enforce AST Modular Boundary Guards in `scripts/trust-benchmark.py`, and **`git commit` + `git push origin main` after every single completed module (1/12 -> 12/12)**.
+- **Task:** Close all 5 remaining Architecture Gaps in `CURRENT_STATE.md` §6 (`BEL-501` -> `BEL-505`). Deliver each gap as a standalone feature branch, TDD Red-Green test, SSOT sync, and merged GitHub PR commit.
 
 ## Pre-Mortem Risks
-- **Cross-Module Private Imports:** Forbid `from app.modules.<other>.repository import ...` via AST check in `scripts/trust-benchmark.py`. Cross-module calls must go through `app.modules.<other>` public facade.
-- **SSOT & CI Compatibility:** Keep `scripts/render-skill-facts.py`, `scripts/lint-skills.py` (`python3 -I -S`), and `CURRENT_STATE.md` 100% synchronized on every push.
+- **300-Line Backend Cap (`be_files_over_300_lines = 0`):** `backend/app/modules/auth/service.py` is 227 lines; apply Ponytail compression so `service.py` and `repository.py` stay well under 300 lines.
+- **IDOR & Public Mutation Whitelist:** Authenticate account settings mutations (`Depends(get_current_user)` + `verify_profile_owner`); register public auth/career endpoints in `PUBLIC_MUTATIONS_WHITELIST` (`scripts/trust-benchmark.py` & `scripts/audit-truth.sh`).
+- **Frontend Ratchet:** Keep all `page.tsx` <= 241 lines, 0 arbitrary hex, 0 emojis, and use `@tanstack/react-query` (never `apiClient` in `useEffect`).
 
-## 12-Module Vertical Refactoring & Push Checklist (Option B2)
-- [x] Module 1/12 (`profile`): `backend/app/modules/profile/` + Public Profile Facade + Push
-- [x] Module 2/12 (`auth`): `backend/app/modules/auth/` (decouple `ProfileRepository`) + Push
-- [x] Module 3/12 (`timeline`): `backend/app/modules/timeline/` (decouple `ProfileRepository`) + Push
-- [x] Module 4/12 (`media`): `backend/app/modules/media/` (decouple `ProfileRepository`) + Push
-- [x] Module 5/12 (`catalogs`): `backend/app/modules/catalogs/` + Push
-- [x] Module 6/12 (`search`): `backend/app/modules/search/` (dedicated `SearchService`/`SearchRepository`) + Push
-- [x] Module 7/12 (`cms`): `backend/app/modules/cms/` + Push
-- [x] Module 8/12 (`ats_matching`): `backend/app/modules/ats_matching/` + Push
-- [x] Module 9/12 (`expert_review`): `backend/app/modules/expert_review/` + Push
-- [x] Module 10/12 (`job_tracker`): `backend/app/modules/job_tracker/` + Push
-- [x] Module 11/12 (`payments`): `backend/app/modules/payments/` + Push
-- [x] Module 12/12 (`analytics`): `backend/app/modules/analytics/` + Final 12-Module AST Lock + Push
+## 5-Feature PR Execution Checklist
+- [x] **Feature 1 (`BEL-501`):** Password Recovery (`password_reset_tokens` DB endpoints + `/forgot-password` UI + PR #1)
+- [ ] **Feature 2 (`BEL-502`):** Account Settings (`POST /v1/users/{username}/password/`, `DELETE /v1/users/{username}/` + `/user/[username]/settings` UI + PR #2)
+- [ ] **Feature 3 (`BEL-503`):** OAuth SSO Callback (`social_accounts` exchange `POST /v1/auth/oauth/callback/` + `/callback` UI + PR #3)
+- [ ] **Feature 4 (`BEL-504`):** PostgreSQL Master Catalogs (`catalog_companies`, `catalog_schools`, `catalog_locations` DB queries & seed + PR #4)
+- [ ] **Feature 5 (`BEL-505`):** Public CMS Careers & Applications (`career_postings` & `career_applications` `POST /v1/career/jobs/{job_id}/apply/` + `/careers` UI + PR #5)

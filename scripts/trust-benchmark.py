@@ -30,6 +30,7 @@ AGENTS = ROOT / ".agents"
 BLOCKING_FUNCS = {"open", "remove", "unlink", "rmtree", "copy", "move", "build"}
 PUBLIC_MUTATIONS_WHITELIST = {
     "login", "logout", "refresh_tokens", "register_user",
+    "request_password_reset", "reset_password",
     "submit_contact_inquiry", "report_candidate_profile",
     "create_momo_payment_qr", "momo_ipn_webhook",
 }

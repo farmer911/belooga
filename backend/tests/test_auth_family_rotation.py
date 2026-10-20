@@ -168,3 +168,56 @@ async def test_refresh_token_grace_window_allows_concurrent_tabs(
     )
     assert chk_res.scalar() is None, "Active session should NOT be revoked during grace window!"
 
+
+@pytest.mark.asyncio
+async def test_password_recovery_token_issuance_and_single_use_reset(
+    client: AsyncClient,
+    test_candidate_a: dict,
+    db_session: AsyncSession,
+):
+    """
+    BEL-501: Verify forgot-password issues a single-use token in password_reset_tokens,
+    reset-password rotates password_hash & revokes active sessions, and replay is rejected.
+    """
+    email = test_candidate_a["email"]
+    uid = test_candidate_a["id"]
+
+    # 1. Request password reset token
+    forgot_res = await client.post("/v1/auth/forgot-password/", json={"email": email})
+    assert forgot_res.status_code == 200
+    forgot_data = forgot_res.json()
+    assert "reset_token" in forgot_data and forgot_data["reset_token"]
+    raw_token = forgot_data["reset_token"]
+
+    # Verify hashed token persisted in password_reset_tokens
+    row_res = await db_session.execute(
+        text("SELECT used_at FROM password_reset_tokens WHERE identity_id = :uid AND token_hash = :th"),
+        {"uid": uid, "th": hash_token(raw_token)},
+    )
+    row = row_res.fetchone()
+    assert row is not None and row.used_at is None
+
+    # 2. Reset password using the token
+    new_pw = "NewRecoveredPass999!"
+    reset_res = await client.post(
+        "/v1/auth/reset-password/",
+        json={"token": raw_token, "new_password": new_pw},
+    )
+    assert reset_res.status_code == 200
+
+    # 3. Verify token is now marked used_at and cannot be replayed
+    replay_res = await client.post(
+        "/v1/auth/reset-password/",
+        json={"token": raw_token, "new_password": "AnotherPass123!"},
+    )
+    assert replay_res.status_code == 400
+
+    # 4. Verify login works with the new password
+    login_res = await client.post(
+        "/v1/auth/login/",
+        json={"email": email, "password": new_pw},
+    )
+    assert login_res.status_code == 200
+    assert "access_token" in login_res.json()
+
+

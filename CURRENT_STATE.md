@@ -47,7 +47,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 64 (62 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 66 (64 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -56,10 +56,12 @@
 | `GET` | `/v1` | `api_root` | Public | `backend/app/main.py` | Root |
 | `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
 | `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
+| `POST` | `/v1/auth/forgot-password/` | `request_password_reset` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/login/` | `login` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/logout/` | `logout` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/auth/me/` | `get_current_session_user` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/refresh/` | `refresh_tokens` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
+| `POST` | `/v1/auth/reset-password/` | `reset_password` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/catalogs/career-roi` | `get_career_upskill_roi` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/catalogs/salary-benchmark` | `get_salary_benchmark` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
@@ -224,7 +226,7 @@ pytest-asyncio>=0.23.0
 
 | Component / Flow | AS-IS (Current Production Reality) | TO-BE (Target Architecture) | Gap Status |
 |---|---|---|---|
-| **Password Recovery (`/forgot-password`)** | Client-side mock form with simulated success banner. No backend endpoint. | Domain 1 backend endpoint generating cryptographically secure reset tokens in `password_reset_tokens`. | ⚠️ UI STUB |
+| **Password Recovery (`/forgot-password`)** | Single-use SHA-256 recovery token vault in `password_reset_tokens` (`FOR UPDATE` lock + session revocation). | SMTP/Transactional email delivery provider integration. | ✅ OPERATIONAL |
 | **Account Settings (`/user/[username]/settings`)** | Client-side mock UI for password rotation and account deletion danger zone. | Dedicated backend mutation endpoints for password rotation and cascading account deletion. | ⚠️ UI STUB |
 | **OAuth SSO Callback (`/callback`)** | Route shell with static redirect. | OAuth authorization code exchange and social account link in `social_accounts` table. | ⚠️ ROUTE STUB |
 | **Master Catalogs (`catalogs.py`)** | `skills` queried from database; `company`, `school`, `location` served via in-memory dictionaries. | Query `catalog_companies`, `catalog_schools`, `catalog_locations` database tables with fuzzy trigram index. | ⚠️ IN-MEMORY CATALOG |
