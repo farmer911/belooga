@@ -48,6 +48,8 @@ export function ATSShareCardModal({
             </h3>
           </div>
           <button
+            type="button"
+            aria-label="Close share card modal"
             onClick={onClose}
             className="text-typography-muted hover:text-typography-main text-lg font-bold leading-none cursor-pointer"
           >

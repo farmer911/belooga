@@ -139,3 +139,27 @@ async def test_analytics_time_range_and_expert_order_feedback_scorecard(
     assert dash_30d["overview"]["total_gmv"] > dash_7d["overview"]["total_gmv"]
 
 
+@pytest.mark.asyncio
+async def test_seo_sitemap_feed_and_lighthouse_metadata_contracts(client: AsyncClient):
+    """
+    BEL-512: Verify GET /v1/seo/sitemap-data returns indexable public profiles/blog slugs
+    and Next.js sitemap.ts, robots.ts, and JSON-LD structured data are configured.
+    """
+    from pathlib import Path
+
+    seo_res = await client.get("/v1/seo/sitemap-data")
+    assert seo_res.status_code == 200
+    seo_data = seo_res.json()
+    assert "public_usernames" in seo_data
+    assert "blog_slugs" in seo_data
+    assert len(seo_data["blog_slugs"]) >= 3
+
+    root = Path(__file__).resolve().parents[2]
+    assert (root / "frontend/src/app/sitemap.ts").exists()
+    assert (root / "frontend/src/app/robots.ts").exists()
+    layout_txt = (root / "frontend/src/app/layout.tsx").read_text()
+    assert "application/ld+json" in layout_txt
+    assert "openGraph" in layout_txt
+
+
+

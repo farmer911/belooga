@@ -53,7 +53,14 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen">
       <section className="relative overflow-hidden bg-slate-900 text-white min-h-[560px] flex items-center justify-center py-20">
         <div className="absolute inset-0 z-0">
-          <img src="/images/home/matt-poster.png" alt="Belooga candidate showcase background" className="w-full h-full object-cover opacity-30" />
+          <img
+            src="/images/home/matt-poster.png"
+            alt="Belooga candidate showcase background"
+            width={1600}
+            height={900}
+            fetchPriority="high"
+            className="w-full h-full object-cover opacity-30"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/60 to-slate-950/80" />
         </div>
 
@@ -73,6 +80,7 @@ export default function HomePage() {
             </div>
             <input
               type="text"
+              aria-label="Search candidates by skill, title, or name"
               data-testid="home-search-input"
               value={searchKey}
               onChange={(e) => setSearchKey(e.target.value)}
@@ -145,7 +153,7 @@ export default function HomePage() {
                 onClick={() => openVideo(w.modalTitle, w.videoUrl)}
               >
                 <div className="modal-start"><div className="video-play-icon" /></div>
-                <img src={w.img} alt={w.modalTitle} className="w-full h-[320px] object-cover rounded-md" />
+                <img src={w.img} alt={w.modalTitle} width={640} height={320} loading="lazy" className="w-full h-[320px] object-cover rounded-md" />
               </div>
 
               <div className={`space-y-4 ${w.reverse ? "order-2 lg:order-1" : ""}`}>
@@ -176,7 +184,7 @@ export default function HomePage() {
               >
                 <div className="start-content-video relative">
                   <div className="modal-start"><div className="video-play-icon" /></div>
-                  <img src={c.img} alt={c.alt} className="w-full h-64 object-cover" />
+                  <img src={c.img} alt={c.alt} width={480} height={256} loading="lazy" className="w-full h-64 object-cover" />
                 </div>
                 <div className="p-6 text-center space-y-1">
                   <h3 className="text-xl font-bold text-typography-main group-hover:text-brand-primary transition-colors">{c.name}</h3>

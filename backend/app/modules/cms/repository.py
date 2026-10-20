@@ -101,3 +101,14 @@ class CmsRepository:
         self.db.add(report)
         await self.db.flush()
         return report_id
+
+    async def list_public_usernames_for_seo(self, limit: int = 100) -> List[str]:
+        stmt = (
+            select(CandidateProfile.username)
+            .where(CandidateProfile.is_hidden.is_(False))
+            .order_by(CandidateProfile.created_at.desc())
+            .limit(limit)
+        )
+        res = await self.db.execute(stmt)
+        return [r[0] for r in res.fetchall() if r[0]]
+
