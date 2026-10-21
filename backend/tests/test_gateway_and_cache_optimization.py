@@ -143,3 +143,69 @@ async def test_tiered_cache_singleflight_swr_and_unified_invalidation():
     assert platform_cache._l1_get(platform_cache._full_key("pub_profile:alexnguyen"))[0] is False
     assert platform_cache._l1_get(platform_cache._full_key("trust:alexnguyen"))[0] is False
     assert platform_cache._l1_get(platform_cache._full_key("trajectory:alexnguyen"))[0] is False
+
+
+@pytest.mark.asyncio
+async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(monkeypatch):
+    """BEL-137: Verify Redis-backed distributed rate-limiting & idempotency across stateless worker restarts."""
+    from pathlib import Path
+    import uuid
+    from app.core import gateway as gw_mod
+
+    assert hasattr(gw_mod, "clear_gateway_l1_state"), "Missing clear_gateway_l1_state helper for multi-pod test"
+    monkeypatch.setenv("GATEWAY_REDIS_ENABLED", "1")
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Cross-worker Distributed Idempotency-Key Replay via Redis (L1 wiped between calls)
+        idem_key = f"idem_bel137_{uuid.uuid4().hex[:8]}"
+        payload = {
+            "name": "Distributed Gateway Tester",
+            "email": "dist-gateway@belooga.com",
+            "message": "Verifying Redis-backed cross-replica idempotency replay.",
+        }
+        first = await client.post("/v1/contact/", json=payload, headers={"Idempotency-Key": idem_key})
+        assert first.status_code in (200, 201)
+        assert first.headers.get("X-Idempotency-Replayed") == "false"
+
+        # Simulate landing on a second K8s replica with empty L1 memory
+        gw_mod.clear_gateway_l1_state()
+        second = await client.post("/v1/contact/", json=payload, headers={"Idempotency-Key": idem_key})
+        assert second.status_code == first.status_code
+        assert second.headers.get("X-Idempotency-Replayed") == "true"
+        assert second.headers.get("X-Idempotency-Backend") == "redis"
+        assert second.json() == first.json()
+
+        # 2. Cross-worker Distributed Rate-Limiting via Redis (L1 wiped before each call)
+        test_ip = f"198.51.100.{uuid.uuid4().int % 200 + 10}"
+        rl_headers = {"X-Test-Rate-Limit": "2", "X-Forwarded-For": test_ip}
+
+        gw_mod.clear_gateway_l1_state()
+        r1 = await client.get("/v1/faqs", headers=rl_headers)
+        assert r1.status_code == 200
+
+        gw_mod.clear_gateway_l1_state()
+        r2 = await client.get("/v1/faqs", headers=rl_headers)
+        assert r2.status_code == 200
+
+        gw_mod.clear_gateway_l1_state()
+        r3 = await client.get("/v1/faqs", headers=rl_headers)
+        assert r3.status_code == 429
+
+        # 3. Verify /v1/gateway/status reports distributed Redis state & K8s Ingress / client gateway wiring
+        status_res = await client.get("/v1/gateway/status")
+        assert status_res.status_code == 200
+        status_body = status_res.json()
+        assert status_body.get("state_backend") == "redis-distributed-l1-fallback"
+        assert status_body["upstreams"].get("redis") == "connected"
+        assert status_body["gateway_metrics"].get("redis_distributed_ops", 0) >= 3
+
+        root = Path(__file__).resolve().parents[2]
+        k8s_txt = (root / "k8s/deployment-and-hpa.yaml").read_text()
+        assert "kind: Ingress" in k8s_txt
+        assert "belooga-edge-ingress" in k8s_txt
+        fe_api_txt = (root / "frontend/src/services/api-client.ts").read_text()
+        mob_api_txt = (root / "mobile/src/services/api-client.ts").read_text()
+        assert "http://localhost:8080" in fe_api_txt
+        assert "http://localhost:8080" in mob_api_txt
+

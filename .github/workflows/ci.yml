@@ -91,8 +91,10 @@ jobs:
           CI: "true"
           DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_db"
           REDIS_URL: "redis://localhost:6379/0"
+          CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080"
         run: |
           (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 &)
+          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 &)
           sleep 3
           cd qc && bun run test:e2e:chromium
 

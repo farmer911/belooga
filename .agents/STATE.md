@@ -1,18 +1,18 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (BEL-135 — PostgreSQL 16 OLAP CTEs & Power BI / DuckDB Star-Schema Export API):**
-  1. Upgrade `AnalyticsRepository` (`backend/app/modules/analytics/repository.py`) with single-roundtrip PostgreSQL 16 OLAP CTEs (`get_bi_star_schema_export`) querying real DB facts across `resume_jd_matches`, `job_descriptions`, `cv_review_orders`, `candidate_job_applications_tracker`, and `profile_skills`.
-  2. Expose `GET /v1/analytics/bi-export` (`BIStarSchemaExportResponse`) returning Star-Schema fact/dimension tables (`fact_ats_scans`, `fact_review_orders`, `fact_job_pipeline`, `dim_skills_demand`) + PowerQuery M snippet for zero-lock Power BI Web Connector & DuckDB ingestion, cached via `platform_cache`.
-  3. Surface the Power BI / DuckDB Star-Schema Web Connector panel (`data-testid="bi-star-schema-panel"`) in `frontend/src/app/admin/analytics/page.tsx` via `useAnalyticsDashboard`.
+- **Task (BEL-137 — Distributed Edge API Gateway, Redis State & K8s Ingress):**
+  1. Upgrade `backend/app/core/gateway.py` (`APIGatewayMiddleware` & `/v1/gateway/status`) from process-local `OrderedDict` state to Distributed Redis-backed Rate-Limiting & Idempotency-Key replay (`gw:rl:*`, `gw:idem:*`) with automatic L1 LRU fallback.
+  2. Activate Edge Gateway (`nginx/gateway.conf` + `docker-compose.yml` `belooga-gateway` on `:8080`), wire Web (`frontend/`) & Mobile (`mobile/`) clients + `.env.example` to route via `:8080`, and add Kubernetes `Ingress` in `k8s/deployment-and-hpa.yaml`.
+  3. Add TDD tests in `backend/tests/test_gateway_and_cache_optimization.py` proving cross-worker distributed Redis rate-limiting, cross-worker `Idempotency-Key` replay, K8s `Ingress` manifest, and live Nginx `:8080` proxy routing.
 
 ## Pre-Mortem Risks
-- Keep all `backend/app/` files <= 300 lines (`be_files_over_300_lines = 0`) and `frontend/src/` under `.agents/ratchet.json` limits.
-- Coalesce all SQL `SUM`/`COUNT`/`AVG`/`json_agg` aggregations to safe non-null defaults so cold DBs never return `None` or divide by zero.
-- Enforce zero raw hex (`fe_arbitrary_hex = 0`), zero emoji (`fe_structural_emoji = 0`), and `@tanstack/react-query` hooks.
+- Keep `backend/app/core/gateway.py` <= 300 lines (`be_files_over_300_lines = 0`) using Ponytail compression.
+- Ensure GitHub Actions CI (`.github/workflows/ci.yml`) runs gateway listener on `:8080` alongside `:8000` so Playwright E2E passes seamlessly in CI.
+- Set `client_max_body_size 15m;` and `limit_req_status 429;` in `nginx/gateway.conf` so 1MB+ video chunks / PDF uploads are not blocked by Nginx's default 1MB limit.
 
 ## Execution Checklist
-- [x] **Phase 1 (TDD RED):** Add failing tests in `backend/tests/test_analytics.py` for `/v1/analytics/bi-export` & real OLAP funnel/skills telemetry
-- [x] **Phase 2 (TDD GREEN Backend):** Implement `BIStarSchemaExportResponse` & SQL OLAP CTEs in `analytics/{repository,service}.py` and `/v1/analytics/bi-export`
-- [x] **Phase 3 (Frontend + E2E):** Update `use-analytics-dashboard.ts`, `admin/analytics/page.tsx`, and `qc/tests/e2e/analytics-dashboard.spec.ts`
+- [x] **Phase 1 (TDD RED):** Add failing tests in `backend/tests/test_gateway_and_cache_optimization.py` for distributed Redis rate-limiting, cross-worker idempotency replay, and K8s Ingress / Edge routing
+- [x] **Phase 2 (TDD GREEN Backend & Edge Infra):** Implement Redis-backed distributed state in `backend/app/core/gateway.py`, update `nginx/gateway.conf`, `docker-compose.yml`, `k8s/deployment-and-hpa.yaml`, and start `belooga-gateway`
+- [x] **Phase 3 (Client Wiring & CI):** Point `frontend/`, `mobile/`, `.env.example`, and `.github/workflows/ci.yml` to `:8080` gateway
 - [x] **Phase 4 (SSOT Sync & PR):** Run `generate-current-state.py`, `render-skill-facts.py`, `trust-benchmark.py`, `audit-truth.sh`, and merge PR
