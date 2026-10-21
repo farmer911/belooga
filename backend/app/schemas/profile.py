@@ -23,8 +23,21 @@ class SkillAdd(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
 
 
+class LanguageAdd(BaseModel):
+    """Payload for associating a spoken language with a candidate profile."""
+
+    name: str = Field(..., min_length=1, max_length=100)
+    proficiency: str = Field("Fluent", min_length=1, max_length=50)
+
+
+class InterestAdd(BaseModel):
+    """Payload for associating an interest with a candidate profile."""
+
+    name: str = Field(..., min_length=1, max_length=100)
+
+
 class SkillResponse(BaseModel):
-    """Response returned upon modifying profile skills."""
+    """Response returned upon modifying profile skills, languages, or interests."""
 
     message: str
     id: Optional[UUID] = None
@@ -88,4 +101,3 @@ class ProfileTrustScoreResponse(BaseModel):
     recruiter_conversion_multiplier: float
     pillars: List[TrustPillarItem] = Field(default_factory=list)
     next_boost_action: str
-

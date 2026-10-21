@@ -9,6 +9,12 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+CURRENT_BRANCH="$(git branch --show-current)"
+if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "master" ]]; then
+    echo "ERROR: Direct push to '$CURRENT_BRANCH' is forbidden! Always push a feature/fix branch and open a Pull Request (gh pr create -> gh pr checks --watch)."
+    exit 1
+fi
+
 echo "[Pre-Push Gate] 1/4 Verifying Skill SSOT, Ratchet & Anti-Deception Benchmark..."
 python3 scripts/render-skill-facts.py --write >/dev/null
 python3 scripts/lint-skills.py --quiet

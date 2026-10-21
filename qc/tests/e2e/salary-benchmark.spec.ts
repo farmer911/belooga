@@ -34,7 +34,7 @@ test.describe('Salary Benchmark & Market Skill Radar Quality Gate', () => {
     await expect(page.locator('text=Cần Bổ Sung Vào CV')).toBeVisible();
 
     // Assert skill items
-    await expect(page.locator('text=Apache Kafka')).toBeVisible();
+    await expect(page.getByText('Apache Kafka', { exact: true })).toBeVisible();
   });
 
   test('TC-SALARY-004: Filter switching updates stack and benchmark metrics', async ({ page }) => {

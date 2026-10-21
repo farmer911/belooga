@@ -35,6 +35,7 @@ BACKEND_TESTS = {
         "test_idor_guards.py",
         "test_media_traversal.py",
         "test_notifications.py",
+        "test_production_readiness_suite.py",
         "test_profile_privacy_and_pii.py",
         "test_timeline_reorder.py",
     ],
@@ -51,6 +52,7 @@ BACKEND_TESTS = {
         "test_high_scale_and_shortlist.py",
         "test_job_tracker.py",
         "test_momo_payment.py",
+        "test_production_readiness_suite.py",
     ],
 }
 

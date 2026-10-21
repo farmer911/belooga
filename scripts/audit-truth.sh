@@ -117,7 +117,7 @@ import ast, glob
 
 PUBLIC_MUTATIONS_WHITELIST = {
     'login', 'logout', 'refresh_tokens', 'register_user',
-    'request_password_reset', 'reset_password', 'oauth_callback',
+    'request_password_reset', 'reset_password', 'oauth_callback', 'verify_email_token',
     'submit_contact_inquiry', 'report_candidate_profile', 'apply_career_job',
     'create_momo_payment_qr', 'momo_ipn_webhook'
 }
@@ -241,10 +241,10 @@ if ! which bun >/dev/null 2>&1; then
     echo -e "  ${RED}CRITICAL: bun runtime not found in PATH!${NC}"
     ERRORS=$((ERRORS + 1))
 else
-    if (cd frontend && bun x tsc --noEmit); then
-        echo -e "  ${GREEN}✓ Frontend TypeScript check passed with 0 errors.${NC}"
+    if (cd frontend && bun x tsc --noEmit && bun run test); then
+        echo -e "  ${GREEN}✓ Frontend TypeScript check & Bun unit tests passed with 0 errors.${NC}"
     else
-        echo -e "  ${RED}CRITICAL: Frontend TypeScript compilation failed!${NC}"
+        echo -e "  ${RED}CRITICAL: Frontend TypeScript compilation or unit tests failed!${NC}"
         ERRORS=$((ERRORS + 1))
     fi
 fi

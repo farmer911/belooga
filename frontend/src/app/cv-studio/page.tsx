@@ -14,9 +14,10 @@ import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studi
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
 
 interface MarketPulseResponse {
-  total_active_candidates: number;
-  video_pitch_adoption_rate: number;
-  skills: Array<{ skill: string; scarcity_index: number; median_salary_vnd: number }>;
+  total_active_candidates?: number;
+  video_pitch_adoption_rate?: number;
+  skill_scarcity_index?: Array<{ skill: string; scarcity_score?: number; salary_premium_pct?: string }>;
+  skills?: Array<{ skill: string; scarcity_index: number; median_salary_vnd: number }>;
 }
 
 const SAMPLE_CV_DATA: CVData = {
@@ -187,7 +188,7 @@ export default function CVStudioPage() {
         {marketPulse && (
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-slate-600 font-medium">+Chèn nhanh kỹ năng khan hiếm:</span>
-            {marketPulse.skills.slice(0, 4).map((s) => (
+            {(marketPulse.skill_scarcity_index ?? marketPulse.skills ?? []).slice(0, 4).map((s) => (
               <button
                 key={s.skill}
                 type="button"

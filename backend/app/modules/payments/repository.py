@@ -2,12 +2,14 @@
 
 from datetime import datetime
 from typing import Any, Dict, Optional
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 ORDERS_DB: Dict[str, Dict[str, Any]] = {}
 
 
 class PaymentRepository:
-    """Repository encapsulating MoMo payment order state and idempotent transitions."""
+    """Repository encapsulating MoMo payment order state, PostgreSQL sync, and idempotent transitions."""
 
     @staticmethod
     def create_order(order_id: str, amount: float, package_type: str) -> Dict[str, Any]:
@@ -35,3 +37,18 @@ class PaymentRepository:
         order["trans_id"] = trans_id
         order["paid_at"] = datetime.now().isoformat()
         return order
+
+    @staticmethod
+    async def sync_paid_order_to_db(db: AsyncSession, order_id: str, trans_id: Optional[str]) -> None:
+        """Persist MoMo IPN settlement to any linked cv_review_orders record in PostgreSQL."""
+        await db.execute(
+            text("""
+                UPDATE cv_review_orders
+                SET order_status = 'paid',
+                    payment_reference = :pref,
+                    updated_at = NOW()
+                WHERE payment_reference = :oid AND order_status = 'pending_payment'
+            """),
+            {"oid": order_id, "pref": f"{order_id}:{trans_id or 'momo'}"},
+        )
+        await db.commit()

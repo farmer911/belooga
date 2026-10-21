@@ -17,6 +17,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `POST` | `/v1/expert-review/orders/{order_id}/checkout/` | `checkout_review_order` | required |
 | `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | required |
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | required |
+| `POST` | `/v1/expert-review/orders/{order_id}/feedback/` | `submit_order_feedback` | required |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
@@ -35,7 +36,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 - Router: `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/api/v1/endpoints/ats_matching.py`, `backend/app/api/v1/endpoints/job_tracker.py`, `backend/app/api/v1/endpoints/analytics.py`, `backend/app/api/v1/endpoints/payments.py`
 - Service: `backend/app/modules/analytics/service.py`, `backend/app/modules/ats_matching/service.py`, `backend/app/modules/expert_review/service.py`, `backend/app/modules/job_tracker/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/payments/service.py`
 - Repository: `backend/app/modules/analytics/repository.py`, `backend/app/modules/ats_matching/repository.py`, `backend/app/modules/expert_review/repository.py`, `backend/app/modules/job_tracker/repository.py`, `backend/app/modules/payments/repository.py`
-- Tests: `backend/tests/test_analytics.py`, `backend/tests/test_ats_matching.py`, `backend/tests/test_expert_review.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_job_tracker.py`, `backend/tests/test_momo_payment.py`
+- Tests: `backend/tests/test_analytics.py`, `backend/tests/test_ats_matching.py`, `backend/tests/test_expert_review.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_job_tracker.py`, `backend/tests/test_momo_payment.py`, `backend/tests/test_production_readiness_suite.py`
 <!-- AUTO:END -->
 
 ## Rules
@@ -47,6 +48,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 ## Known Traps
 - **Router Prefixes & Static Path Precedence:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`. Always place `/jobs/analytics` above `/jobs/{job_id}`.
 - **Sanitizing `to_tsquery` Tokens:** Always strip non-alphanumeric symbols (`C++`, `C#`, `.NET`) before joining tokens with `|` for PostgreSQL `to_tsquery`.
+- **Concurrent Lazy Seeding Race (`expert_review/repository.py`):** Always guard `seed_packages_if_empty` and `seed_experts_if_empty` with `SELECT pg_advisory_xact_lock(...)` and deduplicate `list_experts` by `full_name` so concurrent requests on a cold DB never insert duplicate rows.
 
 ## Self-Verification
 ```bash

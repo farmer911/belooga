@@ -1,8 +1,7 @@
 """Timeline service (Vertical Module: timeline).
 
-Business domain service managing work history, academic credentials,
+Business domain service managing work history, academic credentials, awards,
 and pessimistic row-locking atomic reordering.
-Communicates with the `profile` module strictly via its public facade (`ProfileService`).
 """
 
 from typing import Any, Dict, List
@@ -16,9 +15,12 @@ from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.profile import ProfileService
 from app.modules.timeline.repository import TimelineRepository
 from app.schemas.timeline import (
+    AwardCertificationCreate,
     CareerTrajectoryResponse,
     EducationExperienceCreate,
+    EducationUpdate,
     JobExperienceCreate,
+    JobExperienceUpdate,
     ReorderRequest,
 )
 
@@ -54,21 +56,27 @@ class TimelineService:
         profile = await self._require_owned_profile(username, current_user)
         next_order = await self.timeline_repo.get_next_job_order(profile.id)
         item_id = await self.timeline_repo.create_job(
-            profile_id=profile.id,
-            title=payload.title,
-            company_name=payload.company_name,
-            from_date_month=payload.from_date_month,
-            from_date_year=payload.from_date_year,
-            currently_work_here=payload.currently_work_here,
-            to_date_month=payload.to_date_month,
-            to_date_year=payload.to_date_year,
-            description=payload.description,
-            logo_url=payload.logo_url,
-            display_order=next_order,
+            profile_id=profile.id, title=payload.title, company_name=payload.company_name,
+            from_date_month=payload.from_date_month, from_date_year=payload.from_date_year,
+            currently_work_here=payload.currently_work_here, to_date_month=payload.to_date_month,
+            to_date_year=payload.to_date_year, description=payload.description,
+            logo_url=payload.logo_url, display_order=next_order,
         )
         await self.db.commit()
         await invalidate_candidate_cache(username)
         return {"id": str(item_id), "display_order": next_order, "message": "Job experience added"}
+
+    async def update_job_experience(
+        self, username: str, item_id: str, payload: JobExperienceUpdate, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile = await self._require_owned_profile(username, current_user)
+        detail = "Job experience not found on this profile"
+        target_uuid = self._parse_item_uuid(item_id, detail)
+        if not await self.timeline_repo.update_job(profile.id, target_uuid, **payload.model_dump(exclude_unset=True)):
+            raise HTTPException(status_code=404, detail=detail)
+        await self.db.commit()
+        await invalidate_candidate_cache(username)
+        return {"id": str(target_uuid), "message": "Job experience updated"}
 
     async def delete_job_experience(
         self, username: str, item_id: str, current_user: AuthenticatedUser
@@ -109,21 +117,26 @@ class TimelineService:
         profile = await self._require_owned_profile(username, current_user)
         next_order = await self.timeline_repo.get_next_education_order(profile.id)
         item_id = await self.timeline_repo.create_education(
-            profile_id=profile.id,
-            school_name=payload.school_name,
-            degree_name=payload.degree_name,
-            gpa=payload.gpa,
-            from_date_month=payload.from_date_month,
-            from_date_year=payload.from_date_year,
-            currently_work_here=payload.currently_work_here,
-            to_date_month=payload.to_date_month,
-            to_date_year=payload.to_date_year,
-            description=payload.description,
-            display_order=next_order,
+            profile_id=profile.id, school_name=payload.school_name, degree_name=payload.degree_name,
+            gpa=payload.gpa, from_date_month=payload.from_date_month, from_date_year=payload.from_date_year,
+            currently_work_here=payload.currently_work_here, to_date_month=payload.to_date_month,
+            to_date_year=payload.to_date_year, description=payload.description, display_order=next_order,
         )
         await self.db.commit()
         await invalidate_candidate_cache(username)
         return {"id": str(item_id), "display_order": next_order, "message": "Education added successfully"}
+
+    async def update_education(
+        self, username: str, item_id: str, payload: EducationUpdate, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile = await self._require_owned_profile(username, current_user)
+        detail = "Education experience not found on this profile"
+        target_uuid = self._parse_item_uuid(item_id, detail)
+        if not await self.timeline_repo.update_education(profile.id, target_uuid, **payload.model_dump(exclude_unset=True)):
+            raise HTTPException(status_code=404, detail=detail)
+        await self.db.commit()
+        await invalidate_candidate_cache(username)
+        return {"id": str(target_uuid), "message": "Education experience updated"}
 
     async def delete_education(
         self, username: str, item_id: str, current_user: AuthenticatedUser
@@ -154,6 +167,35 @@ class TimelineService:
             await self.db.rollback()
             raise
         return {"message": "Education experiences reordered successfully"}
+
+    async def list_awards(self, username: str) -> List[Dict[str, Any]]:
+        return await self.timeline_repo.list_awards_by_username(username)
+
+    async def create_award(
+        self, username: str, payload: AwardCertificationCreate, current_user: AuthenticatedUser
+    ) -> Dict[str, Any]:
+        profile = await self._require_owned_profile(username, current_user)
+        item_id = await self.timeline_repo.create_award(
+            profile_id=profile.id, title=payload.title, location_name=payload.location_name,
+            from_date_month=payload.from_date_month, from_date_year=payload.from_date_year,
+            currently_work_here=payload.currently_work_here, to_date_month=payload.to_date_month,
+            to_date_year=payload.to_date_year, description=payload.description, logo_url=payload.logo_url,
+        )
+        await self.db.commit()
+        await invalidate_candidate_cache(username)
+        return {"id": str(item_id), "message": "Award certification added"}
+
+    async def delete_award(
+        self, username: str, item_id: str, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile = await self._require_owned_profile(username, current_user)
+        detail = "Award certification not found on this profile"
+        target_uuid = self._parse_item_uuid(item_id, detail)
+        if not await self.timeline_repo.delete_award(profile.id, target_uuid):
+            raise HTTPException(status_code=404, detail=detail)
+        await self.db.commit()
+        await invalidate_candidate_cache(username)
+        return {"message": "Award certification deleted"}
 
     async def get_career_trajectory(self, username: str) -> CareerTrajectoryResponse:
         uname = username.lower().strip()

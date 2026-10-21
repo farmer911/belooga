@@ -1,12 +1,15 @@
 """Notification service (Vertical Module: notifications).
 
 Orchestrates in-app notifications, channel preference checks, open-redirect
-deep-link validation, and non-blocking transactional email outbox dispatch.
+deep-link validation, and non-blocking SMTP/transactional email outbox dispatch.
 """
 
 import asyncio
+from email.message import EmailMessage
+import logging
 import os
 import re
+import smtplib
 from typing import Any, Dict, Optional
 import uuid
 
@@ -22,7 +25,13 @@ from app.schemas.notifications import (
     NotificationPreferenceUpdate,
 )
 
+logger = logging.getLogger(__name__)
 FRONTEND_BASE_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "").strip()
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
+SMTP_FROM = os.getenv("SMTP_FROM", "noreply@belooga.com").strip()
 DEEP_LINK_REGEX = re.compile(r"^/[a-zA-Z0-9_\-\?=&/.@%]*$")
 
 
@@ -37,15 +46,30 @@ def sanitize_deep_link(deep_link: str) -> str:
 def _render_transactional_email_sync(
     recipient_email: str, subject: str, message: str, deeplink_url: str
 ) -> bool:
-    """Non-blocking email outbox formatter executed inside asyncio.to_thread."""
+    """Non-blocking email outbox formatter & SMTP dispatcher executed inside asyncio.to_thread."""
     if not recipient_email or "@" not in recipient_email:
         return False
-    _html_body = (
+    html_body = (
         f"<h2>{subject}</h2>"
         f"<p>{message}</p>"
         f"<p><a href='{deeplink_url}'>Open in Belooga ({deeplink_url})</a></p>"
     )
-    return bool(_html_body)
+    if SMTP_HOST:
+        try:
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = SMTP_FROM
+            msg["To"] = recipient_email
+            msg.set_content(f"{message}\n\nOpen: {deeplink_url}")
+            msg.add_alternative(html_body, subtype="html")
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=5) as server:
+                if SMTP_USER and SMTP_PASSWORD:
+                    server.starttls()
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                server.send_message(msg)
+        except Exception as exc:
+            logger.warning("SMTP delivery fallback to DB outbox for %s: %s", recipient_email, exc)
+    return bool(html_body)
 
 
 class NotificationService:

@@ -12,11 +12,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.schemas.timeline import (
+    AwardCertificationCreate,
+    AwardCertificationResponse,
     CareerTrajectoryResponse,
     EducationExperienceCreate,
     EducationResponse,
+    EducationUpdate,
     JobExperienceCreate,
     JobExperienceResponse,
+    JobExperienceUpdate,
     ReorderRequest,
 )
 from app.modules.timeline import TimelineService
@@ -45,6 +49,17 @@ async def create_job_experience(
     db: AsyncSession = Depends(get_db),
 ):
     return await TimelineService(db).create_job_experience(username, payload, current_user)
+
+
+@router.patch("/profile/{username}/job-experiences/{item_id}/", response_model=Dict[str, str], tags=["Domain 3: Timeline CRUD & Reordering"])
+async def update_job_experience(
+    username: str,
+    item_id: str,
+    payload: JobExperienceUpdate,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await TimelineService(db).update_job_experience(username, item_id, payload, current_user)
 
 
 @router.delete("/profile/{username}/job-experiences/{item_id}/", response_model=Dict[str, str], tags=["Domain 3: Timeline CRUD & Reordering"])
@@ -84,6 +99,17 @@ async def create_education(
     return await TimelineService(db).create_education(username, payload, current_user)
 
 
+@router.patch("/profile/{username}/education/{item_id}/", response_model=Dict[str, str], tags=["Domain 3: Timeline CRUD & Reordering"])
+async def update_education(
+    username: str,
+    item_id: str,
+    payload: EducationUpdate,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await TimelineService(db).update_education(username, item_id, payload, current_user)
+
+
 @router.delete("/profile/{username}/education/{item_id}/", response_model=Dict[str, str], tags=["Domain 3: Timeline CRUD & Reordering"])
 async def delete_education(
     username: str,
@@ -103,3 +129,29 @@ async def reorder_education_experiences(
 ):
     return await TimelineService(db).reorder_education_experiences(username, payload, current_user)
 
+
+# --- Awards & Certifications ---
+
+@router.get("/profile/{username}/awards/", response_model=List[AwardCertificationResponse], tags=["Domain 3: Timeline CRUD & Reordering"])
+async def list_awards(username: str, db: AsyncSession = Depends(get_db)):
+    return await TimelineService(db).list_awards(username)
+
+
+@router.post("/profile/{username}/awards/", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED, tags=["Domain 3: Timeline CRUD & Reordering"])
+async def create_award(
+    username: str,
+    payload: AwardCertificationCreate,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await TimelineService(db).create_award(username, payload, current_user)
+
+
+@router.delete("/profile/{username}/awards/{item_id}/", response_model=Dict[str, str], tags=["Domain 3: Timeline CRUD & Reordering"])
+async def delete_award(
+    username: str,
+    item_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await TimelineService(db).delete_award(username, item_id, current_user)

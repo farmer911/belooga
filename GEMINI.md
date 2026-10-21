@@ -23,7 +23,7 @@ Always-on project instruction for Gemini / Antigravity agent.
 3. **No fake success banners, band-aid code, or `useEffect` API calls:** Never stub UI toasts, swallow exceptions (`except: pass`), bypass `router -> service -> repository` layers, call `apiClient` inside `useEffect` (must use `@tanstack/react-query`), or skip tests (`test.skip()`).
 4. **No blocking calls in async event loop:** Never call `open()`, `doc.build()`, `shutil.rmtree()`, or `remove()` synchronously inside async functions across `backend/app/`; use `asyncio.to_thread`.
 5. **No unindexed search fallbacks:** Never combine `search_vector @@` with `OR ILIKE` (violates ADR-005).
-6. **No completion without proof:** Never claim a task or bug fix is done without running `python3 scripts/trust-benchmark.py` and verified tests (`No Proof = Not Done`).
+6. **No completion without proof or PR CI green:** Never claim a task or bug fix is done without running `python3 scripts/trust-benchmark.py`, verified tests, and pushing via a feature branch PR (`gh pr create` -> `gh pr checks --watch` green). Never push directly to `main`.
 
 ## 4. Supervisor Operating Discipline (Always-On)
 - **Ultra-Short & Simplified Responses (<= 8 Lines):** Mọi câu trả lời hoặc clarify của AI phải cực ngắn gọn, đi thẳng vào trọng tâm (tối đa 5–8 dòng hoặc 3–5 gạch đầu dòng: *Root Cause -> Option A/B ngắn gọn -> Kết quả*). Không viết sớ dài dòng, không lặp lại code diff. Query `graphify` -> `CURRENT_STATE.md` -> `.agents/PRODUCT_THESIS.md` -> Domain `SKILL.md` -> Code before acting.
@@ -38,5 +38,5 @@ Always-on project instruction for Gemini / Antigravity agent.
 - **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to `fe-domain-*`), test with `cd frontend && bun x tsc --noEmit`.
 - **E2E / Visual QC:** Skill `belooga-qc-engineering`, run `cd qc && bun run test:e2e`.
 - **Agile Planning & PR Delivery:** Skill `belooga-senior-agile-workflow`, task breakdown with standalone engine at `../beloga-agent-kanban` (CLI: `bun run agent`).
-- **Quality Gate / PR:** Workflow `.agents/workflows/definition-of-done.md`.
-- **Before claiming done:** Always run `python3 scripts/lint-skills.py --quiet && python3 scripts/trust-benchmark.py`.
+- **Quality Gate / PR:** Workflow `.agents/workflows/definition-of-done.md` (Always branch -> `git push -u origin <branch>` -> `gh pr create` -> `gh pr checks --watch` -> `gh pr merge --squash --delete-branch`).
+- **Before claiming done:** Always run `python3 scripts/lint-skills.py --quiet && python3 scripts/trust-benchmark.py` and verify remote PR checks pass (`gh pr checks --watch`).

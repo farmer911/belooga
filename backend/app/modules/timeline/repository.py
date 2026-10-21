@@ -10,7 +10,7 @@ import uuid
 from sqlalchemy import case, delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.timeline import EducationExperience, JobExperience
+from app.models.timeline import AwardCertification, EducationExperience, JobExperience
 
 
 class TimelineRepository:
@@ -36,8 +36,7 @@ class TimelineRepository:
         stmt = select(func.coalesce(func.max(JobExperience.display_order), -1) + 1).where(
             JobExperience.profile_id == profile_id
         )
-        res = await self.db.execute(stmt)
-        return res.scalar() or 0
+        return (await self.db.execute(stmt)).scalar() or 0
 
     async def create_job(
         self,
@@ -55,46 +54,40 @@ class TimelineRepository:
     ) -> uuid.UUID:
         item_id = uuid.uuid4()
         job = JobExperience(
-            id=item_id,
-            profile_id=profile_id,
-            title=title,
-            company_name=company_name,
-            from_date_month=from_date_month,
-            from_date_year=from_date_year,
-            currently_work_here=currently_work_here,
-            to_date_month=to_date_month,
-            to_date_year=to_date_year,
-            description=description,
-            logo_url=logo_url,
+            id=item_id, profile_id=profile_id, title=title, company_name=company_name,
+            from_date_month=from_date_month, from_date_year=from_date_year,
+            currently_work_here=currently_work_here, to_date_month=to_date_month,
+            to_date_year=to_date_year, description=description, logo_url=logo_url,
             display_order=display_order,
         )
         self.db.add(job)
         await self.db.flush()
         return item_id
 
+    async def update_job(self, profile_id: uuid.UUID, item_id: uuid.UUID, **fields) -> bool:
+        valid = {k: v for k, v in fields.items() if v is not None}
+        if not valid:
+            return True
+        stmt = update(JobExperience).where(
+            JobExperience.id == item_id, JobExperience.profile_id == profile_id
+        ).values(**valid)
+        return (await self.db.execute(stmt)).rowcount > 0
+
     async def delete_job(self, profile_id: uuid.UUID, item_id: uuid.UUID) -> bool:
-        stmt = delete(JobExperience).where(
-            JobExperience.id == item_id,
-            JobExperience.profile_id == profile_id,
-        )
-        res = await self.db.execute(stmt)
-        return res.rowcount > 0
+        stmt = delete(JobExperience).where(JobExperience.id == item_id, JobExperience.profile_id == profile_id)
+        return (await self.db.execute(stmt)).rowcount > 0
 
     async def lock_jobs_for_update(self, profile_id: uuid.UUID) -> None:
-        stmt = (
-            select(JobExperience.id)
-            .where(JobExperience.profile_id == profile_id)
-            .with_for_update()
+        await self.db.execute(
+            select(JobExperience.id).where(JobExperience.profile_id == profile_id).with_for_update()
         )
-        await self.db.execute(stmt)
 
     async def update_job_order(self, profile_id: uuid.UUID, item_id: uuid.UUID, display_order: int) -> None:
-        stmt = (
+        await self.db.execute(
             update(JobExperience)
             .where(JobExperience.id == item_id, JobExperience.profile_id == profile_id)
             .values(display_order=display_order)
         )
-        await self.db.execute(stmt)
 
     async def bulk_update_job_orders(
         self, profile_id: uuid.UUID, order_pairs: List[tuple[uuid.UUID, int]]
@@ -102,15 +95,11 @@ class TimelineRepository:
         if not order_pairs:
             return
         whens = {item_id: order_val for item_id, order_val in order_pairs}
-        stmt = (
+        await self.db.execute(
             update(JobExperience)
-            .where(
-                JobExperience.profile_id == profile_id,
-                JobExperience.id.in_(list(whens.keys())),
-            )
+            .where(JobExperience.profile_id == profile_id, JobExperience.id.in_(list(whens.keys())))
             .values(display_order=case(whens, value=JobExperience.id))
         )
-        await self.db.execute(stmt)
 
     async def list_education_by_username(self, username: str) -> List[Dict[str, Any]]:
         query = text("""
@@ -129,8 +118,7 @@ class TimelineRepository:
         stmt = select(func.coalesce(func.max(EducationExperience.display_order), -1) + 1).where(
             EducationExperience.profile_id == profile_id
         )
-        res = await self.db.execute(stmt)
-        return res.scalar() or 0
+        return (await self.db.execute(stmt)).scalar() or 0
 
     async def create_education(
         self,
@@ -148,46 +136,41 @@ class TimelineRepository:
     ) -> uuid.UUID:
         item_id = uuid.uuid4()
         edu = EducationExperience(
-            id=item_id,
-            profile_id=profile_id,
-            school_name=school_name,
-            degree_name=degree_name,
-            gpa=gpa,
-            from_date_month=from_date_month,
-            from_date_year=from_date_year,
-            currently_work_here=currently_work_here,
-            to_date_month=to_date_month,
-            to_date_year=to_date_year,
-            description=description,
-            display_order=display_order,
+            id=item_id, profile_id=profile_id, school_name=school_name, degree_name=degree_name,
+            gpa=gpa, from_date_month=from_date_month, from_date_year=from_date_year,
+            currently_work_here=currently_work_here, to_date_month=to_date_month,
+            to_date_year=to_date_year, description=description, display_order=display_order,
         )
         self.db.add(edu)
         await self.db.flush()
         return item_id
 
+    async def update_education(self, profile_id: uuid.UUID, item_id: uuid.UUID, **fields) -> bool:
+        valid = {k: v for k, v in fields.items() if v is not None}
+        if not valid:
+            return True
+        stmt = update(EducationExperience).where(
+            EducationExperience.id == item_id, EducationExperience.profile_id == profile_id
+        ).values(**valid)
+        return (await self.db.execute(stmt)).rowcount > 0
+
     async def delete_education(self, profile_id: uuid.UUID, item_id: uuid.UUID) -> bool:
         stmt = delete(EducationExperience).where(
-            EducationExperience.id == item_id,
-            EducationExperience.profile_id == profile_id,
+            EducationExperience.id == item_id, EducationExperience.profile_id == profile_id
         )
-        res = await self.db.execute(stmt)
-        return res.rowcount > 0
+        return (await self.db.execute(stmt)).rowcount > 0
 
     async def lock_education_for_update(self, profile_id: uuid.UUID) -> None:
-        stmt = (
-            select(EducationExperience.id)
-            .where(EducationExperience.profile_id == profile_id)
-            .with_for_update()
+        await self.db.execute(
+            select(EducationExperience.id).where(EducationExperience.profile_id == profile_id).with_for_update()
         )
-        await self.db.execute(stmt)
 
     async def update_education_order(self, profile_id: uuid.UUID, item_id: uuid.UUID, display_order: int) -> None:
-        stmt = (
+        await self.db.execute(
             update(EducationExperience)
             .where(EducationExperience.id == item_id, EducationExperience.profile_id == profile_id)
             .values(display_order=display_order)
         )
-        await self.db.execute(stmt)
 
     async def bulk_update_education_orders(
         self, profile_id: uuid.UUID, order_pairs: List[tuple[uuid.UUID, int]]
@@ -195,12 +178,59 @@ class TimelineRepository:
         if not order_pairs:
             return
         whens = {item_id: order_val for item_id, order_val in order_pairs}
-        stmt = (
+        await self.db.execute(
             update(EducationExperience)
-            .where(
-                EducationExperience.profile_id == profile_id,
-                EducationExperience.id.in_(list(whens.keys())),
-            )
+            .where(EducationExperience.profile_id == profile_id, EducationExperience.id.in_(list(whens.keys())))
             .values(display_order=case(whens, value=EducationExperience.id))
         )
-        await self.db.execute(stmt)
+
+    async def list_awards_by_username(self, username: str) -> List[Dict[str, Any]]:
+        query = text("""
+            SELECT a.id, a.title, a.location_name, a.from_date_month, a.from_date_year,
+                   a.currently_work_here, a.to_date_month, a.to_date_year, a.description,
+                   a.logo_url, a.display_order
+            FROM award_certifications a
+            JOIN candidate_profiles p ON p.id = a.profile_id
+            WHERE p.username = :username
+            ORDER BY a.display_order ASC, a.from_date_year DESC NULLS LAST
+        """)
+        res = await self.db.execute(query, {"username": username.lower().strip()})
+        return [dict(r._mapping) for r in res.fetchall()]
+
+    async def create_award(
+        self,
+        profile_id: uuid.UUID,
+        title: str,
+        location_name: Optional[str] = "Global",
+        from_date_month: Optional[int] = 1,
+        from_date_year: Optional[int] = 2023,
+        currently_work_here: bool = False,
+        to_date_month: Optional[int] = None,
+        to_date_year: Optional[int] = None,
+        description: Optional[str] = "",
+        logo_url: Optional[str] = None,
+    ) -> uuid.UUID:
+        next_ord = (
+            await self.db.execute(
+                select(func.coalesce(func.max(AwardCertification.display_order), -1) + 1).where(
+                    AwardCertification.profile_id == profile_id
+                )
+            )
+        ).scalar() or 0
+        item_id = uuid.uuid4()
+        awd = AwardCertification(
+            id=item_id, profile_id=profile_id, title=title, location_name=location_name,
+            from_date_month=from_date_month, from_date_year=from_date_year,
+            currently_work_here=currently_work_here, to_date_month=to_date_month,
+            to_date_year=to_date_year, description=description, logo_url=logo_url,
+            display_order=next_ord,
+        )
+        self.db.add(awd)
+        await self.db.flush()
+        return item_id
+
+    async def delete_award(self, profile_id: uuid.UUID, item_id: uuid.UUID) -> bool:
+        stmt = delete(AwardCertification).where(
+            AwardCertification.id == item_id, AwardCertification.profile_id == profile_id
+        )
+        return (await self.db.execute(stmt)).rowcount > 0

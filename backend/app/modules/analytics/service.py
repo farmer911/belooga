@@ -23,6 +23,7 @@ class AnalyticsService:
     async def get_dashboard(self, time_range: str = "7D") -> AnalyticsDashboardResponse:
         if os.getenv("ENVIRONMENT") == "testing":
             total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
+            db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
         else:
             counts = await platform_cache.get_or_set(
                 "analytics:platform_counts",
@@ -30,12 +31,14 @@ class AnalyticsService:
                 loader=lambda: self.repo.get_platform_counts(),
             )
             total_users, total_scans, active_jobs = counts[0], counts[1], counts[2]
+            db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
+
         range_norm = (time_range or "7D").upper()
         mult = 4.2 if range_norm == "30D" else (12.5 if range_norm == "ALL" else 1.0)
         effective_users = int(max(total_users, 42) * mult)
         effective_scans = int(max(total_scans, 185) * mult)
         micro_pass_rev = int(effective_users * 0.22) * 59000.0
-        expert_gmv = int(effective_users * 0.08) * 350000.0
+        expert_gmv = int(effective_users * 0.08) * 350000.0 + db_gmv_vnd
         expert_fee = expert_gmv * 0.08
         net_rev = micro_pass_rev + expert_fee
         infra_cost = round(375000.0 * (1.0 if mult == 1.0 else min(mult / 4.0, 3.0)), 0)
@@ -83,6 +86,18 @@ class AnalyticsService:
         ]
         recent_transactions = [
             TransactionRecord(
+                id=f"ORD-{o['id'][:8].upper()}",
+                user_name=o["user_name"],
+                package_name=o["package_name"],
+                amount=round(float(o["amount_cents"]) * 250.0, 0),
+                platform_fee=round(float(o["amount_cents"]) * 250.0 * 0.08, 0),
+                payment_method="MoMo QR",
+                status="RELEASED" if o["status"] == "completed" else "HELD_IN_ESCROW",
+                created_at=o["created_at"],
+            )
+            for o in db_orders
+        ] + [
+            TransactionRecord(
                 id=tid, user_name=uname, package_name=pkg, amount=amt, platform_fee=fee,
                 payment_method="MoMo QR", status=st,
                 created_at=(today - timedelta(minutes=mins)).strftime("%H:%M %d/%m"),
@@ -94,7 +109,7 @@ class AnalyticsService:
             overview=overview,
             revenue_chart=revenue_chart,
             funnel=funnel,
-            recent_transactions=recent_transactions,
+            recent_transactions=recent_transactions[:6],
         )
 
     async def get_unit_economics(self) -> UnitEconomicsResponse:

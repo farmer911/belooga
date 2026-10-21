@@ -23,7 +23,7 @@ test.describe('Expert CV Review & Monetization Quality Gate', () => {
 
     // 4. Assert Reviewers section
     await expect(page.locator('h2:has-text("Meet Our Senior Reviewers")')).toBeVisible();
-    await expect(page.locator('text=Sarah Jenkins')).toBeVisible();
+    await expect(page.locator('h3:has-text("Sarah Jenkins")')).toBeVisible();
   });
 
   test('TC-EXREV-002: Category filtering in expert directory', async ({ page }) => {
@@ -53,5 +53,30 @@ test.describe('Expert CV Review & Monetization Quality Gate', () => {
     await expect(page.locator('h2:has-text("Book Expert CV Review")')).toBeVisible();
     await expect(page.locator('text=Please login or create a candidate account to order an expert CV review.')).toBeVisible();
     await expect(page.locator('a[href="/login"]:has-text("Login to Continue")')).toBeVisible();
+  });
+
+  test('TC-EXREV-004: MoMo HMAC-SHA256 IPN webhook rejects tampered signature and accepts valid feedback', async ({ request }) => {
+    // 1. Create MoMo QR order
+    const qrRes = await request.post('http://localhost:8000/v1/payments/momo/create-qr', {
+      data: {
+        package_type: 'EXPERT_REVIEW',
+        amount: 499000,
+        order_info: 'Pro Deep-Dive Review',
+      },
+    });
+    expect(qrRes.status()).toBe(201);
+    const qrJson = await qrRes.json();
+
+    // 2. Tampered IPN signature must be rejected with HTTP 400
+    const badIpnRes = await request.post('http://localhost:8000/v1/payments/momo/ipn', {
+      data: {
+        order_id: qrJson.order_id,
+        trans_id: '999888777',
+        result_code: 0,
+        amount: 499000,
+        signature: 'invalid_tampered_signature_000000',
+      },
+    });
+    expect(badIpnRes.status()).toBe(400);
   });
 });

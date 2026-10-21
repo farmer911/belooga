@@ -1,6 +1,6 @@
 """Identity and session repository (Vertical Module: auth).
 
-Data access layer for identities, refresh sessions, and authentication tokens.
+Data access layer for identities, refresh sessions, password reset, and email verification tokens.
 """
 
 from datetime import datetime, timezone
@@ -10,7 +10,12 @@ import uuid
 from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.identity import Identity, PasswordResetToken, RefreshSession, SocialAccount
+from app.models.identity import (
+    EmailVerificationToken,
+    Identity,
+    PasswordResetToken,
+    RefreshSession,
+)
 
 
 class IdentityRepository:
@@ -21,13 +26,11 @@ class IdentityRepository:
 
     async def get_by_email(self, email: str) -> Optional[Identity]:
         stmt = select(Identity).where(Identity.email == email.lower().strip())
-        res = await self.db.execute(stmt)
-        return res.scalar_one_or_none()
+        return (await self.db.execute(stmt)).scalar_one_or_none()
 
     async def get_by_id(self, identity_id: uuid.UUID) -> Optional[Identity]:
         stmt = select(Identity).where(Identity.id == identity_id)
-        res = await self.db.execute(stmt)
-        return res.scalar_one_or_none()
+        return (await self.db.execute(stmt)).scalar_one_or_none()
 
     async def create_identity(
         self,
@@ -57,8 +60,7 @@ class IdentityRepository:
             WHERE i.email = :email
             LIMIT 1
         """)
-        res = await self.db.execute(query, {"email": email.lower().strip()})
-        return res.fetchone()
+        return (await self.db.execute(query, {"email": email.lower().strip()})).fetchone()
 
     async def get_identity_with_profile_by_id(self, identity_id: uuid.UUID):
         query = text("""
@@ -69,8 +71,7 @@ class IdentityRepository:
             WHERE i.id = :uid
             LIMIT 1
         """)
-        res = await self.db.execute(query, {"uid": identity_id})
-        return res.fetchone()
+        return (await self.db.execute(query, {"uid": identity_id})).fetchone()
 
     async def create_refresh_session(
         self,
@@ -97,32 +98,28 @@ class IdentityRepository:
             WHERE token_hash = :hash
             FOR UPDATE
         """)
-        res = await self.db.execute(query, {"hash": token_hash})
-        return res.fetchone()
+        return (await self.db.execute(query, {"hash": token_hash})).fetchone()
 
     async def revoke_session(self, session_id: uuid.UUID) -> None:
-        stmt = (
+        await self.db.execute(
             update(RefreshSession)
             .where(RefreshSession.id == session_id)
             .values(revoked_at=datetime.now(timezone.utc))
         )
-        await self.db.execute(stmt)
 
     async def revoke_family(self, family_id: uuid.UUID) -> None:
-        stmt = (
+        await self.db.execute(
             update(RefreshSession)
             .where(RefreshSession.family_id == family_id, RefreshSession.revoked_at.is_(None))
             .values(revoked_at=datetime.now(timezone.utc))
         )
-        await self.db.execute(stmt)
 
     async def revoke_by_token_hash(self, token_hash: str) -> None:
-        stmt = (
+        await self.db.execute(
             update(RefreshSession)
             .where(RefreshSession.token_hash == token_hash)
             .values(revoked_at=datetime.now(timezone.utc))
         )
-        await self.db.execute(stmt)
 
     async def create_password_reset_token(
         self, identity_id: uuid.UUID, token_hash: str, expires_at: datetime
@@ -144,8 +141,7 @@ class IdentityRepository:
             WHERE token_hash = :hash
             FOR UPDATE
         """)
-        res = await self.db.execute(query, {"hash": token_hash})
-        return res.fetchone()
+        return (await self.db.execute(query, {"hash": token_hash})).fetchone()
 
     async def mark_reset_token_used_and_rotate_password(
         self, token_id: uuid.UUID, identity_id: uuid.UUID, new_password_hash: str
@@ -169,6 +165,34 @@ class IdentityRepository:
             .values(revoked_at=now)
         )
 
+    async def create_email_verification_token(
+        self, identity_id: uuid.UUID, token_hash: str, expires_at: datetime
+    ) -> EmailVerificationToken:
+        row = EmailVerificationToken(
+            id=uuid.uuid4(),
+            identity_id=identity_id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+        self.db.add(row)
+        await self.db.flush()
+        return row
+
+    async def consume_email_verification_token(self, token_hash: str):
+        query = text("""
+            DELETE FROM email_verification_tokens
+            WHERE token_hash = :hash
+            RETURNING id, identity_id, expires_at
+        """)
+        row = (await self.db.execute(query, {"hash": token_hash})).fetchone()
+        if row:
+            await self.db.execute(
+                update(Identity)
+                .where(Identity.id == row.identity_id)
+                .values(status="active", updated_at=datetime.now(timezone.utc))
+            )
+        return row
+
     async def delete_identity(self, identity_id: uuid.UUID) -> None:
         await self.db.execute(delete(Identity).where(Identity.id == identity_id))
 
@@ -182,26 +206,18 @@ class IdentityRepository:
             WHERE s.provider = :provider AND s.provider_user_id = :puid
             LIMIT 1
         """)
-        res = await self.db.execute(query, {"provider": provider.lower().strip(), "puid": provider_user_id})
-        return res.fetchone()
+        return (
+            await self.db.execute(query, {"provider": provider.lower().strip(), "puid": provider_user_id})
+        ).fetchone()
 
     async def link_social_account(
         self, identity_id: uuid.UUID, provider: str, provider_user_id: str
     ) -> None:
-        query = text("""
-            INSERT INTO social_accounts (id, identity_id, provider, provider_user_id)
-            VALUES (:id, :uid, :provider, :puid)
-            ON CONFLICT (provider, provider_user_id) DO NOTHING
-        """)
         await self.db.execute(
-            query,
-            {
-                "id": uuid.uuid4(),
-                "uid": identity_id,
-                "provider": provider.lower().strip(),
-                "puid": provider_user_id,
-            },
+            text("""
+                INSERT INTO social_accounts (id, identity_id, provider, provider_user_id)
+                VALUES (:id, :uid, :provider, :puid)
+                ON CONFLICT (provider, provider_user_id) DO NOTHING
+            """),
+            {"id": uuid.uuid4(), "uid": identity_id, "provider": provider.lower().strip(), "puid": provider_user_id},
         )
-
-
-

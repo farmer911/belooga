@@ -1,6 +1,20 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Candidate Workspace Core Quality Gate', () => {
+  test.beforeEach(async ({ page }) => {
+    // Authenticate candidate session (sets HttpOnly belooga_refresh_token cookie for session bootstrap)
+    const loginRes = await page.request.post('http://localhost:8000/v1/auth/login/', {
+      headers: {
+        'X-Forwarded-For': `10.88.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
+      },
+      data: {
+        email: 'alex@belooga.com',
+        password: 'SecurePassword123!',
+      },
+    });
+    expect(loginRes.status()).toBe(200);
+  });
+
   test('TC-WORK-001: 2-Column responsive layout and sticky sidebar assertions', async ({ page }) => {
     await page.goto('/user/alexnguyen');
 
@@ -38,7 +52,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await expect(modal).toBeVisible();
 
     // Close Modal
-    await page.locator('button:has(svg.lucide-x)').click();
+    await page.locator('[data-testid="close-pitch-modal-btn"]').click();
     await expect(modal).toBeHidden();
   });
 
@@ -382,6 +396,55 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     // Stop recording and close
     await page.locator('[data-testid="studio-stop-btn"]').click();
     await page.locator('button:has-text("Close")').click();
+  });
+
+  test('TC-WORK-008: Languages & Interests card visibility and full profile taxonomy/awards CRUD', async ({ page, request }) => {
+    await page.goto('/user/alexnguyen');
+
+    // 1. Assert Languages & Interests card and Awards Timeline card are visible in Workspace
+    const langInterestCard = page.locator('[data-testid="languages-interests-card"]');
+    await expect(langInterestCard).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-testid="language-input"]')).toBeVisible();
+    await expect(page.locator('[data-testid="interest-input"]')).toBeVisible();
+    await expect(page.locator('[data-testid="awards-timeline-card"]')).toBeVisible();
+    await expect(page.locator('[data-testid="award-title-input"]')).toBeVisible();
+
+    // 2. Verify authenticated API CRUD for Languages, Interests, and Awards
+    const authRes = await request.post('http://localhost:8000/v1/auth/login/', {
+      data: {
+        email: 'alex@belooga.com',
+        password: 'SecurePassword123!',
+      },
+    });
+    expect(authRes.status()).toBe(200);
+    const { access_token } = await authRes.json();
+    const headers = { Authorization: `Bearer ${access_token}` };
+
+    const addLangRes = await request.post('http://localhost:8000/v1/profile/alexnguyen/languages/', {
+      headers,
+      data: { name: 'Japanese', proficiency: 'Conversational' },
+    });
+    expect(addLangRes.status()).toBe(200);
+    const afterAddLang = await addLangRes.json();
+    expect(afterAddLang.name).toBe('Japanese');
+
+    const delLangRes = await request.delete('http://localhost:8000/v1/profile/alexnguyen/languages/Japanese/', {
+      headers,
+    });
+    expect(delLangRes.status()).toBe(200);
+
+    const addAwardRes = await request.post('http://localhost:8000/v1/profile/alexnguyen/awards/', {
+      headers,
+      data: { title: 'Playwright QC Award', issuer: 'Belooga QA', issued_year: 2026 },
+    });
+    expect(addAwardRes.status()).toBe(201);
+    const createdAward = await addAwardRes.json();
+    expect(createdAward.id).toBeDefined();
+
+    const delAwardRes = await request.delete(`http://localhost:8000/v1/profile/alexnguyen/awards/${createdAward.id}/`, {
+      headers,
+    });
+    expect(delAwardRes.status()).toBe(200);
   });
 });
 

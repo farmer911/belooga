@@ -25,6 +25,12 @@ export default defineConfig({
       maxDiffPixelRatio: 0.01, // Strict 1% visual delta tolerance
     },
   },
+  webServer: {
+    command: 'cd ../frontend && NEXT_PUBLIC_E2E=1 bun run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 60000,
+  },
   projects: [
     {
       name: 'Desktop Chromium',

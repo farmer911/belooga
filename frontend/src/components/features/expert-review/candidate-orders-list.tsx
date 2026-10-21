@@ -6,7 +6,7 @@ import { ReviewOrder, ReviewFeedback } from "@/hooks/use-expert-review";
 import { apiClient } from "@/services/api-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface CandidateOrdersListProps {
@@ -85,7 +85,7 @@ export function CandidateOrdersList({ orders, onPayOrder }: CandidateOrdersListP
                     className="bg-brand-primary hover:bg-brand-hover text-white gap-1.5"
                   >
                     <CreditCard className="h-4 w-4" />
-                    {payingId === order.id ? "Processing..." : "Pay ${(order.amount_paid_cents / 100).toFixed(0)}"}
+                    {payingId === order.id ? "Processing..." : `Pay $${(order.amount_paid_cents / 100).toFixed(0)}`}
                   </Button>
                 )}
 
@@ -114,7 +114,6 @@ export function CandidateOrdersList({ orders, onPayOrder }: CandidateOrdersListP
           ))}
         </div>
 
-        {/* Feedback Viewer Dialog */}
         <Dialog open={!!selectedFeedback} onClose={() => setSelectedFeedback(null)}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             {selectedFeedback && (
@@ -129,7 +128,6 @@ export function CandidateOrdersList({ orders, onPayOrder }: CandidateOrdersListP
                 </DialogHeader>
 
                 <div className="mt-4 space-y-4 text-sm">
-                  {/* Metric Chips */}
                   <div className="grid grid-cols-3 gap-3 text-center bg-surface-page p-3 rounded-lg border border-surface-border">
                     <div>
                       <div className="text-xl font-extrabold text-brand-primary">{selectedFeedback.score_overall}/100</div>
