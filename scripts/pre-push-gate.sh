@@ -21,8 +21,11 @@ python3 scripts/lint-skills.py --quiet
 python3 scripts/ratchet.py
 python3 scripts/trust-benchmark.py
 
-echo "[Pre-Push Gate] 2/4 Verifying Frontend TypeScript Compilation..."
+echo "[Pre-Push Gate] 2/4 Verifying Frontend & Mobile TypeScript Compilation + Mobile Tests..."
 (cd frontend && bun x tsc --noEmit)
+if [ -d "mobile" ]; then
+    (cd mobile && bun x tsc --noEmit && bun test)
+fi
 
 echo "[Pre-Push Gate] 3/4 Running Backend Pytest Suite..."
 backend/.venv/bin/pytest backend/tests/ -q

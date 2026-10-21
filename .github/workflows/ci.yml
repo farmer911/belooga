@@ -61,9 +61,10 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install Frontend & QC Dependencies
+      - name: Install Frontend, Mobile & QC Dependencies
         run: |
           cd frontend && bun install --frozen-lockfile || bun install
+          cd ../mobile && bun install --frozen-lockfile || bun install
           cd ../qc && bun install && bun x playwright install --with-deps chromium
 
       - name: Initialize Database Schema & Seed Data
@@ -80,9 +81,10 @@ jobs:
         run: |
           bash scripts/audit-truth.sh
 
-      - name: Run Frontend Unit Tests
+      - name: Run Frontend & Mobile Unit Tests + Typecheck
         run: |
           cd frontend && bun run test
+          cd ../mobile && bun x tsc --noEmit && bun test
 
       - name: Run Playwright E2E Automation Suite
         env:

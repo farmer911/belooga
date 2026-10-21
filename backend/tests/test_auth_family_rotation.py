@@ -262,4 +262,72 @@ async def test_oauth_sso_callback_links_social_account_and_issues_session(
     assert res2.json()["user"]["id"] == str(uid)
 
 
+@pytest.mark.asyncio
+async def test_mobile_dual_mode_refresh_token_and_logout(
+    client: AsyncClient,
+    test_candidate_a: dict,
+    db_session: AsyncSession,
+):
+    """
+    BEL-132: Verify Native Mobile clients (without cookies) receive refresh_token in
+    TokenResponse and can rotate/revoke sessions via JSON body or X-Refresh-Token header.
+    """
+    uid = test_candidate_a["id"]
+    family_id = uuid.uuid4()
+    raw_refresh = generate_refresh_token()
+    token_hash_val = hash_token(raw_refresh)
+    now = datetime.now(timezone.utc)
+
+    await db_session.execute(
+        text("""
+            INSERT INTO refresh_sessions (identity_id, family_id, token_hash, expires_at)
+            VALUES (:uid, :fid, :thash, :exp)
+        """),
+        {"uid": uid, "fid": family_id, "thash": token_hash_val, "exp": now + timedelta(days=30)},
+    )
+    await db_session.commit()
+
+    # Ensure zero cookies on client (simulating React Native / Expo SecureStore client)
+    client.cookies.clear()
+
+    # 1. Rotate via JSON body {"refresh_token": ...} without cookies
+    refresh_res = await client.post(
+        "/v1/auth/refresh/",
+        json={"refresh_token": raw_refresh},
+    )
+    assert refresh_res.status_code == 200
+    refresh_data = refresh_res.json()
+    assert "access_token" in refresh_data
+    assert "refresh_token" in refresh_data and refresh_data["refresh_token"]
+    rotated_token = refresh_data["refresh_token"]
+    assert rotated_token != raw_refresh
+
+    # 2. Rotate again via X-Refresh-Token header without cookies
+    client.cookies.clear()
+    header_res = await client.post(
+        "/v1/auth/refresh/",
+        headers={"X-Refresh-Token": rotated_token},
+    )
+    assert header_res.status_code == 200
+    header_data = header_res.json()
+    second_rotated = header_data["refresh_token"]
+    assert second_rotated and second_rotated != rotated_token
+
+    # 3. Logout via JSON body without cookies revokes the mobile refresh session
+    client.cookies.clear()
+    logout_res = await client.post(
+        "/v1/auth/logout/",
+        json={"refresh_token": second_rotated},
+    )
+    assert logout_res.status_code == 200
+
+    # Verify session is revoked in DB
+    rev_res = await db_session.execute(
+        text("SELECT revoked_at FROM refresh_sessions WHERE token_hash = :th"),
+        {"th": hash_token(second_rotated)},
+    )
+    assert rev_res.scalar() is not None
+
+
+
 
