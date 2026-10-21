@@ -32,9 +32,7 @@ CACHEABLE_PUBLIC_PREFIXES = (
 
 _token_buckets: OrderedDict[str, Tuple[float, float]] = OrderedDict()
 _idempotency_store: OrderedDict[str, Tuple[float, int, List[Tuple[bytes, bytes]], bytes]] = OrderedDict()
-_gateway_redis: Optional[aioredis.Redis] = None
-_gateway_redis_loop: Optional[asyncio.AbstractEventLoop] = None
-_gateway_redis_disabled_until: float = 0.0
+_redis_state: Dict[str, Any] = {"client": None, "loop": None, "disabled_until": 0.0}
 _gateway_stats: Dict[str, int] = {
     "total_requests": 0, "rate_limited_429": 0, "payload_rejected_413": 0,
     "idempotency_replays": 0, "etag_304_hits": 0, "redis_distributed_ops": 0,
@@ -50,24 +48,23 @@ def clear_gateway_l1_state() -> None:
 
 
 async def _get_gateway_redis() -> Optional[aioredis.Redis]:
-    global _gateway_redis, _gateway_redis_loop, _gateway_redis_disabled_until
     if os.getenv("ENVIRONMENT") == "testing" and os.getenv("GATEWAY_REDIS_ENABLED") != "1":
         return None
     now = time.monotonic()
-    if now < _gateway_redis_disabled_until:
+    if now < float(_redis_state["disabled_until"]):
         return None
     loop = asyncio.get_running_loop()
-    if _gateway_redis is None or _gateway_redis_loop is not loop:
+    if _redis_state["client"] is None or _redis_state["loop"] is not loop:
         try:
-            _gateway_redis = aioredis.from_url(
+            _redis_state["client"] = aioredis.from_url(
                 os.getenv("REDIS_URL", "redis://localhost:6379/0"),
                 encoding="utf-8", decode_responses=True, socket_connect_timeout=0.2, socket_timeout=0.4,
             )
-            _gateway_redis_loop = loop
+            _redis_state["loop"] = loop
         except Exception:
-            _gateway_redis_disabled_until = now + 10.0
+            _redis_state["disabled_until"] = now + 10.0
             return None
-    return _gateway_redis
+    return _redis_state["client"]
 
 
 def _resolve_rate_tier(method: str, path: str, custom_limit: Optional[str]) -> Tuple[int, str]:
@@ -102,7 +99,6 @@ def _consume_token_bucket(bucket_key: str, capacity: int, max_buckets: int = 819
 
 
 async def _consume_rate_limit(bucket_key: str, capacity: int, max_buckets: int = 8192) -> Tuple[bool, int]:
-    global _gateway_redis_disabled_until
     r_client = await _get_gateway_redis()
     if r_client is not None:
         try:
@@ -113,12 +109,11 @@ async def _consume_rate_limit(bucket_key: str, capacity: int, max_buckets: int =
             _gateway_stats["redis_distributed_ops"] += 1
             return count <= capacity, max(0, capacity - count)
         except Exception:
-            _gateway_redis_disabled_until = time.monotonic() + 10.0
+            _redis_state["disabled_until"] = time.monotonic() + 10.0
     return _consume_token_bucket(bucket_key, capacity, max_buckets)
 
 
 async def _lookup_idempotency(idem_key: str) -> Optional[Tuple[int, List[Tuple[bytes, bytes]], bytes, bytes]]:
-    global _gateway_redis_disabled_until
     cached = _idempotency_store.get(idem_key)
     if cached is not None:
         exp_at, c_status, c_headers, c_body = cached
@@ -137,12 +132,11 @@ async def _lookup_idempotency(idem_key: str) -> Optional[Tuple[int, List[Tuple[b
                 _idempotency_store[idem_key] = (time.monotonic() + 300.0, c_status, c_hdrs, c_body)
                 return c_status, c_hdrs, c_body, b"redis"
         except Exception:
-            _gateway_redis_disabled_until = time.monotonic() + 10.0
+            _redis_state["disabled_until"] = time.monotonic() + 10.0
     return None
 
 
 async def _store_idempotency(idem_key: str, status: int, headers: List[Tuple[bytes, bytes]], body: bytes) -> None:
-    global _gateway_redis_disabled_until
     c_hdrs = [(k, v) for (k, v) in headers if k.lower() == b"content-type"]
     _idempotency_store[idem_key] = (time.monotonic() + 300.0, status, c_hdrs, body)
     while len(_idempotency_store) > 2048:
@@ -154,7 +148,7 @@ async def _store_idempotency(idem_key: str, status: int, headers: List[Tuple[byt
             await r_client.setex(f"belooga:gw:idem:{idem_key}", 300, json.dumps(doc))
             _gateway_stats["redis_distributed_ops"] += 1
         except Exception:
-            _gateway_redis_disabled_until = time.monotonic() + 10.0
+            _redis_state["disabled_until"] = time.monotonic() + 10.0
 
 
 async def _send_json_response(send: Send, status_code: int, payload: Dict[str, Any], extra_headers: List[Tuple[bytes, bytes]]) -> None:
