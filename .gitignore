@@ -17,7 +17,8 @@ __pycache__/
 *$py.class
 *.so
 .env
-.env.local
+.env.*
+!.env.example
 .venv/
 venv/
 ENV/

@@ -46,3 +46,18 @@ async def test_momo_payment_flow_and_idempotency(client: AsyncClient):
     res_ipn_duplicate = await client.post("/v1/payments/momo/ipn", json=ipn_payload)
     assert res_ipn_duplicate.status_code == 200
     assert res_ipn_duplicate.json()["status"] == "ALREADY_PROCESSED"
+
+
+def test_momo_secret_key_production_guard_and_cors_origins(monkeypatch: pytest.MonkeyPatch):
+    """Verify MOMO_SECRET_KEY raises RuntimeError in production when missing, and CORS_ORIGINS parses env."""
+    from app.modules.payments.service import get_momo_secret_key
+    from app.main import get_cors_origins
+
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.delenv("MOMO_SECRET_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="MOMO_SECRET_KEY"):
+        get_momo_secret_key()
+
+    monkeypatch.setenv("CORS_ORIGINS", "https://belooga.com, https://app.belooga.com ")
+    assert get_cors_origins() == ["https://belooga.com", "https://app.belooga.com"]
+
