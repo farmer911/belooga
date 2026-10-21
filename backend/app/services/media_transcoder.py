@@ -160,7 +160,8 @@ async def extract_poster_thumbnail(video_path: str, poster_path: str) -> Optiona
             logger.warning("Fallback frame extraction error: %s", type(e).__name__)
 
     if os.path.exists(safe_poster) and os.path.getsize(safe_poster) > 0:
-        return f"http://localhost:8000/uploads/videos/{os.path.basename(safe_poster)}"
+        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
+        return f"{gateway_origin}/uploads/videos/{os.path.basename(safe_poster)}"
     return "/images/home/matt-poster.png"
 
 

@@ -28,7 +28,8 @@ flowchart LR
     end
 
     subgraph GW_RPC["Edge & Transport Layer"]
-        GW["Pure-ASGI API Gateway (gateway.py)\n• Bounded LRU GCRA Rate Limit\n• Route-Tiered RPM Policies\n• ETag 304 & Idempotency-Key"]
+        EDGE["Nginx Edge Gateway (:8080) & K8s Ingress\n(nginx/gateway.conf & deployment-and-hpa.yaml)\n• 100r/s Burst 200 Rate Limit (429)\n• 15MB Body Guard & Keepalive Upstream"]
+        GW["Distributed Pure-ASGI Gateway (gateway.py)\n• Redis Distributed Rate-Limit & Idempotency\n• Bounded LRU L1 Circuit-Breaker Fallback\n• ETag 304 & Route-Tiered RPM Policies"]
         RPC["ConnectRPC Batch Engine (rpc.py)\n• POST /v1/rpc/batch\n• Protobuf-Varint Binary Framing\n• Shared Profile Bundle Hydration"]
     end
 
@@ -43,11 +44,11 @@ flowchart LR
         K8S["Kubernetes HPA & Probes (k8s/)\n• /health/live & /health/ready\n• Lifespan Drain + 2..10 Replicas"]
     end
 
-    FE --> GW --> RPC --> SVC
+    FE --> EDGE --> GW --> RPC --> SVC
     SVC --> CACHE
     SVC --> EVT
     SVC --> PG
-    K8S -.-> GW
+    K8S -.-> EDGE
 ```
 
 ---
@@ -65,7 +66,7 @@ flowchart LR
 | **Senior Agile / Kanban Delivery** | Feature branches, PRs, Kanban tickets | `belooga-senior-agile-workflow` |
 | **Default Code Compression** | All code implementations | `ponytail` |
 | **UI/UX Design Intelligence** | Design tokens, palettes, UX checklists | `ui-ux-pro-max` |
-| **Backend System Standards** | `backend/app/` | `belooga-backend-engineering` |
+| **Backend System & API Gateway Standards** | `backend/app/`, `nginx/gateway.conf`, `k8s/` | `belooga-backend-engineering` |
 | **Frontend UI Standards** | `frontend/src/` | `belooga-frontend-engineering` |
 | **QC & Playwright Testing** | `qc/` | `belooga-qc-engineering` |
 | **Backend Code Review** | Backend PRs / diffs | `be-code-review` |

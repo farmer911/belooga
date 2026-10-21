@@ -5,6 +5,7 @@ Always-on project instruction for Gemini / Antigravity agent.
 ## 1. Verified Tech Stack (Ground Truth)
 - **Frontend (Web):** Next.js 16.3.8, React 19 (App Router), Bun runtime, Tailwind CSS v4, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`, Zustand.
 - **Mobile App (`mobile/`):** Expo SDK 58.0.16 / React Native 0.88.0 (Expo Router), TypeScript, `@tanstack/react-query`, `zod`, Zustand, `expo-secure-store`, Android SDK 36 Clean-APK Pipeline (`mobile/scripts/build-apk.sh`) & ADB UIAutomator2 / Maestro E2E (`mobile/scripts/e2e-mobile-adb.sh`).
+- **Edge & Distributed API Gateway:** Nginx 1.27 Reverse Proxy (`nginx/gateway.conf` on `:8080`, K8s `Ingress` in `k8s/deployment-and-hpa.yaml`) + Pure-ASGI Distributed Redis Gateway (`backend/app/core/gateway.py`) & ConnectRPC Batch Engine (`backend/app/core/rpc.py`).
 - **Backend:** FastAPI, Python 3.12+, SQLAlchemy 2.0 Async (`asyncpg`), Alembic (`backend/alembic/`), Pydantic v2, ReportLab, AnyIO.
 - **Database:** PostgreSQL 16 (See `CURRENT_STATE.md` §1; GIN `TSVECTOR`, `pg_trgm`), Redis 7.
 - **QC:** Playwright (TypeScript/Bun) in `qc/` (`bun run test:e2e`), Pytest in `backend/tests/`.
@@ -35,7 +36,7 @@ Always-on project instruction for Gemini / Antigravity agent.
 ## 5. Task Routing
 - **Forensic Investigation & Plan (`/investigate`):** Skill `investigate` (read-only trace + Option A/B trade-off + writes `.agents/STATE.md` & halts).
 - **Supervisor & Product Challenge:** Skill `belooga-supervisor` + `.agents/PRODUCT_THESIS.md`.
-- **Backend API / DB:** Skill `belooga-backend-engineering` (routes to `be-domain-*`), test with `backend/.venv/bin/pytest backend/tests/`.
+- **Backend API / Gateway / DB:** Skill `belooga-backend-engineering` (covers Edge `:8080` + `backend/app/core/gateway.py` + routes to `be-domain-*`), test with `backend/.venv/bin/pytest backend/tests/`.
 - **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to `fe-domain-*`), test with `cd frontend && bun x tsc --noEmit`.
 - **E2E / Visual QC:** Skill `belooga-qc-engineering`, run `cd qc && bun run test:e2e`.
 - **Agile Planning & PR Delivery:** Skill `belooga-senior-agile-workflow`, task breakdown with standalone engine at `../beloga-agent-kanban` (CLI: `bun run agent`).

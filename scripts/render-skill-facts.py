@@ -32,11 +32,16 @@ BACKEND = {
 BACKEND_TESTS = {
     "be-domain-core": [
         "test_auth_family_rotation.py",
+        "test_event_stream_and_k8s_probes.py",
+        "test_fullstack_seo_gateway.py",
+        "test_gateway_and_cache_optimization.py",
         "test_idor_guards.py",
         "test_media_traversal.py",
         "test_notifications.py",
         "test_production_readiness_suite.py",
         "test_profile_privacy_and_pii.py",
+        "test_rpc_and_dossier_optimization.py",
+        "test_sql_and_flow_optimization.py",
         "test_timeline_reorder.py",
     ],
     "be-domain-discovery": [

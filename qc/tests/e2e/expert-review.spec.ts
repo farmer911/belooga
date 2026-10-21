@@ -57,7 +57,7 @@ test.describe('Expert CV Review & Monetization Quality Gate', () => {
 
   test('TC-EXREV-004: MoMo HMAC-SHA256 IPN webhook rejects tampered signature and accepts valid feedback', async ({ request }) => {
     // 1. Create MoMo QR order
-    const qrRes = await request.post('http://localhost:8000/v1/payments/momo/create-qr', {
+    const qrRes = await request.post('http://localhost:8080/v1/payments/momo/create-qr', {
       data: {
         package_type: 'EXPERT_REVIEW',
         amount: 499000,
@@ -68,7 +68,7 @@ test.describe('Expert CV Review & Monetization Quality Gate', () => {
     const qrJson = await qrRes.json();
 
     // 2. Tampered IPN signature must be rejected with HTTP 400
-    const badIpnRes = await request.post('http://localhost:8000/v1/payments/momo/ipn', {
+    const badIpnRes = await request.post('http://localhost:8080/v1/payments/momo/ipn', {
       data: {
         order_id: qrJson.order_id,
         trans_id: '999888777',

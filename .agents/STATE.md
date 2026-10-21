@@ -1,18 +1,18 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (BEL-137 — Distributed Edge API Gateway, Redis State & K8s Ingress):**
-  1. Upgrade `backend/app/core/gateway.py` (`APIGatewayMiddleware` & `/v1/gateway/status`) from process-local `OrderedDict` state to Distributed Redis-backed Rate-Limiting & Idempotency-Key replay (`gw:rl:*`, `gw:idem:*`) with automatic L1 LRU fallback.
-  2. Activate Edge Gateway (`nginx/gateway.conf` + `docker-compose.yml` `belooga-gateway` on `:8080`), wire Web (`frontend/`) & Mobile (`mobile/`) clients + `.env.example` to route via `:8080`, and add Kubernetes `Ingress` in `k8s/deployment-and-hpa.yaml`.
-  3. Add TDD tests in `backend/tests/test_gateway_and_cache_optimization.py` proving cross-worker distributed Redis rate-limiting, cross-worker `Idempotency-Key` replay, K8s `Ingress` manifest, and live Nginx `:8080` proxy routing.
+- **Task (BEL-138 — Full Service, Workflow, Skill, README & E2E Gateway Alignment):**
+  1. Update Backend services (`profile/service.py`, `media/service.py`, `analytics/service.py`, `services/media_transcoder.py`) to emit Gateway URLs (`PUBLIC_API_URL=http://localhost:8080`) instead of hardcoded `:8000`.
+  2. Synchronize Skills, Rules, Workflows (`GEMINI.md`, `.agents/ROUTER.md`, `.agents/rules/backend.md`, `belooga-backend-engineering`, `belooga-frontend-engineering`, `belooga-qc-engineering`, `render-skill-facts.py`) and `README.md` with the `:8080` Edge + Distributed Redis API Gateway architecture.
+  3. Migrate all Playwright E2E API calls (`qc/tests/e2e/workspace.spec.ts`, `expert-review.spec.ts`) and Frontend BI snippets (`use-analytics-dashboard.ts`) from `:8000` to `:8080` and verify live E2E execution.
 
 ## Pre-Mortem Risks
-- Keep `backend/app/core/gateway.py` <= 300 lines (`be_files_over_300_lines = 0`) using Ponytail compression.
-- Ensure GitHub Actions CI (`.github/workflows/ci.yml`) runs gateway listener on `:8080` alongside `:8000` so Playwright E2E passes seamlessly in CI.
-- Set `client_max_body_size 15m;` and `limit_req_status 429;` in `nginx/gateway.conf` so 1MB+ video chunks / PDF uploads are not blocked by Nginx's default 1MB limit.
+- Register `PUBLIC_API_URL` in `.env.example` so `scripts/trust-benchmark.py` passes with 100% score.
+- Keep all `backend/app/` files <= 300 lines (`be_files_over_300_lines = 0`) and all `SKILL.md` files <= 200 lines (`scripts/lint-skills.py`).
+- Ensure `nginx/gateway.conf` proxies `/redoc` in addition to `/docs` and `/openapi.json`.
 
 ## Execution Checklist
-- [x] **Phase 1 (TDD RED):** Add failing tests in `backend/tests/test_gateway_and_cache_optimization.py` for distributed Redis rate-limiting, cross-worker idempotency replay, and K8s Ingress / Edge routing
-- [x] **Phase 2 (TDD GREEN Backend & Edge Infra):** Implement Redis-backed distributed state in `backend/app/core/gateway.py`, update `nginx/gateway.conf`, `docker-compose.yml`, `k8s/deployment-and-hpa.yaml`, and start `belooga-gateway`
-- [x] **Phase 3 (Client Wiring & CI):** Point `frontend/`, `mobile/`, `.env.example`, and `.github/workflows/ci.yml` to `:8080` gateway
-- [x] **Phase 4 (SSOT Sync & PR):** Run `generate-current-state.py`, `render-skill-facts.py`, `trust-benchmark.py`, `audit-truth.sh`, and merge PR
+- [x] **Phase 1 (TDD RED):** Add failing test in `backend/tests/test_gateway_and_cache_optimization.py` checking service URLs, E2E specs, and README gateway alignment
+- [x] **Phase 2 (TDD GREEN Services & E2E):** Update backend services, `use-analytics-dashboard.ts`, `qc/tests/e2e/*.spec.ts`, and `nginx/gateway.conf` to `:8080`
+- [x] **Phase 3 (Skills, Workflows & README):** Update `GEMINI.md`, `README.md`, `.agents/ROUTER.md`, `.agents/rules/backend.md`, and `.agents/skills/*`
+- [x] **Phase 4 (Verification & PR):** Run `pytest`, Playwright E2E, `audit-truth.sh`, `trust-benchmark.py`, and merge PR

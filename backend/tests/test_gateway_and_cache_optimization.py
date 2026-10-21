@@ -209,3 +209,26 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
         assert "http://localhost:8080" in fe_api_txt
         assert "http://localhost:8080" in mob_api_txt
 
+        # 4. BEL-138: Verify services, E2E specs, and README route through Edge Gateway (:8080)
+        bi_res = await client.get("/v1/analytics/bi-export?limit=10")
+        assert bi_res.status_code == 200
+        bi_body = bi_res.json()
+        assert "http://localhost:8080/v1/analytics/bi-export" in bi_body["power_bi_m_query_snippet"]
+        assert "http://localhost:8080/v1/analytics/bi-export" in bi_body["duckdb_sql_snippet"]
+
+        for rel_file in [
+            "backend/app/modules/profile/service.py",
+            "backend/app/modules/media/service.py",
+            "backend/app/services/media_transcoder.py",
+            "frontend/src/hooks/use-analytics-dashboard.ts",
+            "qc/tests/e2e/workspace.spec.ts",
+            "qc/tests/e2e/expert-review.spec.ts",
+        ]:
+            content = (root / rel_file).read_text()
+            assert "http://localhost:8000" not in content, f"{rel_file} still hardcodes :8000 instead of Gateway :8080"
+            assert "http://localhost:8080" in content
+
+        readme_txt = (root / "README.md").read_text()
+        assert "http://localhost:8080" in readme_txt
+        assert "belooga-gateway" in readme_txt
+
