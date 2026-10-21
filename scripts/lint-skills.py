@@ -99,7 +99,7 @@ valid_api_norm = {ep.rstrip("/") for ep in valid_api_endpoints}
 
 def resolve_path(raw):
     raw = raw.strip("/")
-    for base in ("", "frontend/", "backend/", "qc/", "frontend/src/", "backend/app/"):
+    for base in ("", "frontend/", "mobile/", "backend/", "qc/", "frontend/src/", "mobile/src/", "backend/app/"):
         if (ROOT / (base + raw)).exists():
             return True
     return False
@@ -287,7 +287,7 @@ def check_ecosystem_coverage():
     allowed_md = {"CURRENT_STATE.md", "GEMINI.md", "README.md", "docs/VIOLATIONS_REGISTER.md", "docs/ponytail-debt.md", "frontend/AGENTS.md", "graphify-out/GRAPH_REPORT.md"}
     for md in ROOT.rglob("*.md"):
         rel = md.relative_to(ROOT).as_posix()
-        if any(rel.startswith(p) for p in (".agents/", "docs/adr/", "legacy/", "node_modules/", "frontend/node_modules/", "frontend/.next/", "qc/node_modules/", "qc/playwright-report/", "qc/test-results/", "backend/.venv/", ".pytest_cache/", ".git/")):
+        if any(rel.startswith(p) for p in (".agents/", "docs/adr/", "legacy/", "node_modules/", "frontend/node_modules/", "frontend/.next/", "mobile/node_modules/", "mobile/.expo/", "qc/node_modules/", "qc/playwright-report/", "qc/test-results/", "backend/.venv/", ".pytest_cache/", ".git/")):
             continue
         if rel not in allowed_md:
             add("ERROR", md, f"redundant/unapproved markdown file `{rel}` outside canonical SSOT whitelist")

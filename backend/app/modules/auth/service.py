@@ -91,7 +91,7 @@ class AuthService:
             "email": user_dto.email, "role": user_dto.role,
         })
         _set_refresh_cookie(response, raw_refresh)
-        return TokenResponse(access_token=access_token, token_type="bearer", user=user_dto)
+        return TokenResponse(access_token=access_token, refresh_token=raw_refresh, token_type="bearer", user=user_dto)
 
     async def check_email_availability(self, email: str) -> CheckAvailabilityResponse:
         existing = await self.identity_repo.get_by_email(email)

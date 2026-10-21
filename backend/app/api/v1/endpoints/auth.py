@@ -5,7 +5,8 @@ Security Invariant:
   a 15s grace window for concurrent requests, and delete_cookie upon family revocation.
 """
 
-from fastapi import APIRouter, Depends, Query, Request, Response, status
+from typing import Optional
+from fastapi import APIRouter, Body, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -18,6 +19,7 @@ from app.schemas.auth import (
     ForgotPasswordResponse,
     LoginRequest,
     OAuthCallbackRequest,
+    RefreshTokenRequest,
     RegisterRequest,
     ResetPasswordRequest,
     TokenResponse,
@@ -28,6 +30,12 @@ from app.schemas.auth import (
 from app.modules.auth import AuthService
 
 router = APIRouter()
+
+
+def _extract_refresh_token(request: Request, payload: Optional[RefreshTokenRequest]) -> Optional[str]:
+    if payload and payload.refresh_token:
+        return payload.refresh_token.strip()
+    return request.cookies.get("belooga_refresh_token") or request.headers.get("X-Refresh-Token")
 
 
 @router.get("/users/exists/email/", response_model=CheckAvailabilityResponse, tags=["Domain 1: Identity & Sessions"])
@@ -68,10 +76,10 @@ async def login(
 async def refresh_tokens(
     request: Request,
     response: Response,
+    payload: Optional[RefreshTokenRequest] = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    refresh_token = request.cookies.get("belooga_refresh_token")
-    return await AuthService(db).refresh_tokens(refresh_token, response)
+    return await AuthService(db).refresh_tokens(_extract_refresh_token(request, payload), response)
 
 
 @router.get("/auth/me/", response_model=UserProfileDTO, tags=["Domain 1: Identity & Sessions"])
@@ -86,10 +94,10 @@ async def get_current_session_user(
 async def logout(
     request: Request,
     response: Response,
+    payload: Optional[RefreshTokenRequest] = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    refresh_token = request.cookies.get("belooga_refresh_token")
-    return await AuthService(db).logout(refresh_token, response)
+    return await AuthService(db).logout(_extract_refresh_token(request, payload), response)
 
 
 @router.post("/auth/forgot-password/", response_model=ForgotPasswordResponse, tags=["Domain 1: Identity & Sessions"])

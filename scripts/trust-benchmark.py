@@ -26,6 +26,7 @@ BE_APP = ROOT / "backend" / "app"
 BE_TESTS = ROOT / "backend" / "tests"
 SCRIPTS_DIR = ROOT / "scripts"
 FE_SRC = ROOT / "frontend" / "src"
+MOBILE_SRC = ROOT / "mobile" / "src"
 QC_TESTS = ROOT / "qc" / "tests"
 AGENTS = ROOT / ".agents"
 
@@ -232,9 +233,9 @@ else:
                 violations["4. Async & IDOR Safety (All BE)"].append(
                     f"{p.relative_to(ROOT)} -> {env_key} has unguarded hardcoded fallback in os.getenv()"
                 )
-    for p in sorted(FE_SRC.rglob("*.ts*")):
+    for p in sorted(list(FE_SRC.rglob("*.ts*")) + (list(MOBILE_SRC.rglob("*.ts*")) if MOBILE_SRC.exists() else [])):
         txt = p.read_text()
-        for m in re.finditer(r"process\.env\.(NEXT_PUBLIC_[A-Z0-9_]+)", txt):
+        for m in re.finditer(r"process\.env\.((?:NEXT|EXPO)_PUBLIC_[A-Z0-9_]+)", txt):
             fe_key = m.group(1)
             if fe_key not in defined_env_keys:
                 violations["6. Memory Cap & Skill SSOT"].append(
