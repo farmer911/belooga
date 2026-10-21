@@ -52,10 +52,10 @@ Every pull request or task completion must pass these empirical gates:
 | **E2E / Visual & Video Evidence** | `cd qc && bun run test:e2e -- <spec>` | Pass + retain `.png`/`.webm` evidence |
 | **Local Pre-Push Gate** | `bash scripts/pre-push-gate.sh` | Blocks push if any check or orphan worker fails |
 | **Master SSOT Truth** | `bash scripts/audit-truth.sh` | All gates pass (Exit: 0) |
-| **Remote GitHub Actions CI** | `gh run list --limit 2` | Verify remote `Belooga SSOT & Integrity CI` passes after push |
+| **Remote GitHub Actions CI** | `gh pr checks --watch` | Wait until remote `Belooga SSOT & Integrity CI` finishes green after PR push |
 
 ## Known Traps
-- **CI Runner Stdlib Isolation (`python3 -I -S`):** Root gate scripts (`scripts/lint-skills.py`, `scripts/ratchet.py`, `scripts/render-skill-facts.py`, `scripts/generate-current-state.py`) run under system `python3` in GitHub Actions and must never require unguarded third-party packages (`PyYAML`, etc.). Always verify `gh run list` after `git push`.
+- **CI Runner Stdlib Isolation (`python3 -I -S`):** Root gate scripts (`scripts/lint-skills.py`, `scripts/ratchet.py`, `scripts/render-skill-facts.py`, `scripts/generate-current-state.py`) run under system `python3` in GitHub Actions and must never require unguarded third-party packages (`PyYAML`, etc.). Always wait for `gh pr checks --watch` to complete green after `git push`.
 
 ---
 
