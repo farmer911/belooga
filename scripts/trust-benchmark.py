@@ -27,6 +27,7 @@ BE_TESTS = ROOT / "backend" / "tests"
 SCRIPTS_DIR = ROOT / "scripts"
 FE_SRC = ROOT / "frontend" / "src"
 MOBILE_SRC = ROOT / "mobile" / "src"
+MOBILE_APP = ROOT / "mobile" / "app"
 QC_TESTS = ROOT / "qc" / "tests"
 AGENTS = ROOT / ".agents"
 
@@ -142,14 +143,20 @@ if MODULES_DIR.exists():
                     f"{py_rel} -> vertical module imports legacy horizontal app.repositories directly"
                 )
 
-for p in FE_SRC.rglob("*"):
+ui_files = list(FE_SRC.rglob("*"))
+if MOBILE_SRC.exists():
+    ui_files.extend(MOBILE_SRC.rglob("*"))
+if MOBILE_APP.exists():
+    ui_files.extend(MOBILE_APP.rglob("*"))
+
+for p in ui_files:
     if p.suffix not in (".ts", ".tsx"):
         continue
     txt = p.read_text(encoding="utf-8", errors="ignore")
     rel = p.relative_to(ROOT)
-    if p.name == "page.tsx" and re.search(r"\bfetch\s*\(", txt):
-        violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> raw fetch() inside page.tsx (must use hook/service)")
-    if re.search(r"useEffect\s*\(\s*\(\)\s*=>\s*\{[^}]*?\bapiClient\.(get|post|put|patch|delete)\b", txt, re.DOTALL):
+    if (p.name == "page.tsx" or "mobile/app/" in rel.as_posix()) and re.search(r"\bfetch\s*\(", txt):
+        violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> raw fetch() inside route screen (must use hook/service)")
+    if re.search(r"useEffect\s*\(\s*\(\)\s*=>\s*\{[^}]*?\b(?:apiClient|mobileApiClient)\.(get|post|put|patch|delete)\b", txt, re.DOTALL):
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> apiClient called inside useEffect (must use @tanstack/react-query)")
     if re.search(r"catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)", txt, re.DOTALL):
         violations["2. Error Transparency (No Pass)"].append(f"{rel} -> fake success state inside catch block")

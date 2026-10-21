@@ -14,4 +14,4 @@
 ## Execution Checklist
 - [x] **PR 1 (BEL-132):** TDD `backend/tests/test_auth_family_rotation.py` + `mobile/` foundation & auth (`bun test` + `tsc --noEmit`) -> PR & Merge
 - [x] **PR 2 (BEL-133):** TDD `mobile/tests/discovery.test.ts` + Talent Feed & Candidate Profile screens -> PR & Merge
-- [ ] **PR 3 (BEL-134):** TDD `mobile/tests/studio-tracker.test.ts` + Video Pitch Studio & Job Kanban Tracker + SSOT sync -> PR & Merge
+- [x] **PR 3 (BEL-134):** TDD `mobile/tests/studio-tracker.test.ts` + Video Pitch Studio & Job Kanban Tracker + SSOT sync -> PR & Merge

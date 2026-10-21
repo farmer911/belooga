@@ -42,6 +42,7 @@ flowchart LR
   3. **Offline Mutation Outbox (`useServiceWorker`):** In offline-capable editors (`src/app/cv-studio/page.tsx`), queue saves via `queueOfflineMutation` when `!navigator.onLine` and auto-sync when connectivity returns.
   4. **Native Web Push & Deep-Link Routing:** Dispatch desktop/mobile notifications via `sendNativeNotification` in `src/components/layout/notification-bell.tsx` with `notificationclick` deep-link focus.
 - **SEO & OpenGraph Metadata:** Public pages (`src/app/public/[username]/layout.tsx` and `src/app/(public)/**`) must export canonical URLs, OpenGraph, and Twitter card metadata alongside `src/app/robots.ts` and `src/app/sitemap.ts`.
+- **Native Mobile Platform (`mobile/`):** Expo Router screens (`mobile/app/(auth)/{login,register}.tsx`, `mobile/app/(tabs)/{index,studio,tracker,profile}.tsx`, `mobile/app/candidate/[username].tsx`) share 1:1 Zod DTO contracts (`mobile/src/lib/schemas.ts`), semantic RGB/RGBA theme tokens (`mobile/src/theme/tokens.ts`), and singleflight token rotation via `expo-secure-store` (`mobile/src/services/api-client.ts`).
 
 ---
 
@@ -56,6 +57,7 @@ flowchart LR
 ## 5. Self-Verification
 ```bash
 cd frontend && bun x tsc --noEmit
+cd mobile && bun x tsc --noEmit && bun test
 python3 scripts/ratchet.py
 backend/.venv/bin/pytest backend/tests/test_ui_design_system_parity.py backend/tests/test_fullstack_seo_gateway.py -v
 cd qc && bun run test:e2e

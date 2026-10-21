@@ -18,10 +18,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / ".agents" / "ratchet.json"
 FE = ROOT / "frontend" / "src"
+MOBILE_SRC = ROOT / "mobile" / "src"
+MOBILE_APP = ROOT / "mobile" / "app"
 BE = ROOT / "backend" / "app"
 
 
 def files(base, exts):
+    if not base.exists():
+        return []
     return [p for p in base.rglob("*") if p.suffix in exts and "node_modules" not in p.parts]
 
 
@@ -30,7 +34,7 @@ def count(pattern, paths):
     return sum(len(rx.findall(p.read_text(errors="ignore"))) for p in paths)
 
 
-fe_src = files(FE, {".ts", ".tsx"})
+fe_src = files(FE, {".ts", ".tsx"}) + files(MOBILE_SRC, {".ts", ".tsx"}) + files(MOBILE_APP, {".ts", ".tsx"})
 be_src = files(BE, {".py"})
 pages = [p for p in fe_src if p.name == "page.tsx"]
 
