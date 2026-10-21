@@ -89,7 +89,7 @@ class ProfileService:
                 "avatar_url": row["avatar_url"] or "/images/avatar.jpg",
                 "video_pitch_url": row["video_pitch_url"],
                 "video_pitch_poster": row["video_pitch_poster"],
-                "resume_url": row["resume_url"] or f"http://localhost:8000/v1/profile/{clean_username}/pdf/",
+                "resume_url": row["resume_url"] or f"{os.getenv('PUBLIC_API_URL', 'http://localhost:8080').rstrip('/')}/v1/profile/{clean_username}/pdf/",
                 "seeking_status": row["seeking_status"],
                 "employment_status": row["employment_status"],
                 "is_hidden": bool(row["is_hidden"]),

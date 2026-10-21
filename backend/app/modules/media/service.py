@@ -64,7 +64,8 @@ class MediaService:
         content = await file.read()
         await write_bytes_async(target_path, content)
 
-        avatar_url = f"http://localhost:8000/uploads/avatars/{safe_filename}"
+        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
+        avatar_url = f"{gateway_origin}/uploads/avatars/{safe_filename}"
         await self.media_repo.update_avatar_url(profile.id, avatar_url)
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
@@ -85,7 +86,8 @@ class MediaService:
         content = await file.read()
         await write_bytes_async(target_path, content)
 
-        resume_url = f"http://localhost:8000/uploads/resumes/{safe_filename}"
+        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
+        resume_url = f"{gateway_origin}/uploads/resumes/{safe_filename}"
         await self.media_repo.update_resume_url(profile.id, resume_url)
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
@@ -193,7 +195,8 @@ class MediaService:
         poster_url = await extract_poster_thumbnail(final_path, poster_path)
         duration_sec = await probe_video_duration(final_path)
 
-        video_url = f"http://localhost:8000/uploads/videos/{final_filename}"
+        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
+        video_url = f"{gateway_origin}/uploads/videos/{final_filename}"
         await self.media_repo.update_video_pitch_url(profile.id, video_url)
         if poster_url:
             await self.media_repo.upsert_pitch_poster(profile.id, poster_url)

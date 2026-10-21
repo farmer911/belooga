@@ -133,8 +133,8 @@ const DEFAULT_BI_EXPORT: BIStarSchemaExportData = {
   schema_version: "belooga-star-v1",
   generated_at: "2026-10-21T06:00:00Z",
   power_bi_m_query_snippet:
-    'let\n    Source = Json.Document(Web.Contents("http://localhost:8000/v1/analytics/bi-export?limit=200")),\n    FactATSScans = Table.FromRecords(Source[fact_ats_scans])\nin\n    FactATSScans',
-  duckdb_sql_snippet: "SELECT * FROM read_json_auto('http://localhost:8000/v1/analytics/bi-export?limit=200');",
+    'let\n    Source = Json.Document(Web.Contents("http://localhost:8080/v1/analytics/bi-export?limit=200")),\n    FactATSScans = Table.FromRecords(Source[fact_ats_scans])\nin\n    FactATSScans',
+  duckdb_sql_snippet: "SELECT * FROM read_json_auto('http://localhost:8080/v1/analytics/bi-export?limit=200');",
   fact_ats_scans: [],
   fact_review_orders: [],
   fact_job_pipeline: [

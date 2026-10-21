@@ -154,16 +154,17 @@ class AnalyticsService:
             {"skill_name": "PostgreSQL", "jd_demand_count": 21, "candidate_supply_count": 11, "demand_gap_index": 17.5},
         ]
 
+        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
         m_query = (
             'let\n'
-            '    Source = Json.Document(Web.Contents("http://localhost:8000/v1/analytics/bi-export?limit=200")),\n'
+            f'    Source = Json.Document(Web.Contents("{gateway_origin}/v1/analytics/bi-export?limit=200")),\n'
             '    FactATSScans = Table.FromRecords(Source[fact_ats_scans]),\n'
             '    DimSkillsDemand = Table.FromRecords(Source[dim_skills_demand])\n'
             'in\n'
             '    FactATSScans'
         )
         duckdb_sql = (
-            "SELECT * FROM read_json_auto('http://localhost:8000/v1/analytics/bi-export?limit=200');"
+            f"SELECT * FROM read_json_auto('{gateway_origin}/v1/analytics/bi-export?limit=200');"
         )
 
         return BIStarSchemaExportResponse(

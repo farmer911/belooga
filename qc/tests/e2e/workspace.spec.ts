@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Candidate Workspace Core Quality Gate', () => {
   test.beforeEach(async ({ page }) => {
     // Authenticate candidate session (sets HttpOnly belooga_refresh_token cookie for session bootstrap)
-    const loginRes = await page.request.post('http://localhost:8000/v1/auth/login/', {
+    const loginRes = await page.request.post('http://localhost:8080/v1/auth/login/', {
       headers: {
         'X-Forwarded-For': `10.88.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
       },
@@ -80,12 +80,12 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await expect(jobCards.first()).toHaveAttribute('draggable', 'true');
 
     // 2. Verify PDF download service returns binary PDF
-    const pdfResponse = await request.get('http://localhost:8000/v1/profile/alexnguyen/pdf/');
+    const pdfResponse = await request.get('http://localhost:8080/v1/profile/alexnguyen/pdf/');
     expect(pdfResponse.status()).toBe(200);
     expect(pdfResponse.headers()['content-type']).toContain('application/pdf');
 
     // 3. Obtain auth token for authenticated upload endpoints
-    const authRes = await request.post('http://localhost:8000/v1/auth/login/', {
+    const authRes = await request.post('http://localhost:8080/v1/auth/login/', {
       data: {
         email: 'alex@belooga.com',
         password: 'SecurePassword123!',
@@ -96,7 +96,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
 
     // 4. Verify chunked upload chunk endpoint
     const uploadId = `upload_${Date.now()}_qctest`;
-    const chunkRes = await request.post('http://localhost:8000/v1/media/upload/chunk', {
+    const chunkRes = await request.post('http://localhost:8080/v1/media/upload/chunk', {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
@@ -159,7 +159,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await page.locator('button:has-text("Close")').click();
 
     // 6. Verify backend auto-generated thumbnail generation end-to-end
-    const authRes = await request.post('http://localhost:8000/v1/auth/login/', {
+    const authRes = await request.post('http://localhost:8080/v1/auth/login/', {
       data: {
         email: 'alex@belooga.com',
         password: 'SecurePassword123!',
@@ -170,7 +170,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
 
     // Upload a small test webm chunk
     const testUploadId = `upload_${Date.now()}_thumbtest`;
-    const chunkUploadRes = await request.post('http://localhost:8000/v1/media/upload/chunk', {
+    const chunkUploadRes = await request.post('http://localhost:8080/v1/media/upload/chunk', {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
@@ -190,7 +190,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     expect(chunkUploadRes.status()).toBe(200);
 
     // Complete upload and verify auto thumbnail poster generation
-    const completeRes = await request.post('http://localhost:8000/v1/media/upload/complete', {
+    const completeRes = await request.post('http://localhost:8080/v1/media/upload/complete', {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
@@ -208,7 +208,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     expect(completeJson.poster_url).toBeDefined();
 
     // 7. Verify profile API now reflects the auto-generated video pitch & poster
-    const profileRes = await request.get('http://localhost:8000/v1/profile/alexnguyen');
+    const profileRes = await request.get('http://localhost:8080/v1/profile/alexnguyen');
     expect(profileRes.status()).toBe(200);
     const profileJson = await profileRes.json();
     expect(profileJson.video_pitch_poster).toBeDefined();
@@ -410,7 +410,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await expect(page.locator('[data-testid="award-title-input"]')).toBeVisible();
 
     // 2. Verify authenticated API CRUD for Languages, Interests, and Awards
-    const authRes = await request.post('http://localhost:8000/v1/auth/login/', {
+    const authRes = await request.post('http://localhost:8080/v1/auth/login/', {
       data: {
         email: 'alex@belooga.com',
         password: 'SecurePassword123!',
@@ -420,7 +420,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     const { access_token } = await authRes.json();
     const headers = { Authorization: `Bearer ${access_token}` };
 
-    const addLangRes = await request.post('http://localhost:8000/v1/profile/alexnguyen/languages/', {
+    const addLangRes = await request.post('http://localhost:8080/v1/profile/alexnguyen/languages/', {
       headers,
       data: { name: 'Japanese', proficiency: 'Conversational' },
     });
@@ -428,12 +428,12 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     const afterAddLang = await addLangRes.json();
     expect(afterAddLang.name).toBe('Japanese');
 
-    const delLangRes = await request.delete('http://localhost:8000/v1/profile/alexnguyen/languages/Japanese/', {
+    const delLangRes = await request.delete('http://localhost:8080/v1/profile/alexnguyen/languages/Japanese/', {
       headers,
     });
     expect(delLangRes.status()).toBe(200);
 
-    const addAwardRes = await request.post('http://localhost:8000/v1/profile/alexnguyen/awards/', {
+    const addAwardRes = await request.post('http://localhost:8080/v1/profile/alexnguyen/awards/', {
       headers,
       data: { title: 'Playwright QC Award', issuer: 'Belooga QA', issued_year: 2026 },
     });
@@ -441,7 +441,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     const createdAward = await addAwardRes.json();
     expect(createdAward.id).toBeDefined();
 
-    const delAwardRes = await request.delete(`http://localhost:8000/v1/profile/alexnguyen/awards/${createdAward.id}/`, {
+    const delAwardRes = await request.delete(`http://localhost:8080/v1/profile/alexnguyen/awards/${createdAward.id}/`, {
       headers,
     });
     expect(delAwardRes.status()).toBe(200);

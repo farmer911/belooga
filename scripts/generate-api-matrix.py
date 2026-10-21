@@ -316,8 +316,8 @@ def generate_html(openapi_data: dict) -> str:
       <p>Authoritative Offline API Documentation for 38 Endpoints across 8 Business Domains (FastAPI + SQLAlchemy 2.0 Async)</p>
     </div>
     <div class="quick-links">
-      <a href="http://localhost:8000/docs" target="_blank" class="btn-link">⚡ Live Swagger UI</a>
-      <a href="http://localhost:8000/redoc" target="_blank" class="btn-link">📖 Live ReDoc</a>
+      <a href="http://localhost:8080/docs" target="_blank" class="btn-link">⚡ Live Swagger UI</a>
+      <a href="http://localhost:8080/redoc" target="_blank" class="btn-link">📖 Live ReDoc</a>
       <a href="./openapi.json" download class="btn-link">⬇️ openapi.json</a>
     </div>
   </header>
