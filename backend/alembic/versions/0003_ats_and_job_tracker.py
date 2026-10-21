@@ -17,7 +17,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    assert revision and (down_revision, branch_labels, depends_on) is not None
+    if not revision and down_revision is None and branch_labels is None and depends_on is None:
+        return
     op.create_table(
         "job_descriptions",
         sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
