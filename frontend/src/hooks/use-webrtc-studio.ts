@@ -160,7 +160,7 @@ export function useWebRTCStudio(
         if (e.data?.size > 0) recordedChunksRef.current.push(e.data);
       };
       recorder.onstop = () => {
-        isRecordingRef.current = false;
+        if (isRecordingRef.current) return;
         setIsRecording(false);
         const b = new Blob(recordedChunksRef.current.length > 0 ? recordedChunksRef.current : [new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])], {
           type: options.mimeType || "video/webm",

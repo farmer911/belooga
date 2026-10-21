@@ -43,21 +43,38 @@ const routeState: MobileRouteState = {
   history: ["/(tabs)"],
 };
 
+const routeListeners = new Set<() => void>();
+
+function notifyRouteListeners(): void {
+  for (const listener of routeListeners) {
+    listener();
+  }
+}
+
 export const mobileRouter = {
+  subscribe(listener: () => void): () => void {
+    routeListeners.add(listener);
+    return () => {
+      routeListeners.delete(listener);
+    };
+  },
   push(path: string, params: Record<string, string> = {}): void {
     routeState.currentPath = path;
     routeState.params = params;
     routeState.history.push(path);
+    notifyRouteListeners();
   },
   replace(path: string, params: Record<string, string> = {}): void {
     routeState.currentPath = path;
     routeState.params = params;
     routeState.history[routeState.history.length - 1] = path;
+    notifyRouteListeners();
   },
   back(): void {
     if (routeState.history.length > 1) {
       routeState.history.pop();
       routeState.currentPath = routeState.history[routeState.history.length - 1] ?? "/(tabs)";
+      notifyRouteListeners();
     }
   },
   getState(): MobileRouteState {
@@ -71,6 +88,7 @@ export const mobileRouter = {
     routeState.currentPath = initialPath;
     routeState.params = {};
     routeState.history = [initialPath];
+    notifyRouteListeners();
   },
 };
 

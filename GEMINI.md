@@ -4,7 +4,7 @@ Always-on project instruction for Gemini / Antigravity agent.
 
 ## 1. Verified Tech Stack (Ground Truth)
 - **Frontend (Web):** Next.js 16.3.8, React 19 (App Router), Bun runtime, Tailwind CSS v4, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`, Zustand.
-- **Mobile App (`mobile/`):** Expo SDK 52 / React Native (Expo Router), TypeScript, `@tanstack/react-query`, `zod`, Zustand, `expo-secure-store` (Dual-Mode Refresh Token Vault).
+- **Mobile App (`mobile/`):** Expo SDK 58.0.16 / React Native 0.88.0 (Expo Router), TypeScript, `@tanstack/react-query`, `zod`, Zustand, `expo-secure-store`, Android SDK 36 Clean-APK Pipeline (`mobile/scripts/build-apk.sh`) & ADB UIAutomator2 / Maestro E2E (`mobile/scripts/e2e-mobile-adb.sh`).
 - **Backend:** FastAPI, Python 3.12+, SQLAlchemy 2.0 Async (`asyncpg`), Alembic (`backend/alembic/`), Pydantic v2, ReportLab, AnyIO.
 - **Database:** PostgreSQL 16 (See `CURRENT_STATE.md` §1; GIN `TSVECTOR`, `pg_trgm`), Redis 7.
 - **QC:** Playwright (TypeScript/Bun) in `qc/` (`bun run test:e2e`), Pytest in `backend/tests/`.

@@ -74,5 +74,21 @@ test('should verify workspace bio and timeline', async ({ page }) => {
 ```bash
 cd qc && bun run test:e2e
 cd qc && bun run test:visual
+cd mobile && bun test
+bash mobile/scripts/build-apk.sh
+bash mobile/scripts/e2e-mobile-adb.sh
 python3 scripts/lint-skills.py --quiet
 ```
+
+---
+
+## 6. Mobile App Automation Testing Pyramid & Clean APK Protocol (`mobile/`)
+
+1. **Tier 1 — In-Process Store, Schema & Singleflight Hook Suite (`cd mobile && bun test`):**
+   - Verifies `SecureStore` keychain hydration, singleflight 401 refresh rotation (`/v1/auth/refresh/`), ConnectRPC `/v1/rpc/*` profile multiplexing, and offline Kanban outbox queueing in <50ms without emulator boot overhead.
+2. **Tier 2 — Clean-First Native APK Build & Cryptographic Signature Gate (`bash mobile/scripts/build-apk.sh`):**
+   - **Mandatory Old-APK Purge:** Always deletes all prior `*.apk` and `*.idsig` files across `mobile/dist/` and `mobile/android/app/build/` (`find ... -name "*.apk" -delete`) before compiling so stale builds can never be installed by mistake.
+   - Bundles the React Native `0.88.0` TypeScript app into `assets/index.android.bundle`, compiles native Android SDK 36 resources (`aapt2`) and Java bytecode (`javac --release 11` -> `d8` `classes.dex`), aligns with `zipalign -p 4`, signs with `apksigner`, and verifies v2/v3 signatures (`apksigner verify --verbose`).
+3. **Tier 3 — Live Android Emulator UIAutomator2 & Maestro E2E (`bash mobile/scripts/e2e-mobile-adb.sh` & `mobile/e2e/maestro-flow.yaml`):**
+   - **Why ADB UIAutomator2 + Maestro over Appium:** Appium requires a heavy WebDriver HTTP daemon and Java bootstrap prone to socket flakiness. **ADB UIAutomator2 (`adb shell uiautomator dump`)** and **Maestro declarative YAML flows** inspect native Android `content-desc` / `resource-id` (`testID`) directly over ADB, compute exact view bounds `[x1,y1][x2,y2]`, dispatch native hardware taps (`adb shell input tap`), capture `.png` visual proof (`adb exec-out screencap -p`), and audit `adb logcat -d` for zero `FATAL EXCEPTION` crashes.
+   - **Emulator Loopback Invariant:** Android Emulators isolate `127.0.0.1` to the guest OS; always configure `adb reverse tcp:8000 tcp:8000` and `adb reverse tcp:8081 tcp:8081` (or target `10.0.2.2:8000`) before launching `com.belooga.mobile/.MainActivity`.
