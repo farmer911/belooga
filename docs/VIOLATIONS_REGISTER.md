@@ -61,6 +61,21 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-006] Báo cáo PR hoàn tất trước khi đợi Remote CI pass & Race condition khi lazy-seed trên DB trắng
+* **Where (Sai ở đâu):** `backend/app/modules/expert_review/repository.py:192-206` (`seed_packages_if_empty`, `seed_experts_if_empty`), `backend/app/core/cache.py:174`, và `scripts/lint-skills.py:293`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Lỗi quy trình của Agent:** Sau khi chạy `gh pr create`, Agent chỉ gọi `gh run list --limit 2` (lúc CI mới chạy được 7s) rồi báo cáo ngay cho User thay vì đợi `gh pr checks --watch` kết thúc.
+  2. **Lỗi kỹ thuật (Cold DB Race Condition):** Trên DB local đã có sẵn dữ liệu nên không kích hoạt nhánh `if not await self.list_experts():`. Trên CI runner (DB trắng), trang `/expert-review` gọi song song `GET /experts` và `GET /packages` khiến 2 request cùng thấy bảng rỗng và insert trùng 2 bản ghi `Sarah Jenkins` / `Alex Chen`.
+  3. **Lỗi Linter Artifact:** Khi CI chạy Playwright E2E trước `lint-skills.py`, thư mục báo cáo tạm `qc/playwright-report/` và `qc/test-results/` sinh ra file `.md` làm `lint-skills.py` báo lỗi ngoài whitelist.
+* **Minimal Fix (Sửa làm sao):**
+  1. Khóa giao dịch bằng `SELECT pg_advisory_xact_lock(...)` và lọc trùng `full_name` trong `ExpertReviewRepository`.
+  2. Đặt `stale_ttl_seconds=0` mặc định trong `AsyncTieredCache.get_or_set` để không tạo background task dùng `AsyncSession` đã đóng.
+  3. Loại trừ `qc/playwright-report/`, `qc/test-results/`, `frontend/.next/` khỏi bộ quét markdown của `scripts/lint-skills.py`.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Bổ sung AST check trong `scripts/trust-benchmark.py` bắt buộc mọi hàm `seed_*_if_empty` phải có `pg_advisory_xact_lock` hoặc `ON CONFLICT`, và tuân thủ bắt buộc `gh pr checks --watch` trước khi báo cáo PR hoàn tất.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py` và `scripts/lint-skills.py`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**

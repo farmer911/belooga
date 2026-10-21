@@ -145,6 +145,12 @@ for p in BE_APP.rglob("*.py"):
     tree = ast.parse(txt, filename=str(rel))
     for n in ast.walk(tree):
         if isinstance(n, ast.AsyncFunctionDef):
+            if n.name.startswith("seed_") and n.name.endswith("_if_empty"):
+                fn_src = ast.get_source_segment(txt, n) or ""
+                if "pg_advisory_xact_lock" not in fn_src and "ON CONFLICT" not in fn_src.upper():
+                    violations["4. Async & IDOR Safety (All BE)"].append(
+                        f"{rel}:{n.lineno} -> {n.name}() missing pg_advisory_xact_lock or ON CONFLICT concurrency guard"
+                    )
             for sub in ast.walk(n):
                 if isinstance(sub, ast.Call):
                     fn = sub.func.id if isinstance(sub.func, ast.Name) else (
