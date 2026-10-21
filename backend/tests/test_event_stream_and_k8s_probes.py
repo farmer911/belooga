@@ -4,7 +4,7 @@ import os
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.core.events import PartitionedEventStream, event_stream
+from app.core.events import PartitionedEventStream
 from app.main import app
 
 

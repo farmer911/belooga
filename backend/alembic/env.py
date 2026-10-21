@@ -15,14 +15,14 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from app.core.database import Base, DATABASE_URL
-import app.models  # noqa: F401 - registers all 24 tables on Base.metadata
+from app import models as _models
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = Base.metadata
+target_metadata = getattr(_models, "Base", Base).metadata
 
 
 def get_database_url() -> str:

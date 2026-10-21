@@ -16,7 +16,6 @@ Usage:
 """
 
 import csv
-import json
 import os
 import re
 import sys
@@ -649,7 +648,6 @@ def hex_to_ansi(hex_color: str) -> str:
 
 def ansi_ljust(s: str, width: int) -> str:
     """Like str.ljust but accounts for zero-width ANSI escape sequences."""
-    import re
     visible_len = len(re.sub(r'\033\[[0-9;]*m', '', s))
     pad = width - visible_len
     return s + (" " * max(0, pad))
@@ -1550,9 +1548,7 @@ def _generate_intelligent_overrides(page_name: str, page_query: str, design_syst
     # Extract style-based overrides
     if style_results:
         style = style_results[0]
-        style_name = style.get("Style Category", "")
         keywords = style.get("Keywords", "")
-        best_for = style.get("Best For", "")
         effects = style.get("Effects & Animation", "")
         
         # Infer layout from style keywords
@@ -1642,7 +1638,6 @@ def _detect_page_type(context: str, style_results: list) -> str:
     
     # Fallback: try to infer from style results
     if style_results:
-        style_name = style_results[0].get("Style Category", "").lower()
         best_for = style_results[0].get("Best For", "").lower()
         
         if "dashboard" in best_for or "data" in best_for:

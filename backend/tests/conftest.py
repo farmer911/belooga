@@ -1,7 +1,6 @@
 import os
 import sys
 import uuid
-import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -22,7 +21,7 @@ os.environ["JWT_SECRET"] = "test_jwt_secret_key_safe_for_testing_12345"
 from sqlalchemy.pool import NullPool
 from app.main import app
 from app.core.database import get_db
-from app.core.security import create_access_token, hash_token, generate_refresh_token
+from app.core.security import create_access_token
 
 
 test_engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool, echo=False)

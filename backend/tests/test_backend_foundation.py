@@ -1,29 +1,20 @@
-import os
 import re
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 import pytest
-import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select
 
 from app.core.database import Base
 from app.models import (
     AwardCertification, CandidateProfile, CareerApplication, CareerPosting,
     CatalogCompany, CatalogLocation, CatalogSchool, ContactInquiry,
-    EducationExperience, EmailVerificationToken, Identity, Interest,
-    JobExperience, Language, PasswordResetToken, ProfileInterest,
-    ProfileLanguage, ProfileMedia, ProfileReport, ProfileSkill,
-    RefreshSession, Skill, SocialAccount, VideoArchive,
+    EducationExperience, Identity, Interest, JobExperience, Language, Skill,
 )
 from app.schemas import (
-    CareerPostingResponse, CatalogItemResponse, ChunkUploadRequest,
-    ChunkUploadResponse, ContactInquiryRequest, EducationCreate,
-    EducationResponse, JobExperienceCreate, JobExperienceResponse,
-    JobExperienceUpdate, MediaResponse, ProfileResponse, ProfileUpdate,
-    ReorderPayload, ReportProfileRequest, SkillAdd, SkillResponse,
-    SuggestionResponse,
+    CatalogItemResponse, ChunkUploadRequest, ChunkUploadResponse,
+    ContactInquiryRequest, JobExperienceCreate, ProfileResponse,
+    ProfileUpdate, ReorderPayload,
 )
 
 EXPECTED_TABLES = {

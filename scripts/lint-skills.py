@@ -16,7 +16,6 @@ Usage:
     python3 scripts/lint-skills.py --quiet    # only summary + errors
 """
 import ast
-import importlib.util
 import json
 import re
 import sys
@@ -246,8 +245,6 @@ def check_reference(path, text):
 
 def check_ecosystem_coverage():
     # Verify 100% of backend routers & frontend pages are registered in render-skill-facts.py
-    spec = importlib.util.spec_from_file_location("rsf", ROOT / "scripts" / "render-skill-facts.py")
-    rsf = importlib.util.module_from_spec(spec)
     rsf_src = (ROOT / "scripts" / "render-skill-facts.py").read_text(encoding="utf-8")
     tree = ast.parse(rsf_src)
     be_mapped, fe_mapped = set(), set()

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, ShieldCheck, Sparkles, Clock, Star } from "lucide-react";
+import { ShieldCheck, Sparkles, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ExpertHeroProps {

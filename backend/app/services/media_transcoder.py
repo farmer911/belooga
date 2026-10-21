@@ -31,6 +31,7 @@ for d in [AVATARS_DIR, RESUMES_DIR, VIDEOS_DIR, CHUNKS_DIR]:
     os.makedirs(d, exist_ok=True)
 
 UPLOAD_ID_REGEX = re.compile(r"^upload_\d+_[a-zA-Z0-9]+$")
+SAFE_FILENAME_REGEX = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 
 def get_validated_upload_dir(upload_id: str, user_id: Optional[uuid.UUID] = None) -> str:
@@ -40,14 +41,32 @@ def get_validated_upload_dir(upload_id: str, user_id: Optional[uuid.UUID] = None
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid upload session identifier format",
         )
-    base_dir = os.path.join(CHUNKS_DIR, str(user_id)) if user_id else CHUNKS_DIR
-    os.makedirs(base_dir, exist_ok=True)
-    chunks_base_real = os.path.realpath(base_dir)
-    resolved_path = os.path.realpath(os.path.join(base_dir, upload_id))
-    if not resolved_path.startswith(chunks_base_real + os.sep):
+    chunks_root_real = os.path.realpath(CHUNKS_DIR)
+    user_segment = str(uuid.UUID(str(user_id))) if user_id else ""
+    candidate_rel = os.path.join(user_segment, upload_id) if user_segment else upload_id
+    resolved_path = os.path.realpath(os.path.join(chunks_root_real, candidate_rel))
+    if not resolved_path.startswith(chunks_root_real + os.sep):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Path traversal attempt detected",
+        )
+    return resolved_path
+
+
+def get_validated_video_path(path_or_name: str) -> str:
+    """Strictly confines video and poster file paths within VIDEOS_DIR."""
+    videos_root_real = os.path.realpath(VIDEOS_DIR)
+    filename = os.path.basename(path_or_name)
+    if not SAFE_FILENAME_REGEX.match(filename):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid media filename",
+        )
+    resolved_path = os.path.realpath(os.path.join(videos_root_real, filename))
+    if not resolved_path.startswith(videos_root_real + os.sep):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Media path traversal attempt detected",
         )
     return resolved_path
 
@@ -88,69 +107,75 @@ async def run_cmd_async(cmd: list, timeout: Optional[int] = None, capture_output
 
 async def transcode_to_streaming_mp4(raw_path: str, mp4_path: str, fallback_path: str) -> Tuple[str, str]:
     """Transcodes raw webm into streaming MP4 with fallback."""
+    safe_raw = get_validated_video_path(raw_path)
+    safe_mp4 = get_validated_video_path(mp4_path)
+    safe_fallback = get_validated_video_path(fallback_path)
     transcode_success = False
     try:
         proc = await run_cmd_async(
             [
-                "ffmpeg", "-y", "-i", raw_path, "-c:v", "libx264", "-preset", "veryfast",
-                "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", mp4_path,
+                "ffmpeg", "-y", "-i", safe_raw, "-c:v", "libx264", "-preset", "veryfast",
+                "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", safe_mp4,
             ],
             timeout=45,
         )
-        if proc.returncode == 0 and os.path.exists(mp4_path) and os.path.getsize(mp4_path) > 0:
+        if proc.returncode == 0 and os.path.exists(safe_mp4) and os.path.getsize(safe_mp4) > 0:
             transcode_success = True
     except Exception as e:
-        logger.warning(f"Error during MP4 transcode: {e}")
+        logger.warning("Error during MP4 transcode: %s", type(e).__name__)
 
     if transcode_success:
         try:
-            await asyncio.to_thread(os.remove, raw_path)
+            await asyncio.to_thread(os.remove, safe_raw)
         except OSError as cleanup_err:
-            logger.debug(f"Raw video cleanup skipped for {raw_path}: {cleanup_err}")
-        return mp4_path, os.path.basename(mp4_path)
+            logger.debug("Raw video cleanup skipped: %s", type(cleanup_err).__name__)
+        return safe_mp4, os.path.basename(safe_mp4)
     else:
         try:
-            await asyncio.to_thread(os.rename, raw_path, fallback_path)
+            await asyncio.to_thread(os.rename, safe_raw, safe_fallback)
         except Exception:
-            fallback_path = raw_path
-        return fallback_path, os.path.basename(fallback_path)
+            safe_fallback = safe_raw
+        return safe_fallback, os.path.basename(safe_fallback)
 
 
 async def extract_poster_thumbnail(video_path: str, poster_path: str) -> Optional[str]:
     """Extracts thumbnail poster at 0.5s with fallback to first frame."""
+    safe_video = get_validated_video_path(video_path)
+    safe_poster = get_validated_video_path(poster_path)
     try:
         await run_cmd_async(
-            ["ffmpeg", "-y", "-ss", "00:00:00.500", "-i", video_path, "-vframes", "1", "-q:v", "2", "-update", "1", poster_path],
+            ["ffmpeg", "-y", "-ss", "00:00:00.500", "-i", safe_video, "-vframes", "1", "-q:v", "2", "-update", "1", safe_poster],
             timeout=10,
         )
     except Exception as e:
-        logger.warning(f"Error extracting frame at 0.5s: {e}")
+        logger.warning("Error extracting frame at 0.5s: %s", type(e).__name__)
 
-    if not os.path.exists(poster_path) or os.path.getsize(poster_path) == 0:
+    if not os.path.exists(safe_poster) or os.path.getsize(safe_poster) == 0:
         try:
             await run_cmd_async(
-                ["ffmpeg", "-y", "-i", video_path, "-vframes", "1", "-q:v", "2", "-update", "1", poster_path],
+                ["ffmpeg", "-y", "-i", safe_video, "-vframes", "1", "-q:v", "2", "-update", "1", safe_poster],
                 timeout=10,
             )
         except Exception as e:
-            logger.warning(f"Fallback frame extraction error: {e}")
+            logger.warning("Fallback frame extraction error: %s", type(e).__name__)
 
-    if os.path.exists(poster_path) and os.path.getsize(poster_path) > 0:
-        return f"http://localhost:8000/uploads/videos/{os.path.basename(poster_path)}"
+    if os.path.exists(safe_poster) and os.path.getsize(safe_poster) > 0:
+        return f"http://localhost:8000/uploads/videos/{os.path.basename(safe_poster)}"
     return "/images/home/matt-poster.png"
 
 
 async def probe_video_duration(video_path: str) -> int:
     """Probes video duration in seconds via ffprobe."""
+    safe_video = get_validated_video_path(video_path)
     duration_sec = 30
     try:
         dur_proc = await run_cmd_async(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", video_path],
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", safe_video],
             capture_output=True,
             timeout=5,
         )
         if dur_proc.stdout and dur_proc.stdout.strip():
             duration_sec = int(round(float(dur_proc.stdout.strip())))
     except Exception as e:
-        logger.warning(f"Duration probe error: {e}")
+        logger.warning("Duration probe error: %s", type(e).__name__)
     return duration_sec

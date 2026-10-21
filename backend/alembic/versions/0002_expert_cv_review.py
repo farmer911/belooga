@@ -18,6 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    assert revision and (down_revision, branch_labels, depends_on) is not None
     # 1. expert_profiles
     op.create_table(
         "expert_profiles",

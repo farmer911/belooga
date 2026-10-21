@@ -6,7 +6,6 @@ Provides search, method filters, domain filtering, and request/response schema p
 """
 
 import json
-import os
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +29,6 @@ def generate_html(openapi_data: dict) -> str:
             domain = tags[0] if tags else "General"
             domains.add(domain)
             
-            operation_id = op.get("operationId", "")
             parameters = op.get("parameters", [])
             security = op.get("security", [])
             auth_required = bool(security)

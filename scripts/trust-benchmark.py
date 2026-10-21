@@ -14,7 +14,6 @@ Usage:
     python3 scripts/trust-benchmark.py
 """
 import ast
-import json
 import re
 import subprocess
 import sys
@@ -23,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BE_APP = ROOT / "backend" / "app"
 BE_TESTS = ROOT / "backend" / "tests"
+SCRIPTS_DIR = ROOT / "scripts"
 FE_SRC = ROOT / "frontend" / "src"
 QC_TESTS = ROOT / "qc" / "tests"
 AGENTS = ROOT / ".agents"
@@ -69,8 +69,8 @@ for p in list(BE_TESTS.rglob("*.py")) + list(QC_TESTS.rglob("*.ts")):
                         f"{rel}:{n.lineno} -> {n.name}() is a source-content-only grep test without runtime execution"
                     )
 
-# --- 2. ERROR TRANSPARENCY (NO SILENT SWALLOW) ---
-for p in BE_APP.rglob("*.py"):
+# --- 2. ERROR TRANSPARENCY (NO SILENT SWALLOW) & CLEAN IMPORTS ---
+for p in list(BE_APP.rglob("*.py")) + list(SCRIPTS_DIR.rglob("*.py")) + list(BE_TESTS.rglob("*.py")):
     txt = p.read_text(encoding="utf-8")
     rel = p.relative_to(ROOT)
     tree = ast.parse(txt, filename=str(rel))
@@ -80,6 +80,24 @@ for p in BE_APP.rglob("*.py"):
                 violations["2. Error Transparency (No Pass)"].append(f"{rel}:{n.lineno} -> bare 'except:' prohibited")
             elif len(n.body) == 1 and isinstance(n.body[0], ast.Pass):
                 violations["2. Error Transparency (No Pass)"].append(f"{rel}:{n.lineno} -> silent 'except ...: pass' band-aid")
+    if p.name != "__init__.py":
+        loaded_names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+        for n in tree.body:
+            if isinstance(n, ast.Assign):
+                if any(isinstance(t, ast.Name) and t.id == "__all__" for t in n.targets) and isinstance(n.value, (ast.List, ast.Tuple)):
+                    loaded_names.update(elt.value for elt in n.value.elts if isinstance(elt, ast.Constant) and isinstance(elt.value, str))
+        for n in tree.body:
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                if isinstance(n, ast.ImportFrom) and n.module == "__future__":
+                    continue
+                for alias in n.names:
+                    if alias.name == "*":
+                        continue
+                    bound = alias.asname or alias.name.split(".")[0]
+                    if bound not in loaded_names:
+                        violations["2. Error Transparency (No Pass)"].append(
+                            f"{rel}:{n.lineno} -> unused top-level import '{bound}'"
+                        )
 
 # --- 3. LAYER PURITY & MODULAR MONOLITH BOUNDARIES ---
 for p in (BE_APP / "api" / "v1" / "endpoints").rglob("*.py"):

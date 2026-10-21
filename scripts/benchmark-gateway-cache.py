@@ -19,12 +19,11 @@ from collections import OrderedDict, defaultdict, deque
 import gc
 import hashlib
 import json
-import statistics
 import time
 import tracemalloc
-from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Tuple
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, Request
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -248,7 +247,6 @@ async def benchmark_gateways() -> Dict[str, Any]:
 
         # Now simulate DDoS IP spoofing memory footprint with 15,000 unique IPs
         tracemalloc.start()
-        snap_before = tracemalloc.take_snapshot()
         ddos_mw = factory()
         for ip_idx in range(n_spoofed_ips):
             await _invoke_asgi(ddos_mw, f"192.168.{ip_idx // 256}.{ip_idx % 256}", etag_val)

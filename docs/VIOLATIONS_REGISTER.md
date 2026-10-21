@@ -76,6 +76,19 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-007] Báo cáo 0 CodeQL Alerts trước khi workflow `push` trên `main` hoàn tất & Để lọt 71 cảnh báo SAST/Quality
+* **Where (Sai ở đâu):** `backend/app/services/media_transcoder.py`, `backend/app/modules/media/service.py`, `frontend/public/sw.js`, `.github/workflows/ci.yml`, `scripts/`, `backend/tests/`, và `backend/alembic/versions/`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Lỗi quy trình của Agent:** Khi PR `#29` đầu tiên kích hoạt CodeQL, nhánh `main` chưa có baseline SARIF nên PR chỉ đánh giá diff của chính PR đó (0 lỗi). Ngay giây đầu sau khi squash-merge vào `main`, Agent gọi `gh api .../code-scanning/alerts` khi workflow `CodeQL` trên `main` còn đang chạy (`in_progress`) nên nhận về `0` và vội vàng báo cáo kết quả, trong khi 2 phút sau bản quét toàn repo trên `main` hoàn tất và xuất hiện 71 cảnh báo (12 Security + 59 Quality).
+  2. **Lỗi kỹ thuật:** Đường dẫn file media (`mp4_path`, `poster_path`) và log trong `media_transcoder.py` / `service.py` dùng trực tiếp chuỗi từ request mà chưa qua hàm khóa `os.path.realpath` + `.startswith(VIDEOS_DIR)`; `sw.js` thiếu kiểm tra `event.origin`; `ci.yml` thiếu `permissions: contents: read` và chưa pin SHA cho `oven-sh/setup-bun`; cùng các `unused-import` và `except ...: pass` trong `scripts/` và `backend/tests/`.
+* **Minimal Fix (Sửa làm sao):**
+  1. Bổ sung `get_validated_video_path()` dùng `os.path.realpath` + `.startswith`, loại bỏ biến người dùng khỏi log, kiểm tra `event.origin` trong `sw.js`, pin SHA & thêm `permissions` cho `ci.yml`.
+  2. Dọn sạch toàn bộ `unused-import`, `unused-local-variable`, `unused-global-variable`, và `empty-except` trên toàn repo.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Nâng cấp `scripts/trust-benchmark.py` để quét AST `empty-except` và `unused top-level import` trên cả `backend/app/`, `backend/tests/`, và `scripts/`, đồng thời bắt buộc đợi workflow `CodeQL` trên `main` hoàn tất và xác nhận `open alerts == 0`.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**
