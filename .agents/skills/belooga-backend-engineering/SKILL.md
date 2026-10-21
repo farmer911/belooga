@@ -13,7 +13,9 @@ description: Technical architecture and engineering guide for Belooga Backend (F
 
 ```mermaid
 flowchart LR
-    Client["Client / Next.js SSR"] --> GW["Layer 0: Pure-ASGI Gateway\n(backend/app/core/gateway.py)"]
+    Client["Client / Next.js / Mobile"] --> Edge["Edge Gateway (:8080)\n(nginx/gateway.conf & K8s Ingress)"]
+    Edge --> GW["Layer 0: Pure-ASGI Gateway\n(backend/app/core/gateway.py)"]
+    GW --> RedisGW[("Redis 7 Distributed\nRate-Limit & Idempotency")]
     GW --> Router["Layer 1: REST Router & RPC Batch\n(endpoints/*.py & core/rpc.py)"]
     Router --> Service["Layer 2: Domain Service\n(modules/*/service.py)"]
     Service --> Cache["Two-Tier SWR Cache\n(backend/app/core/cache.py)"]
@@ -22,9 +24,9 @@ flowchart LR
     Repo --> PG[("PostgreSQL 16\nGIN + Composite B-Tree")]
 ```
 
-1. **Layer 0 — Pure-ASGI API Gateway (`backend/app/core/gateway.py`):**
-   - Zero-copy `__call__(scope, receive, send)` middleware (never use `BaseHTTPMiddleware`).
-   - Enforces Bounded LRU Token-Bucket (GCRA) rate limiting with route tiers (`AUTH_STRICT_RPM=30`, `MUTATION_RPM=180`, `DEFAULT_RATE_LIMIT_RPM=600`, `CHUNK_UPLOAD_RPM=2400`), `413 Payload Too Large` guard, `Idempotency-Key` replay cache, `ETag` `304 Not Modified`, and unified control-plane telemetry (`/v1/gateway/*`).
+1. **Layer 0 — Edge Nginx Gateway (`:8080`) & Distributed Pure-ASGI API Gateway (`backend/app/core/gateway.py`):**
+   - Edge reverse proxy (`nginx/gateway.conf` on `:8080` + K8s `Ingress` in `k8s/deployment-and-hpa.yaml`) terminates edge traffic (`100r/s` burst `200`, `15MB` body limit) and routes to `backend:8000`.
+   - Zero-copy `__call__(scope, receive, send)` middleware (never use `BaseHTTPMiddleware`) backed by Distributed Redis state (`belooga:gw:rl:*`, `belooga:gw:idem:*`) with Bounded LRU L1 fallback (`AUTH_STRICT_RPM=30`, `MUTATION_RPM=180`, `DEFAULT_RATE_LIMIT_RPM=600`, `CHUNK_UPLOAD_RPM=2400`), `413 Payload Too Large` guard, `Idempotency-Key` replay cache, `ETag` `304 Not Modified`, and unified control-plane telemetry (`/v1/gateway/*`).
 2. **Layer 1 — Routers & ConnectRPC Batch Multiplexer (`backend/app/api/v1/endpoints/`, `backend/app/core/rpc.py`):**
    - Thin controllers handling HTTP request parsing, auth injection (`get_current_user`), calling domain services, and returning Pydantic DTOs. Zero raw SQL or direct commits.
    - Multi-widget views use `/v1/rpc/*` batching (`asyncio.gather` + shared profile bundle hydration + optional binary Protobuf-Varint framing `application/x-belooga-rpc-bin`).

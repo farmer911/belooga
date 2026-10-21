@@ -2,7 +2,7 @@ import { normalizeMobileUser, useMobileAuthStore } from "@/store/auth-store";
 import { tokenResponseSchema } from "@/lib/schemas";
 
 export const MOBILE_API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export class MobileApiError extends Error {
   public readonly status: number;

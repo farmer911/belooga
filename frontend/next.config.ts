@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const nextConfig: NextConfig = {
   compress: true,

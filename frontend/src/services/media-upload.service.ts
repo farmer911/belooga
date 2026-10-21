@@ -1,6 +1,6 @@
 import { apiClient } from "@/services/api-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const CHUNK_SIZE = 1024 * 1024; // 1MB chunks for streaming chunked upload
 
 export interface ChunkUploadProgress {

@@ -47,6 +47,7 @@ if ! adb get-state >/dev/null 2>&1; then
     exit 1
 fi
 adb reverse tcp:8081 tcp:8081 >/dev/null 2>&1 || true
+adb reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true
 adb reverse tcp:8000 tcp:8000 >/dev/null 2>&1 || true
 adb install -r "$APK_PATH" >/dev/null
 echo "  ✓ Installed $APK_PATH on $(adb devices | awk 'NR==2{print $1}')."
