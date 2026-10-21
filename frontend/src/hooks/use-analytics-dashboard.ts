@@ -57,6 +57,43 @@ export interface UnitEconomicsData {
   strategic_growth_insight: string;
 }
 
+export interface DimSkillDemandRow {
+  skill_name: string;
+  jd_demand_count: number;
+  candidate_supply_count: number;
+  demand_gap_index: number;
+}
+
+export interface BIStarSchemaExportData {
+  schema_version: string;
+  generated_at: string;
+  power_bi_m_query_snippet: string;
+  duckdb_sql_snippet: string;
+  fact_ats_scans: Array<{
+    scan_id: string;
+    job_title: string;
+    company_name: string;
+    ats_score: number;
+    matched_skills_count: number;
+    missing_skills_count: number;
+    scanned_at: string;
+  }>;
+  fact_review_orders: Array<{
+    order_id: string;
+    target_role: string;
+    order_status: string;
+    amount_vnd: number;
+    platform_fee_vnd: number;
+    created_at: string;
+  }>;
+  fact_job_pipeline: Array<{
+    status: string;
+    job_count: number;
+    avg_match_score: number;
+  }>;
+  dim_skills_demand: DimSkillDemandRow[];
+}
+
 const DEFAULT_ANALYTICS: AnalyticsData = {
   overview: {
     total_users: 142,
@@ -92,6 +129,26 @@ const DEFAULT_ANALYTICS: AnalyticsData = {
   ],
 };
 
+const DEFAULT_BI_EXPORT: BIStarSchemaExportData = {
+  schema_version: "belooga-star-v1",
+  generated_at: "2026-10-21T06:00:00Z",
+  power_bi_m_query_snippet:
+    'let\n    Source = Json.Document(Web.Contents("http://localhost:8000/v1/analytics/bi-export?limit=200")),\n    FactATSScans = Table.FromRecords(Source[fact_ats_scans])\nin\n    FactATSScans',
+  duckdb_sql_snippet: "SELECT * FROM read_json_auto('http://localhost:8000/v1/analytics/bi-export?limit=200');",
+  fact_ats_scans: [],
+  fact_review_orders: [],
+  fact_job_pipeline: [
+    { status: "TARGETING", job_count: 14, avg_match_score: 76.5 },
+    { status: "APPLIED", job_count: 9, avg_match_score: 82.0 },
+    { status: "INTERVIEW", job_count: 4, avg_match_score: 88.5 },
+  ],
+  dim_skills_demand: [
+    { skill_name: "Golang", jd_demand_count: 18, candidate_supply_count: 7, demand_gap_index: 22.5 },
+    { skill_name: "Kubernetes", jd_demand_count: 14, candidate_supply_count: 5, demand_gap_index: 23.33 },
+    { skill_name: "PostgreSQL", jd_demand_count: 21, candidate_supply_count: 11, demand_gap_index: 17.5 },
+  ],
+};
+
 export function useAnalyticsDashboard(timeRange: "7D" | "30D" | "ALL" = "7D") {
   const { data = DEFAULT_ANALYTICS, isLoading } = useQuery<AnalyticsData>({
     queryKey: ["analytics-dashboard", timeRange],
@@ -110,6 +167,14 @@ export function useAnalyticsDashboard(timeRange: "7D" | "30D" | "ALL" = "7D") {
     },
   });
 
-  return { data, unitEconomics, isLoading, error: null };
-}
+  const { data: biExport = DEFAULT_BI_EXPORT } = useQuery<BIStarSchemaExportData>({
+    queryKey: ["analytics-bi-export"],
+    queryFn: async () => {
+      const res = await apiClient.get<BIStarSchemaExportData>("/v1/analytics/bi-export?limit=50", { timeout: 3000 });
+      return res.data;
+    },
+    placeholderData: DEFAULT_BI_EXPORT,
+  });
 
+  return { data, unitEconomics, biExport, isLoading, error: null };
+}

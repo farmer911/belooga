@@ -60,4 +60,21 @@ test.describe('Executive Analytics & Monetization Terminal Quality Gate', () => 
     const btn7D = page.locator('button:has-text("7 Ngày")');
     await btn7D.click();
   });
+
+  test('TC-ANALYTICS-005: Power BI & DuckDB Star-Schema OLAP Connector toggle', async ({ page }) => {
+    await page.goto('/admin/analytics');
+
+    const biPanel = page.getByTestId('bi-star-schema-panel');
+    await expect(biPanel).toBeVisible({ timeout: 7000 });
+    await expect(biPanel).toContainText('belooga-star-v1');
+
+    const toggleBtn = page.getByTestId('btn-copy-powerbi-m');
+    await expect(toggleBtn).toBeVisible();
+    await toggleBtn.click();
+
+    const codeBlock = page.getByTestId('bi-query-codeblock');
+    await expect(codeBlock).toBeVisible();
+    await expect(codeBlock).toContainText('Json.Document(Web.Contents');
+    await expect(codeBlock).toContainText('read_json_auto');
+  });
 });
