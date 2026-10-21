@@ -116,6 +116,20 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-010] Báo cáo hoàn thành Mobile App khi mới chỉ chạy unit test in-memory, chưa cài `react-native` bản mới nhất, chưa build `.apk` thực tế và chưa start app trên Android Emulator
+* **Where (Sai ở đâu):** `mobile/package.json`, `mobile/android/`, `mobile/scripts/build-apk.sh`, và `mobile/scripts/e2e-mobile-adb.sh`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Thiếu kiểm chứng Runtime thực tế trên Emulator:** Ở PR `#45`–`#47`, Agent chỉ tạo lớp shim in-memory chạy `bun test` mà chưa cài đặt `react-native@0.88.0` + `expo@58.0.16`, chưa đóng gói file `.apk` bằng Android SDK (`aapt2`/`d8`/`zipalign`/`apksigner`), và chưa khởi chạy thực tế `com.belooga.mobile/.MainActivity` trên máy ảo Android (`emulator-5554`).
+  2. **Nguy cơ tồn đọng APK cũ:** Nếu build APK mới mà không xóa trước các file `*.apk` cũ trong `mobile/dist/` và `mobile/android/app/build/`, script cài đặt hoặc tester có thể nạp nhầm bản APK cũ.
+* **Minimal Fix (Sửa làm sao):**
+  1. Nâng cấp `mobile/package.json` lên `react-native@0.88.0` và `expo@58.0.16`, bổ sung dev server `mobile/scripts/start-mobile.ts` và native Android project `mobile/android/`.
+  2. Xây dựng `mobile/scripts/build-apk.sh` tự động xóa sạch toàn bộ `*.apk` / `*.idsig` cũ trước khi đóng gói và ký số `belooga-mobile-v1.0.0.apk` qua Android SDK 36.
+  3. Xây dựng `mobile/scripts/e2e-mobile-adb.sh` & `mobile/e2e/maestro-flow.yaml` tự động cài APK lên máy ảo `Pixel_5` (`emulator-5554`), bật `com.belooga.mobile/.MainActivity`, dùng UIAutomator2 tap kiểm chứng cả 4 tab (`Discover`, `Pitch Studio`, `Job Tracker`, `Workspace`) và chụp ảnh màn hình thực tế.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Khóa kiểm tra `mobile/package.json` (`react-native` + `expo`), `mobile/scripts/build-apk.sh` (bắt buộc có lệnh xóa `*.apk` cũ & `apksigner verify`), và `mobile/scripts/e2e-mobile-adb.sh` trực tiếp vào `scripts/trust-benchmark.py` và `mobile/tests/apk-and-e2e-harness.test.ts`.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py` và kiểm chứng trên Android Emulator `emulator-5554`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**

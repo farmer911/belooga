@@ -166,6 +166,32 @@ if not (ROOT / "backend" / "alembic" / "env.py").exists():
 if not (FE_SRC / "components" / "providers" / "query-provider.tsx").exists():
     violations["3. Layer Purity (No Band-Aids)"].append("query-provider.tsx missing -> @tanstack/react-query provider required")
 
+# Mobile RN + Clean APK Build + E2E Automation Guard (VIOLATION-010)
+mobile_pkg_path = ROOT / "mobile" / "package.json"
+mobile_build_apk = ROOT / "mobile" / "scripts" / "build-apk.sh"
+mobile_e2e_adb = ROOT / "mobile" / "scripts" / "e2e-mobile-adb.sh"
+if mobile_pkg_path.exists():
+    m_pkg = json.loads(mobile_pkg_path.read_text(encoding="utf-8"))
+    m_deps = m_pkg.get("dependencies", {})
+    if "react-native" not in m_deps or "expo" not in m_deps:
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            "mobile/package.json missing real 'react-native' or 'expo' dependencies"
+        )
+    if not mobile_build_apk.exists():
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            "mobile/scripts/build-apk.sh missing -> Clean-first APK build pipeline required"
+        )
+    else:
+        apk_txt = mobile_build_apk.read_text(encoding="utf-8")
+        if "*.apk" not in apk_txt or "-delete" not in apk_txt or "apksigner" not in apk_txt:
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                "mobile/scripts/build-apk.sh missing mandatory old-*.apk purge (-delete) or apksigner verify"
+            )
+    if not mobile_e2e_adb.exists() or not (ROOT / "mobile" / "e2e" / "maestro-flow.yaml").exists():
+        violations["1. Test Honesty (No Skips/Hollow)"].append(
+            "mobile E2E automation scripts (e2e-mobile-adb.sh / maestro-flow.yaml) missing"
+        )
+
 # --- 4. ASYNC EVENT-LOOP & IDOR SAFETY ACROSS ALL BACKEND ---
 for p in BE_APP.rglob("*.py"):
     txt = p.read_text(encoding="utf-8")

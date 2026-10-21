@@ -7,6 +7,11 @@ node_modules/
 */.next/
 .expo/
 */.expo/
+mobile/android/app/build/
+mobile/android/app/src/main/assets/
+mobile/android/*.keystore
+mobile/dist/
+mobile/artifacts/*.xml
 out/
 build/
 *.tsbuildinfo

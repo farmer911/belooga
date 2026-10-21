@@ -1,0 +1,25 @@
+appId: com.belooga.mobile
+---
+- launchApp
+- assertVisible:
+    id: "mobile-discovery-heading"
+- assertVisible:
+    id: "mobile-candidate-card-alexnguyen"
+- tapOn:
+    id: "mobile-tab-studio"
+- assertVisible:
+    id: "mobile-studio-title"
+- tapOn:
+    id: "mobile-studio-upload-chunks"
+- assertVisible: "Upload Progress: 100% (3/3 Chunks Assembled)"
+- tapOn:
+    id: "mobile-tab-tracker"
+- assertVisible:
+    id: "mobile-tracker-title"
+- tapOn:
+    id: "mobile-tracker-move-job_101-INTERVIEW"
+- assertVisible: "Stripe — Staff Mobile Engineer [INTERVIEW] (Synced)"
+- tapOn:
+    id: "mobile-tab-profile"
+- assertVisible:
+    id: "mobile-workspace-heading"
