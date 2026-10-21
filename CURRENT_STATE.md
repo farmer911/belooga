@@ -188,22 +188,22 @@
 
 ### 4.1 Backend (`backend/requirements.txt`)
 ```text
-fastapi>=0.111.0,<1.0.0
+fastapi>=0.143.3,<1.0.0
 uvicorn[standard]>=0.30.0,<1.0.0
-sqlalchemy[asyncio]>=2.0.30,<3.0.0
+sqlalchemy[asyncio]>=2.1.5,<3.0.0
 asyncpg>=0.29.0,<1.0.0
 alembic>=1.13.1,<2.0.0
 pydantic>=2.7.0,<3.0.0
-pyjwt>=2.8.0,<3.0.0
+pyjwt>=2.15.1,<3.0.0
 pwdlib[argon2]>=0.2.0,<1.0.0
 argon2-cffi>=23.1.0,<24.0.0
 python-multipart>=0.0.9,<1.0.0
-redis>=5.0.0,<6.0.0
+redis>=8.1.0,<9.0.0
 httpx>=0.27.0,<1.0.0
 email-validator>=2.0.0
 reportlab>=4.2.0
 pytest>=8.0.0
-pytest-asyncio>=0.23.0
+pytest-asyncio>=1.4.0
 ```
 
 ### 4.2 Frontend (`frontend/package.json`)

@@ -83,11 +83,15 @@ export function useWebRTCStudio(
     audioId: string
   ) => {
     if (isRecordingRef.current) return;
-    if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
+    const prevStream = mediaStream;
     const cfg = getResolutionConfig(res, ratio);
     const stream =
       (await acquireStream(devId, res, ratio, audioId)) ||
       createStudioPreviewStream(candidateName, cfg.width, cfg.height, ratio, canvasAnimationRef.current);
+    if (isRecordingRef.current) return;
+    if (prevStream && prevStream !== stream) {
+      prevStream.getTracks().forEach((t) => t.stop());
+    }
     setMediaStream(stream);
   };
 
@@ -136,7 +140,8 @@ export function useWebRTCStudio(
 
   const startRecording = useCallback(() => {
     let stream = mediaStream;
-    if (!stream) {
+    const hasLiveTracks = stream && stream.getTracks().some((t) => t.readyState === "live");
+    if (!stream || !hasLiveTracks) {
       const cfg = getResolutionConfig(selectedResolution, selectedRatio);
       stream = createStudioPreviewStream(candidateName, cfg.width, cfg.height, selectedRatio, canvasAnimationRef.current);
       setMediaStream(stream);
@@ -160,8 +165,8 @@ export function useWebRTCStudio(
         const b = new Blob(recordedChunksRef.current.length > 0 ? recordedChunksRef.current : [new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])], {
           type: options.mimeType || "video/webm",
         });
-        setRecordedBlob(b);
-        setRecordedVideoUrl(URL.createObjectURL(b));
+        setRecordedBlob((prev) => prev || b);
+        setRecordedVideoUrl((prev) => prev || URL.createObjectURL(b));
       };
       recorder.start(1000);
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
@@ -191,18 +196,12 @@ export function useWebRTCStudio(
       } catch (e) {}
     }
     setIsRecording(false);
-    setTimeout(() => {
-      setRecordedBlob((curr) => {
-        if (!curr) {
-          const fb = new Blob(recordedChunksRef.current.length > 0 ? recordedChunksRef.current : [new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])], {
-            type: "video/webm",
-          });
-          setRecordedVideoUrl(URL.createObjectURL(fb));
-          return fb;
-        }
-        return curr;
-      });
-    }, 50);
+    const fb = new Blob(
+      recordedChunksRef.current.length > 0 ? recordedChunksRef.current : [new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])],
+      { type: "video/webm" }
+    );
+    setRecordedBlob((curr) => curr || fb);
+    setRecordedVideoUrl((curr) => curr || URL.createObjectURL(fb));
   }, []);
 
   const closeStudio = useCallback(() => {

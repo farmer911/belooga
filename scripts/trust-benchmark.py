@@ -14,6 +14,8 @@ Usage:
     python3 scripts/trust-benchmark.py
 """
 import ast
+import json
+import os
 import re
 import subprocess
 import sys
@@ -211,6 +213,29 @@ if not thesis_md.exists() or len(thesis_md.read_text().splitlines()) > 120:
 l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True)
 if l_proc.returncode != 0:
     violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors (or failed stdlib -I -S isolation check)")
+
+if os.getenv("CI") != "true":
+    try:
+        pr_proc = subprocess.run(
+            ["gh", "pr", "list", "--state", "open", "--json", "number,title,statusCheckRollup"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(ROOT),
+        )
+        if pr_proc.returncode == 0 and pr_proc.stdout.strip():
+            for pr_item in json.loads(pr_proc.stdout):
+                failed_checks = [
+                    c.get("name", "check")
+                    for c in (pr_item.get("statusCheckRollup") or [])
+                    if c.get("conclusion") in ("FAILURE", "TIMED_OUT", "ACTION_REQUIRED")
+                ]
+                if failed_checks:
+                    violations["6. Memory Cap & Skill SSOT"].append(
+                        f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
+                    )
+    except Exception as gh_err:
+        sys.stderr.write(f"[warn] GitHub open PR health check skipped: {gh_err}\n")
 
 # --- RENDER VISUAL BENCHMARK SCORECARD ---
 print("=" * 78)

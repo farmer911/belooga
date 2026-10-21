@@ -89,6 +89,20 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-008] Bỏ sót 8 PR tự động của Dependabot bị đỏ CI trên repo & Race condition `TC-WORK-006` trong WebRTC Studio
+* **Where (Sai ở đâu):** `.github/dependabot.yml`, `.github/workflows/ci.yml:103`, `frontend/src/hooks/use-webrtc-studio.ts:86-205`, và `scripts/trust-benchmark.py`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Điểm mù quan sát của Agent:** Sau khi bật `.github/dependabot.yml`, `app/dependabot` tự động mở 8 PR (`#30`–`#37`) ở chế độ nền. Agent chỉ kiểm tra PR của chính mình mà không quét `gh pr list --state open`, dẫn đến việc không phát hiện 7 PR của Dependabot bị fail CI.
+  2. **Xung đột SSOT với Dependabot:** Bước `git diff --exit-code CURRENT_STATE.md` trong `ci.yml` luôn báo lỗi với mọi PR của `dependabot[bot]` sửa `backend/requirements.txt` hoặc `frontend/package.json` vì bot không chạy `generate-current-state.py`.
+  3. **Race Condition WebRTC Studio (`TC-WORK-006`):** `reacquireStream` gọi `mediaStream.getTracks().stop()` trước khi `await acquireStream()` hoàn tất, và `stopRecording` gọi `setRecordedVideoUrl` bên trong `setTimeout(..., 50)` lồng trong `setRecordedBlob((curr) => ...)` (impure state updater của React 19), làm nút `studio-save-btn` bị trễ/mất khi E2E click nhanh.
+* **Minimal Fix (Sửa làm sao):**
+  1. Gộp toàn bộ nâng cấp từ `#30`–`#37` (`actions/checkout@v7`, `actions/setup-python@v7`, `fastapi>=0.143.3`, `sqlalchemy>=2.1.5`, `pyjwt>=2.15.1`, `redis>=8.1.0`, `pytest-asyncio>=1.4.0`), cấu hình gom nhóm `open-pull-requests-limit: 1` trong `dependabot.yml`, và miễn `git diff CURRENT_STATE.md` cho `dependabot[bot]` trong `ci.yml`.
+  2. Sửa `reacquireStream`, `startRecording`, và `stopRecording` trong `use-webrtc-studio.ts` để khởi tạo `recordedVideoUrl` đồng bộ ngay lập tức.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Tích hợp bộ quét `gh pr list --state open --json number,title,statusCheckRollup` trực tiếp vào Axis 6 của `scripts/trust-benchmark.py` để chặn đứng ngay nếu trên repo có bất kỳ Open PR nào bị đỏ CI.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**
