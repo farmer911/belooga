@@ -103,6 +103,19 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-009] Trôi cấu hình `.env.example` (11 biến thiếu) & Hardcoded fallback `MOMO_SECRET_KEY` / `CORS_ORIGINS`
+* **Where (Sai ở đâu):** `.env.example`, `.gitignore`, `backend/app/modules/payments/service.py:22`, và `backend/app/main.py:48`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Trôi cấu hình `.env.example`:** Khi phát triển các module `notifications`, `payments`, `database` pool tuning và SEO `NEXT_PUBLIC_SITE_URL`, Agent thêm `os.getenv(...)` / `process.env.NEXT_PUBLIC_*` vào code nhưng quên cập nhật `.env.example` (thiếu 11 biến).
+  2. **Hardcoded Fallback Secret & CORS:** `MOMO_SECRET_KEY` dùng `os.getenv("MOMO_SECRET_KEY", "belooga_momo_secret_key_mock_hmac")` không có kiểm tra chặn `RuntimeError` khi `ENVIRONMENT=production` (khác với `JWT_SECRET` trong `security.py`), và `CORSMiddleware` trong `main.py` hardcode danh sách `localhost` thay vì đọc `os.getenv("CORS_ORIGINS")`.
+* **Minimal Fix (Sửa làm sao):**
+  1. Bổ sung hàm `get_momo_secret_key()` bắt buộc `RuntimeError` nếu thiếu `MOMO_SECRET_KEY` trên `production`/`prod`/`staging`, và hàm `get_cors_origins()` đọc `CORS_ORIGINS` trong `main.py`.
+  2. Đồng bộ đủ 11 biến vào `.env.example` và chặn `.env.*` (`!.env.example`) trong `.gitignore`.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Bổ sung bộ quét tự động trong `scripts/trust-benchmark.py` đối chiếu toàn bộ `os.getenv(...)` trong `backend/app/` và `process.env.NEXT_PUBLIC_*` trong `frontend/src/` với `.env.example`, đồng thời cấm truyền fallback trực tiếp vào `os.getenv("*SECRET*")`.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**

@@ -19,12 +19,22 @@ from app.schemas.payments import (
     OrderStatusResponse,
 )
 
-MOMO_SECRET_KEY = os.getenv("MOMO_SECRET_KEY", "belooga_momo_secret_key_mock_hmac")
+def get_momo_secret_key() -> str:
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    secret = os.getenv("MOMO_SECRET_KEY")
+    if not secret:
+        if env in ("production", "prod", "staging"):
+            raise RuntimeError("FATAL SECURITY ERROR: MOMO_SECRET_KEY environment variable is required in production!")
+        return "belooga_momo_secret_key_mock_hmac"
+    return secret
+
+
+MOMO_SECRET_KEY = get_momo_secret_key()
 
 
 def compute_momo_ipn_signature(order_id: str, amount: float, trans_id: str) -> str:
     raw = f"amount={amount}&orderId={order_id}&transId={trans_id}"
-    return hmac.new(MOMO_SECRET_KEY.encode("utf-8"), raw.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.new(get_momo_secret_key().encode("utf-8"), raw.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 class PaymentService:
@@ -32,7 +42,7 @@ class PaymentService:
     def create_qr(payload: MomoCreatePaymentRequest) -> MomoCreatePaymentResponse:
         order_id = f"MOMO-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
         raw_sig = f"amount={payload.amount}&orderId={order_id}&package={payload.package_type}"
-        sig = hmac.new(MOMO_SECRET_KEY.encode("utf-8"), raw_sig.encode("utf-8"), hashlib.sha256).hexdigest()
+        sig = hmac.new(get_momo_secret_key().encode("utf-8"), raw_sig.encode("utf-8"), hashlib.sha256).hexdigest()
 
         qr_code_url = (
             f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data="

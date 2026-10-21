@@ -214,6 +214,33 @@ l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lin
 if l_proc.returncode != 0:
     violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors (or failed stdlib -I -S isolation check)")
 
+# Env SSOT Parity & Production Secret Guard
+env_example = ROOT / ".env.example"
+if not env_example.exists():
+    violations["6. Memory Cap & Skill SSOT"].append(".env.example is missing at repository root")
+else:
+    defined_env_keys = set(re.findall(r"^([A-Z][A-Z0-9_]+)=", env_example.read_text(), re.MULTILINE))
+    for p in sorted(BE_APP.rglob("*.py")):
+        txt = p.read_text()
+        for m in re.finditer(r'os\.getenv\(\s*["\']([A-Z0-9_]+)["\']\s*(?:,\s*([^)]+))?\)', txt):
+            env_key, default_arg = m.group(1), m.group(2)
+            if env_key not in defined_env_keys:
+                violations["6. Memory Cap & Skill SSOT"].append(
+                    f"{p.relative_to(ROOT)} -> os.getenv('{env_key}') missing from .env.example"
+                )
+            if "SECRET" in env_key and default_arg and default_arg.strip() not in ("None", '""', "''"):
+                violations["4. Async & IDOR Safety (All BE)"].append(
+                    f"{p.relative_to(ROOT)} -> {env_key} has unguarded hardcoded fallback in os.getenv()"
+                )
+    for p in sorted(FE_SRC.rglob("*.ts*")):
+        txt = p.read_text()
+        for m in re.finditer(r"process\.env\.(NEXT_PUBLIC_[A-Z0-9_]+)", txt):
+            fe_key = m.group(1)
+            if fe_key not in defined_env_keys:
+                violations["6. Memory Cap & Skill SSOT"].append(
+                    f"{p.relative_to(ROOT)} -> process.env.{fe_key} missing from .env.example"
+                )
+
 if os.getenv("CI") != "true":
     try:
         curr_branch = subprocess.check_output(

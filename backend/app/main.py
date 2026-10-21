@@ -1,7 +1,9 @@
+import os
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,17 +45,20 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(APIGatewayMiddleware)
 
 # CORS Configuration
+def get_cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+from app.services.media_transcoder import UPLOAD_BASE
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from fastapi.staticfiles import StaticFiles
-import os
-from app.services.media_transcoder import UPLOAD_BASE
 
 for sub in ["avatars", "resumes", "videos", "chunks"]:
     os.makedirs(os.path.join(UPLOAD_BASE, sub), exist_ok=True)
