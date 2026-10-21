@@ -15,6 +15,7 @@ class RegisterRequest(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
 
+
 class UserProfileDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -25,10 +26,12 @@ class UserProfileDTO(BaseModel):
     role: str = "candidate"
     avatar_url: Optional[str] = "/images/avatar.jpg"
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserProfileDTO
+
 
 class CheckAvailabilityResponse(BaseModel):
     exists: bool
@@ -62,4 +65,15 @@ class OAuthCallbackRequest(BaseModel):
     last_name: Optional[str] = "Candidate"
 
 
+class EmailVerificationRequestResponse(BaseModel):
+    message: str
+    verification_token: Optional[str] = None
 
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(..., min_length=8)
+
+
+class VerifyEmailResponse(BaseModel):
+    message: str
+    verified: bool

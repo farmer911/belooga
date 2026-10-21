@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BellRing, MailCheck } from "lucide-react";
+import { BellRing, MailCheck, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 
 interface NotificationPreferenceDTO {
@@ -40,6 +41,30 @@ const PREF_ITEMS: Array<{
 
 export function NotificationPreferencesCard() {
   const queryClient = useQueryClient();
+  const [verifyToken, setVerifyToken] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+
+  const requestVerifyMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<{ message: string; verification_token?: string | null }>(
+        "/v1/auth/verify-email/request/"
+      );
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data.verification_token) setVerifyToken(data.verification_token);
+    },
+  });
+
+  const confirmVerifyMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<{ message: string }>("/v1/auth/verify-email/", {
+        token: verifyToken.trim(),
+      });
+      return res.data;
+    },
+    onSuccess: () => setEmailVerified(true),
+  });
 
   const { data: prefs } = useQuery<NotificationPreferenceDTO>({
     queryKey: ["notification-preferences"],
@@ -106,6 +131,60 @@ export function NotificationPreferencesCard() {
             </label>
           );
         })}
+      </div>
+
+      <div
+        data-testid="settings-email-verification"
+        className="p-4 rounded-xl border border-surface-border bg-surface-page/40 space-y-3"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h4 className="text-xs font-bold text-typography-main flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-brand-primary" /> Email Address Verification
+            </h4>
+            <p className="text-[11px] text-typography-muted">
+              Verify your account email with a single-use token to unlock Verified Candidate status.
+            </p>
+          </div>
+          <button
+            type="button"
+            data-testid="request-email-verify-btn"
+            disabled={requestVerifyMutation.isPending || emailVerified}
+            onClick={() => requestVerifyMutation.mutate()}
+            className="px-3 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+          >
+            {emailVerified ? "Verified" : requestVerifyMutation.isPending ? "Sending..." : "Send Verification Code"}
+          </button>
+        </div>
+
+        {emailVerified ? (
+          <div
+            data-testid="email-verified-badge"
+            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Email verified successfully!
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              data-testid="verify-email-token-input"
+              placeholder="Paste email verification token..."
+              value={verifyToken}
+              onChange={(e) => setVerifyToken(e.target.value)}
+              className="flex-1 px-3 py-1.5 border border-surface-border rounded-lg text-xs bg-surface-card"
+            />
+            <button
+              type="button"
+              data-testid="confirm-email-verify-btn"
+              disabled={!verifyToken.trim() || confirmVerifyMutation.isPending}
+              onClick={() => confirmVerifyMutation.mutate()}
+              className="px-3 py-1.5 rounded-lg border border-brand-primary text-brand-primary hover:bg-brand-primary/10 text-xs font-semibold cursor-pointer disabled:opacity-50"
+            >
+              Verify Token
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

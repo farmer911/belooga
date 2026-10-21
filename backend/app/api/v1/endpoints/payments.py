@@ -1,6 +1,9 @@
 """Thin Controller for Domain 13: MoMo Payments & Escrow."""
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
 from app.modules.payments import PaymentService
 from app.schemas.payments import (
     MomoCreatePaymentRequest,
@@ -20,9 +23,9 @@ async def create_momo_payment_qr(payload: MomoCreatePaymentRequest):
 
 
 @router.post("/ipn", response_model=MomoIpnResponse, status_code=status.HTTP_200_OK)
-async def momo_ipn_webhook(payload: MomoIpnRequest):
-    """BEL-203: MoMo IPN Receiver with Idempotency guard and HMAC validation."""
-    return PaymentService.handle_ipn(payload)
+async def momo_ipn_webhook(payload: MomoIpnRequest, db: AsyncSession = Depends(get_db)):
+    """BEL-203: MoMo IPN Receiver with Idempotency guard, HMAC-SHA256 validation, and DB sync."""
+    return await PaymentService.handle_ipn(payload, db)
 
 
 @router.get("/order-status/{order_id}", response_model=OrderStatusResponse, status_code=status.HTTP_200_OK)

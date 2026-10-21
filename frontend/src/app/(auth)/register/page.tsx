@@ -9,7 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient, getApiErrorDetail } from "@/services/api-client";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthStore, normalizeAuthUser } from "@/store/auth-store";
 import { registerSchema, RegisterFormValues } from "@/lib/schemas";
 
 type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
@@ -84,8 +84,8 @@ export default function RegisterPage() {
       return res.data;
     },
     onSuccess: ({ access_token, user }) => {
+      setUser(normalizeAuthUser(user));
       setAccessToken(access_token);
-      setUser(user);
       router.push(`/user/${user.username}`);
     },
     onError: (err: unknown) => {

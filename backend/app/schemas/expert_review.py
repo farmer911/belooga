@@ -50,6 +50,18 @@ class OrderCheckoutRequest(BaseModel):
     coupon_code: Optional[str] = None
 
 
+class CVReviewFeedbackSubmitRequest(BaseModel):
+    score_overall: int = Field(..., ge=0, le=100)
+    score_ats_compatibility: int = Field(..., ge=0, le=100)
+    score_impact_action_verbs: int = Field(..., ge=0, le=100)
+    score_structure_formatting: int = Field(..., ge=0, le=100)
+    summary_verdict: str = Field(..., min_length=5, max_length=4000)
+    strengths: List[str] = Field(default_factory=list)
+    improvements: List[str] = Field(default_factory=list)
+    annotated_cv_url: Optional[str] = None
+    video_feedback_url: Optional[str] = None
+
+
 class CVReviewFeedbackResponse(BaseModel):
     id: uuid.UUID
     order_id: uuid.UUID
@@ -93,4 +105,3 @@ class ExpertMatchRecommendationResponse(BaseModel):
     match_confidence_pct: int
     estimated_ats_lift_points: int
     match_rationale: str
-

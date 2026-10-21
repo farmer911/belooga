@@ -120,15 +120,57 @@ class ExpertReviewRepository:
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
+    async def upsert_order_feedback(
+        self,
+        order: CVReviewOrder,
+        score_overall: int,
+        score_ats_compatibility: int,
+        score_impact_action_verbs: int,
+        score_structure_formatting: int,
+        summary_verdict: str,
+        strengths: List[str],
+        improvements: List[str],
+        annotated_cv_url: Optional[str] = None,
+        video_feedback_url: Optional[str] = None,
+    ) -> CVReviewFeedback:
+        existing = await self.get_feedback_by_order_id(order.id)
+        experts = await self.list_experts()
+        assigned_expert_id = order.expert_id or (experts[0].id if experts else None)
+        if existing:
+            existing.score_overall = score_overall
+            existing.score_ats_compatibility = score_ats_compatibility
+            existing.score_impact_action_verbs = score_impact_action_verbs
+            existing.score_structure_formatting = score_structure_formatting
+            existing.summary_verdict = summary_verdict
+            existing.strengths = strengths
+            existing.improvements = improvements
+            existing.annotated_cv_url = annotated_cv_url
+            existing.video_feedback_url = video_feedback_url
+        else:
+            existing = CVReviewFeedback(
+                order_id=order.id,
+                expert_id=assigned_expert_id,
+                score_overall=score_overall,
+                score_ats_compatibility=score_ats_compatibility,
+                score_impact_action_verbs=score_impact_action_verbs,
+                score_structure_formatting=score_structure_formatting,
+                summary_verdict=summary_verdict,
+                strengths=strengths,
+                improvements=improvements,
+                annotated_cv_url=annotated_cv_url,
+                video_feedback_url=video_feedback_url,
+            )
+            self.db.add(existing)
+        order.order_status = "completed"
+        await self.db.commit()
+        return await self.get_feedback_by_order_id(order.id) or existing
+
     async def ensure_feedback_for_paid_order(self, order: CVReviewOrder) -> CVReviewFeedback:
         existing = await self.get_feedback_by_order_id(order.id)
         if existing:
             return existing
-        experts = await self.list_experts()
-        assigned_expert_id = order.expert_id or (experts[0].id if experts else None)
-        fb = CVReviewFeedback(
-            order_id=order.id,
-            expert_id=assigned_expert_id,
+        return await self.upsert_order_feedback(
+            order=order,
             score_overall=88,
             score_ats_compatibility=92,
             score_impact_action_verbs=85,
@@ -146,9 +188,6 @@ class ExpertReviewRepository:
                 "Pair your top role with a 30-second Belooga Video Elevator Pitch.",
             ],
         )
-        self.db.add(fb)
-        await self.db.commit()
-        return await self.get_feedback_by_order_id(order.id) or fb
 
     async def seed_packages_if_empty(self, pkg_seeds: list[tuple]) -> None:
         if not await self.list_packages():

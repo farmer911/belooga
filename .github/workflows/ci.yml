@@ -58,9 +58,10 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install Frontend Dependencies
+      - name: Install Frontend & QC Dependencies
         run: |
           cd frontend && bun install --frozen-lockfile || bun install
+          cd ../qc && bun install && bun x playwright install --with-deps chromium
 
       - name: Initialize Database Schema & Seed Data
         run: |
@@ -75,6 +76,20 @@ jobs:
           CI: "true"
         run: |
           bash scripts/audit-truth.sh
+
+      - name: Run Frontend Unit Tests
+        run: |
+          cd frontend && bun run test
+
+      - name: Run Playwright E2E Automation Suite
+        env:
+          CI: "true"
+          DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_db"
+          REDIS_URL: "redis://localhost:6379/0"
+        run: |
+          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 &)
+          sleep 3
+          cd qc && bun run test:e2e:chromium
 
       - name: Skill lint, AUTO facts, ratchet
         run: |

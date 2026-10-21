@@ -12,6 +12,7 @@ from app.modules.expert_review.repository import ExpertReviewRepository
 from app.modules.notifications import NotificationService
 from app.schemas.expert_review import (
     CVReviewFeedbackResponse,
+    CVReviewFeedbackSubmitRequest,
     CVReviewOrderCreateRequest,
     CVReviewOrderResponse,
     CVReviewPackageResponse,
@@ -30,10 +31,7 @@ class ExpertReviewService:
         async def _compute() -> List[Dict[str, Any]]:
             await self._ensure_seed_data()
             experts = await self.repo.list_experts(role_category)
-            return [
-                ExpertProfileResponse.model_validate(e).model_dump(mode="json")
-                for e in experts
-            ]
+            return [ExpertProfileResponse.model_validate(e).model_dump(mode="json") for e in experts]
 
         if os.getenv("ENVIRONMENT") == "testing":
             rows = await _compute()
@@ -46,10 +44,7 @@ class ExpertReviewService:
         async def _compute() -> List[Dict[str, Any]]:
             await self._ensure_seed_data()
             packages = await self.repo.list_packages()
-            return [
-                CVReviewPackageResponse.model_validate(p).model_dump(mode="json")
-                for p in packages
-            ]
+            return [CVReviewPackageResponse.model_validate(p).model_dump(mode="json") for p in packages]
 
         if os.getenv("ENVIRONMENT") == "testing":
             rows = await _compute()
@@ -57,31 +52,24 @@ class ExpertReviewService:
             rows = await platform_cache.get_or_set("expert_packages:all", 60, _compute)
         return [CVReviewPackageResponse(**r) for r in rows]
 
-    async def recommend_expert_and_package(
-        self, target_role: str
-    ) -> ExpertMatchRecommendationResponse:
+    async def recommend_expert_and_package(self, target_role: str) -> ExpertMatchRecommendationResponse:
         async def _compute() -> Dict[str, Any]:
             await self._ensure_seed_data()
             experts = await self.repo.list_experts(None)
             packages = await self.repo.list_packages()
             role_lower = target_role.lower()
-
-            if any(k in role_lower for k in ("front", "react", "next", "ui", "design")):
-                cat_match = "Frontend"
-            elif any(k in role_lower for k in ("ai", "ml", "data", "llm", "research")):
-                cat_match = "AI"
-            else:
-                cat_match = "Backend"
-
+            cat_match = (
+                "Frontend" if any(k in role_lower for k in ("front", "react", "next", "ui", "design"))
+                else "AI" if any(k in role_lower for k in ("ai", "ml", "data", "llm", "research"))
+                else "Backend"
+            )
             chosen_exp = next(
                 (e for e in experts if cat_match.lower() in (e.role_category or "").lower()),
                 experts[0],
             )
             is_exec = any(k in role_lower for k in ("staff", "principal", "lead", "head", "architect"))
-            target_slug = "elite" if is_exec else "pro"
-            chosen_pkg = next((p for p in packages if p.slug == target_slug), packages[0])
-
-            resp = ExpertMatchRecommendationResponse(
+            chosen_pkg = next((p for p in packages if p.slug == ("elite" if is_exec else "pro")), packages[0])
+            return ExpertMatchRecommendationResponse(
                 target_role=target_role,
                 recommended_expert=ExpertProfileResponse.model_validate(chosen_exp),
                 recommended_package=CVReviewPackageResponse.model_validate(chosen_pkg),
@@ -91,15 +79,12 @@ class ExpertReviewService:
                     f"Matched with {chosen_exp.full_name} ({chosen_exp.headline}) and {chosen_pkg.name} "
                     f"for {target_role} calibration (+{26 if is_exec else 19} projected ATS points)."
                 ),
-            )
-            return resp.model_dump(mode="json")
+            ).model_dump(mode="json")
 
         if os.getenv("ENVIRONMENT") == "testing":
             data = await _compute()
         else:
-            data = await platform_cache.get_or_set(
-                f"expert_rec:{target_role.lower().strip()}", ttl_seconds=60, loader=_compute
-            )
+            data = await platform_cache.get_or_set(f"expert_rec:{target_role.lower().strip()}", 60, _compute)
         return ExpertMatchRecommendationResponse(**data)
 
     async def create_order(
@@ -108,18 +93,11 @@ class ExpertReviewService:
         await self._ensure_seed_data()
         package = await self.repo.get_package_by_slug(payload.package_slug)
         if not package:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Review package '{payload.package_slug}' not found",
-            )
-
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Review package '{payload.package_slug}' not found")
         if payload.expert_id:
             expert = await self.repo.get_expert_by_id(payload.expert_id)
             if not expert or not expert.is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Selected expert is currently unavailable",
-                )
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Selected expert is currently unavailable")
 
         order = await self.repo.create_order(
             candidate_identity_id=candidate_identity_id,
@@ -150,12 +128,8 @@ class ExpertReviewService:
         order = await self.repo.get_order_by_id(order_id)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-
-        # IDOR Guard
         if order.candidate_identity_id != candidate_identity_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
 
         payment_ref = f"txn_{uuid.uuid4().hex[:12]}_{payload.payment_method}"
         updated_order = await self.repo.update_order_status(
@@ -183,39 +157,58 @@ class ExpertReviewService:
         order = await self.repo.get_order_by_id(order_id)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-
-        # IDOR Guard
         if order.candidate_identity_id != candidate_identity_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
 
         feedback = await self.repo.get_feedback_by_order_id(order_id)
         if not feedback and order.order_status in ("paid", "in_review", "completed"):
             feedback = await self.repo.ensure_feedback_for_paid_order(order)
         if not feedback:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Review feedback is still in progress by the expert",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review feedback is still in progress by the expert")
+        return self._serialize_feedback(feedback)
 
+    async def submit_order_feedback(
+        self, order_id: uuid.UUID, actor_identity_id: uuid.UUID, payload: CVReviewFeedbackSubmitRequest
+    ) -> CVReviewFeedbackResponse:
+        order = await self.repo.get_order_by_id(order_id)
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+        if order.candidate_identity_id != actor_identity_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
+
+        feedback = await self.repo.upsert_order_feedback(
+            order=order,
+            score_overall=payload.score_overall,
+            score_ats_compatibility=payload.score_ats_compatibility,
+            score_impact_action_verbs=payload.score_impact_action_verbs,
+            score_structure_formatting=payload.score_structure_formatting,
+            summary_verdict=payload.summary_verdict,
+            strengths=payload.strengths,
+            improvements=payload.improvements,
+            annotated_cv_url=payload.annotated_cv_url,
+            video_feedback_url=payload.video_feedback_url,
+        )
+        await NotificationService(self.db).dispatch_event(
+            identity_id=order.candidate_identity_id,
+            event_type="EXPERT_FEEDBACK_READY",
+            title=f"Expert CV Review Completed ({payload.score_overall}/100)",
+            message=payload.summary_verdict[:160],
+            deep_link=f"/expert-review?order_id={order_id}&status=completed",
+            send_email=True,
+            category="order",
+        )
         return self._serialize_feedback(feedback)
 
     def _serialize_feedback(self, fb: CVReviewFeedback) -> CVReviewFeedbackResponse:
         return CVReviewFeedbackResponse(
-            id=fb.id,
-            order_id=fb.order_id,
+            id=fb.id, order_id=fb.order_id,
             expert_name=fb.expert.full_name if fb.expert else "Senior Expert",
-            score_overall=fb.score_overall,
-            score_ats_compatibility=fb.score_ats_compatibility,
+            score_overall=fb.score_overall, score_ats_compatibility=fb.score_ats_compatibility,
             score_impact_action_verbs=fb.score_impact_action_verbs,
             score_structure_formatting=fb.score_structure_formatting,
-            summary_verdict=fb.summary_verdict,
-            strengths=fb.strengths,
-            improvements=fb.improvements,
-            annotated_cv_url=fb.annotated_cv_url,
-            video_feedback_url=fb.video_feedback_url,
-            submitted_at=fb.submitted_at,
+            summary_verdict=fb.summary_verdict, strengths=fb.strengths,
+            improvements=fb.improvements, annotated_cv_url=fb.annotated_cv_url,
+            video_feedback_url=fb.video_feedback_url, submitted_at=fb.submitted_at,
         )
 
     def _serialize_order(self, order) -> CVReviewOrderResponse:
@@ -224,14 +217,10 @@ class ExpertReviewService:
             package_name=order.package.name if order.package else "Custom Package",
             package_slug=order.package.slug if order.package else "custom",
             expert_name=order.expert.full_name if order.expert else "Auto-matched Senior Expert",
-            resume_url=order.resume_url,
-            target_role=order.target_role,
-            target_companies=order.target_companies,
-            candidate_notes=order.candidate_notes,
-            order_status=order.order_status,
-            amount_paid_cents=order.amount_paid_cents,
-            payment_reference=order.payment_reference,
-            created_at=order.created_at,
+            resume_url=order.resume_url, target_role=order.target_role,
+            target_companies=order.target_companies, candidate_notes=order.candidate_notes,
+            order_status=order.order_status, amount_paid_cents=order.amount_paid_cents,
+            payment_reference=order.payment_reference, created_at=order.created_at,
             feedback=self._serialize_feedback(order.feedback) if order.feedback else None,
         )
 

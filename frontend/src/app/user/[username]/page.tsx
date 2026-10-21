@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
 import { useCandidateProfile } from "@/hooks/use-candidate-profile";
 import { WorkspaceToolbar } from "@/components/features/profile/workspace-toolbar";
+import { AuthSessionBootstrap } from "@/components/providers/auth-guard";
 import { ProfileHeaderCard } from "@/components/features/profile/profile-header-card";
 import { SkillsCard } from "@/components/features/profile/skills-card";
 import { LanguagesInterestsCard } from "@/components/features/profile/languages-interests-card";
 import { ExperienceTimeline } from "@/components/features/timeline/experience-timeline";
 import { EducationTimeline } from "@/components/features/timeline/education-timeline";
+import { AwardsTimeline } from "@/components/features/timeline/awards-timeline";
 import { VideoPitchCard } from "@/components/features/media/video-pitch-card";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { ResumeAttachmentCard } from "@/components/features/media/resume-attachment-card";
@@ -26,7 +28,6 @@ interface WorkspaceTrustScore {
   next_boost_action: string;
 }
 
-// Lazy-load WebRTC Studio Modal with Next.js dynamic import (SSR disabled)
 const WebRTCStudioModal = dynamic(
   () => import("@/components/features/studio/webrtc-studio-modal"),
   { ssr: false }
@@ -57,6 +58,10 @@ export default function WorkspacePage() {
     handleDeleteEducation,
     handleAddSkill,
     handleRemoveSkill,
+    handleAddLanguage,
+    handleRemoveLanguage,
+    handleAddInterest,
+    handleRemoveInterest,
     handleAvatarFileChange,
     handleResumeFileChange,
     handleDownloadPdf,
@@ -93,7 +98,7 @@ export default function WorkspacePage() {
 
   return (
     <div className="min-h-screen bg-surface-page py-8" data-testid="workspace-container">
-      {/* Hidden file inputs for avatar & resume */}
+      <AuthSessionBootstrap />
       <input type="file" ref={resumeInputRef} accept=".pdf" className="hidden" onChange={handleResumeFileChange} />
       <input type="file" id="avatar-upload-input" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
 
@@ -105,9 +110,7 @@ export default function WorkspacePage() {
           onDownloadPdf={handleDownloadPdf}
         />
 
-        {/* 2-Column Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN: 320px STICKY SIDEBAR (lg:col-span-4) */}
           <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
             <ProfileHeaderCard
               profile={profile}
@@ -143,11 +146,13 @@ export default function WorkspacePage() {
             <LanguagesInterestsCard
               languages={profile.languages}
               interests={profile.interests}
+              onAddLanguage={handleAddLanguage}
+              onRemoveLanguage={handleRemoveLanguage}
+              onAddInterest={handleAddInterest}
+              onRemoveInterest={handleRemoveInterest}
             />
           </aside>
 
-
-          {/* RIGHT COLUMN: MAIN STREAM (lg:col-span-8) */}
           <main className="lg:col-span-8 space-y-8">
             <VideoPitchCard
               posterUrl={profile.video_pitch_poster}
@@ -166,6 +171,7 @@ export default function WorkspacePage() {
               onAddEducation={handleAddEducation}
               onDeleteEducation={handleDeleteEducation}
             />
+            <AwardsTimeline username={username} />
             <ResumeAttachmentCard
               resumeName={resumeName}
               isUploadingResume={isUploadingResume}
@@ -176,7 +182,6 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      {/* Video Playback Modal */}
       <VideoPitchModal
         isOpen={videoModalOpen}
         onClose={() => setVideoModalOpen(false)}
@@ -185,7 +190,6 @@ export default function WorkspacePage() {
         posterUrl={profile.video_pitch_poster}
       />
 
-      {/* Live WebRTC Studio Modal */}
       {studioModalOpen && (
         <WebRTCStudioModal
           isOpen={studioModalOpen}

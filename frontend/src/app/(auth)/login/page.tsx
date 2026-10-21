@@ -9,7 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient, getApiErrorDetail } from "@/services/api-client";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthStore, normalizeAuthUser } from "@/store/auth-store";
 import { loginSchema, LoginFormValues } from "@/lib/schemas";
 
 export default function LoginPage() {
@@ -33,9 +33,17 @@ export default function LoginPage() {
       return response.data;
     },
     onSuccess: ({ access_token, user }) => {
+      setUser(normalizeAuthUser(user));
       setAccessToken(access_token);
-      setUser(user);
-      router.push(`/user/${user.username}`);
+      const nextParam =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("next")
+          : null;
+      const target =
+        nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+          ? nextParam
+          : `/user/${user.username}`;
+      router.push(target);
     },
     onError: (err: unknown) => {
       setErrorMessage(getApiErrorDetail(err, "Invalid credentials. Please verify your email and password."));

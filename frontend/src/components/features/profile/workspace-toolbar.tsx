@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, ExternalLink, Edit3, Download, Lock, Globe } from "lucide-react";
+import { CheckCircle2, ExternalLink, Edit3, Download, Lock, Globe, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface WorkspaceToolbarProps {
@@ -55,6 +55,11 @@ export function WorkspaceToolbar({
         <Link href={`/user/${username}/update`}>
           <Button variant="outline" size="sm" className="gap-2 border-brand-primary text-brand-primary">
             <Edit3 className="w-4 h-4" aria-hidden="true" /> Edit Bio & Info
+          </Button>
+        </Link>
+        <Link href={`/user/${username}/settings`}>
+          <Button variant="outline" size="sm" data-testid="workspace-settings-btn" className="gap-2 text-typography-heading">
+            <Settings className="w-4 h-4" aria-hidden="true" /> Settings
           </Button>
         </Link>
         <Button

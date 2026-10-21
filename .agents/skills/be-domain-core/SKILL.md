@@ -19,6 +19,8 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `POST` | `/v1/auth/logout/` | `logout` | public |
 | `POST` | `/v1/auth/forgot-password/` | `request_password_reset` | public |
 | `POST` | `/v1/auth/reset-password/` | `reset_password` | public |
+| `POST` | `/v1/auth/verify-email/request/` | `request_email_verification` | required |
+| `POST` | `/v1/auth/verify-email/` | `verify_email_token` | public |
 | `POST` | `/v1/users/{username}/password/` | `change_user_password` | required |
 | `DELETE` | `/v1/users/{username}/` | `delete_user_account` | required |
 | `POST` | `/v1/auth/oauth/callback/` | `oauth_callback` | public |
@@ -27,15 +29,24 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `PATCH` | `/v1/profile/{username}` | `update_candidate_profile` | required |
 | `POST` | `/v1/profile/{username}/skills/` | `add_candidate_skill` | required |
 | `DELETE` | `/v1/profile/{username}/skills/{skill_name}/` | `remove_candidate_skill` | required |
+| `POST` | `/v1/profile/{username}/languages/` | `add_candidate_language` | required |
+| `DELETE` | `/v1/profile/{username}/languages/{language_name}/` | `remove_candidate_language` | required |
+| `POST` | `/v1/profile/{username}/interests/` | `add_candidate_interest` | required |
+| `DELETE` | `/v1/profile/{username}/interests/{interest_name}/` | `remove_candidate_interest` | required |
 | `GET` | `/v1/profile/{username}/career-trajectory` | `get_candidate_career_trajectory` | public |
 | `GET` | `/v1/profile/{username}/job-experiences/` | `list_job_experiences` | public |
 | `POST` | `/v1/profile/{username}/job-experiences/` | `create_job_experience` | required |
+| `PATCH` | `/v1/profile/{username}/job-experiences/{item_id}/` | `update_job_experience` | required |
 | `DELETE` | `/v1/profile/{username}/job-experiences/{item_id}/` | `delete_job_experience` | required |
 | `POST` | `/v1/profile/{username}/job-experiences/order/` | `reorder_job_experiences` | required |
 | `GET` | `/v1/profile/{username}/education/` | `list_education_experiences` | public |
 | `POST` | `/v1/profile/{username}/education/` | `create_education` | required |
+| `PATCH` | `/v1/profile/{username}/education/{item_id}/` | `update_education` | required |
 | `DELETE` | `/v1/profile/{username}/education/{item_id}/` | `delete_education` | required |
 | `POST` | `/v1/profile/{username}/education/order/` | `reorder_education_experiences` | required |
+| `GET` | `/v1/profile/{username}/awards/` | `list_awards` | public |
+| `POST` | `/v1/profile/{username}/awards/` | `create_award` | required |
+| `DELETE` | `/v1/profile/{username}/awards/{item_id}/` | `delete_award` | required |
 | `PATCH` | `/v1/profile/{username}/avatar/` | `upload_avatar` | required |
 | `PATCH` | `/v1/profile/{username}/resume/` | `upload_resume` | required |
 | `DELETE` | `/v1/profile/{username}/resume/` | `delete_resume` | required |
@@ -54,7 +65,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 - Router: `backend/app/api/v1/endpoints/auth.py`, `backend/app/api/v1/endpoints/profile.py`, `backend/app/api/v1/endpoints/timeline.py`, `backend/app/api/v1/endpoints/media.py`, `backend/app/api/v1/endpoints/notifications.py`
 - Service: `backend/app/modules/auth/service.py`, `backend/app/modules/media/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/profile/service.py`, `backend/app/modules/timeline/service.py`, `backend/app/services/media_transcoder.py`, `backend/app/services/pdf_generator.py`
 - Repository: `backend/app/modules/auth/repository.py`, `backend/app/modules/media/repository.py`, `backend/app/modules/notifications/repository.py`, `backend/app/modules/profile/repository.py`, `backend/app/modules/timeline/repository.py`
-- Tests: `backend/tests/test_auth_family_rotation.py`, `backend/tests/test_idor_guards.py`, `backend/tests/test_media_traversal.py`, `backend/tests/test_notifications.py`, `backend/tests/test_profile_privacy_and_pii.py`, `backend/tests/test_timeline_reorder.py`
+- Tests: `backend/tests/test_auth_family_rotation.py`, `backend/tests/test_idor_guards.py`, `backend/tests/test_media_traversal.py`, `backend/tests/test_notifications.py`, `backend/tests/test_production_readiness_suite.py`, `backend/tests/test_profile_privacy_and_pii.py`, `backend/tests/test_timeline_reorder.py`
 <!-- AUTO:END -->
 
 ## Rules

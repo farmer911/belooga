@@ -1,7 +1,7 @@
 """Candidate profile service & cross-module facade (Vertical Module: profile).
 
 Enforces privacy guards (is_hidden check), PII masking, biographical updates,
-skills taxonomy associations, and exposes clean facade methods for sibling modules.
+skills/languages/interests taxonomy associations, and exposes clean facade methods.
 """
 
 from typing import Any, Dict, List, Optional
@@ -51,17 +51,18 @@ class ProfileService:
         last_name: str,
     ):
         return await self.profile_repo.create_profile(
-            profile_id=profile_id,
-            identity_id=identity_id,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            headline="Candidate",
-            bio="",
-            is_hidden=False,
-            is_fresh=True,
-            submitted=False,
+            profile_id=profile_id, identity_id=identity_id, username=username,
+            first_name=first_name, last_name=last_name, headline="Candidate", bio="",
+            is_hidden=False, is_fresh=True, submitted=False,
         )
+
+    async def _require_owned(self, username: str, current_user: AuthenticatedUser):
+        verify_profile_owner(current_user, username)
+        clean_username = username.lower().strip()
+        profile = await self.profile_repo.get_by_username(clean_username)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+        return profile, clean_username
 
     # --- Domain 2 Endpoints ---
     async def get_raw_profile_bundle(self, username: str) -> Dict[str, Any]:
@@ -73,10 +74,7 @@ class ProfileService:
         async def _load_bundle() -> Dict[str, Any]:
             row = await self.profile_repo.get_full_profile_bundle(clean_username)
             if not row:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Candidate @{username} not found",
-                )
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Candidate @{username} not found")
             return {
                 "id": str(row["id"]),
                 "username": row["username"],
@@ -105,9 +103,7 @@ class ProfileService:
         if os.getenv("ENVIRONMENT") == "testing":
             bundle = await _load_bundle()
         else:
-            bundle = await profile_cache.get_or_set(
-                f"pub_profile:{clean_username}", ttl_seconds=30, loader=_load_bundle
-            )
+            bundle = await profile_cache.get_or_set(f"pub_profile:{clean_username}", ttl_seconds=30, loader=_load_bundle)
         self.db.info[session_key] = bundle
         return bundle
 
@@ -120,10 +116,7 @@ class ProfileService:
         )
         bundle = await self.get_raw_profile_bundle(username)
         if bundle.get("is_hidden") and not is_owner:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Candidate @{username} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Candidate @{username} not found")
         return {
             **bundle,
             "email": bundle.get("_raw_email") if is_owner else None,
@@ -148,17 +141,14 @@ class ProfileService:
 
             has_video = bool(bundle.get("video_pitch_url"))
             video_pts = 35 if has_video else 0
-
             job_count = len(jobs)
             exp_pts = min(25, job_count * 10 + (5 if any(len(j.get("description") or "") >= 60 for j in jobs) else 0))
-
-            bio_text = f"{headline} {bio}"
+            bio_text = f"{headline} {bio}".lower()
             effective_skill_cnt = max(
                 len(skills),
-                sum(1 for tok in ("go", "python", "react", "postgres", "kubernetes", "aws", "typescript", "java") if tok in bio_text.lower()),
+                sum(1 for tok in ("go", "python", "react", "postgres", "kubernetes", "aws", "typescript", "java") if tok in bio_text),
             )
             skill_pts = min(20, effective_skill_cnt * 4)
-
             bio_pts = min(20, (8 if len(bio) >= 40 else 3) + (6 if headline else 0) + (6 if education else 2))
             total = min(100, video_pts + exp_pts + skill_pts + bio_pts)
             tier = (
@@ -177,7 +167,6 @@ class ProfileService:
                 if len(skills) < 5
                 else "Profile is recruiter-ready. Keep seeking status updated for priority shortlist placement."
             )
-
             return {
                 "username": bundle["username"],
                 "_is_hidden": bool(bundle.get("is_hidden")),
@@ -185,77 +174,37 @@ class ProfileService:
                 "readiness_tier": tier,
                 "recruiter_conversion_multiplier": multiplier,
                 "pillars": [
-                    {
-                        "pillar": "Video Pitch Verification",
-                        "score": video_pts,
-                        "max_score": 35,
-                        "status": "Verified" if has_video else "Missing",
-                        "detail": "60s authentic video pitch attached" if has_video else "No video pitch recorded yet",
-                    },
-                    {
-                        "pillar": "Career Timeline Depth",
-                        "score": exp_pts,
-                        "max_score": 25,
-                        "status": "Strong" if exp_pts >= 20 else "Partial",
-                        "detail": f"{job_count} verified role(s) on timeline",
-                    },
-                    {
-                        "pillar": "Skill Taxonomy Coverage",
-                        "score": skill_pts,
-                        "max_score": 20,
-                        "status": "Indexed" if skill_pts >= 12 else "Needs Tags",
-                        "detail": f"{effective_skill_cnt} searchable domain skills indexed",
-                    },
-                    {
-                        "pillar": "Executive Bio & Academic Proof",
-                        "score": bio_pts,
-                        "max_score": 20,
-                        "status": "Complete" if bio_pts >= 16 else "Basic",
-                        "detail": f"{len(education)} education record(s) & narrative summary",
-                    },
+                    {"pillar": "Video Pitch Verification", "score": video_pts, "max_score": 35, "status": "Verified" if has_video else "Missing", "detail": "60s authentic video pitch attached" if has_video else "No video pitch recorded yet"},
+                    {"pillar": "Career Timeline Depth", "score": exp_pts, "max_score": 25, "status": "Strong" if exp_pts >= 20 else "Partial", "detail": f"{job_count} verified role(s) on timeline"},
+                    {"pillar": "Skill Taxonomy Coverage", "score": skill_pts, "max_score": 20, "status": "Indexed" if skill_pts >= 12 else "Needs Tags", "detail": f"{effective_skill_cnt} searchable domain skills indexed"},
+                    {"pillar": "Executive Bio & Academic Proof", "score": bio_pts, "max_score": 20, "status": "Complete" if bio_pts >= 16 else "Basic", "detail": f"{len(education)} education record(s) & narrative summary"},
                 ],
                 "next_boost_action": next_action,
             }
 
         data = await profile_cache.get_or_set(f"trust:{clean_username}", ttl_seconds=45, loader=_compute)
         if data.get("_is_hidden") and not is_owner:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Candidate @{username} not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Candidate @{username} not found")
         return data
 
     async def update_candidate_profile(
         self, username: str, payload: ProfileUpdate, current_user: AuthenticatedUser
     ) -> Dict[str, str]:
-        verify_profile_owner(current_user, username)
-        clean_username = username.lower().strip()
-
-        profile = await self.profile_repo.get_by_username(clean_username)
-        if not profile:
-            raise HTTPException(status_code=404, detail="Candidate not found")
-
+        profile, clean_username = await self._require_owned(username, current_user)
         update_dict = payload.model_dump(exclude_unset=True)
         if update_dict:
             await self.profile_repo.update_profile(profile.id, **update_dict)
             await self.db.commit()
             await invalidate_candidate_cache(clean_username)
-
         return {"message": "Profile updated successfully"}
 
     async def add_candidate_skill(
         self, username: str, skill_name: str, current_user: AuthenticatedUser
     ) -> Dict[str, str]:
-        verify_profile_owner(current_user, username)
         clean_name = skill_name.strip()
         if not clean_name:
             raise HTTPException(status_code=400, detail="Skill name cannot be empty")
-
-        clean_username = username.lower().strip()
-        profile = await self.profile_repo.get_by_username(clean_username)
-        if not profile:
-            raise HTTPException(status_code=404, detail="Candidate not found")
-
+        profile, clean_username = await self._require_owned(username, current_user)
         await self.profile_repo.add_skill(profile.id, clean_name)
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
@@ -264,15 +213,44 @@ class ProfileService:
     async def remove_candidate_skill(
         self, username: str, skill_name: str, current_user: AuthenticatedUser
     ) -> Dict[str, str]:
-        verify_profile_owner(current_user, username)
-        clean_name = skill_name.strip()
-
-        clean_username = username.lower().strip()
-        profile = await self.profile_repo.get_by_username(clean_username)
-        if not profile:
-            raise HTTPException(status_code=404, detail="Candidate not found")
-
-        await self.profile_repo.remove_skill(profile.id, clean_name)
+        profile, clean_username = await self._require_owned(username, current_user)
+        await self.profile_repo.remove_skill(profile.id, skill_name.strip())
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
-        return {"message": f"Skill '{clean_name}' removed"}
+        return {"message": f"Skill '{skill_name.strip()}' removed"}
+
+    async def add_candidate_language(
+        self, username: str, language_name: str, proficiency: str, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile, clean_username = await self._require_owned(username, current_user)
+        await self.profile_repo.add_language(profile.id, language_name.strip(), proficiency.strip())
+        await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
+        return {"message": f"Language '{language_name.strip()}' added", "name": language_name.strip()}
+
+    async def remove_candidate_language(
+        self, username: str, language_name: str, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile, clean_username = await self._require_owned(username, current_user)
+        await self.profile_repo.remove_language(profile.id, language_name.strip())
+        await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
+        return {"message": f"Language '{language_name.strip()}' removed"}
+
+    async def add_candidate_interest(
+        self, username: str, interest_name: str, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile, clean_username = await self._require_owned(username, current_user)
+        await self.profile_repo.add_interest(profile.id, interest_name.strip())
+        await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
+        return {"message": f"Interest '{interest_name.strip()}' added"}
+
+    async def remove_candidate_interest(
+        self, username: str, interest_name: str, current_user: AuthenticatedUser
+    ) -> Dict[str, str]:
+        profile, clean_username = await self._require_owned(username, current_user)
+        await self.profile_repo.remove_interest(profile.id, interest_name.strip())
+        await self.db.commit()
+        await invalidate_candidate_cache(clean_username)
+        return {"message": f"Interest '{interest_name.strip()}' removed"}

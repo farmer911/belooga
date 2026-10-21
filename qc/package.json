@@ -6,6 +6,7 @@
     "test": "playwright test",
     "test:visual": "playwright test tests/visual",
     "test:e2e": "playwright test tests/e2e",
+    "test:e2e:chromium": "playwright test tests/e2e --project='Desktop Chromium'",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report"
   },

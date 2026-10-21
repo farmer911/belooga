@@ -69,6 +69,20 @@ class EducationCreate(BaseModel):
     logo_url: Optional[str] = None
 
 
+class EducationUpdate(BaseModel):
+    """Payload for updating an existing academic credential entry."""
+
+    school_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    degree_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    gpa: Optional[str] = None
+    from_date_month: Optional[int] = Field(None, ge=1, le=12)
+    from_date_year: Optional[int] = Field(None, ge=1900, le=2100)
+    currently_work_here: Optional[bool] = None
+    to_date_month: Optional[int] = Field(None, ge=1, le=12)
+    to_date_year: Optional[int] = Field(None, ge=1900, le=2100)
+    description: Optional[str] = None
+
+
 # Backward-compatible alias
 EducationExperienceCreate = EducationCreate
 
@@ -151,4 +165,3 @@ class CareerTrajectoryResponse(BaseModel):
     estimated_tenure_years: float
     trajectory_velocity: str
     key_promotion_gaps: List[str]
-

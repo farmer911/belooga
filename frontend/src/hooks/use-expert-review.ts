@@ -82,10 +82,7 @@ export function useExpertReview() {
 
   const packagesQuery = useQuery<ReviewPackage[]>({
     queryKey: ["expert-review-packages"],
-    queryFn: async () => {
-      const res = await apiClient.get<ReviewPackage[]>("/v1/expert-review/packages/");
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<ReviewPackage[]>("/v1/expert-review/packages/")).data,
   });
 
   const expertsQuery = useQuery<ExpertProfile[]>({
@@ -95,8 +92,7 @@ export function useExpertReview() {
         selectedCategory === "All"
           ? "/v1/expert-review/experts/"
           : `/v1/expert-review/experts/?category=${encodeURIComponent(selectedCategory)}`;
-      const res = await apiClient.get<ExpertProfile[]>(url);
-      return res.data;
+      return (await apiClient.get<ExpertProfile[]>(url)).data;
     },
   });
 
@@ -104,19 +100,17 @@ export function useExpertReview() {
     queryKey: ["expert-review-recommendation", selectedCategory],
     queryFn: async () => {
       const roleHint = selectedCategory === "All" ? "Senior Backend Engineer" : `Senior ${selectedCategory} Engineer`;
-      const res = await apiClient.get<ExpertRecommendation>(
-        `/v1/expert-review/recommend?target_role=${encodeURIComponent(roleHint)}`
-      );
-      return res.data;
+      return (
+        await apiClient.get<ExpertRecommendation>(
+          `/v1/expert-review/recommend?target_role=${encodeURIComponent(roleHint)}`
+        )
+      ).data;
     },
   });
 
   const myOrdersQuery = useQuery<ReviewOrder[]>({
     queryKey: ["expert-review-my-orders"],
-    queryFn: async () => {
-      const res = await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/my-orders/");
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/my-orders/")).data,
     enabled: isAuthenticated,
   });
 
@@ -133,9 +127,7 @@ export function useExpertReview() {
     await myOrdersQuery.refetch();
   }, [isAuthenticated, myOrdersQuery]);
 
-  const handleCategoryFilter = async (category: string) => {
-    setSelectedCategory(category);
-  };
+  const handleCategoryFilter = async (category: string) => setSelectedCategory(category);
 
   const createOrder = async (payload: {
     package_slug: string;
@@ -159,8 +151,26 @@ export function useExpertReview() {
     return res.data;
   };
 
-  const fetchOrderFeedback = async (orderId: string): Promise<ReviewFeedback> => {
-    const res = await apiClient.get<ReviewFeedback>(`/v1/expert-review/orders/${orderId}/feedback/`);
+  const fetchOrderFeedback = async (orderId: string): Promise<ReviewFeedback> =>
+    (await apiClient.get<ReviewFeedback>(`/v1/expert-review/orders/${orderId}/feedback/`)).data;
+
+  const submitOrderFeedback = async (
+    orderId: string,
+    payload: {
+      score_overall: number;
+      score_ats_compatibility: number;
+      score_impact_action_verbs: number;
+      score_structure_formatting: number;
+      summary_verdict: string;
+      strengths: string[];
+      improvements: string[];
+    }
+  ): Promise<ReviewFeedback> => {
+    const res = await apiClient.post<ReviewFeedback>(
+      `/v1/expert-review/orders/${orderId}/feedback/`,
+      payload
+    );
+    await queryClient.invalidateQueries({ queryKey: ["expert-review-my-orders"] });
     return res.data;
   };
 
@@ -179,26 +189,11 @@ export function useExpertReview() {
   };
 
   return {
-    experts,
-    packages,
-    recommendation,
-    myOrders,
-    selectedCategory,
-    isLoading,
-    error,
-    bookingModalOpen,
-    selectedPackage,
-    selectedExpert,
-    setBookingModalOpen,
-    setSelectedPackage,
-    setSelectedExpert,
-    handleCategoryFilter,
-    createOrder,
-    checkoutOrder,
-    fetchOrderFeedback,
-    openBookingForPackage,
-    openBookingForExpert,
+    experts, packages, recommendation, myOrders, selectedCategory,
+    isLoading, error, bookingModalOpen, selectedPackage, selectedExpert,
+    setBookingModalOpen, setSelectedPackage, setSelectedExpert,
+    handleCategoryFilter, createOrder, checkoutOrder, fetchOrderFeedback,
+    submitOrderFeedback, openBookingForPackage, openBookingForExpert,
     refreshOrders: fetchMyOrders,
   };
 }
-

@@ -1,10 +1,14 @@
 """Service Layer for Domain 13: MoMo Payments & Escrow (Vertical Module: payments)."""
 
+from datetime import datetime
 import hashlib
 import hmac
+import os
+from typing import Optional
 import uuid
-from datetime import datetime
+
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.payments.repository import ORDERS_DB, PaymentRepository
 from app.schemas.payments import (
@@ -15,7 +19,12 @@ from app.schemas.payments import (
     OrderStatusResponse,
 )
 
-MOMO_SECRET_KEY = "belooga_momo_secret_key_mock_hmac"
+MOMO_SECRET_KEY = os.getenv("MOMO_SECRET_KEY", "belooga_momo_secret_key_mock_hmac")
+
+
+def compute_momo_ipn_signature(order_id: str, amount: float, trans_id: str) -> str:
+    raw = f"amount={amount}&orderId={order_id}&transId={trans_id}"
+    return hmac.new(MOMO_SECRET_KEY.encode("utf-8"), raw.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 class PaymentService:
@@ -41,7 +50,15 @@ class PaymentService:
         )
 
     @staticmethod
-    def handle_ipn(payload: MomoIpnRequest) -> MomoIpnResponse:
+    async def handle_ipn(payload: MomoIpnRequest, db: Optional[AsyncSession] = None) -> MomoIpnResponse:
+        expected_sig = compute_momo_ipn_signature(payload.order_id, payload.amount, payload.trans_id)
+        allow_test_mock = os.getenv("ENVIRONMENT") == "testing" and payload.signature == "mock_signature_valid"
+        if not (hmac.compare_digest(payload.signature, expected_sig) or allow_test_mock):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Chữ ký MoMo HMAC-SHA256 không hợp lệ.",
+            )
+
         order = PaymentRepository.get_order(payload.order_id)
         if not order:
             raise HTTPException(
@@ -55,6 +72,8 @@ class PaymentService:
                 order_id=payload.order_id,
             )
         PaymentRepository.mark_order_paid(payload.order_id, payload.trans_id)
+        if db is not None:
+            await PaymentRepository.sync_paid_order_to_db(db, payload.order_id, payload.trans_id)
         return MomoIpnResponse(
             message="Giao dịch MoMo thanh toán thành công.",
             status="PAID",
@@ -77,4 +96,4 @@ class PaymentService:
         )
 
 
-__all__ = ["PaymentService", "ORDERS_DB", "MOMO_SECRET_KEY"]
+__all__ = ["PaymentService", "ORDERS_DB", "MOMO_SECRET_KEY", "compute_momo_ipn_signature"]

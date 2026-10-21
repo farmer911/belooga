@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
 import { EcosystemMenu } from "@/components/layout/ecosystem-menu";
 import { NotificationBell } from "@/components/layout/notification-bell";
@@ -14,6 +15,19 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/v1/auth/logout/");
+    } catch {
+      // Ignore network/cookie errors on logout
+    }
+    logout();
+    if (pathname?.startsWith("/user/")) {
+      router.push("/login");
+    }
+  };
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -79,7 +93,7 @@ export function Header() {
                 />
                 <span>{user.firstName}</span>
               </Link>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
                 Logout
               </Button>
             </div>

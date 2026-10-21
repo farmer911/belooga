@@ -208,7 +208,7 @@ function SearchContent() {
 
           {data.total_pages > 1 && (
             <div data-testid="search-pagination" className="flex items-center justify-center gap-2 pt-8">
-              {Array.from({ length: data.total_pages }, (_, i) => i + 1).map((p) => (
+              {Array.from({ length: Math.min(data.total_pages, 10) }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
                   onClick={() => router.push(`/search?key=${encodeURIComponent(query)}&page=${p}`)}
