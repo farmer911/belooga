@@ -113,7 +113,7 @@ class AsyncTieredCache:
         return "MISS", None
 
     def _l1_set(
-        self, full_key: str, value: Any, ttl_seconds: int, stale_ttl_seconds: int = 30
+        self, full_key: str, value: Any, ttl_seconds: int, stale_ttl_seconds: int = 0
     ) -> None:
         now = time.monotonic()
         fresh_until = now + max(1, ttl_seconds)
@@ -177,7 +177,7 @@ class AsyncTieredCache:
         ttl_seconds: int,
         loader: Callable[[], Awaitable[Any]],
         l1_ttl_seconds: Optional[int] = None,
-        stale_ttl_seconds: int = 30,
+        stale_ttl_seconds: int = 0,
         force_cache: bool = False,
     ) -> Any:
         full_key = self._full_key(key)

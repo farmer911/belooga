@@ -2,7 +2,7 @@
 
 import uuid
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -24,7 +24,13 @@ class ExpertReviewRepository:
             query = query.where(ExpertProfile.role_category.ilike(f"%{role_category}%"))
         query = query.order_by(ExpertProfile.rating.desc(), ExpertProfile.total_reviews_count.desc())
         result = await self.db.execute(query)
-        return list(result.scalars().all())
+        seen: set[str] = set()
+        unique_experts: List[ExpertProfile] = []
+        for exp in result.scalars().all():
+            if exp.full_name not in seen:
+                seen.add(exp.full_name)
+                unique_experts.append(exp)
+        return unique_experts
 
     async def get_expert_by_id(self, expert_id: uuid.UUID) -> Optional[ExpertProfile]:
         query = select(ExpertProfile).where(ExpertProfile.id == expert_id)
@@ -190,6 +196,7 @@ class ExpertReviewRepository:
         )
 
     async def seed_packages_if_empty(self, pkg_seeds: list[tuple]) -> None:
+        await self.db.execute(text("SELECT pg_advisory_xact_lock(9001)"))
         if not await self.list_packages():
             self.db.add_all([
                 CVReviewPackage(name=n, slug=s, description=d, price_cents=p, turn_around_hours=h, is_popular=pop, features=f)
@@ -198,6 +205,7 @@ class ExpertReviewRepository:
             await self.db.commit()
 
     async def seed_experts_if_empty(self, exp_seeds: list[tuple]) -> None:
+        await self.db.execute(text("SELECT pg_advisory_xact_lock(9002)"))
         if not await self.list_experts():
             self.db.add_all([
                 ExpertProfile(full_name=fn, headline=hl, bio=b, avatar_url=av, company=co, role_category=rc, years_of_experience=yoe, rating=rt, total_reviews_count=cnt, turn_around_days=td, is_active=True)

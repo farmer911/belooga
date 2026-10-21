@@ -48,6 +48,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 ## Known Traps
 - **Router Prefixes & Static Path Precedence:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`. Always place `/jobs/analytics` above `/jobs/{job_id}`.
 - **Sanitizing `to_tsquery` Tokens:** Always strip non-alphanumeric symbols (`C++`, `C#`, `.NET`) before joining tokens with `|` for PostgreSQL `to_tsquery`.
+- **Concurrent Lazy Seeding Race (`expert_review/repository.py`):** Always guard `seed_packages_if_empty` and `seed_experts_if_empty` with `SELECT pg_advisory_xact_lock(...)` and deduplicate `list_experts` by `full_name` so concurrent requests on a cold DB never insert duplicate rows.
 
 ## Self-Verification
 ```bash
