@@ -1,17 +1,17 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (`BEL-520` + Protected Route & Session Guard):** Enforce Frontend Protected Route Guard + HttpOnly Cookie Session Hydration across `/user/[username]/*`:
-  1. **Session Hydration (`auth-store.ts`, `auth-guard.tsx`):** Hydrate in-memory Zustand auth state via React Query (`POST /v1/auth/refresh/` with `withCredentials: true`) without storing tokens in `localStorage`/`sessionStorage`.
-  2. **Protected Route & Client-Side IDOR Guard (`ProtectedRoute`, `user/[username]/layout.tsx`):** Redirect unauthenticated visitors on `/user/[username]`, `/user/[username]/update`, `/user/[username]/settings` to `/login?next=...`, and redirect cross-user access (`user.username !== username`) to `/public/${username}`.
-  3. **Login `?next=` Redirect & Server Logout (`login/page.tsx`, `Header.tsx`):** Honor safe `?next=` post-login redirect and revoke `belooga_refresh_token` cookie on `POST /v1/auth/logout/`.
-  4. **Unit & E2E Verification (`auth-flow.spec.ts`, `workspace.spec.ts`):** Add `TC-AUTH-005` testing unauthenticated redirect & cross-user IDOR guard, and authenticate `workspace.spec.ts` via `beforeEach`.
+- **Task (GitHub Code Security & Quality - Option B):** Configure GitHub CodeQL (`security-and-quality` suite) & Dependabot SCA for `farmer911/belooga`:
+  1. **Dependabot Configuration (`.github/dependabot.yml`):** Automated weekly dependency & CVE tracking across `backend` (`pip`), `frontend` (`npm`), `qc` (`npm`), and `.github/workflows` (`github-actions`) with grouped minor/patch updates to prevent PR noise.
+  2. **CodeQL Security & Quality Workflow (`.github/workflows/codeql.yml`):** Run `github/codeql-action@v3` matrix (`actions`, `python`, `javascript-typescript`) with `queries: security-and-quality` on push/PR to `main` and weekly schedule, excluding `legacy/**` and build artifacts.
+  3. **Repo Security Settings (`gh api`):** Enable `vulnerability-alerts` and `automated-security-fixes` on `farmer911/belooga`.
 
 ## Pre-Mortem Risks
-- Never call `apiClient` inside `useEffect` (use `@tanstack/react-query`). Keep all files <= 300 lines and zero tokens in `localStorage`/`sessionStorage`.
+- Ignore `legacy/**` (read-only historical reference) in CodeQL config so legacy files do not pollute SAST/Quality signals.
+- Keep `STATE.md` <= 50 lines and verify remote PR CI (`gh pr checks --watch`) passes 100% including the new CodeQL workflow jobs.
 
 ## Execution Checklist
-- [x] Update `frontend/src/store/auth-store.ts` with `isHydrated` & `setHydrated`
-- [x] Create `frontend/src/components/providers/auth-guard.tsx` & `frontend/src/app/user/[username]/layout.tsx`
-- [x] Wire `AuthSessionBootstrap` in `Header.tsx` and `?next=` redirect in `login/page.tsx`
-- [x] Add `TC-AUTH-005` in `qc/tests/e2e/auth-flow.spec.ts`, update `workspace.spec.ts`, and verify 51/51 Playwright + `audit-truth.sh`
+- [x] Create `.github/dependabot.yml` covering `pip`, `npm` (`frontend`, `qc`), and `github-actions`
+- [x] Create `.github/workflows/codeql.yml` with `queries: security-and-quality` and `paths-ignore`
+- [x] Enable GitHub `vulnerability-alerts` and `automated-security-fixes` via `gh api`
+- [x] Verify `audit-truth.sh`, `trust-benchmark.py`, and remote PR checks (`gh pr checks --watch`)
