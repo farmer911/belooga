@@ -254,6 +254,19 @@ if os.getenv("CI") != "true":
                         violations["6. Memory Cap & Skill SSOT"].append(
                             f"Main branch workflow '{r_item.get('name')}' failed on main ({head_sha[:7]})"
                         )
+            alerts_proc = subprocess.run(
+                ["gh", "api", "repos/farmer911/belooga/code-scanning/alerts?state=open&per_page=100"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                cwd=str(ROOT),
+            )
+            if alerts_proc.returncode == 0 and alerts_proc.stdout.strip():
+                open_alerts = json.loads(alerts_proc.stdout)
+                if isinstance(open_alerts, list) and len(open_alerts) > 0:
+                    violations["6. Memory Cap & Skill SSOT"].append(
+                        f"GitHub CodeQL has {len(open_alerts)} open security/quality alert(s) on main (must be 0)"
+                    )
     except Exception as gh_err:
         sys.stderr.write(f"[warn] GitHub open PR health check skipped: {gh_err}\n")
 

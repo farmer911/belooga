@@ -52,10 +52,12 @@ Every pull request or task completion must pass these empirical gates:
 | **E2E / Visual & Video Evidence** | `cd qc && bun run test:e2e -- <spec>` | Pass + retain `.png`/`.webm` evidence |
 | **Local Pre-Push Gate** | `bash scripts/pre-push-gate.sh` | Blocks push if any check or orphan worker fails |
 | **Master SSOT Truth** | `bash scripts/audit-truth.sh` | All gates pass (Exit: 0) |
-| **Remote GitHub Actions CI** | `gh pr checks --watch` | Wait until remote `Belooga SSOT & Integrity CI` finishes green after PR push |
+| **Remote GitHub Actions CI** | `gh pr checks --watch` | Wait until remote `Belooga SSOT & Integrity CI` and `CodeQL` finish green |
+| **Repo-Wide GitHub Health** | `python3 scripts/trust-benchmark.py` (on `main`) | 0 failing open PRs (`gh pr list`), 0 failed `main` runs, 0 open CodeQL alerts |
 
 ## Known Traps
 - **CI Runner Stdlib Isolation (`python3 -I -S`):** Root gate scripts (`scripts/lint-skills.py`, `scripts/ratchet.py`, `scripts/render-skill-facts.py`, `scripts/generate-current-state.py`) run under system `python3` in GitHub Actions and must never require unguarded third-party packages (`PyYAML`, etc.). Always wait for `gh pr checks --watch` to complete green after `git push`.
+- **Post-Merge CodeQL & Background Bot PRs (`VIOLATION-007` & `VIOLATION-008`):** Never report task completion immediately after merging without verifying on `main` that post-merge `CodeQL` runs completed with `0` open alerts and that no background bot PRs (`app/dependabot`) are failing CI (`scripts/trust-benchmark.py` enforces all 3 checks automatically).
 
 ---
 

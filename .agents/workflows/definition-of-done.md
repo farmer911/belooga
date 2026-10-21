@@ -37,11 +37,13 @@ If any metric prints `better`, lock in the lower baseline via `python3 scripts/r
 - Verify against legacy source at `$LEGACY_DIR` (default: `../Beloga-CV`).
 - Ensure zero class collision or global CSS pollution.
 
-## Step 6: Update `.agents/STATE.md`, Create Pull Request & Watch Remote CI
+## Step 6: Update `.agents/STATE.md`, Create Pull Request, Watch Remote CI & Verify Post-Merge Health
 ```bash
 git status
 git push -u origin <feature-branch>
 gh pr create --title "..." --body "..."
 gh pr checks --watch
+gh pr merge --squash --delete-branch
+python3 scripts/trust-benchmark.py
 ```
-Mark completed items `[x]` in `.agents/STATE.md`, push to a feature/fix branch (never push directly to `main`), open a Pull Request, and wait until `gh pr checks --watch` reports 100% green before reporting completion or running `gh pr merge --squash --delete-branch`.
+Mark completed items `[x]` in `.agents/STATE.md`, push to a feature/fix branch (never push directly to `main`), open a Pull Request, and wait until `gh pr checks --watch` reports 100% green before running `gh pr merge --squash --delete-branch`. After merging to `main`, wait for post-merge workflows (`CodeQL Security & Quality` and `Belooga SSOT & Integrity CI`) and run `python3 scripts/trust-benchmark.py` on `main` to verify 0 failing open PRs, 0 failing `main` workflows, and 0 open CodeQL alerts.
