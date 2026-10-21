@@ -38,3 +38,79 @@ export const tokenResponseSchema = z.object({
   user: userProfileDtoSchema,
 });
 export type TokenResponseDTO = z.infer<typeof tokenResponseSchema>;
+
+export const candidateSearchCardSchema = z.object({
+  username: z.string().min(1),
+  first_name: z.string().default(""),
+  last_name: z.string().default(""),
+  headline: z.string().default(""),
+  location: z.string().default(""),
+  avatar_url: z.string().nullable().optional(),
+  video_url: z.string().nullable().optional(),
+  skills: z.array(z.string()).default([]),
+  trust_score: z.number().default(0),
+});
+export type CandidateSearchCardDTO = z.infer<typeof candidateSearchCardSchema>;
+
+export const candidateSearchResponseSchema = z.object({
+  items: z.array(candidateSearchCardSchema).default([]),
+  total: z.number().default(0),
+  next_cursor: z.string().nullable().optional(),
+});
+export type CandidateSearchResponseDTO = z.infer<typeof candidateSearchResponseSchema>;
+
+export const trendingInsightsSchema = z.object({
+  trending_skills: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        candidate_count: z.number().default(0),
+      })
+    )
+    .default([]),
+  featured_roles: z.array(z.string()).default([]),
+});
+export type TrendingInsightsDTO = z.infer<typeof trendingInsightsSchema>;
+
+export const candidateJobExperienceSchema = z.object({
+  id: z.string().min(1),
+  company_name: z.string().min(1),
+  title: z.string().min(1),
+  start_date: z.string().default(""),
+  end_date: z.string().nullable().optional(),
+  is_current: z.boolean().default(false),
+});
+
+export const candidatePublicProfileSchema = z.object({
+  username: z.string().min(1),
+  first_name: z.string().default(""),
+  last_name: z.string().default(""),
+  headline: z.string().default(""),
+  location: z.string().default(""),
+  bio: z.string().default(""),
+  avatar_url: z.string().nullable().optional(),
+  video_url: z.string().nullable().optional(),
+  skills: z.array(z.string()).default([]),
+  job_experiences: z.array(candidateJobExperienceSchema).default([]),
+});
+export type CandidatePublicProfileDTO = z.infer<typeof candidatePublicProfileSchema>;
+
+export const candidateTrustScoreSchema = z.object({
+  trust_score: z.number().default(0),
+  tier: z.string().default("Standard"),
+});
+export type CandidateTrustScoreDTO = z.infer<typeof candidateTrustScoreSchema>;
+
+export const candidateTrajectorySchema = z.object({
+  total_years_experience: z.number().default(0),
+  milestones: z
+    .array(
+      z.object({
+        year: z.string(),
+        role: z.string(),
+        company: z.string(),
+      })
+    )
+    .default([]),
+});
+export type CandidateTrajectoryDTO = z.infer<typeof candidateTrajectorySchema>;
