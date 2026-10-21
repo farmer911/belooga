@@ -1,17 +1,16 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (GitHub Code Security & Quality - Option B):** Configure GitHub CodeQL (`security-and-quality` suite) & Dependabot SCA for `farmer911/belooga`:
-  1. **Dependabot Configuration (`.github/dependabot.yml`):** Automated weekly dependency & CVE tracking across `backend` (`pip`), `frontend` (`npm`), `qc` (`npm`), and `.github/workflows` (`github-actions`) with grouped minor/patch updates to prevent PR noise.
-  2. **CodeQL Security & Quality Workflow (`.github/workflows/codeql.yml`):** Run `github/codeql-action@v3` matrix (`actions`, `python`, `javascript-typescript`) with `queries: security-and-quality` on push/PR to `main` and weekly schedule, excluding `legacy/**` and build artifacts.
-  3. **Repo Security Settings (`gh api`):** Enable `vulnerability-alerts` and `automated-security-fixes` on `farmer911/belooga`.
+- **Task (Remediate All 71 GitHub CodeQL Security & Quality Alerts + Permanent Guard):**
+  1. **Security Remediation (12/12 Alerts):** Enforce `get_validated_video_path()` (`os.path.realpath` + `.startswith`) in `media_transcoder.py`, strip user-controlled paths from log entries in `media/service.py` & `media_transcoder.py`, verify `event.origin === self.location.origin` in `frontend/public/sw.js`, and add `permissions: contents: read` + commit-pinned `oven-sh/setup-bun` in `.github/workflows/ci.yml`.
+  2. **Code Quality Remediation (59/59 Alerts):** Eliminate all unused imports, unused local/global variables, repeated imports, uninitialized variables, and `empty-except` blocks across `backend/`, `frontend/`, `scripts/`, and `.agents/skills/ui-ux-pro-max/scripts/`.
+  3. **Self-Learn Permanent Guard (`scripts/trust-benchmark.py`, `docs/VIOLATIONS_REGISTER.md`):** Extend `trust-benchmark.py` Axis 2 to fail on AST `empty-except` and unused top-level imports across `backend/app/`, `backend/tests/`, and `scripts/`, and log `VIOLATION-007`.
 
 ## Pre-Mortem Risks
-- Ignore `legacy/**` (read-only historical reference) in CodeQL config so legacy files do not pollute SAST/Quality signals.
-- Keep `STATE.md` <= 50 lines and verify remote PR CI (`gh pr checks --watch`) passes 100% including the new CodeQL workflow jobs.
+- Do not claim 0 CodeQL alerts until the post-merge `CodeQL` workflow on `main` finishes and `gh api repos/farmer911/belooga/code-scanning/alerts?state=open` returns `0`.
 
 ## Execution Checklist
-- [x] Create `.github/dependabot.yml` covering `pip`, `npm` (`frontend`, `qc`), and `github-actions`
-- [x] Create `.github/workflows/codeql.yml` with `queries: security-and-quality` and `paths-ignore`
-- [x] Enable GitHub `vulnerability-alerts` and `automated-security-fixes` via `gh api`
-- [x] Verify `audit-truth.sh`, `trust-benchmark.py`, and remote PR checks (`gh pr checks --watch`)
+- [x] Fix 12 security/workflow alerts (`media_transcoder.py`, `media/service.py`, `sw.js`, `ci.yml`)
+- [x] Fix 59 quality alerts (`unused-import`, `unused-variable`, `empty-except`, Alembic revision globals)
+- [x] Upgrade `scripts/trust-benchmark.py` + `docs/VIOLATIONS_REGISTER.md` (`VIOLATION-007`)
+- [x] Verify `audit-truth.sh`, PR CI green, merge to `main`, and confirm `0` open CodeQL alerts

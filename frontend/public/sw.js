@@ -177,6 +177,9 @@ self.addEventListener("sync", (event) => {
 });
 
 self.addEventListener("message", (event) => {
+  if (event.origin && event.origin !== self.location.origin) {
+    return;
+  }
   const data = event.data || {};
 
   if (data.type === "SKIP_WAITING") {

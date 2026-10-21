@@ -38,7 +38,6 @@ export function WebRTCStudioModal({
     handleRatioChange,
     isRecording,
     recordingSeconds,
-    recordedBlob,
     recordedVideoUrl,
     isUploadingChunks,
     chunkProgress,

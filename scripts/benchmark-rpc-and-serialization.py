@@ -14,7 +14,7 @@ import asyncio
 import json
 import struct
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 import zlib
 
 from fastapi.encoders import jsonable_encoder
@@ -123,7 +123,7 @@ async def benchmark_inter_module_rpc() -> Dict[str, Any]:
                 writer.write(struct.pack("!I", len(resp)) + resp)
                 await writer.drain()
         except asyncio.IncompleteReadError:
-            pass
+            return
         finally:
             writer.close()
 

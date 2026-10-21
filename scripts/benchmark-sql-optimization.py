@@ -28,9 +28,6 @@ from sqlalchemy import select, func, text
 from app.core.database import async_session_maker
 from app.models import (
     CandidateProfile,
-    Skill,
-    ProfileSkill,
-    JobExperience,
     CVReviewOrder,
     CandidateJobApplicationTracker,
 )

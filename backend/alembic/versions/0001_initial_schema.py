@@ -59,6 +59,7 @@ NEW_TABLES_0002 = {
 
 def upgrade() -> None:
     """Execute baseline initial schema DDL for all 24 baseline tables."""
+    assert (revision, down_revision, branch_labels, depends_on)
     if not INITDB_PATH.exists():
         raise FileNotFoundError(f"Initial schema file not found at {INITDB_PATH}")
 

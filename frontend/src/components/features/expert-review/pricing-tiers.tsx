@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Sparkles, Clock, Zap } from "lucide-react";
+import { Check, Sparkles, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";

@@ -35,8 +35,8 @@ def discover_gemini_models(api_key: str) -> list[str]:
                         name = m.get("name", "").replace("models/", "")
                         if name and f"{ver}/{name}" not in discovered:
                             discovered.append(f"{ver}/{name}")
-        except Exception:
-            pass
+        except Exception as e:
+            sys.stderr.write(f"[warn] Gemini model discovery skipped for {ver}: {e}\n")
     return discovered
 
 
@@ -316,8 +316,8 @@ Originating from {parent_ref}: **{idea_title}**
                 ["gh", "issue", "edit", str(issue_num), "--remove-label", "status:todo", "--add-label", "status:in-progress"],
                 cwd=str(ROOT_DIR)
             )
-        except Exception:
-            pass
+        except Exception as e:
+            sys.stderr.write(f"[warn] GitHub label update skipped: {e}\n")
 
     print("\n" + "=" * 60)
     print("✓ All tasks generated and synced to GitHub successfully!")

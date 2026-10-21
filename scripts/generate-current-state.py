@@ -19,7 +19,6 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -36,6 +35,7 @@ def get_git_info():
         ).strip()
     except Exception:
         commit = "unknown"
+    dirty_files = []
     try:
         # Ignore untracked review artifacts and the output file itself
         porcelain = subprocess.check_output(
@@ -47,7 +47,6 @@ def get_git_info():
         ]
         dirty_count = len(dirty_files)
     except Exception:
-        dirty_files = []
         dirty_count = 0
 
     if dirty_count > 0 and "--allow-dirty" not in sys.argv:
@@ -210,18 +209,18 @@ def extract_dependencies():
             fe_deps["dependencies"] = pkg_data.get("dependencies", {})
             fe_deps["devDependencies"] = pkg_data.get("devDependencies", {})
         except Exception:
-            pass
+            fe_deps["dependencies"] = {}
+            fe_deps["devDependencies"] = {}
 
     return backend_reqs, fe_deps
 
 
 def main():
-    commit, dirty_count = get_git_info()
+    get_git_info()
     tables = extract_database_tables()
     endpoints = extract_backend_routes()
     fe_routes = extract_frontend_routes()
     be_deps, fe_deps = extract_dependencies()
-    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
 
     domain_endpoints = [e for e in endpoints if not e["path"] in ("/health", "/v1")]
     root_probes = [e for e in endpoints if e["path"] in ("/health", "/v1")]

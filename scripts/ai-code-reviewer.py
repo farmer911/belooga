@@ -76,7 +76,7 @@ def discover_gemini_models(api_key: str) -> list[str]:
                         if name and f"{ver}/{name}" not in discovered:
                             discovered.append(f"{ver}/{name}")
         except Exception as e:
-            pass
+            sys.stderr.write(f"[warn] Gemini model discovery skipped for {ver}: {e}\n")
     return discovered
 
 

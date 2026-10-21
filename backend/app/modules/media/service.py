@@ -171,8 +171,9 @@ class MediaService:
         if not profile:
             raise HTTPException(status_code=404, detail="Candidate not found")
 
+        owner_slug = profile.username.lower().strip()
         timestamp = int(time.time())
-        raw_path = os.path.join(VIDEOS_DIR, f"{clean_username}_raw_{timestamp}.webm")
+        raw_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_raw_{timestamp}.webm")
 
         try:
             await assemble_chunks_async(upload_dir, raw_path, payload.total_chunks)
@@ -182,13 +183,13 @@ class MediaService:
         try:
             await asyncio.to_thread(shutil.rmtree, upload_dir)
         except Exception as e:
-            logger.warning(f"Error cleaning up chunks directory {upload_dir}: {e}")
+            logger.warning("Error cleaning up temporary chunks directory: %s", type(e).__name__)
 
-        mp4_path = os.path.join(VIDEOS_DIR, f"{clean_username}_pitch_{timestamp}.mp4")
-        fallback_path = os.path.join(VIDEOS_DIR, f"{clean_username}_pitch_{timestamp}.webm")
+        mp4_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_pitch_{timestamp}.mp4")
+        fallback_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_pitch_{timestamp}.webm")
         final_path, final_filename = await transcode_to_streaming_mp4(raw_path, mp4_path, fallback_path)
 
-        poster_path = os.path.join(VIDEOS_DIR, f"{clean_username}_poster_{timestamp}.jpg")
+        poster_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_poster_{timestamp}.jpg")
         poster_url = await extract_poster_thumbnail(final_path, poster_path)
         duration_sec = await probe_video_duration(final_path)
 

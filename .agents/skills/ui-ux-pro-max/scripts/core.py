@@ -557,18 +557,16 @@ def _load_product_keywords():
     return sorted(keywords, key=len, reverse=True)
 
 
-_DOMAIN_KEYWORDS = None
-_DOMAIN_KEYWORDS_SIGNATURE = None
+_DOMAIN_KEYWORDS_CACHE = {"data": None, "sig": None}
 
 
 def _domain_keywords():
-    global _DOMAIN_KEYWORDS, _DOMAIN_KEYWORDS_SIGNATURE
     product_path = DATA_DIR / CSV_CONFIG["product"]["file"]
     signature = _file_signature(product_path) if product_path.exists() else None
-    if _DOMAIN_KEYWORDS is not None and _DOMAIN_KEYWORDS_SIGNATURE == signature:
-        return _DOMAIN_KEYWORDS
+    if _DOMAIN_KEYWORDS_CACHE["data"] is not None and _DOMAIN_KEYWORDS_CACHE["sig"] == signature:
+        return _DOMAIN_KEYWORDS_CACHE["data"]
 
-    _DOMAIN_KEYWORDS = {
+    _DOMAIN_KEYWORDS_CACHE["data"] = {
         "color": ["color", "palette", "hex", "rgb", "token", "semantic", "accent", "destructive", "muted", "foreground"],
         "chart": ["time series", "chart", "graph", "visualization", "trend", "bar chart", "pie", "scatter", "heatmap", "funnel", "forecast"],
         "landing": ["landing", "page", "cta", "conversion", "hero", "testimonial", "pricing", "section"],
@@ -582,8 +580,8 @@ def _domain_keywords():
         "react": ["react", "next.js", "nextjs", "suspense", "memo", "usecallback", "useeffect", "rerender", "bundle", "waterfall", "barrel", "dynamic import", "rsc", "server component"],
         "web": ["aria", "focus", "outline", "semantic", "virtualize", "autocomplete", "form", "input type", "preconnect", "drag reorder", "single pointer", "touch target", "native accessibility"]
     }
-    _DOMAIN_KEYWORDS_SIGNATURE = signature
-    return _DOMAIN_KEYWORDS
+    _DOMAIN_KEYWORDS_CACHE["sig"] = signature
+    return _DOMAIN_KEYWORDS_CACHE["data"]
 
 
 def _contains_phrase(text, phrase):
@@ -779,6 +777,7 @@ def search(query, domain=None, max_results=MAX_RESULTS, diagnostics=False):
     if not filepath.exists():
         return {"error": f"File not found: {filepath}", "domain": domain}
 
+    landing_rows = []
     if search_domain == "style" and exact_style is None and redirect is None:
         if style_rows is None:
             style_rows = _load_rows_or_empty(filepath)
