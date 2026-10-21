@@ -114,3 +114,52 @@ export const candidateTrajectorySchema = z.object({
     .default([]),
 });
 export type CandidateTrajectoryDTO = z.infer<typeof candidateTrajectorySchema>;
+
+export const interviewKitResponseSchema = z.object({
+  elevator_pitch_script: z.string().min(1),
+  questions: z
+    .array(
+      z.object({
+        question: z.string().min(1),
+        tip: z.string().default(""),
+      })
+    )
+    .default([]),
+});
+export type InterviewKitResponseDTO = z.infer<typeof interviewKitResponseSchema>;
+
+export const videoUploadCompleteSchema = z.object({
+  status: z.string(),
+  video_url: z.string().min(1),
+});
+export type VideoUploadCompleteDTO = z.infer<typeof videoUploadCompleteSchema>;
+
+export const jobStatusEnum = z.enum([
+  "TARGETING",
+  "TAILORED",
+  "APPLIED",
+  "INTERVIEW",
+  "OFFER",
+]);
+export type MobileJobStatus = z.infer<typeof jobStatusEnum>;
+
+export const trackedJobItemSchema = z.object({
+  id: z.string().min(1),
+  company: z.string().min(1),
+  position: z.string().min(1),
+  status: jobStatusEnum,
+  salary: z.string().default(""),
+  score: z.number().min(0).max(100).default(0),
+  notes: z.string().default(""),
+});
+export type TrackedJobItemDTO = z.infer<typeof trackedJobItemSchema>;
+
+export const createTrackedJobSchema = z.object({
+  company: z.string().trim().min(1, "Company name is required").max(255),
+  position: z.string().trim().min(1, "Position is required").max(255),
+  status: jobStatusEnum,
+  salary: z.string().trim().max(100),
+  score: z.number().min(0).max(100),
+  notes: z.string().trim(),
+});
+export type CreateTrackedJobInput = z.infer<typeof createTrackedJobSchema>;
