@@ -15,7 +15,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    assert (revision, down_revision, branch_labels, depends_on)
+    assert revision and (down_revision, branch_labels, depends_on) is not None
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_notifications_identity_unread_created "
         "ON notifications (identity_id, is_read, created_at DESC)"
