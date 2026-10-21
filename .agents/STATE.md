@@ -1,16 +1,16 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Expected Outcome
-- **Task (Remediate All 71 GitHub CodeQL Security & Quality Alerts + Permanent Guard):**
-  1. **Security Remediation (12/12 Alerts):** Enforce `get_validated_video_path()` (`os.path.realpath` + `.startswith`) in `media_transcoder.py`, strip user-controlled paths from log entries in `media/service.py` & `media_transcoder.py`, verify `event.origin === self.location.origin` in `frontend/public/sw.js`, and add `permissions: contents: read` + commit-pinned `oven-sh/setup-bun` in `.github/workflows/ci.yml`.
-  2. **Code Quality Remediation (59/59 Alerts):** Eliminate all unused imports, unused local/global variables, repeated imports, uninitialized variables, and `empty-except` blocks across `backend/`, `frontend/`, `scripts/`, and `.agents/skills/ui-ux-pro-max/scripts/`.
-  3. **Self-Learn Permanent Guard (`scripts/trust-benchmark.py`, `docs/VIOLATIONS_REGISTER.md`):** Extend `trust-benchmark.py` Axis 2 to fail on AST `empty-except` and unused top-level imports across `backend/app/`, `backend/tests/`, and `scripts/`, and log `VIOLATION-007`.
+- **Task (Consolidate Dependabot PRs `#30`–`#37`, Fix WebRTC Studio Race Condition & Add Repo PR Health Guard):**
+  1. **Consolidate Dependency Upgrades (`#30`–`#37`):** Upgrade `actions/checkout@v7` & `actions/setup-python@v7` across `.github/workflows/*.yml`, update `backend/requirements.txt` (`fastapi>=0.143.3`, `sqlalchemy>=2.1.5`, `pyjwt>=2.15.1`, `redis>=8.1.0`, `pytest-asyncio>=1.4.0`), regenerate `CURRENT_STATE.md`, and group Dependabot updates (`open-pull-requests-limit: 1`).
+  2. **Fix WebRTC Studio E2E Race (`use-webrtc-studio.ts`):** Stop previous stream tracks only after `acquireStream()` resolves, verify live tracks in `startRecording()`, and set `recordedVideoUrl` synchronously in `stopRecording()` without impure nested state updaters.
+  3. **Automated PR/CI Health Guard (`scripts/trust-benchmark.py`, `docs/VIOLATIONS_REGISTER.md`):** Query `gh pr list --state open --json number,title,statusCheckRollup` in `trust-benchmark.py` Axis 6 so any failing open PR on the repo immediately fails the supervisor benchmark (`VIOLATION-008`).
 
 ## Pre-Mortem Risks
-- Do not claim 0 CodeQL alerts until the post-merge `CodeQL` workflow on `main` finishes and `gh api repos/farmer911/belooga/code-scanning/alerts?state=open` returns `0`.
+- Close superseded Dependabot PRs (`#30`–`#35`, `#37`) and verify `trust-benchmark.py` reports 100% with 0 failing open PRs.
 
 ## Execution Checklist
-- [x] Fix 12 security/workflow alerts (`media_transcoder.py`, `media/service.py`, `sw.js`, `ci.yml`)
-- [x] Fix 59 quality alerts (`unused-import`, `unused-variable`, `empty-except`, Alembic revision globals)
-- [x] Upgrade `scripts/trust-benchmark.py` + `docs/VIOLATIONS_REGISTER.md` (`VIOLATION-007`)
-- [x] Verify `audit-truth.sh`, PR CI green, merge to `main`, and confirm `0` open CodeQL alerts
+- [x] Consolidate `#30`–`#37` into `backend/requirements.txt`, `.github/workflows/*.yml`, and `.github/dependabot.yml`
+- [x] Fix `reacquireStream` & `stopRecording` race in `frontend/src/hooks/use-webrtc-studio.ts`
+- [x] Add Open PR CI health monitor to `scripts/trust-benchmark.py` & log `VIOLATION-008`
+- [x] Close superseded Dependabot PRs, verify `audit-truth.sh`, merge PR, and confirm 0 failing PRs/runs

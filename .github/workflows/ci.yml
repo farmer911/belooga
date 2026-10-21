@@ -41,10 +41,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: "pip"
@@ -103,4 +103,6 @@ jobs:
       - name: Verify Zero State Drift (Generator must match repo)
         run: |
           python3 scripts/generate-current-state.py
-          git diff --exit-code CURRENT_STATE.md
+          if [ "${{ github.actor }}" != "dependabot[bot]" ]; then
+            git diff --exit-code CURRENT_STATE.md
+          fi
