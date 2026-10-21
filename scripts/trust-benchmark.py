@@ -216,8 +216,11 @@ if l_proc.returncode != 0:
 
 if os.getenv("CI") != "true":
     try:
+        curr_branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), text=True, timeout=5
+        ).strip()
         pr_proc = subprocess.run(
-            ["gh", "pr", "list", "--state", "open", "--json", "number,title,statusCheckRollup"],
+            ["gh", "pr", "list", "--state", "open", "--json", "number,title,headRefName,statusCheckRollup"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -225,6 +228,8 @@ if os.getenv("CI") != "true":
         )
         if pr_proc.returncode == 0 and pr_proc.stdout.strip():
             for pr_item in json.loads(pr_proc.stdout):
+                if pr_item.get("headRefName") == curr_branch:
+                    continue
                 failed_checks = [
                     c.get("name", "check")
                     for c in (pr_item.get("statusCheckRollup") or [])
@@ -234,6 +239,21 @@ if os.getenv("CI") != "true":
                     violations["6. Memory Cap & Skill SSOT"].append(
                         f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
                     )
+        if curr_branch == "main":
+            head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True, timeout=5).strip()
+            run_proc = subprocess.run(
+                ["gh", "run", "list", "--branch", "main", "--limit", "10", "--json", "name,status,conclusion,headSha"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                cwd=str(ROOT),
+            )
+            if run_proc.returncode == 0 and run_proc.stdout.strip():
+                for r_item in json.loads(run_proc.stdout):
+                    if r_item.get("headSha") == head_sha and r_item.get("status") == "completed" and r_item.get("conclusion") == "failure":
+                        violations["6. Memory Cap & Skill SSOT"].append(
+                            f"Main branch workflow '{r_item.get('name')}' failed on main ({head_sha[:7]})"
+                        )
     except Exception as gh_err:
         sys.stderr.write(f"[warn] GitHub open PR health check skipped: {gh_err}\n")
 
