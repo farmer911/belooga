@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Briefcase, Target } from "lucide-react";
+import { Briefcase, Check, Code2, Database, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,7 +14,8 @@ import { AnalyticsTransactionsTable } from "@/components/features/analytics/anal
 
 export default function AnalyticsDashboardPage() {
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "ALL">("7D");
-  const { data, unitEconomics, isLoading } = useAnalyticsDashboard(timeRange);
+  const [showBiQuery, setShowBiQuery] = useState(false);
+  const { data, unitEconomics, biExport, isLoading } = useAnalyticsDashboard(timeRange);
 
   return (
     <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
@@ -35,30 +36,17 @@ export default function AnalyticsDashboardPage() {
         {/* Time range switcher & shortcuts */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center bg-surface-page border border-surface-border rounded-lg p-0.5 text-[11px]">
-            <button
-              onClick={() => setTimeRange("7D")}
-              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                timeRange === "7D" ? "bg-brand-primary text-white font-semibold shadow-xs" : "text-typography-muted hover:text-typography-main"
-              }`}
-            >
-              7 Ngày
-            </button>
-            <button
-              onClick={() => setTimeRange("30D")}
-              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                timeRange === "30D" ? "bg-brand-primary text-white font-semibold shadow-xs" : "text-typography-muted hover:text-typography-main"
-              }`}
-            >
-              30 Ngày
-            </button>
-            <button
-              onClick={() => setTimeRange("ALL")}
-              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                timeRange === "ALL" ? "bg-brand-primary text-white font-semibold shadow-xs" : "text-typography-muted hover:text-typography-main"
-              }`}
-            >
-              Tất Cả
-            </button>
+            {(["7D", "30D", "ALL"] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setTimeRange(r)}
+                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  timeRange === r ? "bg-brand-primary text-white font-semibold shadow-xs" : "text-typography-muted hover:text-typography-main"
+                }`}
+              >
+                {r === "7D" ? "7 Ngày" : r === "30D" ? "30 Ngày" : "Tất Cả"}
+              </button>
+            ))}
           </div>
 
           <Link href="/workspace/jobs">
@@ -84,7 +72,6 @@ export default function AnalyticsDashboardPage() {
           </div>
         ) : (
           <>
-            {/* Top KPI Metrics Row */}
             <AnalyticsKpiCards overview={data.overview} />
 
             {/* Unit Economics & Cohort Retention Telemetry Banner */}
@@ -111,6 +98,45 @@ export default function AnalyticsDashboardPage() {
               </div>
             )}
 
+            {/* Power BI & DuckDB Star-Schema OLAP Connector */}
+            <div
+              data-testid="bi-star-schema-panel"
+              className="rounded-xl border border-surface-border bg-surface-card p-3.5 space-y-2.5 text-xs shadow-xs"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Database className="w-4 h-4 text-brand-primary" aria-hidden="true" />
+                  <span className="font-bold text-typography-heading">
+                    Power BI & DuckDB Star-Schema OLAP Feed ({biExport.schema_version})
+                  </span>
+                  <Badge variant="outline" className="text-[10px] border-surface-border text-typography-muted">
+                    ATS Facts: {biExport.fact_ats_scans.length} · Orders: {biExport.fact_review_orders.length}
+                  </Badge>
+                  {biExport.dim_skills_demand.slice(0, 3).map((sk) => (
+                    <Badge key={sk.skill_name} variant="outline" className="text-[10px] border-teal-200 bg-teal-50/40 text-teal-800">
+                      {sk.skill_name}: Gap {sk.demand_gap_index} (JD {sk.jd_demand_count} / CV {sk.candidate_supply_count})
+                    </Badge>
+                  ))}
+                </div>
+                <Button
+                  data-testid="btn-copy-powerbi-m"
+                  onClick={() => setShowBiQuery((prev) => !prev)}
+                  className="bg-surface-page hover:bg-surface-card text-typography-heading border border-surface-border text-[11px] px-2.5 h-7 rounded-lg gap-1"
+                >
+                  {showBiQuery ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Code2 className="w-3.5 h-3.5" />}
+                  <span>{showBiQuery ? "Ẩn PowerQuery M / DuckDB" : "Power BI Web Connector"}</span>
+                </Button>
+              </div>
+              {showBiQuery && (
+                <pre
+                  data-testid="bi-query-codeblock"
+                  className="rounded-lg bg-surface-page border border-surface-border p-2.5 text-[11px] font-mono text-typography-main overflow-x-auto"
+                >
+                  {`${biExport.power_bi_m_query_snippet}\n\n-- DuckDB Zero-Lock OLAP:\n${biExport.duckdb_sql_snippet}`}
+                </pre>
+              )}
+            </div>
+
             {/* Middle Grid: Revenue Charts & PLG Funnel */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div className="lg:col-span-7">
@@ -121,14 +147,11 @@ export default function AnalyticsDashboardPage() {
               </div>
             </div>
 
-            {/* Bottom Row: Transactions Ledger */}
             <AnalyticsTransactionsTable transactions={data.recent_transactions} />
           </>
         )}
       </main>
 
-
-      {/* Terminal Status Bar */}
       <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div>Hệ thống đo lường tài chính: <strong className="text-typography-main">Belooga Executive Terminal</strong> (MoMo & Escrow Float Engine)</div>
         <div className="flex items-center gap-2">
