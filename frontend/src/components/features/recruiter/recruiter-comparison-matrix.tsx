@@ -52,29 +52,20 @@ export function RecruiterComparisonMatrix({
 
   const compareMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await apiClient.post<{ comparisons?: Array<{ username: string; ats_score: number }> }>(
-          "/v1/recruiter/compare",
-          {
-            usernames: candidates.map((c) => c.username),
-            jd_text: jdText,
-          }
-        );
-        return res.data;
-      } catch {
-        return null;
-      }
+      const res = await apiClient.post<{ comparisons?: Array<{ username: string; ats_score: number }> }>(
+        "/v1/recruiter/compare",
+        {
+          usernames: candidates.map((c) => c.username),
+          jd_text: jdText,
+        }
+      );
+      return res.data;
     },
     onSuccess: (data) => {
       const next: Record<string, number> = {};
       if (data?.comparisons) {
         for (const item of data.comparisons) {
           next[item.username] = item.ats_score;
-        }
-      } else {
-        for (const c of candidates) {
-          const boost = jdText.toLowerCase().includes("golang") && c.matched_skills.includes("Golang") ? 3 : 1;
-          next[c.username] = Math.min(99, c.ats_score + boost);
         }
       }
       setCustomScores(next);

@@ -115,18 +115,14 @@ interface CvDraftPayload {
 }
 
 export async function hydrateCandidateProfileCv(username: string): Promise<string> {
-  const [draftSettled, profSettled, timelineSettled] = await Promise.allSettled([
+  const [draftSettled, profSettled] = await Promise.allSettled([
     apiClient.get<CvDraftPayload>(`/v1/profile/${username}/cv-draft/`),
     apiClient.get<CandidateProfile>(`/v1/profile/${username}/`),
-    apiClient.get<JobExperience[] | { job_experiences?: JobExperience[]; items?: JobExperience[] }>(`/v1/profile/${username}/timeline/`),
   ]);
 
   const draft = draftSettled.status === "fulfilled" ? draftSettled.value.data : null;
   const prof = profSettled.status === "fulfilled" ? profSettled.value.data : null;
-  const timelineRaw = timelineSettled.status === "fulfilled" ? timelineSettled.value.data : null;
-  const timelineJobs: JobExperience[] = Array.isArray(timelineRaw)
-    ? timelineRaw
-    : timelineRaw?.job_experiences ?? timelineRaw?.items ?? prof?.job_experiences ?? [];
+  const timelineJobs: JobExperience[] = prof?.job_experiences ?? [];
 
   const fullName = draft?.full_name || prof?.full_name || username;
   const headline = draft?.headline || prof?.headline || "Senior Software Engineer";

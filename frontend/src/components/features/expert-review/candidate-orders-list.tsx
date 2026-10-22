@@ -49,26 +49,8 @@ export function CandidateOrdersList({ orders, highlightedOrderId, onPayOrder, on
   const handleViewReport = async (order: ReviewOrder) => {
     setActiveOrder(order);
     if (order.feedback) { setSelectedFeedback(order.feedback); return; }
-    try {
-      const res = await apiClient.get<ReviewFeedback>(`/v1/expert-review/orders/${order.id}/feedback/`);
-      setSelectedFeedback(res.data);
-    } catch {
-      setSelectedFeedback({
-        id: `fb-${order.id}`, order_id: order.id,
-        expert_name: order.expert_name || "Principal Engineering Reviewer",
-        score_overall: 91, score_ats_compatibility: 95, score_impact_action_verbs: 89, score_structure_formatting: 94,
-        summary_verdict: `CV ứng tuyển vị trí ${order.target_role} có cấu trúc chuẩn ATS, số liệu định lượng STAR rõ ràng và độ khớp từ khóa kỹ thuật cao (tăng từ 68 -> 91/100).`,
-        strengths: [
-          "Mô tả hệ thống Distributed Microservices & PostgreSQL GIN TSVECTOR có số liệu RPS/Latency cụ thể.",
-          "Bố cục 1 cột sạch, tương thích 100% trình đọc bot ATS của các tập đoàn công nghệ.",
-        ],
-        improvements: [
-          "Bổ sung quy mô đội ngũ (Team size / Mentorship) ở vị trí gần nhất để nổi bật năng lực Senior/Lead.",
-          "Đưa nhóm kỹ năng Core System Design & Cloud Native lên ngay dưới phần Executive Summary.",
-        ],
-        submitted_at: new Date().toISOString(),
-      });
-    }
+    const res = await apiClient.get<ReviewFeedback>(`/v1/expert-review/orders/${order.id}/feedback/`);
+    setSelectedFeedback(res.data);
   };
 
   const getStatusBadge = (status: string, isReleased?: boolean) => {

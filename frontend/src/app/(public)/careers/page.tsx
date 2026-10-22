@@ -7,10 +7,12 @@ import { MapPin, ArrowRight, Sparkles, CheckCircle2, Building2, PlusCircle, Doll
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/services/api-client";
+import { useAuthStore } from "@/store/auth-store";
 import { PostCareerModal, CareerJobItem } from "@/components/features/careers/post-career-modal";
 
 export default function CareersPage() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
   const [activeJob, setActiveJob] = useState<CareerJobItem | null>(null);
   const [postModalOpen, setPostModalOpen] = useState(false);
   const [companyFilter, setCompanyFilter] = useState<string>("ALL");
@@ -56,9 +58,10 @@ export default function CareersPage() {
 
   const applyMutation = useMutation({
     mutationFn: async (job: CareerJobItem) => {
+      const authFullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
       const applyPayload = {
-        applicant_name: applicantName.trim() || "Alex Nguyen",
-        applicant_email: applicantEmail.trim() || "alex@belooga.com",
+        applicant_name: applicantName.trim() || authFullName || "Candidate Applicant",
+        applicant_email: applicantEmail.trim() || user?.email || "candidate@belooga.com",
         resume_url: pitchNote.trim() || "/uploads/resumes/belooga_pitch_profile.pdf",
       };
       await apiClient.post(`/v1/career/jobs/${job.id}/apply/`, applyPayload);
