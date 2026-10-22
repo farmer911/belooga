@@ -62,28 +62,14 @@ const DEFAULT_WALLET_STATE: UserWalletStateDTO = {
   ],
 };
 
+let memoryWalletState: UserWalletStateDTO = DEFAULT_WALLET_STATE;
+
 function loadLocalWallet(): UserWalletStateDTO {
-  if (typeof window === "undefined") return DEFAULT_WALLET_STATE;
-  try {
-    const raw = window.localStorage.getItem(WALLET_STORAGE_KEY);
-    if (!raw) return DEFAULT_WALLET_STATE;
-    const parsed = JSON.parse(raw) as UserWalletStateDTO;
-    if (typeof parsed.available_balance_vnd === "number" && Array.isArray(parsed.transactions)) {
-      return parsed;
-    }
-  } catch {
-    return DEFAULT_WALLET_STATE;
-  }
-  return DEFAULT_WALLET_STATE;
+  return memoryWalletState;
 }
 
 function saveLocalWallet(state: UserWalletStateDTO): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // storage quota ignored
-  }
+  memoryWalletState = state;
 }
 
 export function formatVnd(amount: number): string {

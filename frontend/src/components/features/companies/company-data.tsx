@@ -132,23 +132,14 @@ export const DEFAULT_COMPANIES: CompanyProfileItem[] = [
   },
 ];
 
+let memoryCompanies: CompanyProfileItem[] = DEFAULT_COMPANIES;
+
 export function readCompanies(): CompanyProfileItem[] {
-  if (typeof window === "undefined") return DEFAULT_COMPANIES;
-  try {
-    const raw = window.localStorage.getItem(LOCAL_COMPANIES_KEY);
-    return raw ? (JSON.parse(raw) as CompanyProfileItem[]) : DEFAULT_COMPANIES;
-  } catch {
-    return DEFAULT_COMPANIES;
-  }
+  return memoryCompanies;
 }
 
 export function writeCompanies(list: CompanyProfileItem[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LOCAL_COMPANIES_KEY, JSON.stringify(list));
-  } catch {
-    // ignore
-  }
+  memoryCompanies = list;
 }
 
 interface CompanyCreateModalProps {

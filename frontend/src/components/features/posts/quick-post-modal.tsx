@@ -47,23 +47,14 @@ export const DEFAULT_USER_POSTS: UserPostItem[] = [
   },
 ];
 
+let memoryPosts: UserPostItem[] = DEFAULT_USER_POSTS;
+
 export function readLocalPosts(): UserPostItem[] {
-  if (typeof window === "undefined") return DEFAULT_USER_POSTS;
-  try {
-    const raw = window.localStorage.getItem(LOCAL_POSTS_KEY);
-    return raw ? (JSON.parse(raw) as UserPostItem[]) : DEFAULT_USER_POSTS;
-  } catch {
-    return DEFAULT_USER_POSTS;
-  }
+  return memoryPosts;
 }
 
 export function writeLocalPosts(posts: UserPostItem[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
-  } catch {
-    // ignore
-  }
+  memoryPosts = posts;
 }
 
 interface QuickPostModalProps {

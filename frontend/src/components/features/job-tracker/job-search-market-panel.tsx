@@ -177,7 +177,7 @@ export function JobSearchAndGoalPanel({
         <div data-testid="ai-matched-jobs-receipt-banner" className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-semibold">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-            <span>Đã trừ 19.000đ từ Ví Belooga & tự động thêm {aiMatchedCount} công việc khớp &gt; 90% ATS vào cột Nhắm Mục Tiêu!</span>
+            <span>Đã trừ 19.000đ từ Ví Belooga & tự động thêm {aiMatchedCount} công việc khớp &gt; 90% ATS vào cột TARGETING!</span>
           </span>
           <button type="button" onClick={() => setAiMatchedCount(null)} className="text-[11px] underline cursor-pointer">Đóng</button>
         </div>
@@ -190,11 +190,11 @@ export function JobSearchAndGoalPanel({
           </span>
           <select aria-label="Lọc theo cột trạng thái" data-testid="kanban-filter-status" value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value as KanbanStatus | "ALL")} className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main">
             <option value="ALL">Tất cả cột (5 giai đoạn)</option>
-            <option value="TARGETING">Nhắm Mục Tiêu</option>
-            <option value="TAILORED">Đã Tối Ưu CV</option>
-            <option value="APPLIED">Đã Nộp Đơn</option>
-            <option value="INTERVIEW">Đang Phỏng Vấn</option>
-            <option value="OFFER">Nhận Offer / Hired</option>
+            <option value="TARGETING">Cột 1: TARGETING</option>
+            <option value="TAILORED">Cột 2: TAILORED</option>
+            <option value="APPLIED">Cột 3: APPLIED</option>
+            <option value="INTERVIEW">Cột 4: INTERVIEW</option>
+            <option value="OFFER">Cột 5: OFFER</option>
           </select>
 
           <select aria-label="Lọc theo điểm ATS" data-testid="kanban-filter-min-score" value={minScoreFilter} onChange={(e) => onMinScoreFilterChange(Number(e.target.value))} className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main">

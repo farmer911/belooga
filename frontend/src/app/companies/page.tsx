@@ -219,7 +219,7 @@ export default function CompaniesDirectoryPage() {
                   <span>{c.open_jobs_count} vị trí đang mở</span>
                 </span>
                 <Link
-                  href={`/companies/${c.slug}`}
+                  href={`/companies/${encodeURIComponent(c.slug)}`}
                   data-testid={`company-card-link-${c.slug}`}
                   className="px-3 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs"
                 >

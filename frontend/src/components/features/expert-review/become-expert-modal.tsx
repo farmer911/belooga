@@ -24,23 +24,14 @@ export interface RegisteredExpertApplication {
 
 const LOCAL_EXPERT_ME_KEY = "belooga_expert_me_v1";
 
+let memoryExpertMe: RegisteredExpertApplication | null = null;
+
 export function readLocalExpertMe(): RegisteredExpertApplication | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(LOCAL_EXPERT_ME_KEY);
-    return raw ? (JSON.parse(raw) as RegisteredExpertApplication) : null;
-  } catch {
-    return null;
-  }
+  return memoryExpertMe;
 }
 
 function writeLocalExpertMe(app: RegisteredExpertApplication): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LOCAL_EXPERT_ME_KEY, JSON.stringify(app));
-  } catch {
-    // ignore
-  }
+  memoryExpertMe = app;
 }
 
 export function toExpertProfile(app: RegisteredExpertApplication): ExpertProfile {

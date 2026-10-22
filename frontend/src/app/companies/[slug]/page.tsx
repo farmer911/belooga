@@ -195,7 +195,7 @@ export default function CompanyProfileDetailPage() {
                     <div className="text-typography-muted">{al.role}</div>
                   </div>
                 </div>
-                <Link href={`/public/${al.username}`} className="text-brand-primary font-semibold underline">Xem Hồ Sơ</Link>
+                <Link href={`/public/${encodeURIComponent(al.username)}`} className="text-brand-primary font-semibold underline">Xem Hồ Sơ</Link>
               </div>
             ))}
           </div>

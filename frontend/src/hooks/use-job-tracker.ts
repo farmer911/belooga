@@ -47,45 +47,24 @@ export interface CareerGoal {
   updated_at: string;
 }
 
-const LOCAL_JOBS_KEY = "belooga_tracked_jobs_v1";
-const LOCAL_GOAL_KEY = "belooga_career_goal_v1";
+let memoryJobs: TrackedJob[] = [];
+let memoryGoal: CareerGoal | null = null;
+let localJobSeq = 1;
 
 function readLocalJobs(): TrackedJob[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(LOCAL_JOBS_KEY);
-    return raw ? (JSON.parse(raw) as TrackedJob[]) : [];
-  } catch {
-    return [];
-  }
+  return memoryJobs;
 }
 
 function writeLocalJobs(items: TrackedJob[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LOCAL_JOBS_KEY, JSON.stringify(items));
-  } catch {
-    // ignore storage quota errors
-  }
+  memoryJobs = items;
 }
 
 function readLocalGoal(): CareerGoal | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(LOCAL_GOAL_KEY);
-    return raw ? (JSON.parse(raw) as CareerGoal) : null;
-  } catch {
-    return null;
-  }
+  return memoryGoal;
 }
 
 function writeLocalGoal(goal: CareerGoal): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LOCAL_GOAL_KEY, JSON.stringify(goal));
-  } catch {
-    // ignore
-  }
+  memoryGoal = goal;
 }
 
 export function useJobTracker() {
@@ -178,7 +157,7 @@ export function useJobTracker() {
       created = response.data;
     } catch {
       created = {
-        id: `local-job-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: `local-job-${Date.now()}-${localJobSeq++}`,
         company_name: payload.company_name,
         position_title: payload.position_title,
         status: payload.status ?? "TARGETING",
