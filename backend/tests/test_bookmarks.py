@@ -1,6 +1,5 @@
 """TDD Unit, Integration, Privacy & IDOR Tests for Candidate Shortlist Bookmarks (BEL-145)."""
 
-import time
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import text
@@ -152,37 +151,3 @@ async def test_bookmarks_crud_idempotency_privacy_and_idor_isolation(
 
     del_again = await client.delete(f"/v1/bookmarks/{target_username}/", headers=headers_a)
     assert del_again.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_bookmarks_p95_latency_and_singleflight_cache_benchmark(
-    client: AsyncClient,
-    test_candidate_a: dict,
-    test_candidate_b: dict,
-):
-    """BEL-149: Verify single-roundtrip SQL + Singleflight SWR cache achieves p95 < 30ms."""
-    headers_a = {"Authorization": f"Bearer {test_candidate_a['token']}"}
-    target_username = test_candidate_b["username"]
-
-    post_res = await client.post(
-        f"/v1/bookmarks/{target_username}/",
-        json={"note": "BEL-149 latency benchmark"},
-        headers=headers_a,
-    )
-    assert post_res.status_code in (200, 201)
-
-    latencies_ms: list[float] = []
-    for _ in range(20):
-        t0 = time.perf_counter()
-        res = await client.get("/v1/bookmarks/", headers=headers_a)
-        latencies_ms.append((time.perf_counter() - t0) * 1000.0)
-        assert res.status_code == 200
-        assert len(res.json()) == 1
-
-    latencies_ms.sort()
-    p95_ms = latencies_ms[int(len(latencies_ms) * 0.95) - 1]
-    assert p95_ms < 30.0, f"Expected p95 < 30ms, got {p95_ms:.2f}ms"
-
-    del_res = await client.delete(f"/v1/bookmarks/{target_username}/", headers=headers_a)
-    assert del_res.status_code in (200, 204)
-

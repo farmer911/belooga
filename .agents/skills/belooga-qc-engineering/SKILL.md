@@ -59,6 +59,7 @@ From `scripts/seed-data.py`:
 3. **Hermetic Test Isolation:** Tests should reset state or target clean seed users rather than mutating shared singletons.
 4. **Always-On Visual & Video Evidence (`screenshot: 'on'`, `video: 'on'`):** Configured in `qc/playwright.config.ts` so passing runs emit screenshot (`.png`) and video (`.webm`) artifacts in `qc/test-results/` for PR attachment, never only on failure.
 5. **Zero Orphan Child Processes:** Any test or agent session that spawns disposable dev servers or headless browsers must terminate all child processes before exiting (`scripts/pre-push-gate.sh`).
+6. **Zero-Mockup & BE-First Verification Gate:** QC MUST NEVER merge a `FE` or `mobile` PR whose `/v1/*` backend routes do not yet exist on `main` (`backend/app/api/v1/endpoints/`) or that contains `FALLBACK_*` / `INITIAL_*` / `DEFAULT_*` mock arrays or static Java strings without HTTP networking (`MainActivity.java`). E2E specs in `qc/tests/e2e/*.spec.ts` must verify real `200`/`201` API responses from FastAPI + PostgreSQL—never pass on fallback UI when the API returns `404`/`500`.
 
 ```typescript
 test('should verify workspace bio and timeline', async ({ page }) => {

@@ -17,33 +17,6 @@ DEFAULT_SKILLS = [
     "Node.js", "GraphQL", "Kubernetes", "AWS", "Product Management",
 ]
 
-COMPANIES_CATALOG = [
-    {"name": "Stripe Inc.", "logo_url": "/images/logo.svg"},
-    {"name": "Airbnb", "logo_url": "/images/logo.svg"},
-    {"name": "Google", "logo_url": "/images/logo.svg"},
-    {"name": "Meta", "logo_url": "/images/logo.svg"},
-    {"name": "Apple", "logo_url": "/images/logo.svg"},
-    {"name": "Belooga", "logo_url": "/images/logo-big.png"},
-]
-
-SCHOOLS_CATALOG = [
-    {"name": "Stanford University", "logo_url": "/images/logo.svg"},
-    {"name": "MIT", "logo_url": "/images/logo.svg"},
-    {"name": "UC Berkeley", "logo_url": "/images/logo.svg"},
-    {"name": "Harvard University", "logo_url": "/images/logo.svg"},
-    {"name": "Carnegie Mellon University", "logo_url": "/images/logo.svg"},
-]
-
-LOCATIONS_CATALOG = [
-    {"name": "San Francisco, CA, USA"},
-    {"name": "New York, NY, USA"},
-    {"name": "Austin, TX, USA"},
-    {"name": "Seattle, WA, USA"},
-    {"name": "Ho Chi Minh, Vietnam"},
-    {"name": "Ha Noi, Vietnam"},
-    {"name": "Remote (Worldwide)"},
-]
-
 
 class CatalogsService:
     """Service layer managing master taxonomies and salary market intelligence."""
@@ -69,51 +42,29 @@ class CatalogsService:
         await platform_cache.invalidate_prefix("catalog:skills")
         return created
 
-    @staticmethod
-    def _filter_catalog(catalog: List[Dict[str, str]], name: str) -> List[Dict[str, str]]:
-        if not name:
-            return catalog
-        clean = name.lower()
-        return [item for item in catalog if clean in item["name"].lower()]
-
     async def suggest_companies(self, name: str) -> List[Dict[str, str]]:
         clean = (name or "").strip().lower()
-
-        async def _load() -> List[Dict[str, str]]:
-            db_items = await self.catalogs_repo.suggest_companies(name)
-            fallback = self._filter_catalog(COMPANIES_CATALOG, name)
-            seen = {i["name"].lower() for i in db_items}
-            return db_items + [f for f in fallback if f["name"].lower() not in seen]
-
         if os.getenv("ENVIRONMENT") == "testing":
-            return await _load()
-        return await platform_cache.get_or_set(f"catalog:companies:{clean}", ttl_seconds=60, loader=_load)
+            return await self.catalogs_repo.suggest_companies(name)
+        return await platform_cache.get_or_set(
+            f"catalog:companies:{clean}", ttl_seconds=60, loader=lambda: self.catalogs_repo.suggest_companies(name)
+        )
 
     async def suggest_schools(self, name: str) -> List[Dict[str, str]]:
         clean = (name or "").strip().lower()
-
-        async def _load() -> List[Dict[str, str]]:
-            db_items = await self.catalogs_repo.suggest_schools(name)
-            fallback = self._filter_catalog(SCHOOLS_CATALOG, name)
-            seen = {i["name"].lower() for i in db_items}
-            return db_items + [f for f in fallback if f["name"].lower() not in seen]
-
         if os.getenv("ENVIRONMENT") == "testing":
-            return await _load()
-        return await platform_cache.get_or_set(f"catalog:schools:{clean}", ttl_seconds=60, loader=_load)
+            return await self.catalogs_repo.suggest_schools(name)
+        return await platform_cache.get_or_set(
+            f"catalog:schools:{clean}", ttl_seconds=60, loader=lambda: self.catalogs_repo.suggest_schools(name)
+        )
 
     async def suggest_locations(self, name: str) -> List[Dict[str, str]]:
         clean = (name or "").strip().lower()
-
-        async def _load() -> List[Dict[str, str]]:
-            db_items = await self.catalogs_repo.suggest_locations(name)
-            fallback = self._filter_catalog(LOCATIONS_CATALOG, name)
-            seen = {i["name"].lower() for i in db_items}
-            return db_items + [f for f in fallback if f["name"].lower() not in seen]
-
         if os.getenv("ENVIRONMENT") == "testing":
-            return await _load()
-        return await platform_cache.get_or_set(f"catalog:locations:{clean}", ttl_seconds=60, loader=_load)
+            return await self.catalogs_repo.suggest_locations(name)
+        return await platform_cache.get_or_set(
+            f"catalog:locations:{clean}", ttl_seconds=60, loader=lambda: self.catalogs_repo.suggest_locations(name)
+        )
 
 
     @staticmethod

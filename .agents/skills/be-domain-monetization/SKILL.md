@@ -51,6 +51,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | public |
 | `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | public |
 | `GET` | `/v1/wallet/` | `get_user_wallet_state` | optional |
+| `GET` | `/v1/wallet/balance` | `get_user_wallet_balance` | optional |
 | `POST` | `/v1/wallet/topup` | `topup_user_wallet` | optional |
 | `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | optional |
 
@@ -64,7 +65,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 1. **Expert Review, Smart Matchmaking & Job Tracker Ownership (`expert_review.py`, `job_tracker.py`):** Mutations require `Depends(get_current_user)` scoped to `current_user.id`. Validate Kanban status transitions (`TARGETING`, `TAILORED`, `APPLIED`, `INTERVIEW`, `OFFER`). Register static sub-paths (`GET /v1/tracker/jobs/analytics`, `GET /v1/expert-review/recommend`) before parameterized routes to prevent `405 Method Not Allowed` shadowing.
 2. **ATS Scan, Talent Shortlist, Market Pulse & Interview Kit (`ats_matching.py`):** `POST /v1/match/ats-scan`, `POST /v1/match/talent-shortlist`, and `POST /v1/match/interview-kit` use `get_current_user_optional` and enforce a hard `50,000` character payload cap (`HTTP 413` / Pydantic `max_length=50000`). Shortlist queries must use PostgreSQL GIN `search_vector @@ to_tsquery('english', ...)` and boost candidates with verified video pitches.
 3. **MoMo HMAC-SHA256 & Idempotency (`payments.py`):** Verify HMAC-SHA256 signatures on `POST /v1/payments/momo/ipn` (reject tampered payloads with 400) and handle duplicate IPN callbacks idempotently.
-4. **Analytics Coalescing, Single-Roundtrip CTEs & Cross-Module SWR Sync (`analytics.py`, `ats_matching.py`, `job_tracker.py`):** Coalesce SQL `SUM`/`COUNT`/`AVG`/`json_agg` aggregations to `0`/`[]`, fetch dashboard counts (`total_users`, `total_scans`, `active_jobs`, `bookmarks_count`) and Market Pulse telemetry (`total_jds_analyzed` + top skills) in single-roundtrip SQL CTEs, and invalidate `market:pulse`, `salary_benchmark:`, and `analytics:` caches on ATS scans, Kanban mutations, and bookmark mutations (`BEL-153` / `BEL-155`).
+4. **Analytics Coalescing & BI Star-Schema OLAP (`analytics.py`):** Coalesce SQL `SUM`/`COUNT`/`AVG`/`json_agg` aggregations to `0`/`[]` and cache platform counts and `/v1/analytics/bi-export` Star-Schema facts/dimensions via `platform_cache.get_or_set`.
 
 ## Known Traps
 - **Router Prefixes & Static Path Precedence:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`. Always place `/jobs/analytics` above `/jobs/{job_id}`.

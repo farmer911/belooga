@@ -229,3 +229,35 @@ class BookmarkRepository:
         await self.db.commit()
         return data
 
+    async def list_growth_rows(self, prefix: str) -> list[dict[str, Any]]:
+        rows = (
+            await self.db.execute(
+                text("SELECT id, message FROM contact_inquiries WHERE name LIKE :p ORDER BY created_at DESC"),
+                {"p": f"{prefix}:%"},
+            )
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            try:
+                out.append(json.loads(r.message))
+            except Exception:
+                continue
+        return out
+
+    async def upsert_growth_row(self, prefix: str, item_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        key_name = f"{prefix}:{item_id}"
+        existing = (
+            await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :n LIMIT 1"), {"n": key_name})
+        ).fetchone()
+        raw = json.dumps(data, ensure_ascii=False)
+        if existing:
+            await self.db.execute(text("UPDATE contact_inquiries SET message = :m WHERE id = :id"), {"m": raw, "id": existing.id})
+        else:
+            await self.db.execute(
+                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :n, 'growth@belooga.internal', :m)"),
+                {"id": uuid.uuid4(), "n": key_name, "m": raw},
+            )
+        await self.db.commit()
+        return data
+
+

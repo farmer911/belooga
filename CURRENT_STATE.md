@@ -50,7 +50,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 169 (167 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 176 (174 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -123,13 +123,18 @@
 | `GET` | `/v1/growth/career-roadmap` | `get_career_roadmap` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/claim-reward` | `claim_wallet_cashback_reward` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/cv-auto-import` | `auto_import_cv_to_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/growth/cv-roasts` | `list_anonymous_cv_roasts` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/cv-roasts` | `submit_anonymous_cv_roast` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/cv-roasts/{roast_id}/vote` | `vote_anonymous_cv_roast` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/expert-mock-booking` | `book_expert_mock_interview` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/growth/expert-mock-slots` | `list_expert_mock_slots` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/growth/hub` | `get_growth_hub` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/mock-interview` | `evaluate_mock_interview` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/outreach-generator` | `generate_outreach_scripts` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/pitch-script` | `generate_pitch_script` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/growth/referrals` | `list_referral_slots` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/referrals` | `create_referral_request` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/growth/rewards` | `list_wallet_rewards` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/salary-negotiation` | `generate_salary_negotiation` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/growth/skill-assessment` | `submit_skill_assessment` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `PATCH` | `/v1/growth/stealth-mode` | `update_stealth_mode` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
@@ -202,6 +207,7 @@
 | `GET` | `/v1/recruiter/pipeline` | `list_recruiter_pipeline` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/recruiter/pipeline` | `add_recruiter_pipeline_candidate` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `PATCH` | `/v1/recruiter/pipeline/{item_id}` | `update_recruiter_pipeline_candidate` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/recruiter/reverse-bids` | `list_recruiter_reverse_bids` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/recruiter/reverse-bids` | `submit_recruiter_reverse_bid` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/search/candidates` | `search_candidates_multi_skill` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/search/top-candidates` | `get_top_high_potential_candidates` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
@@ -222,6 +228,7 @@
 | `DELETE` | `/v1/users/{username}/` | `delete_user_account` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/users/{username}/password/` | `change_user_password` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/wallet/` | `get_user_wallet_state` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
+| `GET` | `/v1/wallet/balance` | `get_user_wallet_balance` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `POST` | `/v1/wallet/topup` | `topup_user_wallet` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 

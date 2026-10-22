@@ -55,8 +55,8 @@ flowchart LR
 ## 3. System-Wide Invariants
 1. **Async Event Loop Non-Blocking:** All synchronous disk I/O, chunk reassembly, and ReportLab PDF builds (`doc.build()`) must execute via `asyncio.to_thread`.
 2. **PostgreSQL GIN Search (ADR-005) & Composite B-Tree Indexes:** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` (never mix with `OR ILIKE`). Every foreign-key + sort query (`identity_id`, `is_read`, `order_status`, `created_at DESC`) must be backed by a composite B-Tree index in `backend/alembic/versions/0004_optimize_indexes_and_sql.py`.
-3. **IDOR & Ownership Protection:** All mutation endpoints must authenticate caller and enforce `verify_profile_owner(current_user, target_username)`.
-4. **Pessimistic Locking & Bulk Reorder:** Timeline reorders and token family rotations must acquire row-level locks via `with_for_update()`, perform a single bulk `CASE` `UPDATE`, and conclude with an explicit `await db.commit()`.
+3. **IDOR, RBAC & Zero Anonymous Fallback Protection:** All mutation and private endpoints must authenticate the caller via `get_current_user` (never fallback to `"alexnguyen"` when unauthenticated) and enforce `verify_profile_owner(current_user, target_username)` and strict RBAC (`candidate`, `recruiter`, `expert`, `admin`). Never leave unguarded simulation routes (`/simulate-delivery`, `valid_sim_sig`) open without test-only guards.
+4. **Pessimistic Locking, Real PostgreSQL Persistence & Zero Schema Drift:** Timeline reorders and token family rotations must acquire row-level locks via `with_for_update()`, perform a single bulk `CASE` `UPDATE`, and conclude with an explicit `await db.commit()`. Every endpoint in `backend/app/api/v1/endpoints/` must query real PostgreSQL tables (see `CURRENT_STATE.md`) via SQLAlchemy async repositories (never return in-memory seed arrays or static multiplier stubs), and every new table/column in `models/*.py` + `initdb.sql` MUST have a matching Alembic migration in `backend/alembic/versions/`.
 
 ---
 

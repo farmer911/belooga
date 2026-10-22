@@ -33,7 +33,7 @@ flowchart LR
 ---
 
 ## 3. State, RPC Batching, Service Worker & SEO Conventions
-- **Server State (`@tanstack/react-query` Mandatory):** All API queries and cache invalidations MUST use `@tanstack/react-query` (`useQuery`, `useMutation`, `useQueryClient`). **NEVER call `apiClient` or `fetch` inside `useEffect`.**
+- **Server State (`@tanstack/react-query` Mandatory) & Zero-Mockup Invariant (`fe_mock_fallback_arrays == 0`):** All API queries and cache invalidations MUST use `@tanstack/react-query` (`useQuery`, `useMutation`, `useQueryClient`) connected 100% to real FastAPI + PostgreSQL `/v1/*` endpoints. **STRICTLY FORBIDDEN from:** (1) calling `apiClient`/`fetch` inside `useEffect`, (2) defining `FALLBACK_*` / `INITIAL_*` / `DEFAULT_*` / `MOCK_*` arrays or `let memory*` RAM stores, (3) using `localStorage` as a fake database when BE is missing, (4) wrapping `apiClient` in `try/catch` to return fallback arrays or fake optimistic success when HTTP 4xx/5xx occurs, (5) using `placeholderData: DEFAULT_*` to mask broken APIs, or (6) hardcoding demo user `"Alex Nguyen"` / `"alexnguyen"` when unauthenticated.
 - **ConnectRPC Multiplexed Batching (`/v1/rpc/*`):** Multi-panel pages (such as `src/app/public/[username]/page.tsx`) batch `profile.getPublic`, `profile.getCompleteness`, and `profile.getEndorsements` into a single `/v1/rpc/*` batch request to eliminate N-request waterfalls.
 - **Form State & Validation (`react-hook-form` + `zod` Mandatory):** Multi-field forms and modal dialogs MUST use `useForm` with `zodResolver` backed by `src/lib/schemas.ts` and paired with `useMutation`.
 - **Production Service Worker & PWA (`public/sw.js` & `public/manifest.webmanifest`):**
