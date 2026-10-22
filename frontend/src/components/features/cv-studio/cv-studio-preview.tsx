@@ -5,6 +5,7 @@ import { Lock, Printer, Mail, Phone, MapPin, Link2 } from "lucide-react";
 import { CVData } from "./cv-studio-editor";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { downloadCandidatePdf } from "@/services/media-upload.service";
 
 interface CVStudioPreviewProps {
   cvData: CVData;
@@ -12,6 +13,7 @@ interface CVStudioPreviewProps {
   lineHeight: number;
   marginSize: number;
   snapOnePage: boolean;
+  username?: string;
 }
 
 export function CVStudioPreview({
@@ -20,12 +22,16 @@ export function CVStudioPreview({
   lineHeight,
   marginSize,
   snapOnePage,
+  username,
 }: CVStudioPreviewProps) {
   const paperRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<number>(100);
 
   const handlePrint = () => {
-    window.print();
+    void downloadCandidatePdf(username || "alexnguyen");
+    if (typeof window !== "undefined" && typeof window.print === "function") {
+      window.print();
+    }
   };
 
   return (
@@ -115,28 +121,6 @@ export function CVStudioPreview({
             >
               {cvData.headline || "Chuyên Viên / Kỹ Sư Công Nghệ Thông Tin"}
             </div>
-            <div className="text-typography-body flex flex-wrap gap-x-3 gap-y-0.5 mt-1 font-normal text-[0.9em]">
-              {cvData.email && (
-                <span className="inline-flex items-center gap-1">
-                  <Mail className="w-3 h-3" aria-hidden="true" />
-                  <span>{cvData.email}</span>
-                </span>
-              )}
-              {cvData.phone && (
-                <span className="inline-flex items-center gap-1">
-                  <Phone className="w-3 h-3" aria-hidden="true" />
-                  <span>{cvData.phone}</span>
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3 h-3" aria-hidden="true" />
-                <span>{cvData.location || "Hồ Chí Minh, Việt Nam"}</span>
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Link2 className="w-3 h-3" aria-hidden="true" />
-                <span>{cvData.linkedin || "linkedin.com/in/belooga-talent"}</span>
-              </span>
-            </div>
           </div>
 
           {(cvData.sectionOrder ?? [
@@ -147,6 +131,32 @@ export function CVStudioPreview({
             "Kỹ năng chuyên môn",
             "Học vấn & Bằng cấp",
           ]).map((sectionName) => {
+            if (sectionName === "Thông tin liên hệ") {
+              return (
+                <div key={sectionName} data-testid="cv-preview-contact" className="mb-3 pb-1.5 border-b border-surface-border text-typography-body flex flex-wrap gap-x-3 gap-y-0.5 font-normal text-[0.9em]">
+                  {cvData.email && (
+                    <span className="inline-flex items-center gap-1">
+                      <Mail className="w-3 h-3" aria-hidden="true" />
+                      <span>{cvData.email}</span>
+                    </span>
+                  )}
+                  {cvData.phone && (
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="w-3 h-3" aria-hidden="true" />
+                      <span>{cvData.phone}</span>
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="w-3 h-3" aria-hidden="true" />
+                    <span>{cvData.location || "Hồ Chí Minh, Việt Nam"}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Link2 className="w-3 h-3" aria-hidden="true" />
+                    <span>{cvData.linkedin || "linkedin.com/in/belooga-talent"}</span>
+                  </span>
+                </div>
+              );
+            }
             if (sectionName === "Tóm tắt sự nghiệp" && cvData.summary) {
               return (
                 <div key={sectionName} className="mb-3">
@@ -180,6 +190,35 @@ export function CVStudioPreview({
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+            if (sectionName === "Dự án tiêu biểu") {
+              const projects = cvData.projects ?? [
+                {
+                  name: "Belooga High-Scale Talent Engine",
+                  role: "Lead Backend Architect",
+                  tech: "Golang, FastAPI, PostgreSQL 16 GIN, Redis 7",
+                  impact: "Reduced p95 full-text search latency to 11ms across 500k+ candidate profiles.",
+                },
+              ];
+              if (!projects.length) return null;
+              return (
+                <div key={sectionName} data-testid="cv-preview-projects" className="mb-3">
+                  <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
+                    Dự Án Tiêu Biểu
+                  </h2>
+                  <div className="space-y-1.5">
+                    {projects.map((proj, idx) => (
+                      <div key={idx} className="space-y-0.5">
+                        <div className="flex justify-between items-baseline">
+                          <span className="font-bold text-typography-main">{proj.name} <span className="italic font-normal text-typography-heading">({proj.role})</span></span>
+                          <span className="text-typography-muted font-mono text-[0.85em]">{proj.tech}</span>
+                        </div>
+                        <p className="text-typography-heading leading-snug">{proj.impact}</p>
                       </div>
                     ))}
                   </div>

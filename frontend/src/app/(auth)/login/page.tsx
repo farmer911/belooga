@@ -21,11 +21,13 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+  const emailVal = watch("email") || "";
 
   const loginMutation = useMutation({
     mutationFn: async (values: LoginFormValues) => {
@@ -37,8 +39,10 @@ export default function LoginPage() {
       setAccessToken(access_token);
       const nextParam =
         typeof window !== "undefined"
-          ? new URLSearchParams(window.location.search).get("next")
+          ? new URLSearchParams(window.location.search).get("next") ||
+            sessionStorage.getItem("belooga_return_to")
           : null;
+      if (typeof window !== "undefined") sessionStorage.removeItem("belooga_return_to");
       const target =
         nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
           ? nextParam
@@ -142,7 +146,12 @@ export default function LoginPage() {
                   key={provider}
                   type="button"
                   data-testid={`oauth-${slug}-btn`}
-                  onClick={() => router.push(`/callback?provider=${slug}&code=oauth_${slug}_code`)}
+                  onClick={() => {
+                    const nextParam = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("next") || sessionStorage.getItem("belooga_return_to")) : null;
+                    const emailParam = encodeURIComponent(emailVal.trim() || "alex@belooga.com");
+                    const nextQuery = nextParam ? `&next=${encodeURIComponent(nextParam)}` : "";
+                    router.push(`/callback?provider=${slug}&code=oauth_${slug}_code&email=${emailParam}${nextQuery}`);
+                  }}
                   className="flex items-center justify-center py-2.5 px-4 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   {provider}

@@ -85,6 +85,14 @@ class CmsRepository:
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none() is not None
 
+    async def get_candidate_identity_by_username(self, username: str) -> Optional[uuid.UUID]:
+        clean = (username or "").strip()
+        if not clean:
+            return None
+        stmt = select(CandidateProfile.identity_id).where(CandidateProfile.username == clean)
+        res = await self.db.execute(stmt)
+        return res.scalar_one_or_none()
+
     async def create_profile_report(
         self,
         reported_profile_id: uuid.UUID,

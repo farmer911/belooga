@@ -137,3 +137,76 @@ async def test_ats_history_and_catalogs_normalization(client: AsyncClient):
     loc_res = await client.get("/v1/profile/location/", params={"name": "Ho"})
     assert loc_res.status_code == 200
     assert len(loc_res.json()) >= 1
+
+
+@pytest.mark.asyncio
+async def test_ats_tailor_cv_and_enriched_history(client: AsyncClient):
+    _, _, headers = await _register_and_token(client, "ats_tailor")
+
+    req_payload = {
+        "job_title": "Senior Backend Architect",
+        "company_name": "Belooga Cloud",
+        "jd_text": "Required skills: Golang, Kubernetes, PostgreSQL, Kafka, Redis, Docker.",
+        "cv_text": "Worked on Python backend systems and helped maintain servers for clients.",
+    }
+    base_scan = await client.post("/v1/match/ats-scan", json=req_payload, headers=headers)
+    assert base_scan.status_code == 200
+    base_score = base_scan.json()["ats_score"]
+
+    tailor_res = await client.post("/v1/match/tailor-cv", json=req_payload, headers=headers)
+    assert tailor_res.status_code == 200
+    t_data = tailor_res.json()
+    assert "tailored_cv_text" in t_data
+    assert "Kubernetes" in t_data["tailored_cv_text"]
+    assert "Kafka" in t_data["tailored_cv_text"]
+    assert t_data["scan_result"]["ats_score"] > base_score
+    assert "Kubernetes" in t_data["scan_result"]["matched_skills"]
+
+    hist_res = await client.get("/v1/match/history", headers=headers)
+    assert hist_res.status_code == 200
+    latest = hist_res.json()[0]
+    assert "matched_skills" in latest
+    assert "missing_skills" in latest
+    assert "Kubernetes" in latest["matched_skills"]
+
+
+@pytest.mark.asyncio
+async def test_location_aware_salary_benchmark_and_recruiter_inquiry_notification(client: AsyncClient):
+    username, _, headers = await _register_and_token(client, "recruiter_notif")
+
+    hcm_res = await client.get(
+        "/v1/catalogs/salary-benchmark",
+        params={"role": "Golang Backend", "level": "Senior", "location": "Ho Chi Minh"},
+    )
+    dn_res = await client.get(
+        "/v1/catalogs/salary-benchmark",
+        params={"role": "Golang Backend", "level": "Senior", "location": "Da Nang"},
+    )
+    rem_res = await client.get(
+        "/v1/catalogs/salary-benchmark",
+        params={"role": "Golang Backend", "level": "Senior", "location": "Remote"},
+    )
+    assert hcm_res.status_code == 200
+    assert dn_res.status_code == 200
+    assert rem_res.status_code == 200
+
+    p50_hcm = hcm_res.json()["p50_salary_vnd"]
+    p50_dn = dn_res.json()["p50_salary_vnd"]
+    p50_rem = rem_res.json()["p50_salary_vnd"]
+    assert p50_dn < p50_hcm < p50_rem
+
+    contact_res = await client.post(
+        "/v1/contact/",
+        json={
+            "name": "Sarah Jenkins (VP Engineering)",
+            "email": "sarah@stripe.com",
+            "message": f"[Inquiry for @{username}] Hi @{username}, we loved your 30s pitch and want to schedule a Staff Engineer interview.",
+        },
+    )
+    assert contact_res.status_code in (200, 201)
+
+    notif_res = await client.get("/v1/notifications/", headers=headers)
+    assert notif_res.status_code == 200
+    items = notif_res.json()["items"]
+    assert any(n["event_type"] == "RECRUITER_INQUIRY" and "Sarah Jenkins" in n["title"] for n in items)
+

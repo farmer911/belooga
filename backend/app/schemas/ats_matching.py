@@ -39,6 +39,11 @@ class ATSScanHistoryItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ATSTailorResponse(BaseModel):
+    tailored_cv_text: str
+    scan_result: ATSScanResponse
+
+
 class TalentShortlistRequest(BaseModel):
     job_title: str = Field(..., max_length=255, description="Target role title for recruiter shortlist")
     company_name: Optional[str] = Field(None, max_length=255, description="Hiring organization")

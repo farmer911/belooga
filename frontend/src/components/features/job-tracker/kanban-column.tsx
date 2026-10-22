@@ -12,6 +12,7 @@ interface KanbanColumnProps {
   jobs: TrackedJob[];
   onMove: (jobId: string, newStatus: KanbanStatus) => void;
   onDelete: (jobId: string) => void;
+  onEdit?: (job: TrackedJob) => void;
 }
 
 export function KanbanColumn({
@@ -21,6 +22,7 @@ export function KanbanColumn({
   jobs,
   onMove,
   onDelete,
+  onEdit,
 }: KanbanColumnProps) {
   return (
     <div className="flex-1 min-w-[260px] max-w-[320px] bg-surface-divider/60 border border-surface-border rounded-xl flex flex-col overflow-hidden shadow-xs">
@@ -43,7 +45,7 @@ export function KanbanColumn({
           </div>
         ) : (
           jobs.map((job) => (
-            <KanbanCard key={job.id} job={job} onMove={onMove} onDelete={onDelete} />
+            <KanbanCard key={job.id} job={job} onMove={onMove} onDelete={onDelete} onEdit={onEdit} />
           ))
         )}
       </div>

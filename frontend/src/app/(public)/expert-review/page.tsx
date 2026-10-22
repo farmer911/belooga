@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useExpertReview } from "@/hooks/use-expert-review";
 import { ExpertHero } from "@/components/features/expert-review/expert-hero";
 import { PricingTiers } from "@/components/features/expert-review/pricing-tiers";
@@ -10,6 +11,15 @@ import { ReviewBookingDialog } from "@/components/features/expert-review/review-
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ExpertReviewPage() {
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const oid = new URLSearchParams(window.location.search).get("order_id");
+      if (oid) setHighlightedOrderId(oid);
+    }
+  }, []);
+
   const {
     experts,
     packages,
@@ -70,6 +80,7 @@ export default function ExpertReviewPage() {
       {/* 2. Candidate Active Orders (if any) */}
       <CandidateOrdersList
         orders={myOrders}
+        highlightedOrderId={highlightedOrderId}
         onPayOrder={async (id) => {
           await checkoutOrder(id);
         }}

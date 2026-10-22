@@ -19,6 +19,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | required |
 | `POST` | `/v1/expert-review/orders/{order_id}/feedback/` | `submit_order_feedback` | required |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
+| `POST` | `/v1/match/tailor-cv` | `tailor_cv` | optional |
 | `GET` | `/v1/match/history` | `list_ats_scan_history` | optional |
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |

@@ -74,10 +74,17 @@ function ForgotPasswordContent() {
         </div>
 
         {resetComplete ? (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center space-y-2" data-testid="password-reset-success">
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center space-y-3" data-testid="password-reset-success">
             <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
             <p className="text-sm font-semibold text-emerald-800">Password Updated</p>
             <p className="text-xs text-emerald-700">Your password has been rotated and active sessions revoked.</p>
+            <div className="pt-1">
+              <Link href="/login">
+                <Button size="sm" className="bg-brand-primary hover:bg-brand-hover text-white">
+                  Back to Sign In
+                </Button>
+              </Link>
+            </div>
           </div>
         ) : submittedEmail ? (
           <div className="space-y-4" data-testid="reset-password-form">
