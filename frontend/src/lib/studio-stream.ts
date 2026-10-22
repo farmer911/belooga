@@ -46,7 +46,8 @@ export async function acquireStream(
           audio: audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true,
         })
       )
-      .catch(() => navigator.mediaDevices.getUserMedia({ video: vConstraints, audio: false }));
+      .catch(() => navigator.mediaDevices.getUserMedia({ video: vConstraints, audio: false }))
+      .catch(() => navigator.mediaDevices.getUserMedia({ video: true, audio: false }));
     const to = new Promise<null>((r) => setTimeout(() => r(null), 1500));
     return await Promise.race([p, to]);
   } catch (e) {

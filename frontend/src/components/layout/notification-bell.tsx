@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck, Mail, ExternalLink, BellRing } from "lucide-react";
@@ -26,8 +26,37 @@ interface NotificationListResponse {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleOutsideEvent = (event: MouseEvent | PointerEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutsideEvent);
+    document.addEventListener("mousedown", handleOutsideEvent);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsideEvent);
+      document.removeEventListener("mousedown", handleOutsideEvent);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   const { data } = useQuery<NotificationListResponse>({
     queryKey: ["notifications"],
@@ -72,7 +101,7 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         data-testid="notification-bell-btn"
