@@ -1,7 +1,7 @@
 """Pydantic v2 DTO Schemas for Domain 11: Candidate Job Applications Tracker (Kanban)."""
 
 import uuid
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,6 +14,45 @@ class TrackedJobCreateRequest(BaseModel):
     match_score: int = Field(0, ge=0, le=100)
     interview_date: Optional[datetime] = None
     notes: Optional[str] = None
+
+
+class MarketJobItemDTO(BaseModel):
+    id: str
+    company_name: str
+    position_title: str
+    location: str
+    salary_range: str
+    match_score: int
+    skills: List[str] = Field(default_factory=list)
+
+
+class CareerGoalUpsertRequest(BaseModel):
+    target_role: str = Field(..., min_length=1, max_length=255)
+    target_salary: str = Field(default="55.000.000 VNĐ", max_length=100)
+    preferred_skills: str = Field(default="Golang, PostgreSQL, Kubernetes", max_length=500)
+    location: str = Field(default="Ho Chi Minh / Remote", max_length=150)
+
+
+class CareerGoalResponse(BaseModel):
+    id: str
+    target_role: str
+    target_salary: str
+    preferred_skills: str
+    location: str
+    updated_at: str
+
+
+class AiJobMatchRequest(BaseModel):
+    target_role: Optional[str] = "Senior Backend Engineer"
+    preferred_skills: Optional[str] = "Golang, PostgreSQL, Kubernetes"
+    expected_salary: Optional[str] = "55.000.000 VNĐ"
+
+
+class AiJobMatchResponse(BaseModel):
+    goal_id: str
+    fee_charged_vnd: int
+    matched_count: int
+    matched_jobs: List["TrackedJobResponse"] = Field(default_factory=list)
 
 
 class TrackedJobStatusUpdateRequest(BaseModel):

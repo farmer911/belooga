@@ -2,14 +2,19 @@
 
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.job_tracker import JobTrackerService
 from app.schemas.job_tracker import (
+    AiJobMatchRequest,
+    AiJobMatchResponse,
+    CareerGoalResponse,
+    CareerGoalUpsertRequest,
     JobPipelineAnalyticsResponse,
+    MarketJobItemDTO,
     TrackedJobCreateRequest,
     TrackedJobStatusUpdateRequest,
     TrackedJobUpdateRequest,
@@ -21,13 +26,65 @@ router = APIRouter(prefix="/tracker", tags=["Domain 11: Candidate Job Tracker & 
 
 @router.get("/jobs/", response_model=List[TrackedJobResponse])
 async def list_tracked_jobs(
+    q: Optional[str] = Query(None, description="Search by company, position, salary, notes"),
+    status: Optional[str] = Query(None, description="Filter by Kanban status"),
+    min_score: int = Query(0, ge=0, le=100, description="Minimum ATS match score"),
+    sort_by: str = Query("created_at", description="Sort by: created_at | match_score | interview_date"),
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     """List all tracked jobs for the current candidate or guest session."""
     candidate_id = current_user.id if current_user else None
     service = JobTrackerService(db)
-    return await service.list_tracked_jobs(candidate_identity_id=candidate_id)
+    return await service.list_tracked_jobs(
+        candidate_identity_id=candidate_id, q=q, status_filter=status, min_score=min_score, sort_by=sort_by
+    )
+
+
+@router.get("/search-market-jobs", response_model=List[MarketJobItemDTO])
+async def search_market_jobs(
+    q: Optional[str] = Query(None, description="Search market jobs by keyword"),
+    skills: Optional[str] = Query(None, description="Comma-separated skills filter"),
+    location: Optional[str] = Query(None, description="Location filter"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Search curated and live market jobs for 1-click Kanban addition."""
+    return await JobTrackerService(db).search_market_jobs(q=q, skills=skills, location=location)
+
+
+@router.get("/goals", response_model=CareerGoalResponse)
+async def get_career_goal(
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve persisted Career Goal for the candidate."""
+    candidate_id = current_user.id if current_user else None
+    return await JobTrackerService(db).get_career_goal(candidate_identity_id=candidate_id)
+
+
+@router.post("/goals", response_model=CareerGoalResponse)
+async def save_career_goal(
+    request: CareerGoalUpsertRequest,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Persist Career Goal in PostgreSQL so F5 reload retains 100% of goal state."""
+    candidate_id = current_user.id if current_user else None
+    return await JobTrackerService(db).save_career_goal(request=request, candidate_identity_id=candidate_id)
+
+
+@router.post("/goals/{goal_id}/ai-match", response_model=AiJobMatchResponse)
+async def ai_match_career_goal(
+    goal_id: str,
+    request: Optional[AiJobMatchRequest] = None,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Paid AI Job Matcher deducting fee from Wallet and populating high-match Kanban cards."""
+    candidate_id = current_user.id if current_user else None
+    return await JobTrackerService(db).ai_match_goal_jobs(
+        goal_id=goal_id, request=request or AiJobMatchRequest(), candidate_identity_id=candidate_id
+    )
 
 
 @router.get("/jobs/analytics", response_model=JobPipelineAnalyticsResponse)

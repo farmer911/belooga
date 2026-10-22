@@ -8,6 +8,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.cms import CareerApplication, CareerPosting, ContactInquiry, ProfileReport
+from app.models.job_tracker import CandidateJobApplicationTracker
 from app.models.profile import CandidateProfile
 
 DEFAULT_BLOG_POSTS: List[Dict[str, Any]] = [
@@ -95,14 +96,99 @@ class CmsRepository:
 
     async def list_active_career_jobs(self) -> List[Dict[str, Any]]:
         res = await self.db.execute(
-            text("SELECT id, title, department, location, description FROM career_postings WHERE is_active = TRUE ORDER BY created_at ASC")
+            text("SELECT id, title, department, location, description FROM career_postings WHERE is_active = TRUE ORDER BY created_at DESC")
         )
-        return [{"id": str(r.id), "title": r.title, "department": r.department, "location": r.location, "description": r.description} for r in res.fetchall()]
+        rows = res.fetchall()
+        meta_res = await self.db.execute(text("SELECT name, message FROM contact_inquiries WHERE name LIKE 'CAREER_META:%'"))
+        meta_map: Dict[str, Dict[str, Any]] = {}
+        for m in meta_res.mappings().all():
+            if m["message"]:
+                meta_map[str(m["name"]).replace("CAREER_META:", "")] = json.loads(m["message"])
+        out: List[Dict[str, Any]] = []
+        for r in rows:
+            jid = str(r.id)
+            meta = meta_map.get(jid, {})
+            skills = meta.get("skills") or ["FastAPI", "Next.js", "PostgreSQL", "TypeScript"]
+            out.append({
+                "id": jid,
+                "title": r.title,
+                "company_name": meta.get("company_name") or "Belooga",
+                "company_logo_url": meta.get("company_logo_url"),
+                "company_website": meta.get("company_website"),
+                "department": r.department,
+                "location": r.location,
+                "salary_range": meta.get("salary_range") or "$4,500 - $6,500 / month",
+                "skills": skills,
+                "skills_required": skills,
+                "is_partner": bool(meta.get("is_partner", False)),
+                "is_system_role": bool(meta.get("is_system_role", True)),
+                "posted_by_identity_id": meta.get("posted_by_identity_id"),
+                "description": r.description,
+                "is_active": True,
+            })
+        return out
 
     async def seed_default_career_postings(self, defaults: List[Dict[str, Any]]) -> None:
+        existing_titles = {j["title"].strip().lower() for j in await self.list_active_career_jobs()}
         for item in defaults:
-            self.db.add(CareerPosting(id=uuid.uuid4(), title=item["title"], department=item["department"], location=item["location"], description=item["description"], is_active=True))
+            if item["title"].strip().lower() in existing_titles:
+                continue
+            jid = uuid.uuid4()
+            self.db.add(CareerPosting(id=jid, title=item["title"], department=item["department"], location=item["location"], description=item["description"], is_active=True))
+            meta_json = json.dumps({
+                "company_name": item.get("company_name", "Belooga"),
+                "salary_range": item.get("salary_range", "$4,500 - $6,500 / month"),
+                "skills": item.get("skills", ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"]),
+                "is_partner": bool(item.get("is_partner", False)),
+                "is_system_role": not bool(item.get("is_partner", False)),
+            }, ensure_ascii=False)
+            self.db.add(ContactInquiry(id=uuid.uuid4(), name=f"CAREER_META:{jid}", email="careers@belooga.internal", message=meta_json))
         await self.db.flush()
+
+    async def create_career_posting(self, title: str, department: str, location: str, description: str, meta: Dict[str, Any]) -> Dict[str, Any]:
+        existing = await self.list_active_career_jobs()
+        comp_norm = (meta.get("company_name") or "Belooga").strip().lower()
+        title_norm = title.strip().lower()
+        for item in existing:
+            if item["title"].strip().lower() == title_norm and (item.get("company_name") or "Belooga").strip().lower() == comp_norm:
+                return item
+        jid = uuid.uuid4()
+        self.db.add(CareerPosting(id=jid, title=title, department=department, location=location, description=description, is_active=True))
+        meta_json = json.dumps(meta, ensure_ascii=False)
+        self.db.add(ContactInquiry(id=uuid.uuid4(), name=f"CAREER_META:{jid}", email="careers@belooga.internal", message=meta_json))
+        await self.db.flush()
+        skills = meta.get("skills") or []
+        return {
+            "id": str(jid), "title": title, "company_name": meta.get("company_name") or "Belooga",
+            "company_logo_url": meta.get("company_logo_url"), "company_website": meta.get("company_website"),
+            "department": department, "location": location, "salary_range": meta.get("salary_range") or "Negotiable",
+            "skills": skills, "skills_required": skills, "is_partner": bool(meta.get("is_partner", True)),
+            "is_system_role": bool(meta.get("is_system_role", False)), "posted_by_identity_id": meta.get("posted_by_identity_id"),
+            "description": description, "is_active": True,
+        }
+
+    async def sync_career_application_to_tracker(
+        self, candidate_identity_id: Optional[uuid.UUID], company_name: str, position_title: str, salary_range: str, location: str
+    ) -> Optional[str]:
+        stmt = select(CandidateJobApplicationTracker).where(
+            CandidateJobApplicationTracker.company_name == company_name,
+            CandidateJobApplicationTracker.position_title == position_title,
+        )
+        if candidate_identity_id:
+            stmt = stmt.where(CandidateJobApplicationTracker.candidate_identity_id == candidate_identity_id)
+        res = await self.db.execute(stmt.limit(1))
+        existing = res.scalar_one_or_none()
+        if existing:
+            return str(existing.id)
+        item = CandidateJobApplicationTracker(
+            id=uuid.uuid4(), candidate_identity_id=candidate_identity_id,
+            company_name=company_name, position_title=position_title,
+            status="APPLIED", expected_salary=salary_range or "Negotiable",
+            match_score=88, notes=f"Applied 1-Click via Belooga Careers ({location})",
+        )
+        self.db.add(item)
+        await self.db.flush()
+        return str(item.id)
 
     async def get_career_posting_by_id(self, job_id: uuid.UUID) -> Optional[CareerPosting]:
         res = await self.db.execute(select(CareerPosting).where(CareerPosting.id == job_id, CareerPosting.is_active.is_(True)))
@@ -154,3 +240,36 @@ class CmsRepository:
             )
         await self.db.commit()
         return post_data
+
+    async def list_persisted_user_posts(self) -> List[Dict[str, Any]]:
+        res = await self.db.execute(text("SELECT id, message FROM contact_inquiries WHERE name LIKE 'USER_POST:%' ORDER BY created_at DESC"))
+        out: List[Dict[str, Any]] = []
+        for r in res.mappings().all():
+            if r["message"]:
+                try:
+                    out.append(json.loads(r["message"]))
+                except Exception:
+                    continue
+        return out
+
+    async def upsert_user_post(self, post_id: str, post_data: Dict[str, Any]) -> Dict[str, Any]:
+        key_tag = f"USER_POST:{post_id}"
+        payload_json = json.dumps(post_data, ensure_ascii=False)
+        res = await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :k LIMIT 1"), {"k": key_tag})
+        row = res.mappings().first()
+        if row:
+            await self.db.execute(text("UPDATE contact_inquiries SET message = :msg WHERE id = :id"), {"msg": payload_json, "id": row["id"]})
+        else:
+            await self.db.execute(
+                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :k, 'posts@belooga.internal', :msg)"),
+                {"id": uuid.uuid4(), "k": key_tag, "msg": payload_json},
+            )
+        await self.db.commit()
+        return post_data
+
+    async def delete_user_post(self, post_id: str) -> bool:
+        key_tag = f"USER_POST:{post_id}"
+        res = await self.db.execute(text("DELETE FROM contact_inquiries WHERE name = :k RETURNING id"), {"k": key_tag})
+        await self.db.commit()
+        return res.scalar_one_or_none() is not None
+

@@ -14,11 +14,8 @@ from app.core.security import AuthenticatedUser
 from app.modules.cms.repository import CmsRepository, DEFAULT_BLOG_POSTS
 from app.modules.notifications import NotificationService
 from app.schemas.cms import (
-    BlogCommentCreateRequest,
-    BlogPostCreateRequest,
-    ContactInquiryRequest,
-    JobApplicantRequest,
-    ReportProfileRequest,
+    BlogCommentCreateRequest, BlogPostCreateRequest, CareerPostingCreateRequest,
+    ContactInquiryRequest, JobApplicantRequest, ReportProfileRequest,
 )
 
 STATIC_FAQS = [
@@ -29,9 +26,9 @@ STATIC_FAQS = [
 ]
 
 DEFAULT_CAREER_JOBS = [
-    {"id": "c1", "title": "Staff Full-Stack Engineer", "department": "Engineering", "location": "Remote / San Francisco", "description": "Build high-throughput async services and sleek Next.js interfaces."},
-    {"id": "c2", "title": "Lead Product Designer", "department": "Design", "location": "San Francisco, CA", "description": "Craft intuitive candidate workspaces and seamless WebRTC video studios."},
-    {"id": "c3", "title": "Head of Talent Partnerships", "department": "Operations", "location": "New York, NY", "description": "Expand employer networks across top high-growth tech companies."},
+    {"id": "c1", "title": "Staff Full-Stack Engineer", "company_name": "Belooga", "department": "Engineering", "location": "Remote / San Francisco", "salary_range": "$4,500 - $6,500 / month", "skills": ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"], "is_partner": False, "description": "Build high-throughput async services and sleek Next.js interfaces."},
+    {"id": "c2", "title": "Lead Product Designer", "company_name": "Belooga", "department": "Design", "location": "San Francisco, CA", "salary_range": "$4,000 - $5,800 / month", "skills": ["Figma", "Design Systems", "UX Research"], "is_partner": False, "description": "Craft intuitive candidate workspaces and seamless WebRTC video studios."},
+    {"id": "c3", "title": "Head of Talent Partnerships", "company_name": "Belooga", "department": "Operations", "location": "New York, NY", "salary_range": "$4,200 - $6,000 / month", "skills": ["B2B Sales", "Talent Acquisition", "Partnerships"], "is_partner": False, "description": "Expand employer networks across top high-growth tech companies."},
 ]
 
 
@@ -63,11 +60,8 @@ class CmsService:
 
     def _format_post(self, raw: Dict[str, Any], viewer_username: Optional[str] = None) -> Dict[str, Any]:
         post = dict(raw)
-        liked_by = list(post.get("liked_by") or [])
-        comments = list(post.get("comments") or [])
-        post["is_liked_by_me"] = bool(viewer_username and viewer_username in liked_by)
-        post["comments_count"] = len(comments)
-        post["likes_count"] = int(post.get("likes_count", 12))
+        liked_by, comments = list(post.get("liked_by") or []), list(post.get("comments") or [])
+        post.update({"is_liked_by_me": bool(viewer_username and viewer_username in liked_by), "comments_count": len(comments), "likes_count": int(post.get("likes_count", 12))})
         return post
 
     async def _load_all_posts(self) -> List[Dict[str, Any]]:
@@ -77,13 +71,9 @@ class CmsService:
         by_slug = {p["slug"]: p for p in persisted if "slug" in p}
         default_slugs = {d["slug"] for d in DEFAULT_BLOG_POSTS}
         merged: List[Dict[str, Any]] = [p for p in persisted if p.get("slug") not in default_slugs]
-        for d in DEFAULT_BLOG_POSTS:
-            merged.append(by_slug.get(d["slug"], dict(d)))
-        return merged
+        return merged + [by_slug.get(d["slug"], dict(d)) for d in DEFAULT_BLOG_POSTS]
 
-    async def list_blog_posts(
-        self, post_type: Optional[str] = None, viewer_username: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    async def list_blog_posts(self, post_type: Optional[str] = None, viewer_username: Optional[str] = None) -> List[Dict[str, Any]]:
         posts = await self._load_all_posts()
         t_norm = (post_type or "all").strip().lower()
         if t_norm in ("user", "user_status"):
@@ -93,16 +83,13 @@ class CmsService:
         return [self._format_post(p, viewer_username) for p in posts]
 
     async def get_blog_post_by_slug(self, slug: str, viewer_username: Optional[str] = None) -> Dict[str, Any]:
-        posts = await self._load_all_posts()
         clean_slug = slug.lower().strip()
-        for post in posts:
+        for post in await self._load_all_posts():
             if post.get("slug") == clean_slug or post.get("id") == clean_slug:
                 return self._format_post(post, viewer_username)
         raise HTTPException(status_code=404, detail=f"Blog article '{slug}' not found")
 
-    async def create_blog_post(
-        self, payload: BlogPostCreateRequest, current_user: Optional[AuthenticatedUser] = None
-    ) -> Dict[str, Any]:
+    async def create_blog_post(self, payload: BlogPostCreateRequest, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
         body_text = (payload.excerpt or (payload.content[0] if payload.content else "") or payload.title or "").strip()
         if not body_text:
             raise HTTPException(status_code=400, detail="Post content cannot be empty")
@@ -124,12 +111,9 @@ class CmsService:
         await platform_cache.invalidate_prefix("cms:")
         return self._format_post(post_data, username)
 
-    async def toggle_like_blog_post(
-        self, post_id: str, current_user: Optional[AuthenticatedUser] = None
-    ) -> Dict[str, Any]:
+    async def toggle_like_blog_post(self, post_id: str, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
         viewer = current_user.username if current_user else "guest_viewer"
-        posts = await self._load_all_posts()
-        target = next((p for p in posts if p.get("slug") == post_id or p.get("id") == post_id), None)
+        target = next((p for p in await self._load_all_posts() if p.get("slug") == post_id or p.get("id") == post_id), None)
         if not target:
             raise HTTPException(status_code=404, detail="Blog post not found")
         post = dict(target)
@@ -147,22 +131,15 @@ class CmsService:
         await platform_cache.invalidate_prefix("cms:")
         return self._format_post(post, viewer)
 
-    async def add_comment_blog_post(
-        self, post_id: str, payload: BlogCommentCreateRequest, current_user: Optional[AuthenticatedUser] = None
-    ) -> Dict[str, Any]:
+    async def add_comment_blog_post(self, post_id: str, payload: BlogCommentCreateRequest, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
         viewer = current_user.username if current_user else "alexnguyen"
-        posts = await self._load_all_posts()
-        target = next((p for p in posts if p.get("slug") == post_id or p.get("id") == post_id), None)
+        target = next((p for p in await self._load_all_posts() if p.get("slug") == post_id or p.get("id") == post_id), None)
         if not target:
             raise HTTPException(status_code=404, detail="Blog post not found")
         post = dict(target)
         comments = list(post.get("comments") or [])
-        comments.append({
-            "id": f"cm-{uuid.uuid4().hex[:8]}", "author_name": viewer, "author_username": viewer,
-            "content": payload.content.strip(), "created_at": datetime.now(timezone.utc).strftime("%H:%M"),
-        })
-        post["comments"] = comments
-        post["comments_count"] = len(comments)
+        comments.append({"id": f"cm-{uuid.uuid4().hex[:8]}", "author_name": viewer, "author_username": viewer, "content": payload.content.strip(), "created_at": datetime.now(timezone.utc).strftime("%H:%M")})
+        post["comments"], post["comments_count"] = comments, len(comments)
         if self.cms_repo:
             await self.cms_repo.upsert_blog_post(post["slug"], post)
             author_username = post.get("author_username")
@@ -189,33 +166,84 @@ class CmsService:
 
         return await _compute() if os.getenv("ENVIRONMENT") == "testing" else await platform_cache.get_or_set("cms:seo_sitemap", 120, _compute)
 
-    async def list_career_jobs(self) -> List[Dict[str, Any]]:
+    async def list_career_jobs(
+        self, company: Optional[str] = None, department: Optional[str] = None,
+        location: Optional[str] = None, q: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         async def _compute() -> List[Dict[str, Any]]:
             if not self.cms_repo:
                 return DEFAULT_CAREER_JOBS
             jobs = await self.cms_repo.list_active_career_jobs()
-            if not jobs:
+            if len(jobs) < 3:
                 await self.cms_repo.seed_default_career_postings(DEFAULT_CAREER_JOBS)
                 await self.db.commit()
                 jobs = await self.cms_repo.list_active_career_jobs()
             return jobs if jobs else DEFAULT_CAREER_JOBS
 
-        return await platform_cache.get_or_set("cms:career_jobs", 60, _compute)
+        all_jobs = await _compute() if os.getenv("ENVIRONMENT") == "testing" else await platform_cache.get_or_set("cms:career_jobs", 60, _compute)
+        out = [dict(j) for j in all_jobs]
+        if company and company.strip().upper() != "ALL":
+            c_norm = company.strip().lower()
+            out = [j for j in out if c_norm in str(j.get("company_name") or "Belooga").lower()]
+        if department:
+            d_norm = department.strip().lower()
+            out = [j for j in out if d_norm in str(j.get("department") or "").lower()]
+        if location:
+            l_norm = location.strip().lower()
+            out = [j for j in out if l_norm in str(j.get("location") or "").lower()]
+        if q:
+            q_norm = q.strip().lower()
+            out = [
+                j for j in out
+                if q_norm in str(j.get("title") or "").lower()
+                or q_norm in str(j.get("company_name") or "").lower()
+                or q_norm in str(j.get("description") or "").lower()
+                or any(q_norm in str(s).lower() for s in (j.get("skills") or []))
+            ]
+        return out
 
-    async def apply_career_job(self, job_id: str, payload: JobApplicantRequest) -> Dict[str, str]:
+    async def create_career_job(
+        self, payload: CareerPostingCreateRequest, current_user: Optional[AuthenticatedUser] = None
+    ) -> Dict[str, Any]:
+        desc = (payload.description or payload.job_description or "").strip() or "Join a high-velocity engineering and product team."
+        skills = payload.skills or payload.skills_required or ["FastAPI", "Next.js", "PostgreSQL"]
+        meta = {
+            "company_name": (payload.company_name or "Belooga").strip(),
+            "company_logo_url": payload.company_logo_url,
+            "company_website": payload.company_website,
+            "salary_range": (payload.salary_range or "Negotiable").strip(),
+            "skills": skills,
+            "is_partner": payload.is_partner,
+            "is_system_role": payload.is_system_role,
+            "posted_by_identity_id": str(current_user.id) if current_user else None,
+        }
+        created = await self.cms_repo.create_career_posting(
+            title=payload.title.strip(), department=(payload.department or "Engineering").strip(),
+            location=(payload.location or "Remote").strip(), description=desc, meta=meta,
+        )
+        await self.db.commit()
+        await platform_cache.invalidate_prefix("cms:")
+        return created
+
+    async def apply_career_job(
+        self, job_id: str, payload: JobApplicantRequest, current_user: Optional[AuthenticatedUser] = None
+    ) -> Dict[str, Any]:
         jobs = await self.list_career_jobs()
         target_uuid: Optional[uuid.UUID] = None
+        matched_job: Optional[Dict[str, Any]] = None
         clean_id = (job_id or "").strip()
         try:
             parsed_uuid = uuid.UUID(clean_id)
             posting = await self.cms_repo.get_career_posting_by_id(parsed_uuid)
             if posting:
                 target_uuid = posting.id
+                matched_job = next((j for j in jobs if str(j.get("id")) == str(target_uuid)), None)
         except ValueError:
             alias_map = {item["id"].lower(): item["title"].lower() for item in DEFAULT_CAREER_JOBS}
             wanted_title = alias_map.get(clean_id.lower(), clean_id.lower().replace("-", " "))
             for item in jobs:
                 if str(item.get("id") or "").lower() == clean_id.lower() or str(item.get("title") or "").lower() == wanted_title:
+                    matched_job = item
                     try:
                         target_uuid = uuid.UUID(str(item["id"]))
                     except ValueError:
@@ -228,8 +256,21 @@ class CmsService:
             job_id=target_uuid, applicant_name=payload.applicant_name.strip(),
             applicant_email=payload.applicant_email.lower().strip(), resume_url=payload.resume_url.strip(),
         )
+        cand_id = current_user.id if current_user else await self.cms_repo.get_candidate_identity_by_username("alexnguyen")
+        comp_name = (matched_job or {}).get("company_name") or "Belooga"
+        pos_title = (matched_job or {}).get("title") or "Software Engineer"
+        sal_range = (matched_job or {}).get("salary_range") or "Negotiable"
+        loc_str = (matched_job or {}).get("location") or "Remote"
+        tracker_id = await self.cms_repo.sync_career_application_to_tracker(cand_id, comp_name, pos_title, sal_range, loc_str)
+        if cand_id and self.db:
+            await NotificationService(self.db).dispatch_event(
+                identity_id=cand_id, event_type="CAREER_APPLICATION_SUBMITTED",
+                title=f"Đã ứng tuyển 1-Click: {pos_title} @ {comp_name}",
+                message=f"Hồ sơ của bạn đã gửi tới {comp_name} và tự động đồng bộ vào Kanban Job Tracker.",
+                deep_link="/workspace/jobs", send_email=False, category="system",
+            )
         await self.db.commit()
-        return {"message": "Application submitted successfully.", "id": str(app_id)}
+        return {"message": "Application submitted successfully.", "id": str(app_id), "tracker_synced": bool(tracker_id), "tracker_item_id": tracker_id}
 
     async def report_candidate_profile(self, user_id: uuid.UUID, payload: ReportProfileRequest) -> Dict[str, str]:
         reason = payload.reason.strip()

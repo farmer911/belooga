@@ -6,6 +6,9 @@ from app.modules.analytics import AnalyticsService
 from app.schemas.analytics import (
     AnalyticsDashboardResponse,
     BIStarSchemaExportResponse,
+    CandidateAnalyticsResponse,
+    ExpertAnalyticsResponse,
+    RecruiterAnalyticsResponse,
     UnitEconomicsResponse,
 )
 
@@ -19,6 +22,25 @@ async def get_executive_analytics_dashboard(
 ):
     """SSOT Executive Analytics Engine delegating to AnalyticsService."""
     return await AnalyticsService(db).get_dashboard(time_range=range)
+
+
+@router.get("/candidate", response_model=CandidateAnalyticsResponse)
+async def get_candidate_analytics(db: AsyncSession = Depends(get_db)):
+    """Return 360-degree Candidate Career & ATS Analytics."""
+    return await AnalyticsService(db).get_candidate_analytics()
+
+
+@router.get("/recruiter", response_model=RecruiterAnalyticsResponse)
+async def get_recruiter_analytics(db: AsyncSession = Depends(get_db)):
+    """Return 360-degree Recruiter Hiring Pipeline & Funnel Analytics."""
+    return await AnalyticsService(db).get_recruiter_analytics()
+
+
+@router.get("/expert", response_model=ExpertAnalyticsResponse)
+async def get_expert_analytics(db: AsyncSession = Depends(get_db)):
+    """Return 360-degree Expert Reviewer SLA, Earnings & ATS Lift Analytics."""
+    return await AnalyticsService(db).get_expert_analytics()
+
 
 
 @router.get("/unit-economics", response_model=UnitEconomicsResponse)
