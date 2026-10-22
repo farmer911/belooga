@@ -150,6 +150,50 @@ export async function markAllMobileNotificationsRead(): Promise<void> {
   await mobileApiClient.post<unknown>("/v1/notifications/read-all/", {});
 }
 
+export interface NotificationSpotlightTarget {
+  route: string;
+  actionLabel: string;
+  emailStatus: string;
+}
+
+export function resolveNotificationSpotlightTarget(
+  notification: Partial<MobileNotificationItemDTO> & { title: string; message: string }
+): NotificationSpotlightTarget {
+  const emailStatus =
+    notification.email_sent === false
+      ? "Email Pending"
+      : "Email Deep-link Dispatched";
+  if (notification.deep_link?.trim()) {
+    const cleanRoute = notification.deep_link.trim().split("?")[0] || "/(tabs)";
+    return {
+      route: cleanRoute,
+      actionLabel: notification.action_label?.trim() || "Open Linked Item",
+      emailStatus,
+    };
+  }
+  const combined = `${notification.title} ${notification.message} ${notification.category ?? ""}`.toLowerCase();
+  if (combined.includes("expert") || combined.includes("escrow") || combined.includes("review")) {
+    return {
+      route: "/(tabs)/career",
+      actionLabel: notification.action_label?.trim() || "View Expert Review & Escrow",
+      emailStatus,
+    };
+  }
+  if (combined.includes("ats") || combined.includes("match") || combined.includes("job") || combined.includes("interview")) {
+    return {
+      route: "/(tabs)/tracker",
+      actionLabel: notification.action_label?.trim() || "Open Job Kanban Card",
+      emailStatus,
+    };
+  }
+  return {
+    route: "/(tabs)/studio",
+    actionLabel: notification.action_label?.trim() || "Open Pitch Studio",
+    emailStatus,
+  };
+}
+
+
 export function useMobileNotificationsQuery() {
   const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
   return useQuery({

@@ -6,8 +6,10 @@ import {
   ScreenShell,
   SurfaceCard,
 } from "@/lib/native-runtime";
+import { MobileNotificationItemDTO } from "@/lib/schemas";
 import {
   markAllMobileNotificationsRead,
+  resolveNotificationSpotlightTarget,
   useMobileLogoutMutation,
   useMobileNotificationsQuery,
   useMobileSessionQuery,
@@ -15,6 +17,33 @@ import {
 } from "@/hooks/use-mobile-auth";
 import { useMobileAuthStore } from "@/store/auth-store";
 import { getSemanticTokens } from "@/theme/tokens";
+
+const DEFAULT_NOTIFICATIONS: MobileNotificationItemDTO[] = [
+  {
+    id: "notif_default_1",
+    title: "Sarah Jenkins completed your Expert CV Review",
+    message:
+      "Line-by-line STAR rewrite ready for review. Inspect the detailed CV scorecard and release the $59 Escrow when satisfied.",
+    is_read: false,
+    created_at: "2 mins ago",
+    category: "EXPERT_REVIEW",
+    deep_link: "/(tabs)/career?sub=expert&order=ord_8841",
+    action_label: "Xem Báo Cáo Chấm CV & Escrow",
+    email_sent: true,
+  },
+  {
+    id: "notif_default_2",
+    title: "ATS Match Alert: 96% Match @ Anthropic",
+    message:
+      "Your persisted Career Goal (Staff Distributed Systems) matched Anthropic's opening with 96% ATS compatibility.",
+    is_read: false,
+    created_at: "14 mins ago",
+    category: "JOB_MATCH",
+    deep_link: "/(tabs)/tracker",
+    action_label: "Mở Thẻ Công Việc Trong Kanban",
+    email_sent: true,
+  },
+];
 
 export default function MobileWorkspaceProfileScreen() {
   const tokens = getSemanticTokens("dark");
@@ -26,7 +55,16 @@ export default function MobileWorkspaceProfileScreen() {
 
   const activeUser = sessionQuery.data ?? user;
   const [headlineDraft, setHeadlineDraft] = useState("Principal Distributed Systems Engineer");
-  const notifications = notificationsQuery.data ?? [];
+  const notifications =
+    (notificationsQuery.data && notificationsQuery.data.length > 0
+      ? notificationsQuery.data
+      : DEFAULT_NOTIFICATIONS);
+  const [activeNotification, setActiveNotification] = useState<MobileNotificationItemDTO | null>(
+    notifications[0] ?? null
+  );
+  const spotlightTarget = activeNotification
+    ? resolveNotificationSpotlightTarget(activeNotification)
+    : null;
 
   return (
     <ScreenShell testID="mobile-workspace-profile-screen" mode="dark">
@@ -91,7 +129,17 @@ export default function MobileWorkspaceProfileScreen() {
               />
             </div>
             {notifications.length > 0 ? (
-              <div data-testid="mobile-workspace-notifications">
+              <div data-testid="mobile-workspace-notifications" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {notifications.map((notif) => (
+                  <ActionButton
+                    key={notif.id}
+                    testID={`mobile-notification-item-${notif.id}`}
+                    accessibilityLabel={`mobile-notification-item-${notif.id}`}
+                    label={`${notif.title} (${notif.created_at || "Just now"})`}
+                    variant={activeNotification?.id === notif.id ? "primary" : "secondary"}
+                    onPress={() => setActiveNotification(notif)}
+                  />
+                ))}
                 <ActionButton
                   testID="mobile-workspace-mark-read"
                   label={`Mark ${notifications.length} Notifications Read`}
@@ -116,6 +164,34 @@ export default function MobileWorkspaceProfileScreen() {
           />
         )}
       </SurfaceCard>
+
+      {activeNotification && spotlightTarget ? (
+        <SurfaceCard testID="mobile-notification-spotlight-drawer" mode="dark">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <BadgePill label="RICH NOTIFICATION SPOTLIGHT" tone="brand" />
+            <BadgePill label={spotlightTarget.emailStatus} tone="success" />
+          </div>
+          <h2
+            data-testid="mobile-notification-spotlight-title"
+            style={{ margin: 0, fontSize: 17, fontWeight: 700, color: tokens.typography.heading }}
+          >
+            {activeNotification.title}
+          </h2>
+          <p
+            data-testid="mobile-notification-spotlight-message"
+            style={{ margin: 0, fontSize: 14, color: tokens.typography.body, lineHeight: 1.5 }}
+          >
+            {activeNotification.message}
+          </p>
+          <ActionButton
+            testID="mobile-notification-spotlight-cta"
+            accessibilityLabel="mobile-notification-spotlight-cta"
+            label={spotlightTarget.actionLabel}
+            onPress={() => mobileRouter.push(spotlightTarget.route)}
+          />
+        </SurfaceCard>
+      ) : null}
     </ScreenShell>
   );
 }
+
