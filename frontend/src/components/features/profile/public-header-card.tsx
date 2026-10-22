@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MapPin, AlertTriangle, MessageSquare, Download } from "lucide-react";
+import { MapPin, AlertTriangle, MessageSquare, Download, Bookmark, BookmarkCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface PublicHeaderCardProps {
@@ -10,6 +10,9 @@ export interface PublicHeaderCardProps {
   seekingStatus?: string;
   headline?: string;
   location?: string;
+  isBookmarked?: boolean;
+  isBookmarkPending?: boolean;
+  onBookmarkToggle?: () => void;
   onReportClick: () => void;
   onContactClick: () => void;
   onDownloadResume: () => void;
@@ -21,6 +24,9 @@ export function PublicHeaderCard({
   seekingStatus,
   headline,
   location,
+  isBookmarked = false,
+  isBookmarkPending = false,
+  onBookmarkToggle,
   onReportClick,
   onContactClick,
   onDownloadResume,
@@ -63,6 +69,33 @@ export function PublicHeaderCard({
         >
           <AlertTriangle className="w-4 h-4 text-amber-500" /> Report Profile
         </Button>
+        {onBookmarkToggle && (
+          <button
+            type="button"
+            data-testid="public-profile-bookmark-btn"
+            aria-label={isBookmarked ? `Remove ${fullName} from shortlist` : `Save ${fullName} to shortlist`}
+            aria-pressed={isBookmarked}
+            disabled={isBookmarkPending}
+            onClick={onBookmarkToggle}
+            className={`min-h-[44px] px-4 py-2 rounded-lg border text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer ${
+              isBookmarked
+                ? "bg-brand-overlay border-brand-primary text-brand-dark"
+                : "bg-surface-card border-surface-border text-typography-main hover:border-brand-primary hover:text-brand-primary"
+            } ${isBookmarkPending ? "opacity-70 animate-pulse" : ""}`}
+          >
+            {isBookmarked ? (
+              <>
+                <BookmarkCheck className="w-4 h-4" aria-hidden="true" />
+                <span>Saved in Shortlist</span>
+              </>
+            ) : (
+              <>
+                <Bookmark className="w-4 h-4" aria-hidden="true" />
+                <span>Save to Shortlist</span>
+              </>
+            )}
+          </button>
+        )}
         <Button
           variant="outline"
           size="sm"

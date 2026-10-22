@@ -23,10 +23,18 @@ export function createStudioPreviewStream(
 
   let frame = 0;
   let lastDrawTime = 0;
+  let videoTrack: MediaStreamTrack | undefined;
+  let audioCtxInstance: AudioContext | null = null;
   const fpsInterval = 1000 / 30; // 30 FPS target throttling
 
   const draw = (now: number) => {
-    if ((onStopRef && !onStopRef.current) || !ctx) return;
+    if ((onStopRef && !onStopRef.current) || !ctx || (videoTrack && videoTrack.readyState === "ended")) {
+      if (audioCtxInstance) {
+        audioCtxInstance.close().catch(() => {});
+        audioCtxInstance = null;
+      }
+      return;
+    }
     requestAnimationFrame(draw);
 
     const elapsed = now - lastDrawTime;
@@ -143,9 +151,10 @@ export function createStudioPreviewStream(
     ctx.fillText(`${name} • 0:30 Pitch`, cx, height * 0.77);
   };
 
-  requestAnimationFrame(draw);
   const stream = canvas.captureStream(30) as MediaStream & { isSynthetic?: boolean };
   stream.isSynthetic = true;
+  videoTrack = stream.getVideoTracks()[0];
+  requestAnimationFrame(draw);
 
   try {
     const AudioContextCtor =
@@ -153,6 +162,7 @@ export function createStudioPreviewStream(
       (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (AudioContextCtor) {
       const audioCtx = new AudioContextCtor();
+      audioCtxInstance = audioCtx;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       gain.gain.value = 0; // Pure silence
