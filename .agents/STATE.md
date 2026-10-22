@@ -1,18 +1,17 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Hypothesis
-- **Task (BEL-139 — Full Platform Option B Remediation & Anti-Recurrence Gates):**
-  1. Fix all 32 FE/BE integration gaps, UI stubs, missing CRUD endpoints, and BE in-memory/hardcoded mocks across all 4 domain tracks.
-  2. Upgrade `scripts/trust-benchmark.py` with automated AST gates blocking uncalled BE endpoints, UI `alert()`/`window.prompt()`/`Simulated` stubs, and unpersisted repositories.
+- **Task (BEL-140 — Mobile App Full Feature Re-Update & Executive UI/UX Re-Skin):**
+  1. **Root Cause of Ugly Mobile UI:** `MainActivity.java` rendered raw Android 1.0 rectangular `LinearLayout`/`Button`/`EditText` without `GradientDrawable` border-radius, borders, pill badges, active bottom-tab indicators, or KPI/media cards, leaving 65% of the screen blank black.
+  2. **Root Cause of Feature Drift:** `mobile/src/` and `mobile/app/` lacked BEL-139 Backend endpoints (`PATCH /v1/tracker/jobs/{id}`, `GET /v1/tracker/jobs/analytics`, `POST /v1/match/ats-scan`, `GET /v1/match/history`, `GET /v1/profile/search/suggest/`, `PATCH /v1/profile/{username}`, `GET /v1/notifications/`).
 
 ## Pre-Mortem Risks
-- Enforce `be_files_over_300_lines = 0`, `fe_files_over_300_lines = 0`, `fe_max_page_lines <= 238`, `fe_arbitrary_hex = 0`, `fe_structural_emoji = 0`, `fe_any = 0`.
-- All new `@router` endpoints must declare `response_model` and `get_current_user` on mutations.
+- Enforce `fe_files_over_300_lines = 0`, `fe_arbitrary_hex = 0`, `fe_structural_emoji = 0`, `fe_any = 0`.
+- Keep all E2E `content-desc` targets (`mobile-discovery-heading`, `mobile-studio-upload-chunks`, `mobile-tracker-move-job_101-INTERVIEW`, `mobile-workspace-heading`) visible above the fold for `UIAutomator2` and `Maestro`.
 
 ## Execution Checklist
-- [x] **Phase 1:** Full-platform forensic audit (`platform_forensic_audit.md`)
-- [x] **Phase 2 (Track 1 BE Core):** Fix Auth avatar/OAuth, Timeline Award PATCH/order & privacy, Media/PDF PII & video-status, Search & DB schema
-- [x] **Phase 3 (Track 2 BE Tools):** Fix Job Tracker PATCH & leak, ATS History & dynamic kit/pulse, Catalogs DB queries, Payments DB sync, CMS/Analytics
-- [x] **Phase 4 (Track 3 FE Core):** Mount global `AuthSessionBootstrap`, fix Mobile Logout, Homepage `<video>`, Avatar upload, Catalogs autocomplete, Timeline Edit/Reorder, PDF auth blob
-- [x] **Phase 5 (Track 4 FE Tools):** Fix CV Studio GET draft/reorder/education, ATS MoMo Tailor callback & History/Questions, Expert Review, Salary params, Kanban Edit, Analytics Copy
-- [x] **Phase 6 (Anti-Recurrence Lock & Verification):** Promote FE-BE wiring & stub gates into `scripts/trust-benchmark.py`, run `pytest`, `tsc`, E2E, and PR checks
+- [x] **Step 1 (TDD Red):** Add failing unit & contract tests in `mobile/tests/` for new BEL-139 mobile APIs & UI design system primitives
+- [x] **Step 2 (Mobile Data & Hooks Re-Update):** Upgrade `schemas.ts`, `use-mobile-discovery.ts`, `use-mobile-studio.ts`, `use-mobile-tracker.ts`, `use-mobile-auth.ts`
+- [x] **Step 3 (React Native UI Re-Skin):** Upgrade `tokens.ts`, `native-runtime.ts`, and all screens in `mobile/app/`
+- [x] **Step 4 (Android Native UI Re-Skin):** Build `BeloogaUiKit.java` + re-skin `MainActivity.java` (`GradientDrawable` cards, pills, waveforms, KPIs, active bottom dock)
+- [x] **Step 5 (Live Emulator E2E & DoD):** Run `bun test`, `bash mobile/scripts/e2e-mobile-adb.sh`, inspect screenshots, run `trust-benchmark.py`, and merge PR

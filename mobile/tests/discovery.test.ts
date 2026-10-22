@@ -4,6 +4,7 @@ import { setMobileFetchTransportForTesting } from "@/services/api-client";
 import {
   buildCandidatePdfExportUrl,
   fetchMobileCandidateProfileBatch,
+  fetchMobileSearchSuggestions,
   fetchMobileTrendingInsights,
   searchMobileCandidates,
 } from "@/hooks/use-mobile-discovery";
@@ -144,5 +145,23 @@ describe("Belooga Mobile Recruiter Talent Discovery & Candidate Profile (BEL-133
     expect(bundle.trust.trust_score).toBe(96);
     expect(bundle.trajectory.total_years_experience).toBe(10);
     expect(buildCandidatePdfExportUrl("alexnguyen")).toContain("/v1/profile/alexnguyen/pdf/");
+  });
+
+  it("fetches autocomplete search suggestions from /v1/profile/search/suggest/", async () => {
+    setMobileFetchTransportForTesting((async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/v1/profile/search/suggest/?q=fast")) {
+        return new Response(
+          JSON.stringify({
+            suggestions: ["FastAPI", "FastAPI Async", "Staff FastAPI Engineer"],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(JSON.stringify({}), { status: 404 });
+    }) as typeof fetch);
+
+    const suggestions = await fetchMobileSearchSuggestions("fast");
+    expect(suggestions).toEqual(["FastAPI", "FastAPI Async", "Staff FastAPI Engineer"]);
   });
 });

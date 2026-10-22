@@ -163,3 +163,42 @@ export const createTrackedJobSchema = z.object({
   notes: z.string().trim(),
 });
 export type CreateTrackedJobInput = z.infer<typeof createTrackedJobSchema>;
+
+export const searchSuggestionsResponseSchema = z.object({
+  suggestions: z.array(z.string()).default([]),
+});
+
+export const atsScanResultSchema = z.object({
+  match_score: z.number().min(0).max(100).default(0),
+  matched_keywords: z.array(z.string()).default([]),
+  missing_keywords: z.array(z.string()).default([]),
+  summary: z.string().default(""),
+});
+export type AtsScanResultDTO = z.infer<typeof atsScanResultSchema>;
+
+export const atsScanHistoryItemSchema = z.object({
+  id: z.string().min(1),
+  job_title: z.string().default(""),
+  company: z.string().default(""),
+  match_score: z.number().default(0),
+  created_at: z.string().default(""),
+});
+export type AtsScanHistoryItemDTO = z.infer<typeof atsScanHistoryItemSchema>;
+
+export const jobPipelineAnalyticsSchema = z.object({
+  total_applications: z.number().default(0),
+  interview_rate: z.number().default(0),
+  average_ats_score: z.number().default(0),
+  by_status: z.record(z.string(), z.number()).default({}),
+});
+export type JobPipelineAnalyticsDTO = z.infer<typeof jobPipelineAnalyticsSchema>;
+
+export const mobileNotificationItemSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().default(""),
+  message: z.string().default(""),
+  is_read: z.boolean().default(false),
+  created_at: z.string().default(""),
+});
+export type MobileNotificationItemDTO = z.infer<typeof mobileNotificationItemSchema>;
+

@@ -68,7 +68,7 @@ javac --release 11 \
     -cp "$PLATFORM_JAR" \
     -d "$BUILD_WORK/obj" \
     "$BUILD_WORK/gen/com/belooga/mobile/R.java" \
-    "$MOBILE_DIR/android/app/src/main/java/com/belooga/mobile/MainActivity.java"
+    "$MOBILE_DIR"/android/app/src/main/java/com/belooga/mobile/*.java
 
 CLASS_FILES=$(find "$BUILD_WORK/obj" -name "*.class")
 "$BUILD_TOOLS/d8" $CLASS_FILES \
