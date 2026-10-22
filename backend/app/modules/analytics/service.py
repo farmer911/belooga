@@ -27,21 +27,15 @@ class AnalyticsService:
 
     async def get_dashboard(self, time_range: str = "7D") -> AnalyticsDashboardResponse:
         if os.getenv("ENVIRONMENT") == "testing":
-            total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
-            bookmarks_count = await self.repo.get_bookmarks_count()
+            total_users, total_scans, active_jobs, bookmarks_count = await self.repo.get_dashboard_counts()
             db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
         else:
             counts = await platform_cache.get_or_set(
-                "analytics:platform_counts",
+                "analytics:dashboard_counts",
                 ttl_seconds=15,
-                loader=lambda: self.repo.get_platform_counts(),
+                loader=lambda: self.repo.get_dashboard_counts(),
             )
-            bookmarks_count = await platform_cache.get_or_set(
-                "analytics:bookmarks_count",
-                ttl_seconds=15,
-                loader=lambda: self.repo.get_bookmarks_count(),
-            )
-            total_users, total_scans, active_jobs = counts[0], counts[1], counts[2]
+            total_users, total_scans, active_jobs, bookmarks_count = counts[0], counts[1], counts[2], counts[3]
             db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
 
         range_norm = (time_range or "7D").upper()
