@@ -17,6 +17,7 @@ import {
 } from "@/hooks/use-mobile-auth";
 import { useMobileAuthStore } from "@/store/auth-store";
 import { getSemanticTokens } from "@/theme/tokens";
+import { UserPostsSection } from "@/components/user-posts-section";
 
 const DEFAULT_NOTIFICATIONS: MobileNotificationItemDTO[] = [
   {
@@ -191,6 +192,8 @@ export default function MobileWorkspaceProfileScreen() {
           />
         </SurfaceCard>
       ) : null}
+
+      <UserPostsSection username={activeUser?.username ?? "alexnguyen"} isOwner />
     </ScreenShell>
   );
 }

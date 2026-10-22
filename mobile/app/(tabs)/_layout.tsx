@@ -1,5 +1,5 @@
 import React from "react";
-import { ActionButton, BadgePill, mobileRouter, ScreenShell } from "@/lib/native-runtime";
+import { ActionButton, mobileRouter, ScreenShell } from "@/lib/native-runtime";
 import { getSemanticTokens } from "@/theme/tokens";
 
 export interface MobileTabDescriptor {

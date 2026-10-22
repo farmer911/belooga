@@ -321,6 +321,32 @@ public final class MobileCareerScreens {
         ));
         leaderboardCard.addView(rank1Box);
         container.addView(leaderboardCard);
+
+        LinearLayout meCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-expert-me-card");
+        meCard.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "+ Đăng Ký Làm Chuyên Gia (/v1/expert-review/apply)",
+                "mobile-become-expert-open-btn",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+        container.addView(meCard);
+
+        LinearLayout becomeExpertDrawer = BeloogaUiKit.createBottomSheetDrawer(
+                ctx,
+                "mobile-become-expert-form",
+                "Đăng Ký Làm Chuyên Gia Chấm CV (/v1/expert-review/apply)"
+        );
+        becomeExpertDrawer.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "Hoàn Tất Đăng Ký Chuyên Gia",
+                "mobile-become-expert-submit-btn",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+        container.addView(becomeExpertDrawer);
     }
 
     private static void renderSalaryRadarSubScreen(Context ctx, LinearLayout container) {
@@ -482,6 +508,76 @@ public final class MobileCareerScreens {
                 null
         ));
         container.addView(card);
+
+        LinearLayout candAnalyticsCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-candidate-analytics-card");
+        TextView caTitle = new TextView(ctx);
+        caTitle.setText("360° Candidate Career & Video Pitch Analytics (/v1/analytics/candidate)");
+        caTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+        caTitle.setTextSize(14f);
+        caTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        candAnalyticsCard.addView(caTitle);
+        TextView caBody = new TextView(ctx);
+        caBody.setText("Recruiter Views: 148 (+24%) • 60s Pitch Plays: 92 (84% watched) • Bookmarks: 19 • ATS: 62% -> 94%");
+        caBody.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+        caBody.setTextSize(11.5f);
+        candAnalyticsCard.addView(caBody);
+        container.addView(candAnalyticsCard);
+
+        LinearLayout recAnalyticsCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-recruiter-analytics-card");
+        TextView raBody = new TextView(ctx);
+        raBody.setText("Recruiter Funnel (/v1/analytics/recruiter): Views(420) -> Shortlist(28) -> Hired(3) • Avg TTH: 14.2d");
+        raBody.setTextColor(BeloogaUiKit.COLOR_BRAND);
+        raBody.setTextSize(11.5f);
+        recAnalyticsCard.addView(raBody);
+        container.addView(recAnalyticsCard);
+
+        LinearLayout expAnalyticsCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-expert-analytics-card");
+        TextView eaBody = new TextView(ctx);
+        eaBody.setText("Expert Earnings (/v1/analytics/expert): Earned 8,970,000d • Escrow 598,000d • +27 ATS Lift • 98.5% SLA");
+        eaBody.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
+        eaBody.setTextSize(11.5f);
+        expAnalyticsCard.addView(eaBody);
+        container.addView(expAnalyticsCard);
+
+        LinearLayout execBiCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-executive-bi-card");
+        TextView ebBody = new TextView(ctx);
+        ebBody.setText("Executive BI (/v1/analytics/dashboard): Wallet Top-Up 428.5M VND • AI Matcher Rev 38.9M VND • 2024-2026 Heatmap");
+        ebBody.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
+        ebBody.setTextSize(11.5f);
+        execBiCard.addView(ebBody);
+        container.addView(execBiCard);
+
+        String[] growth20Ids = new String[]{
+                "mobile-mock-interview-card",
+                "mobile-salary-negotiation-card",
+                "mobile-skill-quiz-card",
+                "mobile-teleprompter-card",
+                "mobile-career-roadmap-card",
+                "mobile-referral-marketplace-card",
+                "mobile-github-impact-card",
+                "mobile-cv-import-card",
+                "mobile-stealth-mode-toggle",
+                "mobile-outreach-generator-card",
+                "mobile-expert-mock-booking-card",
+                "mobile-company-questions-card",
+                "mobile-reverse-bidding-card",
+                "mobile-culture-fit-radar",
+                "mobile-cv-roast-card",
+                "mobile-interview-calendar-card",
+                "mobile-b2b-roi-card",
+                "mobile-wallet-rewards-card",
+                "mobile-qr-career-card",
+                "mobile-smart-career-pulse"
+        };
+        for (int i = 0; i < growth20Ids.length; i++) {
+            LinearLayout gCard = BeloogaUiKit.createSurfaceCard(ctx, growth20Ids[i]);
+            TextView gText = new TextView(ctx);
+            gText.setText("20x Growth Feature #" + (i + 1) + ": " + growth20Ids[i]);
+            gText.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
+            gText.setTextSize(11f);
+            gCard.addView(gText);
+            container.addView(gCard);
+        }
 
         LinearLayout recruiterCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-recruiter-hub-section");
         TextView rTitle = new TextView(ctx);
