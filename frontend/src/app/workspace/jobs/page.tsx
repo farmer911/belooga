@@ -32,25 +32,14 @@ export default function JobTrackerKanbanPage() {
 
   const editJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      try {
-        const res = await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}`, {
-          company_name: editForm.company_name,
-          position_title: editForm.position_title,
-          expected_salary: editForm.expected_salary || undefined,
-          notes: editForm.notes || undefined,
-          interview_date: editForm.interview_date || undefined,
-        });
-        return res.data;
-      } catch {
-        return {
-          id: jobId,
-          company_name: editForm.company_name,
-          position_title: editForm.position_title,
-          expected_salary: editForm.expected_salary || undefined,
-          notes: editForm.notes || undefined,
-          interview_date: editForm.interview_date || undefined,
-        } as Partial<TrackedJob> & { id: string };
-      }
+      const res = await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}`, {
+        company_name: editForm.company_name,
+        position_title: editForm.position_title,
+        expected_salary: editForm.expected_salary || undefined,
+        notes: editForm.notes || undefined,
+        interview_date: editForm.interview_date || undefined,
+      });
+      return res.data;
     },
     onSuccess: (updated) => {
       queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>

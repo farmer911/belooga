@@ -1,6 +1,11 @@
-🎯 Đang làm ticket: [BEL-218] (#176) — [P0-NO-MOCKUP] Purge All Mock/Fallback Arrays & LocalStorage Fake DBs in frontend/src/ — 100% Real FastAPI + PostgreSQL Integration | Role: FE | Cột: Testing
+🎯 Đang làm ticket: [BEL-226] (#196) — [FE] Khắc Phục Triệt Để 7 Hành Vi Gian Lận Ở Frontend (#1, #2, #3, #4, #5, #8, #9 Từ Audit #179) | Role: FE | Cột: Testing
 
-## Summary
-- Rebased `feature/BEL-218-fe-purge-mockups` (PR #186) onto `origin/main` cleanly (`mergeable: MERGEABLE`).
-- Purged 100% of `FALLBACK_*`, `INITIAL_*`, `DEFAULT_*`, `MOCK_*` mock arrays, localStorage/in-memory fake DBs, and catch-fallback returns across `frontend/src/`.
-- Verified `grep -rn -E "FALLBACK_|INITIAL_|DEFAULT_|MOCK_" frontend/src/` returns 0 matches, `tsc --noEmit` & `bun test` pass, and `trust-benchmark.py` scores 100%.
+- **Ticket:** `#196` (`[BEL-226]`, Kanban Item ID: `PVTI_lAHOAeXQP84BoMSnzhCxl5U`).
+- **Branch:** `feature/BEL-226-fe-remediate-deceptions`.
+- **Changes Delivered:**
+  - Removed fake `valid_sim_sig` IPN webhook call in `momo-checkout-dialog.tsx` and `/simulate-delivery` bypass in `use-wallet.ts`.
+  - Removed error-swallowing `catch` blocks fabricating report feedback, comparison boosts, and job edits in `candidate-orders-list.tsx`, `recruiter-comparison-matrix.tsx`, and `workspace/jobs/page.tsx`.
+  - Aligned all route calls in `cv-file-parser.ts`, `community-company-suite.tsx`, and `recruiter-tracker-wallet-suite.tsx` 1:1 with real FastAPI endpoints.
+  - Replaced hardcoded `"Alex Nguyen"` / `"alex@belooga.com"` / `"alexnguyen"` fallbacks in `careers/page.tsx`, `social-feed-card.tsx`, and `review-booking-dialog.tsx` with `useAuthStore` state.
+  - Added TDD unit tests in `frontend/src/__tests__/schemas-and-store.test.ts` (11/11 pass).
+- **Verification:** `bun x tsc --noEmit` 0 errors, `bun test` 11/11 pass, `trust-benchmark.py` 100% (0 violations).

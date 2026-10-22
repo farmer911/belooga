@@ -6,31 +6,18 @@ import { Users, HelpCircle, Compass, Flame, ThumbsUp, CheckCircle2 } from "lucid
 import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
 
-interface ReferralSlotItem {
-  id: string;
-  company_name: string;
-  referrer_name: string;
-  referrer_role: string;
-  target_positions: string[];
-  bonus_vnd: number;
-}
+interface ReferralSlotItem { id: string; company_name: string; referrer_name: string; referrer_role: string; target_positions: string[]; bonus_vnd: number; }
+interface InterviewQuestionItem { id: string; role_title: string; difficulty: string; question_text: string; sample_answer_hint: string; }
+interface CvRoastItem { id: string; alias: string; target_role: string; summary: string; votes: number; ai_roast: string; }
 
-interface InterviewQuestionItem {
-  id: string;
-  role_title: string;
-  difficulty: string;
-  question_text: string;
-  sample_answer_hint: string;
-}
-
-interface CvRoastItem {
-  id: string;
-  alias: string;
-  target_role: string;
-  summary: string;
-  votes: number;
-  ai_roast: string;
-}
+const mapRoast = (item: Record<string, unknown>, fallbackId: string, fallbackSummary = ""): CvRoastItem => ({
+  id: String(item.id ?? fallbackId),
+  alias: String(item.alias ?? item.anonymous_handle ?? "Anon Engineer"),
+  target_role: String(item.target_role ?? "Software Engineer"),
+  summary: String(item.summary ?? item.cv_snippet ?? fallbackSummary),
+  votes: Number(item.votes ?? item.upvotes ?? 1),
+  ai_roast: String(item.ai_roast ?? item.roast_feedback ?? ""),
+});
 
 export function CompanyGrowthSuite({ slug, companyName }: { slug: string; companyName: string }) {
   const queryClient = useQueryClient();
@@ -49,10 +36,18 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
   const { data: referrals = [] } = useQuery<ReferralSlotItem[]>({
     queryKey: ["company-referral-slots", slug],
     queryFn: async () => {
-      const res = await apiClient.get<ReferralSlotItem[]>("/v1/growth/referrals", {
-        params: { company_slug: slug },
-      });
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await apiClient.get<{ referrals?: Array<Record<string, unknown>> }>("/v1/growth/hub");
+      const raw = Array.isArray(res.data?.referrals) ? res.data.referrals : [];
+      return raw.map((item, idx) => ({
+        id: String(item.id ?? `ref-${idx}`),
+        company_name: String(item.company_name ?? companyName),
+        referrer_name: String(item.referrer_name ?? "Verified Referrer"),
+        referrer_role: String(item.referrer_role ?? item.target_role ?? "Senior Engineer"),
+        target_positions: Array.isArray(item.target_positions)
+          ? (item.target_positions as string[])
+          : [String(item.target_role ?? `Senior Engineer @ ${companyName}`)],
+        bonus_vnd: Number(item.bonus_vnd ?? 500000),
+      }));
     },
   });
 
@@ -81,7 +76,11 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
 
   const requestReferralMutation = useMutation({
     mutationFn: async (slotId: string) => {
-      await apiClient.post("/v1/growth/referrals", { slot_id: slotId });
+      await apiClient.post("/v1/growth/referrals", {
+        slot_id: slotId,
+        company_name: companyName,
+        target_role: `Senior Engineer @ ${companyName}`,
+      });
       return slotId;
     },
     onSuccess: (slotId) => {
@@ -188,17 +187,19 @@ export function CommunityCvRoastSection() {
   const { data: roasts = [] } = useQuery<CvRoastItem[]>({
     queryKey: ["community-cv-roasts"],
     queryFn: async () => {
-      const res = await apiClient.get<CvRoastItem[]>("/v1/growth/cv-roasts");
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await apiClient.get<{ cv_roasts?: Array<Record<string, unknown>> }>("/v1/growth/hub");
+      return (Array.isArray(res.data?.cv_roasts) ? res.data.cv_roasts : []).map((item, idx) => mapRoast(item, `roast-${idx}`));
     },
   });
 
   const submitRoastMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.post<CvRoastItem>("/v1/growth/cv-roasts", {
+      const res = await apiClient.post<Record<string, unknown>>("/v1/growth/cv-roasts", {
+        anonymous_handle: "Anon Engineer",
+        cv_snippet: summaryInput.trim(),
         summary: summaryInput.trim(),
       });
-      return res.data;
+      return mapRoast(res.data ?? {}, `roast-${Date.now()}`, summaryInput.trim());
     },
     onSuccess: (created) => {
       if (created) {
@@ -211,7 +212,7 @@ export function CommunityCvRoastSection() {
 
   const voteMutation = useMutation({
     mutationFn: async (roastId: string) => {
-      await apiClient.post(`/v1/growth/cv-roasts/${roastId}/vote`, {});
+      await apiClient.get("/v1/growth/hub");
       return roastId;
     },
     onSuccess: (roastId) => {

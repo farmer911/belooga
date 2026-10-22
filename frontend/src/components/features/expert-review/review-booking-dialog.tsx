@@ -62,9 +62,10 @@ export function ReviewBookingDialog({
 
   const uploadResumeMutation = useMutation({
     mutationFn: async (file: File) => {
+      const activeUser = user?.username || "";
       const [uploadRes, parsed] = await Promise.allSettled([
-        uploadResume(file, user?.username || "alexnguyen"),
-        extractCvFileContent(file, user?.username || "alexnguyen"),
+        activeUser ? uploadResume(file, activeUser) : Promise.reject(new Error("unauthenticated")),
+        extractCvFileContent(file, activeUser || undefined),
       ]);
       const url = uploadRes.status === "fulfilled" && uploadRes.value?.resume_url
         ? uploadRes.value.resume_url

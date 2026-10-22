@@ -96,6 +96,7 @@ export const WALLET_TOPUP_API_ENDPOINT = "/v1/wallet/topup" as const;
 export const WALLET_PAY_API_ENDPOINT = "/v1/wallet/pay" as const;
 export const EXPERT_SIMULATE_DELIVERY_ENDPOINT = "/v1/expert-review/orders/{order_id}/simulate-delivery" as const;
 export const EXPERT_COMPLETE_ORDER_ENDPOINT = "/v1/expert-review/orders/{order_id}/complete" as const;
+export const MOMO_IPN_WEBHOOK_ENDPOINT = "/v1/payments/momo/ipn" as const;
 export const BLOG_POSTS_API_ENDPOINT = "/v1/blog/posts/" as const;
 export const BLOG_POST_LIKE_API_ENDPOINT = "/v1/blog/posts/{post_id}/like" as const;
 export const BLOG_POST_COMMENTS_API_ENDPOINT = "/v1/blog/posts/{post_id}/comments" as const;

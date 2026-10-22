@@ -12,7 +12,7 @@ description: Frontend Career Acceleration, Monetization & Executive Analytics Pa
 - Page: `frontend/src/app/ats-diagnostics/page.tsx` (235 lines, client component)
 - Page: `frontend/src/app/cv-studio/page.tsx` (227 lines, client component)
 - Page: `frontend/src/app/salary-benchmark/page.tsx` (200 lines, client component)
-- Page: `frontend/src/app/workspace/jobs/page.tsx` (231 lines, client component)
+- Page: `frontend/src/app/workspace/jobs/page.tsx` (220 lines, client component)
 - Page: `frontend/src/app/workspace/wallet/page.tsx` (217 lines, client component)
 - Page: `frontend/src/app/workspace/analytics/page.tsx` (213 lines, client component)
 - Page: `frontend/src/app/recruiter/hub/page.tsx` (199 lines, client component)

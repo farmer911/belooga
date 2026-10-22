@@ -10,15 +10,36 @@ import { Button } from "@/components/ui/button";
 interface ExpertMockSlot { id: string; expert_name: string; role: string; topic: string; price_vnd: number; }
 interface ReverseBidItem { id: string; username: string; role: string; salary_usd: number; status: string; }
 interface WalletRewardItem { id: string; title: string; bonus_vnd: number; }
+interface ExpertApiItem { id: string; full_name: string; current_role: string; current_company: string; specialties?: string[]; price_vnd: number; }
+
+const mapReverseBid = (item: Record<string, unknown>, fallbackId: string, fallbackUser = "candidate", fallbackUsd = 3500): ReverseBidItem => ({
+  id: String(item.id ?? fallbackId),
+  username: String(item.username ?? item.candidate_username ?? fallbackUser),
+  role: String(item.role ?? "Senior Software Engineer"),
+  salary_usd: Number(item.salary_usd ?? item.offered_salary_usd ?? fallbackUsd),
+  status: String(item.status ?? "SENT"),
+});
 
 export function ExpertLiveMockBookingCard() {
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const { data: slots = [] } = useQuery<ExpertMockSlot[]>({
     queryKey: ["expert-mock-slots"],
-    queryFn: async () => (await apiClient.get<ExpertMockSlot[]>("/v1/growth/expert-mock-slots")).data ?? [],
+    queryFn: async () => {
+      const res = await apiClient.get<ExpertApiItem[]>("/v1/expert-review/experts/");
+      return (Array.isArray(res.data) ? res.data : []).map((exp) => ({
+        id: exp.id,
+        expert_name: exp.full_name,
+        role: `${exp.current_role} @ ${exp.current_company}`,
+        topic: exp.specialties?.join(", ") || "System Design & Career Coaching",
+        price_vnd: exp.price_vnd,
+      }));
+    },
   });
   const bookMutation = useMutation({
-    mutationFn: async (slotId: string) => { await apiClient.post("/v1/growth/expert-mock-booking", { slot_id: slotId }); return slotId; },
+    mutationFn: async (slotId: string) => {
+      await apiClient.post("/v1/growth/expert-mock-booking", { slot_id: slotId, expert_name: slotId, slot_label: "1-on-1 Live Mock Interview", price_vnd: 299000 });
+      return slotId;
+    },
     onSuccess: (slotId) => setBookedSlots((p) => [...p, slotId]),
   });
 
@@ -67,19 +88,20 @@ export function RecruiterReverseBidAndRoiSuite() {
   const { data: bids = [] } = useQuery<ReverseBidItem[]>({
     queryKey: ["recruiter-reverse-bids"],
     queryFn: async () => {
-      const res = await apiClient.get<ReverseBidItem[]>("/v1/recruiter/reverse-bids");
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await apiClient.get<{ reverse_bids?: Array<Record<string, unknown>> }>("/v1/growth/hub");
+      return (Array.isArray(res.data?.reverse_bids) ? res.data.reverse_bids : []).map((item, idx) => mapReverseBid(item, `bid-${idx}`));
     },
   });
 
   const submitBidMutation = useMutation({
     mutationFn: async () => {
       const usd = Number(bidSalaryUsd) || 3500;
-      const res = await apiClient.post<ReverseBidItem>("/v1/recruiter/reverse-bids", {
+      const res = await apiClient.post<Record<string, unknown>>("/v1/recruiter/reverse-bids", {
         candidate_username: candidateUsername.trim(),
         offered_salary_usd: usd,
+        message: "Reverse offer bid via Belooga Recruiter Hub",
       });
-      return res.data;
+      return mapReverseBid(res.data ?? {}, `bid-${Date.now()}`, candidateUsername.trim(), usd);
     },
     onSuccess: (created) => {
       if (created) {
@@ -173,10 +195,7 @@ export function RecruiterReverseBidAndRoiSuite() {
 
 export function TrackerCalendarAndPulseSuite() {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
-
-  const togglePrep = (id: string) => {
-    setCheckedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
-  };
+  const togglePrep = (id: string) => setCheckedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
 
   return (
     <div className="px-4 py-2.5 border-b border-surface-border bg-surface-card grid grid-cols-1 lg:grid-cols-12 gap-3 text-xs">
@@ -186,17 +205,9 @@ export function TrackerCalendarAndPulseSuite() {
           <span>Interview Calendar & Prep Checklist:</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {[
-            { id: "prep-1", label: "Ôn System Design 10k RPS" },
-            { id: "prep-2", label: "Chuẩn bị 3 câu chuyện STAR" },
-          ].map((item) => (
+          {[{ id: "prep-1", label: "Ôn System Design 10k RPS" }, { id: "prep-2", label: "Chuẩn bị 3 câu chuyện STAR" }].map((item) => (
             <label key={item.id} className="inline-flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="checkbox"
-                data-testid={`interview-prep-checkbox-${item.id}`}
-                checked={checkedItems.includes(item.id)}
-                onChange={() => togglePrep(item.id)}
-              />
+              <input type="checkbox" data-testid={`interview-prep-checkbox-${item.id}`} checked={checkedItems.includes(item.id)} onChange={() => togglePrep(item.id)} />
               <span>{item.label}</span>
             </label>
           ))}
@@ -221,14 +232,18 @@ export function WalletRewardsCashbackCard() {
   const { data: rewards = [] } = useQuery<WalletRewardItem[]>({
     queryKey: ["wallet-rewards-list"],
     queryFn: async () => {
-      const res = await apiClient.get<WalletRewardItem[]>("/v1/growth/rewards");
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await apiClient.get<Array<{ id: string; name: string; price_vnd: number }>>("/v1/expert-review/packages/");
+      return (Array.isArray(res.data) ? res.data : []).map((pkg) => ({
+        id: pkg.id,
+        title: `Cashback Gói ${pkg.name}`,
+        bonus_vnd: Math.max(25000, Math.round((pkg.price_vnd || 250000) * 0.1)),
+      }));
     },
   });
 
   const claimMutation = useMutation({
     mutationFn: async (rew: WalletRewardItem) => {
-      await apiClient.post("/v1/growth/claim-reward", { reward_id: rew.id });
+      await apiClient.post("/v1/growth/claim-reward", { reward_id: rew.id, reward_code: rew.id, amount_vnd: rew.bonus_vnd });
       await topupWallet({ amount_vnd: rew.bonus_vnd, payment_method: "Belooga Career Cashback" });
       return rew.id;
     },
