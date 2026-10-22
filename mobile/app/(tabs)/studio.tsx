@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { ActionButton, BadgePill, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
+import {
+  BadgePill,
+  NeumorphicButton,
+  NeumorphicCard,
+  NeumorphicInput,
+  NeumorphicInsetWell,
+  ScreenShell,
+} from "@/lib/native-runtime";
 import {
   extractMobileCvFile,
   loadMobileProfileCvText,
@@ -11,10 +18,10 @@ import {
   useMobileChunkUploadMutation,
   useMobileTeleprompterMutation,
 } from "@/hooks/use-mobile-studio";
-import { getSemanticTokens } from "@/theme/tokens";
+import { getSemanticTokens, NEUMORPHIC_TOKENS } from "@/theme/tokens";
 
 export default function MobilePitchStudioScreen() {
-  const tokens = getSemanticTokens("dark");
+  const tokens = getSemanticTokens("neumorphic");
   const [targetRole, setTargetRole] = useState("Staff Backend Engineer");
   const [jobDescription, setJobDescription] = useState("");
   const [cvText, setCvText] = useState("Python • FastAPI • PostgreSQL 16 • React Native");
@@ -67,8 +74,8 @@ export default function MobilePitchStudioScreen() {
   };
 
   return (
-    <ScreenShell testID="mobile-pitch-studio-screen" mode="dark">
-      <SurfaceCard testID="mobile-teleprompter-card" mode="dark">
+    <ScreenShell testID="mobile-pitch-studio-screen" mode="neumorphic">
+      <NeumorphicCard testID="mobile-teleprompter-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <BadgePill label="WEBRTC 60S STUDIO • H.264" tone="brand" />
           <BadgePill label="1080P 60FPS READY" tone="success" />
@@ -79,18 +86,11 @@ export default function MobilePitchStudioScreen() {
         >
           60s Video Elevator Pitch Studio
         </h1>
-        <input
-          data-testid="mobile-studio-role-input"
+        <NeumorphicInput
+          testID="mobile-studio-role-input"
           value={targetRole}
           placeholder="Target Role"
           onChange={(e) => setTargetRole(e.target.value)}
-          style={{
-            backgroundColor: tokens.surface.elevated,
-            color: tokens.typography.main,
-            border: `1px solid ${tokens.surface.border}`,
-            borderRadius: 12,
-            padding: "11px 14px",
-          }}
         />
         <textarea
           data-testid="mobile-studio-jd-input"
@@ -98,16 +98,16 @@ export default function MobilePitchStudioScreen() {
           placeholder="Paste key job requirements for AI Teleprompter & ATS Scan..."
           onChange={(e) => setJobDescription(e.target.value)}
           style={{
-            backgroundColor: tokens.surface.elevated,
+            backgroundColor: NEUMORPHIC_TOKENS.recessedWell,
             color: tokens.typography.main,
-            border: `1px solid ${tokens.surface.border}`,
-            borderRadius: 12,
+            borderRadius: 14,
+            boxShadow: NEUMORPHIC_TOKENS.insetRecessedShadow,
             padding: "11px 14px",
             minHeight: 72,
           }}
         />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-studio-generate-script"
             label={
               teleprompterMutation.isPending ? "Generating..." : "Generate AI Teleprompter Script"
@@ -116,7 +116,7 @@ export default function MobilePitchStudioScreen() {
             disabled={teleprompterMutation.isPending}
             onPress={handleGenerateScript}
           />
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-studio-ats-scan"
             label={atsScanMutation.isPending ? "Scanning..." : "Run ATS Match Scan"}
             variant="secondary"
@@ -125,14 +125,14 @@ export default function MobilePitchStudioScreen() {
           />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-ats-upload-file-btn"
             accessibilityLabel="mobile-ats-upload-file-btn"
             label="Tải File CV (PDF/DOCX)"
             variant="secondary"
             onPress={() => void handleUploadCvFile()}
           />
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-ats-load-profile-btn"
             accessibilityLabel="mobile-ats-load-profile-btn"
             label="Nạp CV Hồ Sơ"
@@ -141,27 +141,18 @@ export default function MobilePitchStudioScreen() {
           />
         </div>
         {teleprompterMutation.data ? (
-          <p
-            data-testid="mobile-studio-script-output"
-            style={{
-              margin: 0,
-              padding: 12,
-              borderRadius: 12,
-              backgroundColor: tokens.surface.elevated,
-              color: tokens.typography.main,
-            }}
-          >
-            {teleprompterMutation.data.elevator_pitch_script}
-          </p>
+          <NeumorphicInsetWell testID="mobile-studio-script-output">
+            <span>{teleprompterMutation.data.elevator_pitch_script}</span>
+          </NeumorphicInsetWell>
         ) : null}
         {atsScanMutation.data ? (
           <div data-testid="mobile-studio-ats-score">
             ATS Compatibility Score: {atsScanMutation.data.match_score}%
           </div>
         ) : null}
-      </SurfaceCard>
+      </NeumorphicCard>
 
-      <SurfaceCard testID="mobile-camera-upload-card" mode="dark">
+      <NeumorphicCard testID="mobile-camera-upload-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div data-testid="mobile-studio-upload-progress" style={{ fontWeight: 700, color: tokens.brand.primary }}>
             Upload Progress: {uploadPercent}% {uploadPercent === 100 ? "(3/3 Chunks Assembled)" : ""}
@@ -171,7 +162,7 @@ export default function MobilePitchStudioScreen() {
         {uploadedUrl ? (
           <div data-testid="mobile-studio-uploaded-url">Published Pitch: {uploadedUrl}</div>
         ) : null}
-        <ActionButton
+        <NeumorphicButton
           testID="mobile-studio-upload-chunks"
           label={
             chunkUploadMutation.isPending
@@ -181,7 +172,7 @@ export default function MobilePitchStudioScreen() {
           disabled={chunkUploadMutation.isPending}
           onPress={handleStartChunkUpload}
         />
-      </SurfaceCard>
+      </NeumorphicCard>
     </ScreenShell>
   );
 }

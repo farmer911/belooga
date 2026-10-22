@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import {
-  ActionButton,
   BadgePill,
   mobileRouter,
+  NeumorphicButton,
+  NeumorphicCard,
+  NeumorphicInput,
   ScreenShell,
-  SurfaceCard,
 } from "@/lib/native-runtime";
 import { MobileNotificationItemDTO } from "@/lib/schemas";
 import {
@@ -20,7 +21,7 @@ import { getSemanticTokens } from "@/theme/tokens";
 import { UserPostsSection } from "@/components/user-posts-section";
 
 export default function MobileWorkspaceProfileScreen() {
-  const tokens = getSemanticTokens("dark");
+  const tokens = getSemanticTokens("neumorphic");
   const user = useMobileAuthStore((s) => s.user);
   const sessionQuery = useMobileSessionQuery();
   const notificationsQuery = useMobileNotificationsQuery();
@@ -38,8 +39,8 @@ export default function MobileWorkspaceProfileScreen() {
     : null;
 
   return (
-    <ScreenShell testID="mobile-workspace-profile-screen" mode="dark">
-      <SurfaceCard testID="mobile-workspace-user-card" mode="dark">
+    <ScreenShell testID="mobile-workspace-profile-screen" mode="neumorphic">
+      <NeumorphicCard testID="mobile-workspace-user-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <BadgePill label="VERIFIED CANDIDATE WORKSPACE" tone="brand" />
           <BadgePill label="VAULT ENCRYPTED" tone="success" />
@@ -64,21 +65,14 @@ export default function MobileWorkspaceProfileScreen() {
             >
               {activeUser.email}
             </p>
-            <input
-              data-testid="mobile-workspace-headline-input"
+            <NeumorphicInput
+              testID="mobile-workspace-headline-input"
               value={headlineDraft}
               onChange={(e) => setHeadlineDraft(e.target.value)}
               placeholder="Update headline..."
-              style={{
-                backgroundColor: tokens.surface.elevated,
-                color: tokens.typography.main,
-                border: `1px solid ${tokens.surface.border}`,
-                borderRadius: 12,
-                padding: "10px 12px",
-              }}
             />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <ActionButton
+              <NeumorphicButton
                 testID="mobile-workspace-save-profile"
                 label={updateProfileMutation.isPending ? "Saving..." : "Save Headline"}
                 onPress={() =>
@@ -88,7 +82,7 @@ export default function MobileWorkspaceProfileScreen() {
                   })
                 }
               />
-              <ActionButton
+              <NeumorphicButton
                 testID="mobile-workspace-view-public"
                 label="Preview Public Profile"
                 variant="secondary"
@@ -102,16 +96,16 @@ export default function MobileWorkspaceProfileScreen() {
             {notifications.length > 0 ? (
               <div data-testid="mobile-workspace-notifications" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {notifications.map((notif) => (
-                  <ActionButton
+                  <NeumorphicButton
                     key={notif.id}
                     testID={`mobile-notification-item-${notif.id}`}
                     accessibilityLabel={`mobile-notification-item-${notif.id}`}
                     label={`${notif.title} (${notif.created_at || "Just now"})`}
-                    variant={activeNotification?.id === notif.id ? "primary" : "secondary"}
+                    variant={activeNotification?.id === notif.id ? "primary" : "inset"}
                     onPress={() => setActiveNotification(notif)}
                   />
                 ))}
-                <ActionButton
+                <NeumorphicButton
                   testID="mobile-workspace-mark-read"
                   label={`Mark ${notifications.length} Notifications Read`}
                   variant="secondary"
@@ -119,7 +113,7 @@ export default function MobileWorkspaceProfileScreen() {
                 />
               </div>
             ) : null}
-            <ActionButton
+            <NeumorphicButton
               testID="mobile-workspace-logout"
               label={logoutMutation.isPending ? "Signing Out..." : "Sign Out"}
               variant="danger"
@@ -128,16 +122,16 @@ export default function MobileWorkspaceProfileScreen() {
             />
           </>
         ) : (
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-workspace-signin"
             label="Sign In to Candidate Vault"
             onPress={() => mobileRouter.replace("/(auth)/login")}
           />
         )}
-      </SurfaceCard>
+      </NeumorphicCard>
 
       {activeNotification && spotlightTarget ? (
-        <SurfaceCard testID="mobile-notification-spotlight-drawer" mode="dark">
+        <NeumorphicCard testID="mobile-notification-spotlight-drawer">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <BadgePill label="RICH NOTIFICATION SPOTLIGHT" tone="brand" />
             <BadgePill label={spotlightTarget.emailStatus} tone="success" />
@@ -154,17 +148,16 @@ export default function MobileWorkspaceProfileScreen() {
           >
             {activeNotification.message}
           </p>
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-notification-spotlight-cta"
             accessibilityLabel="mobile-notification-spotlight-cta"
             label={spotlightTarget.actionLabel}
             onPress={() => mobileRouter.push(spotlightTarget.route)}
           />
-        </SurfaceCard>
+        </NeumorphicCard>
       ) : null}
 
       <UserPostsSection username={activeUser?.username ?? "alexnguyen"} isOwner />
     </ScreenShell>
   );
 }
-

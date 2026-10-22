@@ -7,33 +7,42 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public final class BeloogaUiKit {
-    public static final int COLOR_PAGE = Color.rgb(9, 13, 22);
-    public static final int COLOR_NAVDOCK = Color.rgb(12, 18, 30);
-    public static final int COLOR_CARD = Color.rgb(17, 25, 40);
-    public static final int COLOR_SUBTLE = Color.rgb(11, 17, 30);
-    public static final int COLOR_ELEVATED = Color.rgb(26, 37, 58);
-    public static final int COLOR_BORDER = Color.rgb(38, 52, 77);
-    public static final int COLOR_BRAND = Color.rgb(91, 187, 174);
-    public static final int COLOR_BRAND_MUTED = Color.argb(46, 91, 187, 174);
+    // Neumorphism (Soft UI) Core Palette (BEL-224 / #194)
+    public static final int COLOR_NEUMORPHIC_CANVAS = Color.rgb(224, 229, 236);    // #E0E5EC
+    public static final int COLOR_NEUMORPHIC_INSET = Color.rgb(209, 217, 230);     // #D1D9E6
+    public static final int COLOR_NEUMORPHIC_HIGHLIGHT = Color.rgb(255, 255, 255); // #FFFFFF
+    public static final int COLOR_NEUMORPHIC_SHADOW = Color.rgb(163, 177, 198);    // #A3B1C6
+
+    public static final int COLOR_PAGE = COLOR_NEUMORPHIC_CANVAS;
+    public static final int COLOR_NAVDOCK = COLOR_NEUMORPHIC_CANVAS;
+    public static final int COLOR_CARD = COLOR_NEUMORPHIC_CANVAS;
+    public static final int COLOR_SUBTLE = COLOR_NEUMORPHIC_INSET;
+    public static final int COLOR_ELEVATED = COLOR_NEUMORPHIC_INSET;
+    public static final int COLOR_BORDER = COLOR_NEUMORPHIC_SHADOW;
+    public static final int COLOR_BRAND = Color.rgb(15, 118, 110);                 // #0F766E Soft Extruded Teal
+    public static final int COLOR_BRAND_MUTED = Color.argb(36, 15, 118, 110);
     public static final int COLOR_ACCENT_BLUE = Color.rgb(37, 99, 235);
     public static final int COLOR_MOMO_PINK = Color.rgb(216, 45, 139);
-    public static final int COLOR_SUCCESS = Color.rgb(52, 211, 153);
-    public static final int COLOR_SUCCESS_MUTED = Color.argb(42, 52, 211, 153);
-    public static final int COLOR_WARNING = Color.rgb(251, 191, 36);
-    public static final int COLOR_WARNING_MUTED = Color.argb(40, 251, 191, 36);
-    public static final int COLOR_TEXT_HEADING = Color.rgb(248, 250, 252);
-    public static final int COLOR_TEXT_MAIN = Color.rgb(226, 232, 240);
-    public static final int COLOR_TEXT_MUTED = Color.rgb(148, 163, 184);
-    public static final int COLOR_TEXT_INVERSE = Color.rgb(11, 17, 30);
+    public static final int COLOR_SUCCESS = Color.rgb(15, 118, 110);
+    public static final int COLOR_SUCCESS_MUTED = Color.argb(36, 15, 118, 110);
+    public static final int COLOR_WARNING = Color.rgb(180, 83, 9);
+    public static final int COLOR_WARNING_MUTED = Color.argb(36, 180, 83, 9);
+    public static final int COLOR_TEXT_HEADING = Color.rgb(30, 41, 59);            // #1E293B Slate 800
+    public static final int COLOR_TEXT_MAIN = Color.rgb(30, 41, 59);               // #1E293B
+    public static final int COLOR_TEXT_MUTED = Color.rgb(71, 85, 105);             // #475569 Slate 600
+    public static final int COLOR_TEXT_INVERSE = Color.rgb(255, 255, 255);         // #FFFFFF
 
     public static final int ICON_DISCOVER = 0;
     public static final int ICON_STUDIO = 1;
@@ -67,6 +76,37 @@ public final class BeloogaUiKit {
             gd.setStroke(dp(ctx, strokeDp), strokeColor);
         }
         return gd;
+    }
+
+    public static LayerDrawable createNeumorphicExtrudedDrawable(
+            Context ctx,
+            int fillColor,
+            float radiusDp
+    ) {
+        GradientDrawable shadowLayer = roundedDrawable(ctx, COLOR_NEUMORPHIC_SHADOW, COLOR_NEUMORPHIC_SHADOW, 0f, radiusDp);
+        GradientDrawable highlightLayer = roundedDrawable(ctx, COLOR_NEUMORPHIC_HIGHLIGHT, COLOR_NEUMORPHIC_HIGHLIGHT, 0f, radiusDp);
+        GradientDrawable surfaceLayer = roundedDrawable(ctx, fillColor, COLOR_NEUMORPHIC_HIGHLIGHT, 0.8f, radiusDp);
+
+        LayerDrawable ld = new LayerDrawable(new Drawable[]{shadowLayer, highlightLayer, surfaceLayer});
+        int bevel = dp(ctx, 2f);
+        int inner = dp(ctx, 1.5f);
+        ld.setLayerInset(0, bevel, bevel, 0, 0);
+        ld.setLayerInset(1, 0, 0, bevel, bevel);
+        ld.setLayerInset(2, inner, inner, inner, inner);
+        return ld;
+    }
+
+    public static LayerDrawable createNeumorphicInsetDrawable(Context ctx, float radiusDp) {
+        GradientDrawable topShadow = roundedDrawable(ctx, COLOR_NEUMORPHIC_SHADOW, COLOR_NEUMORPHIC_SHADOW, 0f, radiusDp);
+        GradientDrawable bottomLight = roundedDrawable(ctx, COLOR_NEUMORPHIC_HIGHLIGHT, COLOR_NEUMORPHIC_HIGHLIGHT, 0f, radiusDp);
+        GradientDrawable recessedCore = roundedDrawable(ctx, COLOR_NEUMORPHIC_INSET, COLOR_NEUMORPHIC_SHADOW, 0.6f, radiusDp);
+
+        LayerDrawable ld = new LayerDrawable(new Drawable[]{topShadow, bottomLight, recessedCore});
+        int rim = dp(ctx, 1.5f);
+        ld.setLayerInset(0, 0, 0, rim, rim);
+        ld.setLayerInset(1, rim, rim, 0, 0);
+        ld.setLayerInset(2, rim, rim, rim, rim);
+        return ld;
     }
 
     public static final class NavIconView extends View {
@@ -218,7 +258,7 @@ public final class BeloogaUiKit {
             boolean isActive = (holder == active);
             if (isActive) {
                 holder.topIndicator.setBackground(roundedDrawable(ctx, COLOR_BRAND, COLOR_BRAND, 0f, 99f));
-                holder.iconPill.setBackground(roundedDrawable(ctx, COLOR_BRAND_MUTED, COLOR_BRAND, 0f, 99f));
+                holder.iconPill.setBackground(createNeumorphicInsetDrawable(ctx, 14f));
                 holder.iconView.setIconColor(COLOR_BRAND);
                 holder.labelView.setTextColor(COLOR_BRAND);
                 holder.labelView.setTypeface(Typeface.DEFAULT_BOLD);
@@ -240,8 +280,8 @@ public final class BeloogaUiKit {
     ) {
         LinearLayout bar = new LinearLayout(ctx);
         bar.setOrientation(LinearLayout.HORIZONTAL);
-        bar.setBackground(roundedDrawable(ctx, COLOR_SUBTLE, COLOR_BORDER, 1f, 11f));
-        int p = dp(ctx, 3.5f);
+        bar.setBackground(createNeumorphicInsetDrawable(ctx, 14f));
+        int p = dp(ctx, 4f);
         bar.setPadding(p, p, p, p);
         LinearLayout.LayoutParams barLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -261,7 +301,7 @@ public final class BeloogaUiKit {
             seg.setPadding(dp(ctx, 6f), dp(ctx, 7f), dp(ctx, 6f), dp(ctx, 7f));
             seg.setContentDescription("mobile-segment-" + labels[i].toLowerCase().replace(" ", "-"));
             if (active) {
-                seg.setBackground(roundedDrawable(ctx, COLOR_BRAND, COLOR_BRAND, 0f, 8f));
+                seg.setBackground(createNeumorphicExtrudedDrawable(ctx, COLOR_BRAND, 10f));
                 seg.setTextColor(COLOR_TEXT_INVERSE);
             } else {
                 seg.setBackgroundColor(Color.TRANSPARENT);
@@ -287,10 +327,10 @@ public final class BeloogaUiKit {
     public static LinearLayout createProgressBar(Context ctx, int percent, int fillColor) {
         LinearLayout track = new LinearLayout(ctx);
         track.setOrientation(LinearLayout.HORIZONTAL);
-        track.setBackground(roundedDrawable(ctx, COLOR_ELEVATED, COLOR_BORDER, 0f, 99f));
+        track.setBackground(createNeumorphicInsetDrawable(ctx, 99f));
         LinearLayout.LayoutParams trackLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(ctx, 8f)
+                dp(ctx, 10f)
         );
         trackLp.setMargins(0, dp(ctx, 6f), 0, dp(ctx, 6f));
         track.setLayoutParams(trackLp);
@@ -309,11 +349,11 @@ public final class BeloogaUiKit {
         return track;
     }
 
-    public static LinearLayout createSurfaceCard(Context ctx, String testId) {
+    public static LinearLayout createNeumorphicCard(Context ctx, String testId) {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1f, 20f));
-        card.setElevation(dp(ctx, 4f));
+        card.setBackground(createNeumorphicExtrudedDrawable(ctx, COLOR_CARD, 20f));
+        card.setElevation(dp(ctx, 6f));
         int pad = dp(ctx, 16f);
         card.setPadding(pad, pad, pad, pad);
         if (testId != null && !testId.isEmpty()) {
@@ -328,10 +368,14 @@ public final class BeloogaUiKit {
         return card;
     }
 
+    public static LinearLayout createSurfaceCard(Context ctx, String testId) {
+        return createNeumorphicCard(ctx, testId);
+    }
+
     public static LinearLayout createBottomSheetDrawer(Context ctx, String title, String testId) {
         LinearLayout sheet = new LinearLayout(ctx);
         sheet.setOrientation(LinearLayout.VERTICAL);
-        sheet.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1.2f, 24f));
+        sheet.setBackground(createNeumorphicExtrudedDrawable(ctx, COLOR_CARD, 24f));
         sheet.setElevation(dp(ctx, 6f));
         int pad = dp(ctx, 16f);
         sheet.setPadding(pad, dp(ctx, 10f), pad, pad);
@@ -363,10 +407,10 @@ public final class BeloogaUiKit {
         return sheet;
     }
 
-    public static LinearLayout createSubtleBox(Context ctx) {
+    public static LinearLayout createNeumorphicInsetWell(Context ctx) {
         LinearLayout box = new LinearLayout(ctx);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackground(roundedDrawable(ctx, COLOR_SUBTLE, COLOR_BORDER, 1f, 12f));
+        box.setBackground(createNeumorphicInsetDrawable(ctx, 14f));
         int pad = dp(ctx, 10f);
         box.setPadding(pad, pad, pad, pad);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -376,6 +420,32 @@ public final class BeloogaUiKit {
         lp.setMargins(0, dp(ctx, 6f), 0, dp(ctx, 6f));
         box.setLayoutParams(lp);
         return box;
+    }
+
+    public static LinearLayout createSubtleBox(Context ctx) {
+        return createNeumorphicInsetWell(ctx);
+    }
+
+    public static EditText createNeumorphicInput(Context ctx, String hint, String testId) {
+        EditText input = new EditText(ctx);
+        input.setHint(hint);
+        input.setHintTextColor(COLOR_TEXT_MUTED);
+        input.setTextColor(COLOR_TEXT_HEADING);
+        input.setTextSize(12.5f);
+        input.setSingleLine(true);
+        input.setBackground(createNeumorphicInsetDrawable(ctx, 14f));
+        int pad = dp(ctx, 10f);
+        input.setPadding(pad, pad, pad, pad);
+        if (testId != null && !testId.isEmpty()) {
+            input.setContentDescription(testId);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        lp.setMargins(0, dp(ctx, 6f), 0, dp(ctx, 6f));
+        input.setLayoutParams(lp);
+        return input;
     }
 
     public static TextView createBadgePill(
@@ -406,7 +476,7 @@ public final class BeloogaUiKit {
         avatar.setTextSize(12.5f);
         avatar.setTypeface(Typeface.DEFAULT_BOLD);
         avatar.setGravity(Gravity.CENTER);
-        avatar.setBackground(roundedDrawable(ctx, bgColor, COLOR_BRAND, 1.5f, 999f));
+        avatar.setBackground(createNeumorphicExtrudedDrawable(ctx, bgColor, 999f));
         int size = dp(ctx, 36f);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
         lp.setMargins(0, 0, dp(ctx, 9f), 0);
@@ -414,7 +484,7 @@ public final class BeloogaUiKit {
         return avatar;
     }
 
-    public static Button createActionButton(
+    public static Button createNeumorphicButton(
             Context ctx,
             String label,
             String testId,
@@ -428,7 +498,8 @@ public final class BeloogaUiKit {
         btn.setTextSize(12.5f);
         btn.setTypeface(Typeface.DEFAULT_BOLD);
         btn.setTextColor(textColor);
-        btn.setBackground(roundedDrawable(ctx, bgColor, COLOR_BORDER, 0f, 14f));
+        btn.setBackground(createNeumorphicExtrudedDrawable(ctx, bgColor, 14f));
+        btn.setElevation(dp(ctx, 4f));
         btn.setPadding(dp(ctx, 12f), dp(ctx, 10f), dp(ctx, 12f), dp(ctx, 10f));
         btn.setMinimumHeight(dp(ctx, 48f));
         btn.setMinHeight(dp(ctx, 48f));
@@ -445,6 +516,17 @@ public final class BeloogaUiKit {
         return btn;
     }
 
+    public static Button createActionButton(
+            Context ctx,
+            String label,
+            String testId,
+            int bgColor,
+            int textColor,
+            View.OnClickListener listener
+    ) {
+        return createNeumorphicButton(ctx, label, testId, bgColor, textColor, listener);
+    }
+
     public static LinearLayout createMetricTile(
             Context ctx,
             String metricValue,
@@ -454,7 +536,7 @@ public final class BeloogaUiKit {
         LinearLayout tile = new LinearLayout(ctx);
         tile.setOrientation(LinearLayout.VERTICAL);
         tile.setGravity(Gravity.CENTER);
-        tile.setBackground(roundedDrawable(ctx, COLOR_SUBTLE, COLOR_BORDER, 1f, 12f));
+        tile.setBackground(createNeumorphicInsetDrawable(ctx, 14f));
         int pad = dp(ctx, 8f);
         tile.setPadding(pad, pad, pad, pad);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -495,10 +577,11 @@ public final class BeloogaUiKit {
         chip.setGravity(Gravity.CENTER);
         chip.setTextSize(11f);
         chip.setTypeface(Typeface.DEFAULT_BOLD);
-        int bg = active ? COLOR_BRAND : COLOR_BRAND_MUTED;
         int fg = active ? COLOR_TEXT_INVERSE : COLOR_BRAND;
         chip.setTextColor(fg);
-        chip.setBackground(roundedDrawable(ctx, bg, COLOR_BRAND, 1f, 999f));
+        chip.setBackground(active
+                ? createNeumorphicExtrudedDrawable(ctx, COLOR_BRAND, 999f)
+                : createNeumorphicInsetDrawable(ctx, 999f));
         chip.setPadding(dp(ctx, 12f), dp(ctx, 6f), dp(ctx, 12f), dp(ctx, 6f));
         chip.setMinimumHeight(dp(ctx, 44f));
         chip.setMinHeight(dp(ctx, 44f));
@@ -522,11 +605,10 @@ public final class BeloogaUiKit {
         btn.setGravity(Gravity.CENTER);
         btn.setTextSize(11f);
         btn.setTypeface(Typeface.DEFAULT_BOLD);
-        int bg = bookmarked ? COLOR_BRAND : COLOR_ELEVATED;
+        int bg = bookmarked ? COLOR_BRAND : COLOR_CARD;
         int fg = bookmarked ? COLOR_TEXT_INVERSE : COLOR_TEXT_HEADING;
-        int border = bookmarked ? COLOR_BRAND : COLOR_BORDER;
         btn.setTextColor(fg);
-        btn.setBackground(roundedDrawable(ctx, bg, border, 1f, 10f));
+        btn.setBackground(createNeumorphicExtrudedDrawable(ctx, bg, 12f));
         int touchSize = dp(ctx, 44f);
         btn.setMinimumWidth(touchSize);
         btn.setMinWidth(touchSize);

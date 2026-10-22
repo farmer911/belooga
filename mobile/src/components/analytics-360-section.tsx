@@ -11,7 +11,7 @@ import { getSemanticTokens } from "@/theme/tokens";
 const RANGES = ["7D", "30D", "ALL"] as const;
 
 export function Analytics360Section() {
-  const tokens = getSemanticTokens("dark");
+  const tokens = getSemanticTokens("neumorphic");
   const [range, setRange] = useState<"7D" | "30D" | "ALL">("30D");
 
   const candQuery = useCandidateAnalyticsQuery(range);

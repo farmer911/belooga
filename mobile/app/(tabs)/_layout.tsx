@@ -1,6 +1,6 @@
 import React from "react";
-import { ActionButton, mobileRouter, ScreenShell } from "@/lib/native-runtime";
-import { getSemanticTokens } from "@/theme/tokens";
+import { mobileRouter, NeumorphicButton, NeumorphicInsetWell, ScreenShell } from "@/lib/native-runtime";
+import { getSemanticTokens, NEUMORPHIC_TOKENS } from "@/theme/tokens";
 
 export interface MobileTabDescriptor {
   key: string;
@@ -17,17 +17,18 @@ export const MOBILE_TABS: readonly MobileTabDescriptor[] = [
 ] as const;
 
 export default function MobileTabsLayout({ children }: { children?: React.ReactNode }) {
-  const tokens = getSemanticTokens("dark");
+  const tokens = getSemanticTokens("neumorphic");
   const currentPath = mobileRouter.getState().currentPath;
 
   return (
-    <ScreenShell testID="mobile-tabs-layout" mode="dark" style={{ minHeight: "100vh", justifyContent: "space-between" }}>
+    <ScreenShell testID="mobile-tabs-layout" mode="neumorphic" style={{ minHeight: "100vh", justifyContent: "space-between" }}>
       <header
         data-testid="mobile-brand-header"
         aria-label="mobile-top-app-header"
         style={{
-          backgroundColor: tokens.surface.card,
-          borderBottom: `1px solid ${tokens.surface.border}`,
+          backgroundColor: NEUMORPHIC_TOKENS.extrudedCard,
+          borderBottom: `1px solid ${NEUMORPHIC_TOKENS.shadowDark}`,
+          boxShadow: NEUMORPHIC_TOKENS.dualExtrudedShadow,
           padding: "12px 18px",
           minHeight: 56,
           display: "flex",
@@ -44,8 +45,9 @@ export default function MobileTabsLayout({ children }: { children?: React.ReactN
               width: 36,
               height: 36,
               borderRadius: 999,
-              backgroundColor: tokens.brand.primary,
-              color: tokens.typography.inverse,
+              backgroundColor: NEUMORPHIC_TOKENS.primaryTeal,
+              color: NEUMORPHIC_TOKENS.highlightBevel,
+              boxShadow: NEUMORPHIC_TOKENS.dualExtrudedShadow,
               fontWeight: 800,
               display: "flex",
               alignItems: "center",
@@ -62,20 +64,20 @@ export default function MobileTabsLayout({ children }: { children?: React.ReactN
               data-testid="mobile-connection-status"
               style={{ fontSize: 11, color: tokens.typography.body }}
             >
-              Edge Gateway :8080 • Keystore Vault Active
+              Edge Gateway :8080 • Soft UI Neumorphic Vault
             </div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-header-wallet-pill"
             accessibilityLabel="mobile-header-wallet-pill"
             label="Ví 1.5M+"
-            variant="secondary"
+            variant="inset"
             style={{ borderRadius: 999, padding: "6px 12px" }}
             onPress={() => mobileRouter.replace("/(tabs)/career")}
           />
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-header-notifications-btn"
             accessibilityLabel="mobile-header-notifications-btn"
             label="Alerts (3)"
@@ -97,8 +99,11 @@ export default function MobileTabsLayout({ children }: { children?: React.ReactN
         data-testid="mobile-bottom-tab-bar"
         aria-label="mobile-bottom-nav-bar"
         style={{
-          backgroundColor: tokens.surface.card,
-          border: `1px solid ${tokens.surface.border}`,
+          backgroundColor: NEUMORPHIC_TOKENS.extrudedCard,
+          borderTop: `1px solid ${NEUMORPHIC_TOKENS.highlightBevel}`,
+          borderLeft: `1px solid ${NEUMORPHIC_TOKENS.highlightBevel}`,
+          borderRight: `1px solid ${NEUMORPHIC_TOKENS.shadowDark}`,
+          borderBottom: `1px solid ${NEUMORPHIC_TOKENS.shadowDark}`,
           borderRadius: 24,
           margin: "0 12px 10px",
           padding: "8px 10px",
@@ -106,19 +111,27 @@ export default function MobileTabsLayout({ children }: { children?: React.ReactN
           display: "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
           gap: 6,
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.32)",
+          boxShadow: NEUMORPHIC_TOKENS.dualExtrudedShadow,
         }}
       >
         {MOBILE_TABS.map((tab) => {
           const isActive = currentPath === tab.route;
           return (
-            <ActionButton
+            <NeumorphicInsetWell
               key={tab.key}
-              testID={`mobile-tab-${tab.key}`}
-              label={tab.title}
-              variant={isActive ? "primary" : "secondary"}
-              onPress={() => mobileRouter.replace(tab.route)}
-            />
+              style={{
+                padding: 2,
+                backgroundColor: isActive ? NEUMORPHIC_TOKENS.recessedWell : "transparent",
+                boxShadow: isActive ? NEUMORPHIC_TOKENS.insetRecessedShadow : "none",
+              }}
+            >
+              <NeumorphicButton
+                testID={`mobile-tab-${tab.key}`}
+                label={tab.title}
+                variant={isActive ? "primary" : "secondary"}
+                onPress={() => mobileRouter.replace(tab.route)}
+              />
+            </NeumorphicInsetWell>
           );
         })}
       </nav>
