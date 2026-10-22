@@ -92,6 +92,12 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         missLabel.setText("✓ Đã bóc tách alex_cv.pdf (PDF/DOCX) & tự động quét ATS (97% Match)");
                         missLabel.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/match/extract-cv-file",
+                                "{\"filename\":\"alex_cv.pdf\",\"content_base64\":\"JVBERi0xLjQK\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -107,6 +113,7 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         missLabel.setText("✓ Đã nạp Hồ Sơ & Kinh nghiệm từ DB thật vào ATS Scanner!");
                         missLabel.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.get(ctx, "/v1/profile/alexnguyen/cv-draft/", null);
                     }
                 }
         ));
@@ -122,6 +129,12 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         missLabel.setText("✓ AI Tailored: Injected GraphQL Federation bullet into CV Studio Draft (99% Match)");
                         missLabel.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/match/tailor-cv",
+                                "{\"missing_keywords\":[\"GraphQL Federation\"],\"target_role\":\"Staff Mobile Engineer\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -205,6 +218,12 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         momoStatus.setText("✓ MoMo QR Active [Order #MOMO-8841] • Scan in MoMo App • Escrow Locked (1,475,000 VND)");
                         momoStatus.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/payments/momo/create-qr",
+                                "{\"amount_vnd\":1475000,\"order_info\":\"Expert CV Review\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -238,6 +257,12 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         momoStatus.setText("✓ Đã nạp +500,000 VND vào Ví khả dụng (Available: 2,000,000 VND)");
                         momoStatus.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/wallet/topup",
+                                "{\"amount_vnd\":500000,\"payment_method\":\"MOMO_QR\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -277,6 +302,12 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         momoStatus.setText("✓ Đã nghiệm thu & giải ngân 1,475,000 VND Escrow cho Expert (SLA Step 4/4)");
                         momoStatus.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/expert-review/orders/ord_8841/complete",
+                                "{}",
+                                null
+                        );
                     }
                 }
         ));
@@ -317,7 +348,17 @@ public final class MobileCareerScreens {
                 "mobile-expert-book-btn-exp-1",
                 BeloogaUiKit.COLOR_BRAND,
                 BeloogaUiKit.COLOR_TEXT_INVERSE,
-                null
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/expert-review/orders/",
+                                "{\"expert_id\":\"exp-1\",\"package_id\":\"pkg_senior\",\"target_role\":\"Staff Backend Engineer\"}",
+                                null
+                        );
+                    }
+                }
         ));
         leaderboardCard.addView(rank1Box);
         container.addView(leaderboardCard);
@@ -411,6 +452,12 @@ public final class MobileCareerScreens {
                     public void onClick(View v) {
                         sub.setText("✓ Crawled 1,280 Salary Records (2024-2026) across 4 Verified Market Sources");
                         sub.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                ctx,
+                                "/v1/catalogs/salary-benchmark/crawl",
+                                "{\"role\":\"Staff Backend Engineer\",\"years\":[\"2024\",\"2025\",\"2026\"]}",
+                                null
+                        );
                     }
                 }
         ));
@@ -855,7 +902,7 @@ public final class MobileCareerScreens {
 
             card.addView(BeloogaUiKit.createActionButton(
                     ctx,
-                    "Rotate Session Token Pair (/v1/auth/refresh)",
+                    "Rotate Session Token Pair (/v1/auth/refresh/)",
                     "mobile-vault-rotate-btn",
                     BeloogaUiKit.COLOR_ACCENT_BLUE,
                     BeloogaUiKit.COLOR_TEXT_HEADING,
@@ -863,6 +910,7 @@ public final class MobileCareerScreens {
                         @Override
                         public void onClick(View v) {
                             vaultInfo.setText("✓ Rotated Bearer Token Pair in SecureStore Vault (0ms Downtime)");
+                            BeloogaApiClient.rotateSessionToken(ctx, null);
                         }
                     }
             ));

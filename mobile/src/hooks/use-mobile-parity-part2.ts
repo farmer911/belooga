@@ -116,7 +116,7 @@ export async function triggerMobileSalaryCrawl(role: string): Promise<SalaryCraw
 }
 
 export async function fetchMobileSocialBlogPosts(): Promise<SocialBlogPostDTO[]> {
-  const raw = await mobileApiClient.get<unknown>("/v1/blog/posts");
+  const raw = await mobileApiClient.get<unknown>("/v1/blog/posts/");
   if (Array.isArray(raw)) return z.array(socialBlogPostSchema).parse(raw);
   return z.array(socialBlogPostSchema).parse((raw as { items?: unknown }).items ?? []);
 }
@@ -125,7 +125,7 @@ export async function createMobileSocialBlogPost(input: {
   title: string;
   content: string;
 }): Promise<SocialBlogPostDTO> {
-  const raw = await mobileApiClient.post<unknown>("/v1/blog/posts", {
+  const raw = await mobileApiClient.post<unknown>("/v1/blog/posts/", {
     title: input.title.trim(),
     content: input.content.trim(),
   });

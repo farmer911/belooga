@@ -89,7 +89,7 @@ describe('[BEL-201] Mobile Expert Reviewer Ranking & Leaderboard Screen Parity (
         );
       }
 
-      if (url.endsWith('/feedback')) {
+      if (url.endsWith('/feedback/') || url.endsWith('/feedback')) {
         return new Response(
           JSON.stringify({
             order_id: 'ord_8841',

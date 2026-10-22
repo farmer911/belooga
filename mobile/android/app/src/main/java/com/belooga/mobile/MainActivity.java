@@ -10,10 +10,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class MainActivity extends Activity {
     private LinearLayout contentContainer;
@@ -72,36 +68,8 @@ public class MainActivity extends Activity {
 
         setContentView(rootShell);
         renderDiscoverScreen();
-        syncLiveGatewayTelemetry();
-    }
-
-    private void syncLiveGatewayTelemetry() {
-        new Thread(() -> {
-            HttpURLConnection conn = null;
-            try {
-                URL url = new URL("http://10.0.2.2:8080/v1/profile/search/?limit=5");
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setConnectTimeout(2500);
-                conn.setReadTimeout(2500);
-                int status = conn.getResponseCode();
-                if (status >= 200 && status < 300) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
-                    }
-                    reader.close();
-                }
-            } catch (Exception ignored) {
-                // Gateway offline during unit/local build without emulator network bridge
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
-                }
-            }
-        }).start();
+        BeloogaApiClient.get(this, "/v1/wallet/balance", null);
+        BeloogaApiClient.get(this, "/v1/profile/search/", null);
     }
 
     private LinearLayout buildTopHeader() {
@@ -360,7 +328,14 @@ public class MainActivity extends Activity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        String newSkill = customSkillInput.getText().toString().trim();
                         customSkillInput.setText("");
+                        BeloogaApiClient.post(
+                                MainActivity.this,
+                                "/v1/catalogs/skills",
+                                "{\"name\":\"" + (newSkill.isEmpty() ? "Kubernetes" : newSkill) + "\",\"category\":\"Engineering\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -410,6 +385,11 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         alexBookmarked = !alexBookmarked;
+                        if (alexBookmarked) {
+                            BeloogaApiClient.post(MainActivity.this, "/v1/bookmarks/alexnguyen/", "{}", null);
+                        } else {
+                            BeloogaApiClient.delete(MainActivity.this, "/v1/bookmarks/alexnguyen/", null);
+                        }
                         renderDiscoverScreen();
                     }
                 }
@@ -658,6 +638,12 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         scriptOutput.setText("Pitch Script: Hi, I am Alex, a Staff Engineer specializing in sub-30ms PostgreSQL GIN search & React Native.");
+                        BeloogaApiClient.post(
+                                MainActivity.this,
+                                "/v1/match/interview-kit",
+                                "{\"target_role\":\"Staff Backend Engineer\",\"company_name\":\"Stripe\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -688,6 +674,12 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         uploadProgress.setText("Upload Progress: 100% (3/3 Chunks Assembled)");
+                        BeloogaApiClient.post(
+                                MainActivity.this,
+                                "/v1/media/upload/complete",
+                                "{\"upload_id\":\"up_mobile_60s\",\"total_chunks\":3}",
+                                null
+                        );
                     }
                 }
         ));
@@ -789,6 +781,12 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         jobStatus.setText("Stripe — Staff Mobile Engineer [INTERVIEW] (Synced)");
+                        BeloogaApiClient.patch(
+                                MainActivity.this,
+                                "/v1/tracker/jobs/job_101/status",
+                                "{\"status\":\"INTERVIEW\"}",
+                                null
+                        );
                     }
                 }
         ));
@@ -824,6 +822,12 @@ public class MainActivity extends Activity {
                     public void onClick(View v) {
                         goalSummary.setText("✓ Đã Lưu Mục Tiêu Bền Vững Xuống DB & Vault (Không mất khi tắt App)");
                         goalSummary.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                MainActivity.this,
+                                "/v1/tracker/goals",
+                                "{\"target_role\":\"Staff Distributed Systems\",\"min_salary_usd\":4500}",
+                                null
+                        );
                     }
                 }
         ));
@@ -839,6 +843,12 @@ public class MainActivity extends Activity {
                     public void onClick(View v) {
                         goalSummary.setText("✓ AI Job Matcher (29k VND): Đã tìm thấy 3 Job khớp 96% ATS và đẩy vào Kanban!");
                         goalSummary.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        BeloogaApiClient.post(
+                                MainActivity.this,
+                                "/v1/tracker/goals/goal_1/ai-match",
+                                "{\"payment_method\":\"WALLET\"}",
+                                null
+                        );
                     }
                 }
         ));
