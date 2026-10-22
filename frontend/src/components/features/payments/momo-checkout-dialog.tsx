@@ -96,19 +96,18 @@ export function MomoCheckoutDialog({
   };
 
   const handleSimulatePayment = async () => {
-    try {
-      if (qrData?.order_id) {
-        await apiClient.post("/v1/payments/momo/ipn", {
-          order_id: qrData.order_id,
-          trans_id: `MOMO_SIM_${Date.now()}`,
-          result_code: 0,
-          signature: "valid_sim_sig",
-          amount,
-        });
-      }
-    } catch {
-      // Fallback
+    if (availableBalanceVnd < amount) {
+      await topupWallet({
+        amount_vnd: Math.max(200000, amount - availableBalanceVnd + 100000),
+        payment_method: "MoMo QR",
+      });
     }
+    await payWithWallet({
+      amount_vnd: amount,
+      target_type: packageType === "EXPERT_REVIEW" ? "EXPERT_ESCROW_LOCK" : "SYSTEM_PURCHASE",
+      order_id: orderId,
+      description: orderInfo,
+    });
     setPaidMethodLabel("MoMo QR Realtime");
     setIsPaid(true);
     if (onPaymentSuccess) onPaymentSuccess();

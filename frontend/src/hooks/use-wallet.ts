@@ -80,7 +80,6 @@ export function useWallet() {
 
   const releaseEscrowMutation = useMutation({
     mutationFn: async (payload: { order_id: string; amount_vnd: number; expert_name?: string }) => {
-      await apiClient.post(`/v1/expert-review/orders/${payload.order_id}/simulate-delivery`, {});
       await apiClient.post(`/v1/expert-review/orders/${payload.order_id}/complete`, {});
       const res = await apiClient.get<UserWalletStateDTO>("/v1/wallet/");
       return res.data;

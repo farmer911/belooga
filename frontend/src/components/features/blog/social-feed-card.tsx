@@ -50,7 +50,7 @@ export function SocialFeedCard({ post, onToggleLike, onAddComment }: SocialFeedC
   const [sharedCopied, setSharedCopied] = useState(false);
 
   const isUserPost = post.post_type === "USER_STATUS";
-  const username = post.author_username || "alexnguyen";
+  const username = post.author_username || "belooga-editorial";
   const likesCount = post.likes_count ?? 0;
   const commentsList = post.comments ?? [];
   const commentsCount = post.comments_count ?? commentsList.length;
