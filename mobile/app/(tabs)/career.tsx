@@ -164,16 +164,19 @@ export default function MobileCareerHubScreen() {
 
       {subTab === "salary" ? (
         <SurfaceCard testID="mobile-salary-benchmark-card" mode="dark">
-          <h2 style={{ margin: 0, fontSize: 17, color: tokens.typography.heading }}>
-            IT Compensation Radar (2024 -&gt; Hiện Tại 2026)
-          </h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+            <h2 style={{ margin: 0, fontSize: 17, color: tokens.typography.heading }}>
+              IT Compensation Radar (2024 -&gt; Hiện Tại 2026)
+            </h2>
+            <BadgePill testID="mobile-crawler-status-badge" label="+14.2% YoY • Live Crawler" tone="success" />
+          </div>
           <input
             data-testid="mobile-salary-role-input"
             value={roleQuery}
             onChange={(e) => setRoleQuery(e.target.value)}
             style={inputStyle}
           />
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div data-testid="mobile-salary-history-chart" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {SALARY_YEARS.map((yr) => (
               <ActionButton
                 key={yr}

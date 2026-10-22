@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   ActionButton,
   BadgePill,
+  BottomSheetDrawer,
   mobileRouter,
   ScreenShell,
   SurfaceCard,
@@ -126,52 +127,41 @@ export default function MobileDiscoveryFeedScreen() {
           }}
           style={inputStyle}
         />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-          <input
-            data-testid="mobile-custom-skill-input"
-            aria-label="mobile-custom-skill-input"
-            value={customSkillInput}
-            placeholder="+ Nhập skill mới (VD: Rust, Zig, GraphQL)..."
-            onChange={(e) => setCustomSkillInput(e.target.value)}
-            style={inputStyle}
-          />
-          <ActionButton
-            testID="mobile-add-custom-skill-btn"
-            accessibilityLabel="mobile-add-custom-skill-btn"
-            label="+ Thêm Skill Mới"
-            style={{ minHeight: 44, padding: "8px 14px" }}
-            onPress={() => void handleAddCustomSkill()}
-          />
-        </div>
-        {suggestions.length > 0 ? (
-          <div data-testid="mobile-search-suggestions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {suggestions.map((sug) => (
-              <ActionButton
-                key={sug}
-                testID={`mobile-suggest-${sug}`}
-                label={sug}
-                variant="secondary"
-                onPress={() => setQueryText(sug)}
-              />
-            ))}
+        <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Multi-Skill Filter & Custom Skill Drawer">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
+            <input
+              data-testid="mobile-custom-skill-input"
+              aria-label="mobile-custom-skill-input"
+              value={customSkillInput}
+              placeholder="+ Nhập skill mới (VD: Rust, Zig, GraphQL)..."
+              onChange={(e) => setCustomSkillInput(e.target.value)}
+              style={inputStyle}
+            />
+            <ActionButton
+              testID="mobile-add-custom-skill-btn"
+              accessibilityLabel="mobile-add-custom-skill-btn"
+              label="+ Thêm Skill Mới"
+              style={{ minHeight: 48, padding: "8px 14px" }}
+              onPress={() => void handleAddCustomSkill()}
+            />
           </div>
-        ) : null}
-        <div data-testid="mobile-trending-skill-chips" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {mergedSkillNames.map((skillName) => {
-            const trendingMeta = trendingSkills.find((t) => t.name === skillName);
-            const active = selectedSkills.includes(skillName);
-            return (
-              <ActionButton
-                key={skillName}
-                testID={`mobile-skill-chip-${skillName}`}
-                accessibilityLabel={`mobile-skill-chip-${skillName}`}
-                label={trendingMeta ? `${skillName} (${trendingMeta.candidate_count})` : skillName}
-                variant={active ? "primary" : "secondary"}
-                onPress={() => toggleSkillSelection(skillName)}
-              />
-            );
-          })}
-        </div>
+          <div data-testid="mobile-trending-skill-chips" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {mergedSkillNames.map((skillName) => {
+              const trendingMeta = trendingSkills.find((t) => t.name === skillName);
+              const active = selectedSkills.includes(skillName);
+              return (
+                <ActionButton
+                  key={skillName}
+                  testID={`mobile-skill-chip-${skillName}`}
+                  accessibilityLabel={`mobile-skill-chip-${skillName}`}
+                  label={trendingMeta ? `${skillName} (${trendingMeta.candidate_count})` : skillName}
+                  variant={active ? "primary" : "secondary"}
+                  onPress={() => toggleSkillSelection(skillName)}
+                />
+              );
+            })}
+          </div>
+        </BottomSheetDrawer>
       </SurfaceCard>
 
       {showSavedOnly && bookmarks.length === 0 ? (
