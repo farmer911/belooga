@@ -76,7 +76,7 @@ export function AnalyticsTransactionsTable({ transactions }: AnalyticsTransactio
                   statusFilter === st ? "bg-brand-primary text-white font-semibold" : "text-typography-muted hover:text-typography-main"
                 }`}
               >
-                {st === "ALL" ? "Tất cả" : st === "SUCCESS" ? "Đã thu" : st === "HELD_IN_ESCROW" ? "Escrow" : "Giải ngân"}
+                {st === "ALL" ? "Mọi GD" : st === "SUCCESS" ? "Đã thu" : st === "HELD_IN_ESCROW" ? "Escrow" : "Giải ngân"}
               </button>
             ))}
           </div>

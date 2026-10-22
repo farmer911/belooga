@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Zap } from "lucide-react";
+import { Zap, Wallet, PlusCircle, CheckCircle2, X } from "lucide-react";
 import { apiClient } from "@/services/api-client";
+import { useWallet, formatVnd } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 
 interface MomoCheckoutDialogProps {
@@ -29,30 +30,30 @@ export function MomoCheckoutDialog({
   onPaymentSuccess,
 }: MomoCheckoutDialogProps) {
   const [isPaid, setIsPaid] = useState<boolean>(false);
-  const [countdown, setCountdown] = useState<number>(600); // 10 minutes
+  const [paidMethodLabel, setPaidMethodLabel] = useState<string>("MoMo QR");
+  const [countdown, setCountdown] = useState<number>(600);
+  const { availableBalanceVnd, payWithWallet, isPayingWithWallet, topupWallet, isToppingUp } = useWallet();
 
   const { data: qrData } = useQuery<MomoQrResponse>({
     queryKey: ["momo-qr", packageType, amount, orderInfo],
-    queryFn: async () => {
-      const res = await apiClient.post<MomoQrResponse>("/v1/payments/momo/create-qr", {
+    queryFn: async () =>
+      (await apiClient.post<MomoQrResponse>("/v1/payments/momo/create-qr", {
         package_type: packageType,
-        amount: amount,
+        amount,
         order_info: orderInfo,
-      });
-      return res.data;
-    },
+      })).data,
     enabled: isOpen,
   });
 
-  const orderId = qrData?.order_id ?? "";
+  const orderId = qrData?.order_id ?? `ORD-${Date.now()}`;
   const qrUrl = qrData?.qr_code_url ?? "";
 
   const { data: orderStatusData } = useQuery<{ order_id: string; status: string }>({
     queryKey: ["momo-order-status", orderId],
     queryFn: async () =>
       (await apiClient.get<{ order_id: string; status: string }>(`/v1/payments/momo/order-status/${orderId}`)).data,
-    enabled: isOpen && Boolean(orderId) && !isPaid,
-    refetchInterval: isOpen && Boolean(orderId) && !isPaid ? 3000 : false,
+    enabled: isOpen && Boolean(qrData?.order_id) && !isPaid,
+    refetchInterval: isOpen && Boolean(qrData?.order_id) && !isPaid ? 3000 : false,
   });
 
   useEffect(() => {
@@ -82,23 +83,38 @@ export function MomoCheckoutDialog({
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  const handleWalletPay = async () => {
+    await payWithWallet({
+      amount_vnd: amount,
+      target_type: packageType === "EXPERT_REVIEW" ? "EXPERT_ESCROW_LOCK" : "SYSTEM_PURCHASE",
+      order_id: orderId,
+      description: orderInfo,
+    });
+    setPaidMethodLabel("Số Dư Ví Belooga");
+    setIsPaid(true);
+    if (onPaymentSuccess) onPaymentSuccess();
+  };
+
   const handleSimulatePayment = async () => {
     try {
-      if (orderId) {
+      if (qrData?.order_id) {
         await apiClient.post("/v1/payments/momo/ipn", {
-          order_id: orderId,
+          order_id: qrData.order_id,
           trans_id: `MOMO_SIM_${Date.now()}`,
           result_code: 0,
           signature: "valid_sim_sig",
-          amount: amount,
+          amount,
         });
       }
     } catch {
       // Fallback
     }
+    setPaidMethodLabel("MoMo QR Realtime");
     setIsPaid(true);
     if (onPaymentSuccess) onPaymentSuccess();
   };
+
+  const hasEnoughBalance = availableBalanceVnd >= amount;
 
   return (
     <div
@@ -106,41 +122,43 @@ export function MomoCheckoutDialog({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in"
     >
       <div className="bg-surface-card border border-surface-border rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl relative text-xs">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-surface-divider pb-3">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-pink-700 flex items-center justify-center text-white font-bold text-[10px]">
               M
             </span>
             <h3 className="font-bold text-typography-main uppercase tracking-wider text-xs">
-              Thanh Toán MoMo QR Realtime
+              Thanh Toán Ví Belooga & MoMo QR
             </h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-typography-muted hover:text-typography-main text-base font-bold leading-none cursor-pointer"
+            aria-label="Close payment modal"
+            className="text-typography-muted hover:text-typography-main cursor-pointer"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {isPaid ? (
-          <div className="py-6 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 text-2xl flex items-center justify-center mx-auto">
-              ✓
+          <div data-testid="payment-success-receipt" className="py-5 text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-            <div className="text-sm font-bold text-typography-main">Thanh Toán Thành Công!</div>
-            <div className="text-typography-muted text-[11px]">
-              Mã giao dịch: <span className="font-mono text-brand-primary font-semibold">{orderId}</span>
+            <div className="text-sm font-bold text-typography-main">Biên Lai Thanh Toán Thành Công!</div>
+            <div className="text-typography-muted text-[11px] space-y-0.5">
+              <div>Mã giao dịch: <span className="font-mono text-brand-primary font-semibold">{orderId}</span></div>
+              <div>Phương thức: <strong className="text-typography-main">{paidMethodLabel}</strong> · Số tiền: <strong className="text-emerald-700">{formatVnd(amount)}</strong></div>
             </div>
-            <p className="text-[10px] text-emerald-700">
-              Đã mở khóa tính năng tự động tối ưu form STAR và xuất bản PDF chuẩn A4.
+            <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+              Đã tự động viết lại CV chuẩn STAR, chèn từ khóa JD còn thiếu và cập nhật điểm ATS mới!
             </p>
             <Button
               onClick={onClose}
               className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs w-full h-8 rounded-lg shadow-xs"
             >
-              Tiếp Tục Sử Dụng
+              Xem Ngay CV Đã Tối Ưu STAR
             </Button>
           </div>
         ) : (
@@ -152,20 +170,46 @@ export function MomoCheckoutDialog({
               </div>
             </div>
 
-            {/* QR Code Container */}
+            <div className="p-3 rounded-xl bg-teal-50/60 border border-teal-200 text-left space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-brand-dark flex items-center gap-1.5">
+                  <Wallet className="w-3.5 h-3.5 text-brand-primary" /> Số dư Ví Belooga:
+                </span>
+                <span data-testid="modal-wallet-balance" className="font-mono font-bold text-brand-primary">
+                  {formatVnd(availableBalanceVnd)}
+                </span>
+              </div>
+              {hasEnoughBalance ? (
+                <Button
+                  type="button"
+                  data-testid="btn-pay-with-wallet"
+                  disabled={isPayingWithWallet}
+                  onClick={handleWalletPay}
+                  className="w-full bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs h-8 rounded-lg gap-1.5"
+                >
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>{isPayingWithWallet ? "Đang trừ ví & tối ưu CV..." : `Thanh Toán Ngay Bằng Ví (-${formatVnd(amount)})`}</span>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  data-testid="btn-quick-topup-wallet"
+                  disabled={isToppingUp}
+                  onClick={() => topupWallet({ amount_vnd: Math.max(200000, amount - availableBalanceVnd + 100000), payment_method: "MoMo QR" })}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs h-8 rounded-lg gap-1.5"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{isToppingUp ? "Đang nạp thêm..." : "Số dư không đủ — Nạp Thêm Ngay +200.000 đ"}</span>
+                </Button>
+              )}
+            </div>
+
             <div className="p-3 bg-surface-card rounded-xl inline-block mx-auto shadow-sm border border-surface-border">
               {qrUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={qrUrl}
-                  alt="MoMo Payment QR"
-                  className="w-44 h-44 object-contain"
-                  data-testid="momo-qr-image"
-                />
+                <img src={qrUrl} alt="MoMo Payment QR" className="w-36 h-36 object-contain" data-testid="momo-qr-image" />
               ) : (
-                <div className="w-44 h-44 flex items-center justify-center text-typography-muted">
-                  Đang sinh mã QR...
-                </div>
+                <div className="w-36 h-36 flex items-center justify-center text-typography-muted">Đang sinh mã QR...</div>
               )}
             </div>
 
@@ -174,11 +218,7 @@ export function MomoCheckoutDialog({
               <span className="font-mono font-bold text-amber-700">{formatTimer(countdown)}</span>
             </div>
 
-            <p className="text-[10px] text-typography-muted leading-tight">
-              Mở ứng dụng MoMo trên điện thoại và quét mã QR ở trên để hoàn tất thanh toán.
-            </p>
-
-            <div className="pt-2 space-y-2">
+            <div className="pt-1 space-y-2">
               <Button
                 data-testid="btn-simulate-momo-pay"
                 onClick={handleSimulatePayment}
