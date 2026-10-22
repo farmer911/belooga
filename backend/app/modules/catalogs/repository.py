@@ -10,6 +10,23 @@ import uuid
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+DEFAULT_COMPANY_SEEDS = [
+    ("Stripe Inc.", "/images/logo.svg"),
+    ("Airbnb", "/images/logo.svg"),
+    ("Google", "/images/logo.svg"),
+    ("Meta", "/images/logo.svg"),
+    ("Apple", "/images/logo.svg"),
+    ("Belooga", "/images/logo-big.png"),
+]
+
+DEFAULT_SCHOOL_SEEDS = [
+    ("Stanford University", "/images/logo.svg"),
+    ("MIT", "/images/logo.svg"),
+    ("UC Berkeley", "/images/logo.svg"),
+    ("Harvard University", "/images/logo.svg"),
+    ("Carnegie Mellon University", "/images/logo.svg"),
+]
+
 DEFAULT_LOCATION_SEEDS = [
     ("San Francisco", "CA", "USA"),
     ("New York", "NY", "USA"),
@@ -71,7 +88,18 @@ class CatalogsRepository:
         await self.db.commit()
         return {"id": str(new_id), "name": clean_name, "category": category or "Engineering"}
 
+    async def seed_companies_if_empty(self) -> None:
+        await self.db.execute(text("SELECT pg_advisory_xact_lock(9001)"))
+        for cname, logo in DEFAULT_COMPANY_SEEDS:
+            cid = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.company.{cname.lower()}")
+            await self.db.execute(
+                text("INSERT INTO catalog_companies (id, name, logo_url) VALUES (:id, :name, :logo) ON CONFLICT DO NOTHING"),
+                {"id": cid, "name": cname, "logo": logo},
+            )
+        await self.db.commit()
+
     async def suggest_companies(self, name: str = "", limit: int = 20) -> List[Dict[str, str]]:
+        await self.seed_companies_if_empty()
         pattern = f"%{name.strip()}%"
         query = text("""
             SELECT name, COALESCE(logo_url, '/images/logo.svg') AS logo_url
@@ -83,7 +111,18 @@ class CatalogsRepository:
         res = await self.db.execute(query, {"pattern": pattern, "limit": limit})
         return [{"name": r.name, "logo_url": r.logo_url} for r in res.fetchall()]
 
+    async def seed_schools_if_empty(self) -> None:
+        await self.db.execute(text("SELECT pg_advisory_xact_lock(9002)"))
+        for sname, logo in DEFAULT_SCHOOL_SEEDS:
+            sid = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.school.{sname.lower()}")
+            await self.db.execute(
+                text("INSERT INTO catalog_schools (id, name, logo_url) VALUES (:id, :name, :logo) ON CONFLICT DO NOTHING"),
+                {"id": sid, "name": sname, "logo": logo},
+            )
+        await self.db.commit()
+
     async def suggest_schools(self, name: str = "", limit: int = 20) -> List[Dict[str, str]]:
+        await self.seed_schools_if_empty()
         pattern = f"%{name.strip()}%"
         query = text("""
             SELECT name, COALESCE(logo_url, '/images/logo.svg') AS logo_url
@@ -97,19 +136,17 @@ class CatalogsRepository:
 
     async def seed_locations_if_empty(self) -> None:
         await self.db.execute(text("SELECT pg_advisory_xact_lock(9003)"))
-        cnt = (await self.db.execute(text("SELECT COUNT(*) FROM catalog_locations"))).scalar() or 0
-        if cnt < len(DEFAULT_LOCATION_SEEDS):
-            for city, state, country in DEFAULT_LOCATION_SEEDS:
-                loc_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.location.{city}.{country}")
-                await self.db.execute(
-                    text("""
-                        INSERT INTO catalog_locations (id, name, state, country)
-                        VALUES (:id, :name, :state, :country)
-                        ON CONFLICT DO NOTHING
-                    """),
-                    {"id": loc_id, "name": city, "state": state, "country": country},
-                )
-            await self.db.commit()
+        for city, state, country in DEFAULT_LOCATION_SEEDS:
+            loc_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.location.{city}.{country}")
+            await self.db.execute(
+                text("""
+                    INSERT INTO catalog_locations (id, name, state, country)
+                    VALUES (:id, :name, :state, :country)
+                    ON CONFLICT DO NOTHING
+                """),
+                {"id": loc_id, "name": city, "state": state, "country": country},
+            )
+        await self.db.commit()
 
     async def suggest_locations(self, name: str = "", limit: int = 20) -> List[Dict[str, str]]:
         await self.seed_locations_if_empty()

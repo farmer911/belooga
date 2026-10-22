@@ -96,7 +96,6 @@ export const WALLET_TOPUP_API_ENDPOINT = "/v1/wallet/topup" as const;
 export const WALLET_PAY_API_ENDPOINT = "/v1/wallet/pay" as const;
 export const EXPERT_SIMULATE_DELIVERY_ENDPOINT = "/v1/expert-review/orders/{order_id}/simulate-delivery" as const;
 export const EXPERT_COMPLETE_ORDER_ENDPOINT = "/v1/expert-review/orders/{order_id}/complete" as const;
-export const MOMO_IPN_WEBHOOK_ENDPOINT = "/v1/payments/momo/ipn" as const;
 export const BLOG_POSTS_API_ENDPOINT = "/v1/blog/posts/" as const;
 export const BLOG_POST_LIKE_API_ENDPOINT = "/v1/blog/posts/{post_id}/like" as const;
 export const BLOG_POST_COMMENTS_API_ENDPOINT = "/v1/blog/posts/{post_id}/comments" as const;
@@ -143,8 +142,12 @@ export const GROWTH_STEALTH_MODE_API_ENDPOINT = "/v1/growth/stealth-mode" as con
 export const GROWTH_HUB_API_ENDPOINT = "/v1/growth/hub" as const;
 export const GROWTH_REFERRALS_API_ENDPOINT = "/v1/growth/referrals" as const;
 export const GROWTH_CV_ROASTS_API_ENDPOINT = "/v1/growth/cv-roasts" as const;
+export const GROWTH_CV_ROAST_VOTE_API_ENDPOINT = "/v1/growth/cv-roasts/{roast_id}/vote" as const;
+export const GROWTH_EXPERT_MOCK_SLOTS_API_ENDPOINT = "/v1/growth/expert-mock-slots" as const;
 export const GROWTH_EXPERT_MOCK_BOOKING_API_ENDPOINT = "/v1/growth/expert-mock-booking" as const;
+export const GROWTH_REWARDS_API_ENDPOINT = "/v1/growth/rewards" as const;
 export const GROWTH_CLAIM_REWARD_API_ENDPOINT = "/v1/growth/claim-reward" as const;
+export const WALLET_BALANCE_API_ENDPOINT = "/v1/wallet/balance" as const;
 
 export const candidateBookmarkItemSchema = z.object({
   id: z.string(),

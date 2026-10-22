@@ -1,4 +1,4 @@
-"""Candidate Shortlist Bookmarks (BEL-145) & B2B Recruiter Hiring Hub (BEL-183) endpoints."""
+"""Candidate Shortlist Bookmarks (BEL-145), B2B Recruiter Hub (BEL-183) & Growth (BEL-211/225) endpoints."""
 
 from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, Query, status
@@ -19,6 +19,7 @@ from app.schemas.bookmarks import (
     CvRoastResponse,
     ExpertMockBookingRequest,
     ExpertMockBookingResponse,
+    ExpertMockSlotDTO,
     GrowthHubResponse,
     MockInterviewEvalRequest,
     MockInterviewEvalResponse,
@@ -34,6 +35,7 @@ from app.schemas.bookmarks import (
     RecruiterPipelineUpdateRequest,
     ReferralRequestCreate,
     ReferralRequestResponse,
+    ReferralSlotItemDTO,
     ReverseBidRequest,
     ReverseBidResponse,
     SalaryNegotiationRequest,
@@ -42,6 +44,7 @@ from app.schemas.bookmarks import (
     SkillAssessmentResponse,
     StealthModeRequest,
     StealthModeResponse,
+    WalletRewardItemDTO,
 )
 
 router = APIRouter(tags=["Domain 6: Talent Discovery & Search"])
@@ -52,7 +55,6 @@ async def list_candidate_bookmarks(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List bookmarked candidates for the authenticated recruiter."""
     return await BookmarkService(db).list_bookmarks(current_user.id)
 
 
@@ -63,13 +65,8 @@ async def add_candidate_bookmark(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Bookmark a visible candidate profile for the authenticated recruiter."""
     note = payload.note if payload else None
-    return await BookmarkService(db).add_bookmark(
-        recruiter_identity_id=current_user.id,
-        username=username,
-        note=note,
-    )
+    return await BookmarkService(db).add_bookmark(recruiter_identity_id=current_user.id, username=username, note=note)
 
 
 @router.delete("/bookmarks/{username}/", response_model=dict[str, str])
@@ -78,11 +75,7 @@ async def remove_candidate_bookmark(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Remove a candidate profile from the authenticated recruiter's shortlist."""
-    return await BookmarkService(db).remove_bookmark(
-        recruiter_identity_id=current_user.id,
-        username=username,
-    )
+    return await BookmarkService(db).remove_bookmark(recruiter_identity_id=current_user.id, username=username)
 
 
 @router.get("/recruiter/pipeline", response_model=List[RecruiterPipelineItemDTO])
@@ -90,7 +83,6 @@ async def list_recruiter_pipeline(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """BEL-183: List B2B recruiter hiring pipeline cards across 5 stages."""
     return await BookmarkService(db).list_pipeline(current_user.id if current_user else None)
 
 
@@ -100,7 +92,6 @@ async def add_recruiter_pipeline_candidate(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """BEL-183: Add a visible candidate into the B2B recruiter hiring pipeline."""
     return await BookmarkService(db).add_to_pipeline(current_user.id if current_user else None, payload)
 
 
@@ -111,7 +102,6 @@ async def update_recruiter_pipeline_candidate(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """BEL-183: Update recruiter hiring pipeline stage, rating, or internal evaluation notes."""
     return await BookmarkService(db).update_pipeline_item(current_user.id if current_user else None, item_id, payload)
 
 
@@ -121,7 +111,6 @@ async def compare_recruiter_candidates(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """BEL-183: Compare 2-3 candidates side-by-side against a target JD."""
     return await BookmarkService(db).compare_candidates(payload)
 
 
@@ -131,8 +120,12 @@ async def invite_recruiter_candidate(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """BEL-183: Send interview invite, unlock contact via Wallet (49,000 VND), and sync candidate Kanban."""
     return await BookmarkService(db).invite_candidate(current_user.id if current_user else None, payload)
+
+
+@router.get("/recruiter/reverse-bids", response_model=List[ReverseBidResponse])
+async def list_recruiter_reverse_bids(db: AsyncSession = Depends(get_db)):
+    return await GrowthService(db).list_reverse_bids()
 
 
 @router.post("/recruiter/reverse-bids", response_model=ReverseBidResponse)
@@ -141,7 +134,6 @@ async def submit_recruiter_reverse_bid(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """BEL-211: Recruiter Reverse Offer Bidding for top candidates."""
     return await GrowthService(db).create_reverse_bid(payload)
 
 
@@ -222,6 +214,11 @@ async def get_growth_hub(db: AsyncSession = Depends(get_db)):
     return await GrowthService(db).get_growth_hub()
 
 
+@router.get("/growth/referrals", response_model=List[ReferralSlotItemDTO])
+async def list_referral_slots(db: AsyncSession = Depends(get_db)):
+    return await GrowthService(db).list_referral_slots()
+
+
 @router.post("/growth/referrals", response_model=ReferralRequestResponse)
 async def create_referral_request(
     payload: ReferralRequestCreate,
@@ -229,6 +226,11 @@ async def create_referral_request(
     db: AsyncSession = Depends(get_db),
 ):
     return await GrowthService(db).create_referral_request(payload)
+
+
+@router.get("/growth/cv-roasts", response_model=List[CvRoastResponse])
+async def list_anonymous_cv_roasts(db: AsyncSession = Depends(get_db)):
+    return await GrowthService(db).list_cv_roasts()
 
 
 @router.post("/growth/cv-roasts", response_model=CvRoastResponse)
@@ -240,6 +242,20 @@ async def submit_anonymous_cv_roast(
     return await GrowthService(db).submit_cv_roast(payload)
 
 
+@router.post("/growth/cv-roasts/{roast_id}/vote", response_model=CvRoastResponse)
+async def vote_anonymous_cv_roast(
+    roast_id: str,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    return await GrowthService(db).vote_cv_roast(roast_id)
+
+
+@router.get("/growth/expert-mock-slots", response_model=List[ExpertMockSlotDTO])
+async def list_expert_mock_slots(db: AsyncSession = Depends(get_db)):
+    return await GrowthService(db).list_expert_mock_slots()
+
+
 @router.post("/growth/expert-mock-booking", response_model=ExpertMockBookingResponse)
 async def book_expert_mock_interview(
     payload: ExpertMockBookingRequest,
@@ -249,6 +265,11 @@ async def book_expert_mock_interview(
     return await GrowthService(db).book_expert_mock(payload)
 
 
+@router.get("/growth/rewards", response_model=List[WalletRewardItemDTO])
+async def list_wallet_rewards(db: AsyncSession = Depends(get_db)):
+    return await GrowthService(db).list_rewards()
+
+
 @router.post("/growth/claim-reward", response_model=ClaimRewardResponse)
 async def claim_wallet_cashback_reward(
     payload: ClaimRewardRequest,
@@ -256,5 +277,3 @@ async def claim_wallet_cashback_reward(
     db: AsyncSession = Depends(get_db),
 ):
     return await GrowthService(db).claim_reward(payload)
-
-

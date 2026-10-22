@@ -65,6 +65,7 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 | `PATCH` | `/v1/recruiter/pipeline/{item_id}` | `update_recruiter_pipeline_candidate` | optional |
 | `POST` | `/v1/recruiter/compare` | `compare_recruiter_candidates` | optional |
 | `POST` | `/v1/recruiter/invite` | `invite_recruiter_candidate` | optional |
+| `GET` | `/v1/recruiter/reverse-bids` | `list_recruiter_reverse_bids` | public |
 | `POST` | `/v1/recruiter/reverse-bids` | `submit_recruiter_reverse_bid` | optional |
 | `POST` | `/v1/growth/mock-interview` | `evaluate_mock_interview` | optional |
 | `POST` | `/v1/growth/salary-negotiation` | `generate_salary_negotiation` | optional |
@@ -75,9 +76,14 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 | `POST` | `/v1/growth/cv-auto-import` | `auto_import_cv_to_profile` | optional |
 | `PATCH` | `/v1/growth/stealth-mode` | `update_stealth_mode` | optional |
 | `GET` | `/v1/growth/hub` | `get_growth_hub` | public |
+| `GET` | `/v1/growth/referrals` | `list_referral_slots` | public |
 | `POST` | `/v1/growth/referrals` | `create_referral_request` | optional |
+| `GET` | `/v1/growth/cv-roasts` | `list_anonymous_cv_roasts` | public |
 | `POST` | `/v1/growth/cv-roasts` | `submit_anonymous_cv_roast` | optional |
+| `POST` | `/v1/growth/cv-roasts/{roast_id}/vote` | `vote_anonymous_cv_roast` | optional |
+| `GET` | `/v1/growth/expert-mock-slots` | `list_expert_mock_slots` | public |
 | `POST` | `/v1/growth/expert-mock-booking` | `book_expert_mock_interview` | optional |
+| `GET` | `/v1/growth/rewards` | `list_wallet_rewards` | public |
 | `POST` | `/v1/growth/claim-reward` | `claim_wallet_cashback_reward` | optional |
 
 - Router: `backend/app/api/v1/endpoints/search.py`, `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/api/v1/endpoints/cms.py`, `backend/app/api/v1/endpoints/bookmarks.py`
@@ -90,7 +96,6 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 1. **ADR-005 Strict Index Search & Keyset Pagination (`search.py`):** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` with `ts_rank_cd` and filter `is_hidden = FALSE`. Support `cursor` keyset pagination (`(created_at, id) < (:cursor_ts, :cursor_id)`) backed by partial B-Tree index `idx_candidate_profiles_visible_created`. Never combine `search_vector @@` with `OR ILIKE`.
 2. **Master Taxonomies, Career ROI, Trending Insights & Singleflight Cache (`catalogs.py`, `search.py`, `app/core/cache.py`):** Normalize lookup queries (trim + lowercase), compute deterministic salary percentiles and upskill compensation deltas (`GET /v1/catalogs/salary-benchmark`, `GET /v1/catalogs/career-roi`), expose trending search telemetry (`GET /v1/profile/search/trending/`), and wrap hot DB read paths (`search_candidates`, `search_suggestions`, `list_skills`, `get_trending_search_insights`) in `platform_cache.get_or_set` to prevent cache-stampede DB overload at 10k–25k CCU.
 3. **CMS & Abuse Reports (`cms.py`):** Profile abuse reports (`POST /v1/profile/{user_id}/report/`) must validate a UUID `user_id`, not a username string.
-4. **Candidate Shortlist Bookmarks (`bookmarks.py`, `modules/bookmarks/`):** Enforce `get_current_user` IDOR isolation (`recruiter_identity_id = current_user.id`), composite index `idx_candidate_bookmarks_recruiter_created ON candidate_bookmarks (recruiter_identity_id, created_at DESC)`, single-roundtrip SQL `JOIN` / writeable CTE upsert, `is_hidden = TRUE` 404 privacy guard, and `platform_cache` Singleflight SWR invalidation (`bookmarks:recruiter:{id}` + `analytics:`).
 
 
 ## Known Traps

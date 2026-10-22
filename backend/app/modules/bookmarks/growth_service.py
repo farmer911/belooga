@@ -1,10 +1,11 @@
-"""BEL-211: Backend Service for 20 High-Attraction Growth Features (`/v1/growth/*`, `/v1/recruiter/reverse-bids`)."""
+"""BEL-211 & BEL-225: Backend Service for 20 High-Attraction Growth Features (`/v1/growth/*`, `/v1/recruiter/reverse-bids`)."""
 
 import re
 import uuid
-from typing import Optional
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.bookmarks.repository import BookmarkRepository
 from app.schemas.bookmarks import (
     CareerRoadmapResponse,
     CareerRoadmapStepDTO,
@@ -16,6 +17,7 @@ from app.schemas.bookmarks import (
     CvRoastResponse,
     ExpertMockBookingRequest,
     ExpertMockBookingResponse,
+    ExpertMockSlotDTO,
     GrowthHubResponse,
     MockInterviewEvalRequest,
     MockInterviewEvalResponse,
@@ -25,6 +27,7 @@ from app.schemas.bookmarks import (
     PitchScriptResponse,
     ReferralRequestCreate,
     ReferralRequestResponse,
+    ReferralSlotItemDTO,
     ReverseBidRequest,
     ReverseBidResponse,
     SalaryNegotiationRequest,
@@ -33,12 +36,19 @@ from app.schemas.bookmarks import (
     SkillAssessmentResponse,
     StealthModeRequest,
     StealthModeResponse,
+    WalletRewardItemDTO,
 )
+
+TECH_SKILLS_DICT = [
+    "Golang", "Rust", "Python", "TypeScript", "React", "Next.js", "PostgreSQL",
+    "Kubernetes", "Docker", "Kafka", "Redis", "FastAPI", "AWS", "GCP", "gRPC", "GraphQL",
+]
 
 
 class GrowthService:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.repo = BookmarkRepository(db)
 
     async def evaluate_mock_interview(self, payload: MockInterviewEvalRequest) -> MockInterviewEvalResponse:
         role = payload.job_title or payload.role_title or "Senior Software Engineer"
@@ -54,14 +64,10 @@ class GrowthService:
             f"tôi đã tối ưu truy vấn asyncpg + GIN TSVECTOR giúp giảm 93% độ trễ P99 xuống 28ms."
         )
         return MockInterviewEvalResponse(
-            overall_score=base,
-            star_score=base,
-            clarity_score=base + 2,
+            overall_score=base, star_score=base, clarity_score=base + 2,
             star_breakdown={"situation": base - 2, "task": base, "action": base + 3, "result": base - 1},
-            coach_feedback=feedback,
-            feedback_summary=feedback,
-            upgraded_answer=upgraded,
-            improved_star_answer=upgraded,
+            coach_feedback=feedback, feedback_summary=feedback,
+            upgraded_answer=upgraded, improved_star_answer=upgraded,
         )
 
     async def generate_salary_negotiation(self, payload: SalaryNegotiationRequest) -> SalaryNegotiationResponse:
@@ -74,41 +80,26 @@ class GrowthService:
             f"mức đề xuất hợp lý để chốt Offer ngay trong tuần này là ${int(counter):,}/tháng (+{lift}%)."
         )
         return SalaryNegotiationResponse(
-            current_offer_usd=base,
-            recommended_counter_usd=counter,
-            uplift_pct=lift,
-            lift_pct=lift,
-            negotiation_script=script,
+            current_offer_usd=base, recommended_counter_usd=counter,
+            uplift_pct=lift, lift_pct=lift, negotiation_script=script,
         )
 
     async def get_career_roadmap(self, role: Optional[str] = None, track: Optional[str] = None) -> CareerRoadmapResponse:
         current = role or track or "Senior Backend Engineer"
         steps = [
             CareerRoadmapStepDTO(
-                level="Junior Engineer",
-                target_role="Mid-Level Backend Engineer",
-                median_salary_usd=1500,
-                timeline_months=12,
-                salary_jump_pct=35.0,
-                required_skills=["REST API", "PostgreSQL", "Docker"],
+                level="Junior Engineer", target_role="Mid-Level Backend Engineer", median_salary_usd=1500,
+                timeline_months=12, salary_jump_pct=35.0, required_skills=["REST API", "PostgreSQL", "Docker"],
                 milestone_outcome="Hoàn thiện module độc lập có unit test & CI/CD",
             ),
             CareerRoadmapStepDTO(
-                level="Senior Engineer",
-                target_role="Staff Platform Engineer",
-                median_salary_usd=3100,
-                timeline_months=18,
-                salary_jump_pct=42.0,
-                required_skills=["Golang", "PostgreSQL 16", "System Design"],
+                level="Senior Engineer", target_role="Staff Platform Engineer", median_salary_usd=3100,
+                timeline_months=18, salary_jump_pct=42.0, required_skills=["Golang", "PostgreSQL 16", "System Design"],
                 milestone_outcome="Thiết kế dịch vụ phân tán chịu tải 10k RPS",
             ),
             CareerRoadmapStepDTO(
-                level="Staff / Principal",
-                target_role="Principal Distributed Systems Architect",
-                median_salary_usd=4800,
-                timeline_months=24,
-                salary_jump_pct=55.0,
-                required_skills=["Distributed Consensus", "Multi-Region K8s", "FinOps"],
+                level="Staff / Principal", target_role="Principal Distributed Systems Architect", median_salary_usd=4800,
+                timeline_months=24, salary_jump_pct=55.0, required_skills=["Distributed Consensus", "Multi-Region K8s", "FinOps"],
                 milestone_outcome="Kiến trúc liên phòng ban & tối ưu P&L toàn nền tảng",
             ),
         ]
@@ -132,10 +123,7 @@ class GrowthService:
         pct = float(payload.score_pct) if payload.score_pct is not None else round(payload.correct_answers / total * 100.0, 1)
         slug = re.sub(r"[^a-z0-9]+", "-", payload.skill_name.lower()).strip("-")
         return SkillAssessmentResponse(
-            skill_name=payload.skill_name,
-            score_pct=pct,
-            verified=pct >= 70.0,
-            badge_slug=f"verified-{slug}",
+            skill_name=payload.skill_name, score_pct=pct, verified=pct >= 70.0, badge_slug=f"verified-{slug}",
         )
 
     async def generate_pitch_script(self, payload: PitchScriptRequest) -> PitchScriptResponse:
@@ -150,72 +138,125 @@ class GrowthService:
         return PitchScriptResponse(duration_seconds=60, wpm_target=135, script_text=script)
 
     async def auto_import_cv(self, payload: CvAutoImportRequest) -> CvAutoImportResponse:
-        skills = ["Golang", "PostgreSQL", "Kubernetes", "FastAPI"]
+        raw = (payload.raw_cv_text or "").strip()
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        full_name = lines[0] if lines and len(lines[0]) <= 60 else "Phúc Nguyễn"
+        headline = lines[1] if len(lines) > 1 and len(lines[1]) <= 90 else "Principal Distributed Systems Architect"
+        low = raw.lower()
+        skills = [s for s in TECH_SKILLS_DICT if s.lower() in low] or ["Golang", "PostgreSQL", "Kubernetes", "FastAPI"]
+        bullet_cnt = max(2, sum(1 for ln in lines if ln.startswith(("-", "•", "*")))) if lines else 6
         return CvAutoImportResponse(
-            full_name="Phúc Nguyễn",
-            headline="Principal Distributed Systems Architect",
-            extracted_skills=skills,
-            experience_count=6,
-            imported_count=6,
+            full_name=full_name, headline=headline, extracted_skills=skills,
+            experience_count=bullet_cnt, imported_count=bullet_cnt,
         )
 
     async def update_stealth_mode(self, payload: StealthModeRequest) -> StealthModeResponse:
-        return StealthModeResponse(
-            stealth_enabled=payload.stealth_enabled,
-            blocked_companies=payload.blocked_companies,
-        )
+        return StealthModeResponse(stealth_enabled=payload.stealth_enabled, blocked_companies=payload.blocked_companies)
 
     async def get_growth_hub(self) -> GrowthHubResponse:
         return GrowthHubResponse(
             github_impact={"total_stars": 640, "top_repo": "belooga-distributed-gateway", "prs_merged_90d": 184},
             culture_fit_radar={"engineering_autonomy": 95, "async_first": 92, "high_velocity": 96},
-            interview_calendar=[
-                {
-                    "id": "cal-1",
-                    "company_name": "VNG Cloud",
-                    "stage": "System Design Loop",
-                    "scheduled_at": "2026-10-25 14:00 ICT",
-                    "prep_checked": True,
-                }
-            ],
+            interview_calendar=[{"id": "cal-1", "company_name": "VNG Cloud", "stage": "System Design Loop", "scheduled_at": "2026-10-25 14:00 ICT", "prep_checked": True}],
             b2b_roi_defaults={"hires_count": 5, "estimated_savings_usd": 21000, "days_saved": 70},
-            qr_career_card={
-                "username": "phucnguyen",
-                "share_url": "https://belooga.vn/public/phucnguyen?ref=qr",
-                "qr_matrix_token": "BEL-QR-PHUCNGUYEN-2026",
-            },
-            smart_career_pulse={
-                "match_alerts_count": 3,
-                "top_matched_company": "VNG Cloud",
-                "top_match_score_pct": 96.0,
-            },
+            qr_career_card={"username": "phucnguyen", "share_url": "https://belooga.vn/public/phucnguyen?ref=qr", "qr_matrix_token": "BEL-QR-PHUCNGUYEN-2026"},
+            smart_career_pulse={"match_alerts_count": 3, "top_matched_company": "VNG Cloud", "top_match_score_pct": 96.0},
         )
+
+    async def list_referral_slots(self) -> List[ReferralSlotItemDTO]:
+        return [
+            ReferralSlotItemDTO(
+                id="ref-1", company_name="VNG Corporation", referrer_name="Minh Trần",
+                referrer_role="Staff Backend Engineer", target_positions=["Senior Golang", "Platform SRE"], bonus_vnd=15_000_000,
+            ),
+            ReferralSlotItemDTO(
+                id="ref-2", company_name="Grab Vietnam", referrer_name="Lan Nguyễn",
+                referrer_role="Engineering Manager", target_positions=["Principal Mobile RN", "Lead Data"], bonus_vnd=25_000_000,
+            ),
+        ]
 
     async def create_referral_request(self, payload: ReferralRequestCreate) -> ReferralRequestResponse:
         sid = payload.slot_id or f"ref-{uuid.uuid4().hex[:6]}"
         return ReferralRequestResponse(id=sid, slot_id=sid, status="REQUESTED")
 
+    async def list_cv_roasts(self) -> List[CvRoastResponse]:
+        rows = await self.repo.list_growth_rows("CV_ROAST")
+        if not rows:
+            seed = {
+                "id": "roast-1", "alias": "Anonymous Senior Go #402", "target_role": "Staff Backend @ Fintech",
+                "summary": "7 năm Go/K8s nhưng mô tả dự án toàn liệt kê trách nhiệm, thiếu metrics P99/RPS.",
+                "votes": 24, "upvotes": 24, "ai_roast": "AI Roast: Hãy thay các câu liệt kê nhiệm vụ bằng % giảm độ trễ P99.",
+            }
+            await self.repo.upsert_growth_row("CV_ROAST", "roast-1", seed)
+            rows = [seed]
+        return [CvRoastResponse(**r) for r in rows]
+
     async def submit_cv_roast(self, payload: CvRoastRequest) -> CvRoastResponse:
-        return CvRoastResponse(
-            id=f"roast-{uuid.uuid4().hex[:6]}",
-            upvotes=12,
-            ai_roast="AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng hoặc độ trễ P99 tiết kiệm được.",
-        )
+        rid = f"roast-{uuid.uuid4().hex[:6]}"
+        summary_txt = (payload.summary or payload.cv_snippet or "CV cần tối ưu hóa động từ STAR và định lượng kết quả.").strip()
+        item = {
+            "id": rid, "alias": payload.anonymous_handle or "Anonymous Candidate #808",
+            "target_role": payload.target_role or "Senior Backend Engineer",
+            "summary": summary_txt, "votes": 12, "upvotes": 12,
+            "ai_roast": "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng hoặc độ trễ P99 tiết kiệm được.",
+        }
+        await self.repo.upsert_growth_row("CV_ROAST", rid, item)
+        return CvRoastResponse(**item)
+
+    async def vote_cv_roast(self, roast_id: str) -> CvRoastResponse:
+        roasts = await self.list_cv_roasts()
+        target = next((r.model_dump() for r in roasts if r.id == roast_id), None)
+        if not target:
+            target = {
+                "id": roast_id, "alias": "Anonymous Senior Go #402", "target_role": "Senior Engineer",
+                "summary": "CV Roast Community Post", "votes": 12, "upvotes": 12,
+                "ai_roast": "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng.",
+            }
+        target["votes"] = int(target.get("votes", 12)) + 1
+        target["upvotes"] = target["votes"]
+        await self.repo.upsert_growth_row("CV_ROAST", roast_id, target)
+        return CvRoastResponse(**target)
+
+    async def list_expert_mock_slots(self) -> List[ExpertMockSlotDTO]:
+        return [
+            ExpertMockSlotDTO(id="exp-1", expert_name="Hoàng Lê (Ex-Grab Principal)", role="System Design & High-Scale Architecture", topic="Thứ 7, 20:00 ICT • 45 phút 1-on-1", price_vnd=590_000),
+            ExpertMockSlotDTO(id="exp-2", expert_name="Dr. Thảo Phạm (AI Lead)", role="LLM Systems & Behavioral Leadership", topic="Chủ Nhật, 10:00 ICT • 45 phút 1-on-1", price_vnd=690_000),
+        ]
 
     async def book_expert_mock(self, payload: ExpertMockBookingRequest) -> ExpertMockBookingResponse:
         bid = f"mock-{uuid.uuid4().hex[:6]}"
         return ExpertMockBookingResponse(booking_id=bid, status="CONFIRMED")
 
+    async def list_rewards(self) -> List[WalletRewardItemDTO]:
+        return [
+            WalletRewardItemDTO(id="rew-1", title="Hoàn thành Video Elevator Pitch 30s đầu tiên", bonus_vnd=50_000),
+            WalletRewardItemDTO(id="rew-2", title="Đạt điểm ATS >= 90/100 và xác thực 2 kỹ năng", bonus_vnd=100_000),
+        ]
+
     async def claim_reward(self, payload: ClaimRewardRequest) -> ClaimRewardResponse:
         amt = 100000 if payload.reward_id == "rew-2" else 50000
         return ClaimRewardResponse(reward_id=payload.reward_id, credited_vnd=amt)
 
+    async def list_reverse_bids(self) -> List[ReverseBidResponse]:
+        rows = await self.repo.list_growth_rows("REVERSE_BID")
+        if not rows:
+            seed = {
+                "id": "bid-1", "username": "phucnguyen", "candidate_username": "phucnguyen",
+                "role": "Staff Distributed Systems Engineer", "salary_usd": 4200,
+                "salary_offer_usd": 4200, "offered_salary_usd": 4200, "status": "SENT",
+            }
+            await self.repo.upsert_growth_row("REVERSE_BID", "bid-1", seed)
+            rows = [seed]
+        return [ReverseBidResponse(**r) for r in rows]
+
     async def create_reverse_bid(self, payload: ReverseBidRequest) -> ReverseBidResponse:
-        usd = int(payload.offered_salary_usd or payload.salary_offer_usd or 3800)
-        return ReverseBidResponse(
-            id=f"bid-{uuid.uuid4().hex[:6]}",
-            candidate_username=payload.candidate_username,
-            salary_offer_usd=usd,
-            offered_salary_usd=usd,
-            status="SENT",
-        )
+        uname = (payload.username or payload.candidate_username or "phucnguyen").strip()
+        usd = int(payload.salary_usd or payload.offered_salary_usd or payload.salary_offer_usd or 3800)
+        bid_id = f"bid-{uuid.uuid4().hex[:6]}"
+        item = {
+            "id": bid_id, "username": uname, "candidate_username": uname,
+            "role": payload.role or "Staff Software Engineer",
+            "salary_usd": usd, "salary_offer_usd": usd, "offered_salary_usd": usd, "status": "SENT",
+        }
+        await self.repo.upsert_growth_row("REVERSE_BID", bid_id, item)
+        return ReverseBidResponse(**item)

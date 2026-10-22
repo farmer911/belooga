@@ -1,4 +1,4 @@
-"""Pydantic v2 DTO schemas for Candidate Shortlist Bookmarks (BEL-145) & B2B Recruiter Hub (BEL-183)."""
+"""Pydantic v2 DTO schemas for Candidate Shortlist Bookmarks (BEL-145), Recruiter Hub (BEL-183) & Growth (BEL-211/225)."""
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -6,13 +6,11 @@ from pydantic import BaseModel, Field
 
 class BookmarkCreateRequest(BaseModel):
     """Optional note payload when bookmarking a candidate profile."""
-
     note: Optional[str] = Field(default=None, max_length=1000)
 
 
 class CandidateBookmarkItemDTO(BaseModel):
     """Enriched candidate bookmark metadata matching Design Spec #64."""
-
     id: str
     recruiter_identity_id: str
     candidate_profile_id: str
@@ -28,7 +26,6 @@ class CandidateBookmarkItemDTO(BaseModel):
 
 class RecruiterPipelineItemDTO(BaseModel):
     """B2B Recruiter Hiring Pipeline card DTO (BEL-183)."""
-
     id: str
     username: str
     full_name: str
@@ -49,7 +46,6 @@ class RecruiterPipelineItemDTO(BaseModel):
 
 class RecruiterPipelineCreateRequest(BaseModel):
     """Payload to add a candidate into the recruiter hiring pipeline."""
-
     username: str
     target_role: str = "Principal Engineer"
     stage: str = "SHORTLISTED"
@@ -59,7 +55,6 @@ class RecruiterPipelineCreateRequest(BaseModel):
 
 class RecruiterPipelineUpdateRequest(BaseModel):
     """Payload to update hiring stage, rating, or evaluation notes."""
-
     stage: Optional[str] = None
     recruiter_rating: Optional[int] = Field(default=None, ge=1, le=5)
     evaluation_notes: Optional[str] = None
@@ -69,14 +64,12 @@ class RecruiterPipelineUpdateRequest(BaseModel):
 
 class RecruiterCompareRequest(BaseModel):
     """Payload to compare 2-3 candidates side-by-side against a target JD."""
-
     usernames: List[str]
     jd_text: Optional[str] = None
 
 
 class RecruiterCompareItemDTO(BaseModel):
     """Side-by-side candidate comparison item against target JD."""
-
     username: str
     full_name: str
     headline: str
@@ -91,13 +84,11 @@ class RecruiterCompareItemDTO(BaseModel):
 
 class RecruiterCompareResponse(BaseModel):
     """Comparison matrix response for 2-3 candidates."""
-
     comparisons: List[RecruiterCompareItemDTO]
 
 
 class RecruiterInviteRequest(BaseModel):
     """Payload to invite a candidate to interview, unlock contact via Wallet, and sync Kanban."""
-
     username: str
     job_title: str = "Senior Distributed Systems Engineer"
     interview_datetime: str = "2026-10-25 14:00 ICT"
@@ -160,12 +151,10 @@ class OutreachGeneratorRequest(BaseModel):
     role_title: Optional[str] = "Senior Backend Engineer"
     job_title: Optional[str] = None
 
-
 class OutreachGeneratorResponse(BaseModel):
     cover_letter: str
     cold_dm: str
     cold_dm_script: str
-
 
 class SkillAssessmentRequest(BaseModel):
     skill_name: str = "PostgreSQL High-Scale"
@@ -173,13 +162,11 @@ class SkillAssessmentRequest(BaseModel):
     correct_answers: int = 5
     total_questions: int = 5
 
-
 class SkillAssessmentResponse(BaseModel):
     skill_name: str
     score_pct: float
     verified: bool
     badge_slug: str
-
 
 class PitchScriptRequest(BaseModel):
     username: Optional[str] = "phucnguyen"
@@ -187,16 +174,13 @@ class PitchScriptRequest(BaseModel):
     role_title: Optional[str] = None
     top_skills: List[str] = Field(default_factory=list)
 
-
 class PitchScriptResponse(BaseModel):
     duration_seconds: int
     wpm_target: int
     script_text: str
 
-
 class CvAutoImportRequest(BaseModel):
     raw_cv_text: str = ""
-
 
 class CvAutoImportResponse(BaseModel):
     full_name: str
@@ -205,16 +189,13 @@ class CvAutoImportResponse(BaseModel):
     experience_count: int
     imported_count: int
 
-
 class StealthModeRequest(BaseModel):
     stealth_enabled: bool = True
     blocked_companies: List[str] = Field(default_factory=list)
 
-
 class StealthModeResponse(BaseModel):
     stealth_enabled: bool
     blocked_companies: List[str]
-
 
 class GrowthHubResponse(BaseModel):
     github_impact: dict[str, int | str]
@@ -224,6 +205,13 @@ class GrowthHubResponse(BaseModel):
     qr_career_card: dict[str, str]
     smart_career_pulse: dict[str, int | str | float]
 
+class ReferralSlotItemDTO(BaseModel):
+    id: str
+    company_name: str
+    referrer_name: str
+    referrer_role: str
+    target_positions: List[str]
+    bonus_vnd: int
 
 class ReferralRequestCreate(BaseModel):
     slot_id: Optional[str] = "ref-1"
@@ -231,57 +219,70 @@ class ReferralRequestCreate(BaseModel):
     role_title: str = "Senior Golang"
     note: str = ""
 
-
 class ReferralRequestResponse(BaseModel):
     id: str
     slot_id: str
     status: str
 
-
 class CvRoastRequest(BaseModel):
+    summary: Optional[str] = None
     anonymous_handle: str = "Anonymous Senior Go #402"
+    target_role: str = "Senior Backend Engineer"
     cv_snippet: str = ""
-
 
 class CvRoastResponse(BaseModel):
     id: str
-    upvotes: int
+    alias: str = "Anonymous Senior Go #402"
+    target_role: str = "Senior Backend Engineer"
+    summary: str = ""
+    votes: int = 12
+    upvotes: int = 12
     ai_roast: str
 
+class ExpertMockSlotDTO(BaseModel):
+    id: str
+    expert_name: str
+    role: str
+    topic: str
+    price_vnd: int
 
 class ExpertMockBookingRequest(BaseModel):
     slot_id: Optional[str] = "exp-1"
     expert_id: Optional[str] = "exp-1"
     topic: str = "System Design & High-Concurrency Mock"
 
-
 class ExpertMockBookingResponse(BaseModel):
     booking_id: str
     status: str
 
+class WalletRewardItemDTO(BaseModel):
+    id: str
+    title: str
+    bonus_vnd: int
 
 class ClaimRewardRequest(BaseModel):
     reward_id: str = "rew-1"
-
 
 class ClaimRewardResponse(BaseModel):
     reward_id: str
     credited_vnd: int
 
-
 class ReverseBidRequest(BaseModel):
-    candidate_username: str
+    username: Optional[str] = None
+    candidate_username: Optional[str] = None
+    role: str = "Staff Software Engineer"
     company_name: str = "Enterprise Tech"
+    salary_usd: Optional[int] = None
     offered_salary_usd: Optional[int] = None
     salary_offer_usd: Optional[int] = None
     pitch_note: str = ""
 
-
 class ReverseBidResponse(BaseModel):
     id: str
+    username: str
     candidate_username: str
+    role: str = "Staff Software Engineer"
+    salary_usd: int
     salary_offer_usd: int
     offered_salary_usd: int
     status: str
-
-

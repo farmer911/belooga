@@ -55,6 +55,15 @@ async def get_user_wallet_state(
     return await PaymentService.get_wallet(db, _wallet_key(current_user))
 
 
+@router.get("/wallet/balance", response_model=UserWalletStateResponse)
+async def get_user_wallet_balance(
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mobile Wallet balance & ledger summary endpoint (BEL-225 parity)."""
+    return await PaymentService.get_wallet(db, _wallet_key(current_user))
+
+
 @router.post("/wallet/topup", response_model=UserWalletStateResponse)
 async def topup_user_wallet(
     payload: WalletTopupRequest,
