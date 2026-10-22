@@ -2,12 +2,10 @@
 
 import React, { useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { Share2, Zap, AlertTriangle, History, Upload, UserCheck } from "lucide-react";
+import { Share2, Zap, AlertTriangle, History, Upload, UserCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
 import { useATSScan, ATSScanPayload, ATSScanHistoryItem } from "@/hooks/use-ats-Scan";
 import { PRESET_VNG, PRESET_SHOPEE } from "@/components/features/ats-diagnostics/ats-presets";
@@ -41,49 +39,48 @@ export default function ATSDiagnosticsPage() {
   const {
     result, shortlist, interviewKit, isLoading, error,
     activeTab, previewMode, setActiveTab, setPreviewMode, scanCV, setResult,
-    scanHistory, marketPulse, refetchHistory, tailorCv,
+    scanHistory, marketPulse, hydrationNotice,
+    extractCvFile, isExtractingFile, loadProfileCv, isLoadingProfileCv,
+    refetchHistory, tailorCv,
   } = useATSScan();
 
-  const loadProfileCvMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiClient.get<{ full_name?: string; headline?: string; summary?: string; skills?: string; experience?: Array<{ company: string; role: string; bullets: string[] }> }>(`/v1/profile/${activeUsername}/cv-draft/`);
-      const d = res.data;
-      if (d?.full_name || d?.summary || d?.skills) {
-        const expText = (d.experience ?? []).map((e) => `${e.role} @ ${e.company}: ${(e.bullets ?? []).join(" ")}`).join("\n");
-        return [d.full_name, d.headline, d.summary, d.skills, expText].filter(Boolean).join("\n");
-      }
-      throw new Error("Empty profile draft");
-    },
-    onSuccess: (text) => setCvText(text),
-    onError: () => {
-      try {
-        const local = localStorage.getItem("belooga_cv_draft_local");
-        if (local) {
-          const parsed = JSON.parse(local) as { fullName?: string; headline?: string; summary?: string; skills?: string };
-          setCvText([parsed.fullName, parsed.headline, parsed.summary, parsed.skills].filter(Boolean).join("\n"));
-        }
-      } catch { /* noop */ }
-    },
-  });
+  const handleScan = async (overrideCvText?: string) => {
+    const targetCv = (overrideCvText ?? cvText).trim();
+    if (!targetCv) return;
+    try {
+      await scanCV({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: targetCv });
+      void refetchHistory();
+    } catch { /* error managed in hook */ }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    if (text.trim()) setCvText(text);
     e.target.value = "";
+    if (!file) return;
+    const extracted = await extractCvFile({ file, candidateName: activeUsername });
+    if (extracted.text) {
+      setCvText(extracted.text);
+      await handleScan(extracted.text);
+    }
   };
-  const handleScan = async (overrideCvText?: string) => {
-    try { await scanCV({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: overrideCvText ?? cvText }); void refetchHistory(); } catch { /* handled */ }
+
+  const handleLoadProfileCv = async () => {
+    const hydratedText = await loadProfileCv(activeUsername);
+    if (hydratedText) {
+      setCvText(hydratedText);
+      await handleScan(hydratedText);
+    }
   };
+
   const handlePaymentSuccess = async () => {
     try {
       const res = await tailorCv({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: cvText });
       if (res.tailored_cv_text) setCvText(res.tailored_cv_text);
       if (res.scan_result) setResult(res.scan_result);
       void refetchHistory();
-    } catch { /* handled */ }
+    } catch { /* error managed in hook */ }
   };
+
   const handleSelectHistory = (item: ATSScanHistoryItem) => {
     setJobTitle(item.job_title); setCompanyName(item.company_name || "");
     setResult({
@@ -94,6 +91,7 @@ export default function ATSDiagnosticsPage() {
       created_at: item.created_at || new Date().toISOString(),
     });
   };
+
   const applyPreset = (preset: ATSScanPayload) => {
     setJobTitle(preset.job_title); setCompanyName(preset.company_name || ""); setJdText(preset.jd_text); setCvText(preset.cv_text);
   };
@@ -156,19 +154,25 @@ export default function ATSDiagnosticsPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1 text-xs gap-2">
-                <span className="text-typography-heading font-medium">Nội dung CV của bạn</span>
+                <span className="text-typography-heading font-medium">Nội dung CV của bạn (.pdf, .docx, .txt)</span>
                 <div className="flex items-center gap-1.5">
-                  <input ref={fileInputRef} type="file" accept=".txt,.md,.csv,.json,.pdf" onChange={handleFileUpload} className="hidden" />
-                  <button type="button" onClick={() => loadProfileCvMutation.mutate()} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer">
-                    <UserCheck className="w-3 h-3 text-brand-primary" /> Nạp CV Hồ Sơ
+                  <input ref={fileInputRef} data-testid="ats-cv-file-input" type="file" accept=".pdf,.docx,.doc,.txt,.md" onChange={handleFileUpload} className="hidden" />
+                  <button type="button" data-testid="btn-load-profile-cv" disabled={isLoadingProfileCv} onClick={handleLoadProfileCv} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer disabled:opacity-50">
+                    <UserCheck className="w-3 h-3 text-brand-primary" /> {isLoadingProfileCv ? "Đang nạp..." : "Nạp CV Hồ Sơ"}
                   </button>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer">
-                    <Upload className="w-3 h-3 text-brand-primary" /> Tải File CV
+                  <button type="button" data-testid="btn-upload-cv-file" disabled={isExtractingFile} onClick={() => fileInputRef.current?.click()} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer disabled:opacity-50">
+                    <Upload className="w-3 h-3 text-brand-primary" /> {isExtractingFile ? "Đang đọc file..." : "Tải File CV"}
                   </button>
                   <span className="text-[10px] text-typography-muted">{cvText.length} ký tự</span>
                 </div>
               </div>
-              <textarea rows={5} value={cvText} onChange={(e) => setCvText(e.target.value)} className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-surface-card resize-y" placeholder="Dán văn bản CV của bạn tại đây..." />
+              {hydrationNotice && (
+                <div data-testid="cv-hydration-status" className="mb-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>{hydrationNotice}</span>
+                </div>
+              )}
+              <textarea data-testid="ats-cv-textarea" rows={5} value={cvText} onChange={(e) => setCvText(e.target.value)} className="w-full bg-surface-page border border-surface-border rounded-lg p-2.5 text-xs text-typography-main font-mono focus:outline-none focus:border-brand-primary focus:bg-surface-card resize-y" placeholder="Dán văn bản CV hoặc tải lên file PDF/DOCX..." />
             </div>
           </div>
 
@@ -196,12 +200,7 @@ export default function ATSDiagnosticsPage() {
               </div>
               <div className="space-y-1 max-h-28 overflow-y-auto">
                 {scanHistory.slice(0, 5).map((item, idx) => (
-                  <button
-                    key={item.id || item.match_id || idx}
-                    type="button"
-                    onClick={() => handleSelectHistory(item)}
-                    className="w-full flex items-center justify-between text-[11px] bg-surface-card hover:border-brand-primary px-2.5 py-1 rounded border border-surface-border transition-colors cursor-pointer text-left"
-                  >
+                  <button key={item.id || item.match_id || idx} type="button" onClick={() => handleSelectHistory(item)} className="w-full flex items-center justify-between text-[11px] bg-surface-card hover:border-brand-primary px-2.5 py-1 rounded border border-surface-border transition-colors cursor-pointer text-left">
                     <span className="truncate font-medium text-typography-heading">{item.job_title} {item.company_name ? `@ ${item.company_name}` : ""}</span>
                     <Badge variant="outline" className="text-[10px] font-bold text-brand-primary border-brand-primary/30">{item.ats_score}/100</Badge>
                   </button>
@@ -215,7 +214,6 @@ export default function ATSDiagnosticsPage() {
       </main>
 
       <ATSShareCardModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} jobTitle={jobTitle} score={result?.ats_score ?? 88} />
-
       <MomoCheckoutDialog isOpen={isMomoOpen} onClose={() => setIsMomoOpen(false)} packageType="MICRO_PASS_29K" amount={29000} orderInfo="Gói 1-Click Tối Ưu Lề CV Chuẩn ATS" onPaymentSuccess={handlePaymentSuccess} />
 
       <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex flex-wrap justify-between items-center gap-2 shadow-xs">

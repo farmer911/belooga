@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   ActionButton,
   BadgePill,
+  BottomSheetDrawer,
   mobileRouter,
   ScreenShell,
   SurfaceCard,
@@ -12,33 +13,85 @@ import {
   useToggleMobileBookmarkMutation,
 } from "@/hooks/use-mobile-bookmarks";
 import {
+  computeCandidateSkillMatch,
+  useCreateMobileCustomSkillMutation,
   useMobileCandidateSearchQuery,
   useMobileSearchSuggestionsQuery,
+  useMobileSkillCatalogQuery,
   useMobileTrendingInsightsQuery,
 } from "@/hooks/use-mobile-discovery";
 import { getSemanticTokens } from "@/theme/tokens";
 
+const DEFAULT_SKILL_CHIPS = ["Golang", "Python", "React", "TypeScript", "Kubernetes", "PostgreSQL", "AI/LLM"];
+
 export default function MobileDiscoveryFeedScreen() {
   const tokens = getSemanticTokens("dark");
   const [queryText, setQueryText] = useState("");
-  const [selectedSkill, setSelectedSkill] = useState<string | undefined>(undefined);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [customSkillInput, setCustomSkillInput] = useState("");
+  const [customSkillsAdded, setCustomSkillsAdded] = useState<string[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const inputStyle = {
+    backgroundColor: tokens.surface.elevated,
+    color: tokens.typography.main,
+    border: `1px solid ${tokens.surface.border}`,
+    borderRadius: 12,
+    padding: "10px 12px",
+    fontSize: 13,
+  };
 
   const searchQuery = useMobileCandidateSearchQuery({
     q: queryText,
-    skill: selectedSkill,
+    skill: selectedSkills[0],
+    skills: selectedSkills,
     cursor,
   });
   const suggestionsQuery = useMobileSearchSuggestionsQuery(queryText);
   const trendingQuery = useMobileTrendingInsightsQuery();
+  const skillCatalogQuery = useMobileSkillCatalogQuery();
+  const createCustomSkillMutation = useCreateMobileCustomSkillMutation();
   const bookmarksQuery = useMobileBookmarksQuery();
   const toggleBookmarkMutation = useToggleMobileBookmarkMutation();
 
   const candidates = searchQuery.data?.items ?? [];
   const trendingSkills = trendingQuery.data?.trending_skills ?? [];
+  const catalogSkills = (skillCatalogQuery.data ?? []).map((s) => s.name);
   const suggestions = suggestionsQuery.data ?? [];
   const bookmarks = bookmarksQuery.data ?? [];
+
+  const mergedSkillNames = Array.from(
+    new Set([
+      ...trendingSkills.map((s) => s.name),
+      ...catalogSkills,
+      ...customSkillsAdded,
+      ...DEFAULT_SKILL_CHIPS,
+    ])
+  );
+
+  const toggleSkillSelection = (skillName: string) => {
+    setSelectedSkills((prev) =>
+      prev.includes(skillName) ? prev.filter((s) => s !== skillName) : [...prev, skillName]
+    );
+    setCursor(undefined);
+  };
+
+  const handleAddCustomSkill = async () => {
+    const clean = customSkillInput.trim();
+    if (!clean) return;
+    try {
+      const created = await createCustomSkillMutation.mutateAsync({ name: clean });
+      const addedName = created.name || clean;
+      setCustomSkillsAdded((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
+      setSelectedSkills((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
+      setCustomSkillInput("");
+      setCursor(undefined);
+    } catch {
+      setCustomSkillsAdded((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
+      setSelectedSkills((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
+      setCustomSkillInput("");
+    }
+  };
 
   const visibleCandidates = showSavedOnly
     ? candidates.filter((c) => isCandidateBookmarked(bookmarks, c.username))
@@ -72,42 +125,43 @@ export default function MobileDiscoveryFeedScreen() {
             setQueryText(e.target.value);
             setCursor(undefined);
           }}
-          style={{
-            backgroundColor: tokens.surface.elevated,
-            color: tokens.typography.main,
-            border: `1px solid ${tokens.surface.border}`,
-            borderRadius: 12,
-            padding: "12px 14px",
-            fontSize: 14,
-          }}
+          style={inputStyle}
         />
-        {suggestions.length > 0 ? (
-          <div data-testid="mobile-search-suggestions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {suggestions.map((sug) => (
-              <ActionButton
-                key={sug}
-                testID={`mobile-suggest-${sug}`}
-                label={sug}
-                variant="secondary"
-                onPress={() => setQueryText(sug)}
-              />
-            ))}
-          </div>
-        ) : null}
-        <div data-testid="mobile-trending-skill-chips" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {trendingSkills.map((skill) => (
-            <ActionButton
-              key={skill.name}
-              testID={`mobile-skill-chip-${skill.name}`}
-              label={`${skill.name} (${skill.candidate_count})`}
-              variant={selectedSkill === skill.name ? "primary" : "secondary"}
-              onPress={() => {
-                setSelectedSkill(selectedSkill === skill.name ? undefined : skill.name);
-                setCursor(undefined);
-              }}
+        <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Multi-Skill Filter & Custom Skill Drawer">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
+            <input
+              data-testid="mobile-custom-skill-input"
+              aria-label="mobile-custom-skill-input"
+              value={customSkillInput}
+              placeholder="+ Nhập skill mới (VD: Rust, Zig, GraphQL)..."
+              onChange={(e) => setCustomSkillInput(e.target.value)}
+              style={inputStyle}
             />
-          ))}
-        </div>
+            <ActionButton
+              testID="mobile-add-custom-skill-btn"
+              accessibilityLabel="mobile-add-custom-skill-btn"
+              label="+ Thêm Skill Mới"
+              style={{ minHeight: 48, padding: "8px 14px" }}
+              onPress={() => void handleAddCustomSkill()}
+            />
+          </div>
+          <div data-testid="mobile-trending-skill-chips" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {mergedSkillNames.map((skillName) => {
+              const trendingMeta = trendingSkills.find((t) => t.name === skillName);
+              const active = selectedSkills.includes(skillName);
+              return (
+                <ActionButton
+                  key={skillName}
+                  testID={`mobile-skill-chip-${skillName}`}
+                  accessibilityLabel={`mobile-skill-chip-${skillName}`}
+                  label={trendingMeta ? `${skillName} (${trendingMeta.candidate_count})` : skillName}
+                  variant={active ? "primary" : "secondary"}
+                  onPress={() => toggleSkillSelection(skillName)}
+                />
+              );
+            })}
+          </div>
+        </BottomSheetDrawer>
       </SurfaceCard>
 
       {showSavedOnly && bookmarks.length === 0 ? (
@@ -127,20 +181,26 @@ export default function MobileDiscoveryFeedScreen() {
       <div data-testid="mobile-candidate-pitch-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {visibleCandidates.map((candidate) => {
           const bookmarked = isCandidateBookmarked(bookmarks, candidate.username);
+          const skillMatch = computeCandidateSkillMatch(candidate.skills, selectedSkills);
           return (
             <SurfaceCard
               key={candidate.username}
               testID={`mobile-candidate-card-${candidate.username}`}
               mode="dark"
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <h2
                   data-testid={`mobile-candidate-name-${candidate.username}`}
                   style={{ margin: 0, fontSize: 17, fontWeight: 700, color: tokens.typography.heading }}
                 >
                   {candidate.first_name} {candidate.last_name} (@{candidate.username})
                 </h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <BadgePill
+                    testID={`mobile-skill-match-badge-${candidate.username}`}
+                    label={skillMatch.label}
+                    tone="brand"
+                  />
                   <BadgePill
                     testID={`mobile-candidate-trust-${candidate.username}`}
                     label={`Trust Score: ${candidate.trust_score}%`}
@@ -170,20 +230,42 @@ export default function MobileDiscoveryFeedScreen() {
               </p>
               {candidate.skills.length > 0 ? (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {candidate.skills.map((sk) => (
-                    <BadgePill key={sk} label={sk} tone="neutral" />
-                  ))}
+                  {candidate.skills.map((sk) => {
+                    const isMatched = selectedSkills.some(
+                      (sel) => sel.toLowerCase() === sk.toLowerCase()
+                    );
+                    return (
+                      <BadgePill
+                        key={sk}
+                        label={sk}
+                        tone={isMatched ? "brand" : "neutral"}
+                      />
+                    );
+                  })}
                 </div>
               ) : null}
-              <ActionButton
-                testID={`mobile-open-candidate-${candidate.username}`}
-                label="Watch 60s Video Pitch & Timeline"
-                onPress={() =>
-                  mobileRouter.push(`/candidate/${candidate.username}`, {
-                    username: candidate.username,
-                  })
-                }
-              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <ActionButton
+                  testID={`mobile-watch-pitch-${candidate.username}`}
+                  accessibilityLabel={`mobile-watch-pitch-${candidate.username}`}
+                  label="0:30 Video Pitch"
+                  variant="secondary"
+                  onPress={() =>
+                    mobileRouter.push(`/candidate/${candidate.username}`, {
+                      username: candidate.username,
+                    })
+                  }
+                />
+                <ActionButton
+                  testID={`mobile-open-candidate-${candidate.username}`}
+                  label="Watch 60s Video Pitch & Timeline"
+                  onPress={() =>
+                    mobileRouter.push(`/candidate/${candidate.username}`, {
+                      username: candidate.username,
+                    })
+                  }
+                />
+              </div>
             </SurfaceCard>
           );
         })}
@@ -200,3 +282,4 @@ export default function MobileDiscoveryFeedScreen() {
     </ScreenShell>
   );
 }
+
