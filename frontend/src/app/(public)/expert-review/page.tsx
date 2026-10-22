@@ -9,10 +9,18 @@ import { SampleFeedbackReport } from "@/components/features/expert-review/sample
 import { CandidateOrdersList } from "@/components/features/expert-review/candidate-orders-list";
 import { ReviewBookingDialog } from "@/components/features/expert-review/review-booking-dialog";
 import { ExpertLeaderboardSection } from "@/components/features/expert-review/expert-leaderboard-section";
+import {
+  BecomeExpertSection,
+  RegisteredExpertApplication,
+  readLocalExpertMe,
+  toExpertProfile,
+  toRankedExpert,
+} from "@/components/features/expert-review/become-expert-modal";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ExpertReviewPage() {
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const [registeredApp, setRegisteredApp] = useState<RegisteredExpertApplication | null>(() => readLocalExpertMe());
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -78,6 +86,9 @@ export default function ExpertReviewPage() {
         </section>
       )}
 
+      {/* 2a. Become an Expert Registration Banner & Modal */}
+      <BecomeExpertSection onExpertRegistered={(app) => setRegisteredApp(app)} />
+
       {/* 2. Candidate Active Orders (if any) */}
       <CandidateOrdersList
         orders={myOrders}
@@ -89,7 +100,10 @@ export default function ExpertReviewPage() {
       />
 
       {/* 2b. Expert Leaderboard & Podium */}
-      <ExpertLeaderboardSection onBookExpert={openBookingForExpert} />
+      <ExpertLeaderboardSection
+        customExperts={registeredApp ? [toRankedExpert(registeredApp)] : []}
+        onBookExpert={openBookingForExpert}
+      />
 
       {/* 3. Pricing Tiers */}
       {isLoading && packages.length === 0 ? (
@@ -108,7 +122,7 @@ export default function ExpertReviewPage() {
 
       {/* 5. Expert Reviewer Directory */}
       <ExpertDirectory
-        experts={experts}
+        experts={registeredApp ? [toExpertProfile(registeredApp), ...experts] : experts}
         selectedCategory={selectedCategory}
         onSelectCategory={handleCategoryFilter}
         onRequestReview={openBookingForExpert}
