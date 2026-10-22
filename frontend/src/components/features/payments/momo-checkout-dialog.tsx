@@ -128,7 +128,7 @@ export function MomoCheckoutDialog({
               M
             </span>
             <h3 className="font-bold text-typography-main uppercase tracking-wider text-xs">
-              Thanh Toán Ví Belooga & MoMo QR
+              Thanh Toán MoMo QR Realtime & Ví Belooga
             </h3>
           </div>
           <button
@@ -152,13 +152,13 @@ export function MomoCheckoutDialog({
               <div>Phương thức: <strong className="text-typography-main">{paidMethodLabel}</strong> · Số tiền: <strong className="text-emerald-700">{formatVnd(amount)}</strong></div>
             </div>
             <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
-              Đã tự động viết lại CV chuẩn STAR, chèn từ khóa JD còn thiếu và cập nhật điểm ATS mới!
+              Đã mở khóa tính năng tự động tối ưu form STAR và chèn từ khóa JD còn thiếu!
             </p>
             <Button
               onClick={onClose}
               className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs w-full h-8 rounded-lg shadow-xs"
             >
-              Xem Ngay CV Đã Tối Ưu STAR
+              Tiếp Tục Sử Dụng
             </Button>
           </div>
         ) : (
