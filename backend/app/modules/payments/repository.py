@@ -106,11 +106,14 @@ class PaymentRepository:
     async def sync_paid_order_to_db(db: AsyncSession, order_id: str, trans_id: Optional[str]) -> None:
         """Persist MoMo IPN settlement to any linked cv_review_orders record in PostgreSQL."""
         order = ORDERS_DB.get(order_id) or {}
-        review_order_id = order.get("review_order_id")
+        raw_rid = str(order.get("review_order_id") or "")
         pref = f"{order_id}:{trans_id or 'momo'}"
-        if review_order_id:
+        if len(raw_rid) == 36:
             try:
-                rid = uuid.UUID(str(review_order_id))
+                rid: Optional[uuid.UUID] = uuid.UUID(raw_rid)
+            except ValueError:
+                rid = None
+            if rid is not None:
                 await db.execute(
                     text("""
                         UPDATE cv_review_orders
@@ -123,8 +126,6 @@ class PaymentRepository:
                 )
                 await db.commit()
                 return
-            except ValueError:
-                review_order_id = None
         await db.execute(
             text("""
                 UPDATE cv_review_orders
