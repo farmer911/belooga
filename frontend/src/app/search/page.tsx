@@ -9,6 +9,7 @@ import { apiClient } from "@/services/api-client";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { SavedShortlistDrawer } from "@/components/features/search/saved-shortlist-drawer";
 import { SkillFilterBar, SearchCandidateCard, SearchCandidateItem, deriveCandidateSkills } from "@/components/features/search/skill-filter-bar";
+import { TopCandidatesLeaderboard } from "@/components/features/search/top-candidates-leaderboard";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 
 interface SearchSuggestionItem { username: string; full_name: string; headline?: string; }
@@ -178,6 +179,8 @@ function SearchContent() {
             </div>
           )}
         </div>
+
+        <TopCandidatesLeaderboard variant="leaderboard" />
 
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs text-typography-muted">

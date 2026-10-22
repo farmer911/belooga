@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search, Brain, Video, Wand2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
+import { TopCandidatesLeaderboard } from "@/components/features/search/top-candidates-leaderboard";
 
 interface HomeTrendingData {
   total_searchable_profiles: number;
@@ -166,6 +167,10 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="py-10 bg-surface-page border-b border-surface-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><TopCandidatesLeaderboard variant="spotlight" /></div>
       </section>
 
       <section className="py-20 bg-surface-card">
