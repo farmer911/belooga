@@ -49,8 +49,8 @@ export default function MobileCareerHubScreen() {
   const createCareerJobMutation = useCreateMobileCareerJobMutation();
   const applyCareerJobMutation = useApplyMobileCareerJobMutation();
 
-  const availVnd = walletQuery.data?.available_balance_vnd ?? 1500000;
-  const escrowVnd = walletQuery.data?.escrow_locked_vnd ?? 1475000;
+  const availVnd = walletQuery.data?.available_balance_vnd ?? 0;
+  const escrowVnd = walletQuery.data?.escrow_locked_vnd ?? 0;
   const inputStyle = {
     backgroundColor: tokens.surface.elevated,
     color: tokens.typography.main,
@@ -257,7 +257,7 @@ export default function MobileCareerHubScreen() {
               <strong>@{post.author_username}:</strong> {post.title} ({post.likes_count} Likes)
             </div>
           ))}
-          {(careerJobsQuery.data ?? [{ id: "cjob_1", company_name: "Databricks", title: "Staff Systems Engineer", location: "Remote", salary_range: "$210k" }]).map((job) => (
+          {(careerJobsQuery.data ?? []).map((job) => (
             <div key={job.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
               <span>{job.title} @ {job.company_name} ({job.salary_range})</span>
               <ActionButton

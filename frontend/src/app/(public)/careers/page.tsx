@@ -7,7 +7,7 @@ import { MapPin, ArrowRight, Sparkles, CheckCircle2, Building2, PlusCircle, Doll
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/services/api-client";
-import { PostCareerModal, CareerJobItem, FALLBACK_CAREER_JOBS } from "@/components/features/careers/post-career-modal";
+import { PostCareerModal, CareerJobItem } from "@/components/features/careers/post-career-modal";
 
 export default function CareersPage() {
   const queryClient = useQueryClient();
@@ -18,41 +18,38 @@ export default function CareersPage() {
   const [applicantEmail, setApplicantEmail] = useState("");
   const [pitchNote, setPitchNote] = useState("");
   const [submittedJobIds, setSubmittedJobIds] = useState<Record<string, boolean>>({});
-  const [localJobs, setLocalJobs] = useState<CareerJobItem[]>([]);
 
-  const { data: apiJobs = FALLBACK_CAREER_JOBS } = useQuery<CareerJobItem[]>({
+  const { data: apiJobs = [] } = useQuery<CareerJobItem[]>({
     queryKey: ["career-jobs"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<CareerJobItem[]>("/v1/careers/");
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
-      } catch { /* fallback */ }
       const res = await apiClient.get<CareerJobItem[]>("/v1/career/jobs/");
-      return Array.isArray(res.data) && res.data.length > 0 ? res.data : FALLBACK_CAREER_JOBS;
+      return Array.isArray(res.data) ? res.data : [];
     },
-    placeholderData: FALLBACK_CAREER_JOBS,
   });
 
   const allJobs = useMemo(
-    () => [
-      ...localJobs,
-      ...apiJobs.map((j) => ({ ...j, company_name: j.company_name || "Belooga" })),
-      ...FALLBACK_CAREER_JOBS.filter((fj) => !apiJobs.some((aj) => aj.title === fj.title)),
-    ],
-    [localJobs, apiJobs]
+    () => apiJobs.map((j) => ({ ...j, company_name: j.company_name || "Belooga" })),
+    [apiJobs]
   );
 
-  const companies = useMemo(() => ["ALL", ...Array.from(new Set(allJobs.map((j) => j.company_name || "Belooga")))], [allJobs]);
-  const visibleJobs = useMemo(() => allJobs.filter((j) => (companyFilter === "ALL" ? true : (j.company_name || "Belooga") === companyFilter)), [allJobs, companyFilter]);
+  const companies = useMemo(
+    () => ["ALL", ...Array.from(new Set(allJobs.map((j) => j.company_name || "Belooga")))],
+    [allJobs]
+  );
+  const visibleJobs = useMemo(
+    () => allJobs.filter((j) => (companyFilter === "ALL" ? true : (j.company_name || "Belooga") === companyFilter)),
+    [allJobs, companyFilter]
+  );
 
   const createCareerMutation = useMutation({
     mutationFn: async (payload: Omit<CareerJobItem, "id">) => {
-      const created: CareerJobItem = { ...payload, id: `job-${Date.now()}` };
-      await Promise.allSettled([apiClient.post("/v1/careers/", payload), apiClient.post("/v1/career/jobs/", payload)]);
-      return created;
+      const res = await apiClient.post<CareerJobItem>("/v1/careers/", payload);
+      return res.data;
     },
     onSuccess: (created) => {
-      setLocalJobs((prev) => [created, ...prev]);
+      if (created) {
+        queryClient.setQueryData<CareerJobItem[]>(["career-jobs"], (prev = []) => [created, ...prev]);
+      }
       void queryClient.invalidateQueries({ queryKey: ["career-jobs"] });
     },
   });
@@ -64,19 +61,13 @@ export default function CareersPage() {
         applicant_email: applicantEmail.trim() || "alex@belooga.com",
         resume_url: pitchNote.trim() || "/uploads/resumes/belooga_pitch_profile.pdf",
       };
-      await Promise.allSettled([
-        apiClient.post(`/v1/careers/${job.id}/apply`, applyPayload),
-        apiClient.post(`/v1/career/jobs/${job.id}/apply/`, applyPayload),
-        apiClient.post("/v1/jobs/", {
-          company: job.company_name || "Belooga", position: job.title, status: "APPLIED",
-          salary: job.salary_range || "Negotiable", score: 88, notes: `Applied via Belooga Careers (${job.location})`,
-        }),
-      ]);
+      await apiClient.post(`/v1/career/jobs/${job.id}/apply/`, applyPayload);
       return job.id;
     },
     onSuccess: (jobId) => {
       setSubmittedJobIds((prev) => ({ ...prev, [jobId]: true }));
-      setActiveJob(null); setPitchNote("");
+      setActiveJob(null);
+      setPitchNote("");
       void queryClient.invalidateQueries({ queryKey: ["job-tracker-items"] });
     },
   });

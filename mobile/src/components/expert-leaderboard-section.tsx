@@ -13,39 +13,6 @@ import {
 import { ActionButton, BadgePill, BottomSheetDrawer, SurfaceCard } from '@/lib/native-runtime';
 import { getSemanticTokens } from '@/theme/tokens';
 
-const DEFAULT_EXPERTS = [
-  {
-    id: 'exp-1',
-    rank_position: 1,
-    name: 'Sarah Jenkins',
-    title: 'Ex-Google Staff Hiring Committee',
-    category: 'backend',
-    badge_title: 'Grandmaster Mentor',
-    ranking_score: 98.4,
-    avg_ats_lift_points: 28,
-    rating: 4.98,
-    completed_reviews_count: 310,
-    avg_turnaround_hours: 11,
-    interview_callback_rate: 91,
-    price_vnd: 299000,
-  },
-  {
-    id: 'exp-2',
-    rank_position: 2,
-    name: 'David Tran',
-    title: 'Principal AI & Distributed Systems Lead',
-    category: 'ai',
-    badge_title: 'Top ATS Lifter',
-    ranking_score: 96.2,
-    avg_ats_lift_points: 26,
-    rating: 4.95,
-    completed_reviews_count: 215,
-    avg_turnaround_hours: 14,
-    interview_callback_rate: 89,
-    price_vnd: 299000,
-  },
-];
-
 export function ExpertLeaderboardSection() {
   const tokens = getSemanticTokens('dark');
   const [category, setCategory] = useState<ExpertLeaderboardCategory>('all');
@@ -64,10 +31,7 @@ export function ExpertLeaderboardSection() {
   const bookMutation = useBookMobileExpertOrderMutation();
   const feedbackMutation = useSubmitExpertOrderFeedbackMutation();
 
-  const items =
-    leaderboardQuery.data && leaderboardQuery.data.items.length > 0
-      ? leaderboardQuery.data.items
-      : DEFAULT_EXPERTS;
+  const items = leaderboardQuery.data?.items ?? [];
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: tokens.surface.elevated,

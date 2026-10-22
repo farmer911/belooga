@@ -38,42 +38,6 @@ export interface BlogPostDTO {
   key_takeaways?: string[];
 }
 
-export const FALLBACK_POSTS: BlogPostDTO[] = [
-  {
-    id: "editorial-1", slug: "how-to-master-the-30-second-pitch",
-    title: "How to Master Your 30-Second Video Elevator Pitch",
-    excerpt: "Proven techniques to articulate your career highlights, project confidence, and hook recruiters in half a minute.",
-    date: "October 2026", image: "/images/blog/blog-1.jpg", author: "Ava Morgan", author_username: "avamorgan",
-    author_headline: "Head of Talent Coaching @ Belooga Editorial", post_type: "EDITORIAL", category: "Video Pitch Mastery",
-    tags: ["VideoPitch", "CareerGrowth", "InterviewPrep"], read_time_minutes: 4, likes_count: 42, comments_count: 1,
-    comments: [{ id: "c-1", author_name: "Alex Nguyen", author_username: "alexnguyen", content: "Kịch bản 60s Teleprompter trong ATS Studio giúp mình quay 1 lần ăn ngay!", created_at: "2 giờ trước" }],
-  },
-  {
-    id: "status-1", slug: "alex-nguyen-ats-94-golang-milestone",
-    title: "Vừa tối ưu CV chuẩn STAR đạt 94/100 điểm ATS cho vị trí Senior Golang @ VNG!",
-    excerpt: "Sau khi dùng tính năng Nạp CV Hồ Sơ và 1-Click STAR Tailor trên Belooga, điểm khớp từ khóa PostgreSQL GIN & Distributed Systems của mình tăng từ 68 lên 94/100.",
-    date: "Hôm nay", author: "Alex Nguyen", author_username: "alexnguyen", author_headline: "Senior Distributed Systems Engineer",
-    post_type: "USER_STATUS", tags: ["Golang", "PostgreSQL", "ATSScore", "SystemDesign"], ats_score_badge: 94, likes_count: 29, comments_count: 1,
-    comments: [{ id: "c-2", author_name: "Minh Tran", author_username: "minhtran", content: "Chúc mừng bác! Điểm STAR Impact 24/25 quá đỉnh.", created_at: "1 giờ trước" }],
-  },
-  {
-    id: "editorial-2", slug: "why-video-resumes-are-the-future",
-    title: "Why Video Resumes Outperform Static PDFs by 3x",
-    excerpt: "Data from 250+ tech companies reveals how personalized video introductions lead to higher interview conversion rates.",
-    date: "September 2026", image: "/images/blog/blog-1.jpg", author: "Jeremy Tran", author_username: "jeremytran",
-    author_headline: "Principal Talent Researcher @ Belooga", post_type: "EDITORIAL", category: "Hiring Data",
-    tags: ["HiringTrends", "VideoResume"], read_time_minutes: 5, likes_count: 35, comments_count: 0,
-  },
-  {
-    id: "editorial-3", slug: "optimizing-candidate-experience",
-    title: "Reinventing the Modern Candidate Discovery Experience",
-    excerpt: "Behind the scenes of Belooga's design system and architectural evolution to Next.js 16.3.8, PostgreSQL 16 GIN, and FastAPI.",
-    date: "September 2026", image: "/images/blog/blog-1.jpg", author: "Engineering Team", author_username: "alexnguyen",
-    author_headline: "Belooga Core Platform Engineering", post_type: "EDITORIAL", category: "Platform Engineering",
-    tags: ["NextJS", "FastAPI", "PostgreSQL"], read_time_minutes: 6, likes_count: 51, comments_count: 0,
-  },
-];
-
 interface SocialFeedCardProps {
   post: BlogPostDTO;
   onToggleLike: (post: BlogPostDTO) => void;
@@ -87,7 +51,7 @@ export function SocialFeedCard({ post, onToggleLike, onAddComment }: SocialFeedC
 
   const isUserPost = post.post_type === "USER_STATUS";
   const username = post.author_username || "alexnguyen";
-  const likesCount = post.likes_count ?? 12;
+  const likesCount = post.likes_count ?? 0;
   const commentsList = post.comments ?? [];
   const commentsCount = post.comments_count ?? commentsList.length;
 

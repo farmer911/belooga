@@ -22,18 +22,6 @@ export interface RegisteredExpertApplication {
   bio: string;
 }
 
-const LOCAL_EXPERT_ME_KEY = "belooga_expert_me_v1";
-
-let memoryExpertMe: RegisteredExpertApplication | null = null;
-
-export function readLocalExpertMe(): RegisteredExpertApplication | null {
-  return memoryExpertMe;
-}
-
-function writeLocalExpertMe(app: RegisteredExpertApplication): void {
-  memoryExpertMe = app;
-}
-
 export function toExpertProfile(app: RegisteredExpertApplication): ExpertProfile {
   return {
     id: app.id,
@@ -90,23 +78,14 @@ export function BecomeExpertSection({ onExpertRegistered }: BecomeExpertSectionP
   const { data: expertMe = null } = useQuery<RegisteredExpertApplication | null>({
     queryKey: ["expert-review-me"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<RegisteredExpertApplication>("/v1/expert-review/me");
-        if (res.data?.full_name) {
-          writeLocalExpertMe(res.data);
-          return res.data;
-        }
-      } catch {
-        // Fallback to local persisted expert profile
-      }
-      return readLocalExpertMe();
+      const res = await apiClient.get<RegisteredExpertApplication>("/v1/expert-review/me");
+      return res.data ?? null;
     },
   });
 
   const applyMutation = useMutation({
     mutationFn: async () => {
-      const app: RegisteredExpertApplication = {
-        id: expertMe?.id || `exp-custom-${Date.now()}`,
+      const payload = {
         full_name: fullName.trim(),
         role_title: roleTitle.trim(),
         company_name: companyName.trim(),
@@ -118,18 +97,13 @@ export function BecomeExpertSection({ onExpertRegistered }: BecomeExpertSectionP
         linkedin_url: linkedinUrl.trim(),
         bio: bio.trim(),
       };
-      writeLocalExpertMe(app);
-      try {
-        await apiClient.post("/v1/expert-review/apply", app);
-      } catch {
-        // Persisted locally as fallback
-      }
-      return app;
+      const res = await apiClient.post<RegisteredExpertApplication>("/v1/expert-review/apply", payload);
+      return res.data;
     },
     onSuccess: (saved) => {
       queryClient.setQueryData(["expert-review-me"], saved);
       queryClient.invalidateQueries({ queryKey: ["expert-leaderboard"] });
-      if (onExpertRegistered) onExpertRegistered(saved);
+      if (saved && onExpertRegistered) onExpertRegistered(saved);
       setModalOpen(false);
     },
   });

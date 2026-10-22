@@ -31,12 +31,6 @@ interface CareerRoadmapStep {
   milestone_outcome: string;
 }
 
-const DEFAULT_ROADMAP: CareerRoadmapStep[] = [
-  { level: "Junior Engineer", median_salary_usd: 1200, required_skills: ["REST API", "SQL", "Git"], milestone_outcome: "Hoàn thiện module độc lập có unit test" },
-  { level: "Senior Engineer", median_salary_usd: 2900, required_skills: ["Golang", "PostgreSQL", "System Design"], milestone_outcome: "Thiết kế dịch vụ chịu tải 10k RPS" },
-  { level: "Staff / Principal", median_salary_usd: 4600, required_skills: ["Distributed Consensus", "Multi-Region K8s", "FinOps"], milestone_outcome: "Kiến trúc liên phòng ban & tối ưu P&L" },
-];
-
 export function MockInterviewAndOutreachSuite({ jobTitle, companyName }: { jobTitle: string; companyName: string }) {
   const [answer, setAnswer] = useState("Chúng tôi đã chuyển đổi truy vấn sang asyncpg kèm chỉ mục GIN TSVECTOR, giảm độ trễ P99 từ 420ms xuống 28ms.");
   const [evalRes, setEvalRes] = useState<MockInterviewEvalResult | null>(null);
@@ -181,18 +175,13 @@ export function SalaryNegotiationAndRoadmapSuite({ techStack, level }: { techSta
     onSuccess: (data) => setNegResult(data),
   });
 
-  const { data: roadmap = DEFAULT_ROADMAP } = useQuery<CareerRoadmapStep[]>({
+  const { data: roadmap = [] } = useQuery<CareerRoadmapStep[]>({
     queryKey: ["growth-career-roadmap", roleTrack],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<{ steps: CareerRoadmapStep[] }>("/v1/growth/career-roadmap", {
-          params: { track: roleTrack },
-        });
-        if (Array.isArray(res.data?.steps) && res.data.steps.length > 0) return res.data.steps;
-      } catch {
-        // Fallback
-      }
-      return DEFAULT_ROADMAP;
+      const res = await apiClient.get<{ steps: CareerRoadmapStep[] }>("/v1/growth/career-roadmap", {
+        params: { track: roleTrack },
+      });
+      return Array.isArray(res.data?.steps) ? res.data.steps : [];
     },
   });
 

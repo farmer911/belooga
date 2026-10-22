@@ -24,7 +24,141 @@ import { mobileApiClient, setMobileFetchTransportForTesting } from "../src/servi
 
 describe("BEL-213 (#145): Mobile Implementation & Parity for the 20 High-Attraction Customer Features", () => {
   beforeEach(() => {
-    setMobileFetchTransportForTesting(null);
+    setMobileFetchTransportForTesting((async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/v1/growth/mock-interview")) {
+        return new Response(
+          JSON.stringify({
+            star_score: 92,
+            clarity_score: 95,
+            feedback_summary: "Strong STAR quantification.",
+            improved_star_answer: "Migrated to asyncpg.",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/salary-negotiation")) {
+        return new Response(
+          JSON.stringify({
+            current_offer_usd: 2600,
+            recommended_counter_usd: 3050,
+            lift_pct: 17.3,
+            negotiation_script: "Counter at $3,050/mo.",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/career-roadmap")) {
+        return new Response(
+          JSON.stringify({
+            current_role: "Senior Backend Engineer",
+            steps: [
+              { target_role: "Staff Engineer", timeline_months: 12, salary_jump_pct: 28, required_skills: ["System Design"] },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/outreach-generator")) {
+        return new Response(
+          JSON.stringify({
+            cover_letter: "Excited to join Stripe.",
+            cold_dm_script: "Hi Stripe Hiring Team, my 94% ATS match aligns directly.",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/skill-assessment")) {
+        return new Response(
+          JSON.stringify({
+            skill_name: "PostgreSQL 16",
+            score_pct: 100,
+            verified: true,
+            badge_slug: "verified-skill-badge-postgresql-16",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/pitch-script")) {
+        return new Response(
+          JSON.stringify({
+            duration_seconds: 60,
+            wpm_target: 135,
+            script_text: "60s teleprompter script.",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/cv-auto-import")) {
+        return new Response(
+          JSON.stringify({
+            full_name: "Nguyen Minh Phuc",
+            headline: "Principal Engineer",
+            extracted_skills: ["Go", "Python", "PostgreSQL 16"],
+            experience_count: 3,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/stealth-mode")) {
+        return new Response(
+          JSON.stringify({
+            stealth_enabled: true,
+            blocked_companies: ["OldCorp", "LegacyBank"],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/hub")) {
+        return new Response(
+          JSON.stringify({
+            github_impact: { total_stars: 1420, top_repo: "belooga", prs_merged_90d: 84 },
+            culture_fit_radar: { engineering_autonomy: 95, async_first: 92, high_velocity: 94 },
+            interview_calendar: [
+              { id: "prep-1", company_name: "Stripe", stage: "System Design", scheduled_at: "2026-10-25T14:00:00Z", prep_checked: true },
+            ],
+            b2b_roi_defaults: { hires_count: 5, estimated_savings_usd: 24500, days_saved: 42 },
+            qr_career_card: { username: "alexnguyen", share_url: "https://belooga.dev/public/alexnguyen", qr_matrix_token: "BEL-QR-9941" },
+            smart_career_pulse: { match_alerts_count: 4, top_matched_company: "Anthropic", top_match_score_pct: 96 },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/referrals")) {
+        return new Response(JSON.stringify({ id: "ref-1", status: "REQUESTED" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url.includes("/interview-questions")) {
+        return new Response(
+          JSON.stringify([{ id: "q-1", question: "Design distributed ledger", difficulty: "HARD" }]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/recruiter/reverse-bids")) {
+        return new Response(
+          JSON.stringify({ id: "bid-1", salary_offer_usd: 5200, status: "SENT" }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/growth/cv-roasts")) {
+        return new Response(JSON.stringify({ id: "roast-1", upvotes: 29 }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url.includes("/v1/growth/expert-mock-booking")) {
+        return new Response(JSON.stringify({ booking_id: "mock-bk-1", status: "ESCROW_LOCKED" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ reward_id: "rew-1", credited_vnd: 100000 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch);
   });
 
   afterEach(() => {

@@ -29,34 +29,6 @@ export interface CandidateAnalyticsPayload {
   }>;
 }
 
-export const FALLBACK_CANDIDATE_ANALYTICS: CandidateAnalyticsPayload = {
-  profile_views_count: 148,
-  search_appearances_count: 492,
-  recruiter_shortlist_count: 19,
-  interview_invites_count: 7,
-  ats_score_history: [
-    { date: "T1/2026", score: 68, target_role: "Backend Engineer" },
-    { date: "T2/2026", score: 76, target_role: "Senior Backend Engineer" },
-    { date: "T3/2026", score: 85, target_role: "Principal Engineer" },
-    { date: "Hiện tại", score: 94, target_role: "Staff / Principal Engineer" },
-  ],
-  application_funnel: {
-    saved_count: 24,
-    applied_count: 18,
-    interviewing_count: 7,
-    offer_count: 3,
-    rejected_count: 2,
-    conversion_to_interview_pct: 38.9,
-    conversion_to_offer_pct: 16.7,
-  },
-  skill_gap_radar: [
-    { skill_name: "System Design", candidate_proficiency_pct: 92, market_demand_pct: 96, salary_premium_usd: 1100 },
-    { skill_name: "Golang / FastAPI", candidate_proficiency_pct: 95, market_demand_pct: 90, salary_premium_usd: 950 },
-    { skill_name: "Kubernetes & Cloud", candidate_proficiency_pct: 78, market_demand_pct: 89, salary_premium_usd: 850 },
-    { skill_name: "LLM / Agentic AI", candidate_proficiency_pct: 84, market_demand_pct: 94, salary_premium_usd: 1250 },
-  ],
-};
-
 interface RecruiterAnalyticsPayload {
   open_roles_count: number;
   active_pipeline_candidates: number;
@@ -64,20 +36,6 @@ interface RecruiterAnalyticsPayload {
   interview_acceptance_rate_pct: number;
   stage_funnel: Array<{ stage: string; count: number; conversion_pct: number }>;
 }
-
-const FALLBACK_RECRUITER_ANALYTICS: RecruiterAnalyticsPayload = {
-  open_roles_count: 6,
-  active_pipeline_candidates: 42,
-  avg_time_to_shortlist_hours: 4.2,
-  interview_acceptance_rate_pct: 91.5,
-  stage_funnel: [
-    { stage: "SHORTLISTED", count: 42, conversion_pct: 100 },
-    { stage: "INTERVIEW_INVITED", count: 19, conversion_pct: 45.2 },
-    { stage: "INTERVIEWING", count: 12, conversion_pct: 28.6 },
-    { stage: "OFFERED", count: 5, conversion_pct: 11.9 },
-    { stage: "HIRED", count: 4, conversion_pct: 9.5 },
-  ],
-};
 
 interface ExpertAnalyticsPayload {
   completed_reviews_count: number;
@@ -89,24 +47,28 @@ interface ExpertAnalyticsPayload {
   net_payout_vnd: number;
 }
 
-const FALLBACK_EXPERT_ANALYTICS: ExpertAnalyticsPayload = {
-  completed_reviews_count: 142,
-  avg_rating: 4.96,
-  avg_ats_score_lift: 26,
-  avg_turnaround_hours: 11.5,
-  repeat_client_rate_pct: 44.2,
-  gross_earnings_vnd: 84500000,
-  net_payout_vnd: 71825000,
-};
-
 export function CandidateAnalyticsWidget() {
+  const { data } = useQuery<CandidateAnalyticsPayload>({
+    queryKey: ["candidate-analytics", "30D"],
+    queryFn: async () => {
+      const res = await apiClient.get<CandidateAnalyticsPayload>("/v1/analytics/candidate", {
+        params: { range: "30D" },
+      });
+      return res.data;
+    },
+  });
+
+  const latestScore = data?.ats_score_history?.[data.ats_score_history.length - 1]?.score ?? 0;
+
   return (
     <div data-testid="candidate-analytics-widget" className="p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
       <div className="flex items-center gap-2.5">
         <BarChart3 className="w-4 h-4 text-brand-primary" aria-hidden="true" />
         <div>
           <div className="font-bold text-typography-main">Candidate Career & Profile Analytics</div>
-          <div className="text-[11px] text-typography-muted">148 Lượt xem hồ sơ · 19 Recruiter Shortlist · 94/100 Điểm ATS hiện tại</div>
+          <div className="text-[11px] text-typography-muted">
+            {data?.profile_views_count ?? 0} Lượt xem hồ sơ · {data?.recruiter_shortlist_count ?? 0} Recruiter Shortlist · {latestScore}/100 Điểm ATS hiện tại
+          </div>
         </div>
       </div>
       <Link href="/workspace/analytics" className="px-3 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-semibold inline-flex items-center gap-1">
@@ -118,18 +80,15 @@ export function CandidateAnalyticsWidget() {
 }
 
 export function RecruiterAnalyticsPanel() {
-  const { data = FALLBACK_RECRUITER_ANALYTICS } = useQuery<RecruiterAnalyticsPayload>({
+  const { data } = useQuery<RecruiterAnalyticsPayload>({
     queryKey: ["recruiter-analytics"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<RecruiterAnalyticsPayload>("/v1/analytics/recruiter");
-        if (res.data?.stage_funnel) return res.data;
-      } catch {
-        // Fallback
-      }
-      return FALLBACK_RECRUITER_ANALYTICS;
+      const res = await apiClient.get<RecruiterAnalyticsPayload>("/v1/analytics/recruiter");
+      return res.data;
     },
   });
+
+  const stageFunnel = data?.stage_funnel ?? [];
 
   return (
     <section data-testid="recruiter-analytics-panel" className="p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-3.5 text-xs">
@@ -139,13 +98,13 @@ export function RecruiterAnalyticsPanel() {
           <h2 className="font-bold text-sm text-typography-main">Recruiter Hiring Funnel & Velocity Analytics</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[11px]">
-          <span className="px-2.5 py-0.5 rounded-md bg-surface-page border border-surface-border font-semibold">Open Roles: <strong>{data.open_roles_count}</strong></span>
-          <span className="px-2.5 py-0.5 rounded-md bg-surface-page border border-surface-border font-semibold">Time-to-Shortlist: <strong>{data.avg_time_to_shortlist_hours}h</strong></span>
-          <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">Interview Acceptance: {data.interview_acceptance_rate_pct}%</span>
+          <span className="px-2.5 py-0.5 rounded-md bg-surface-page border border-surface-border font-semibold">Open Roles: <strong>{data?.open_roles_count ?? 0}</strong></span>
+          <span className="px-2.5 py-0.5 rounded-md bg-surface-page border border-surface-border font-semibold">Time-to-Shortlist: <strong>{data?.avg_time_to_shortlist_hours ?? 0}h</strong></span>
+          <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">Interview Acceptance: {data?.interview_acceptance_rate_pct ?? 0}%</span>
         </div>
       </div>
       <div data-testid="recruiter-analytics-funnel" className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-        {data.stage_funnel.map((st) => (
+        {stageFunnel.map((st) => (
           <div key={st.stage} className="p-2.5 rounded-lg bg-surface-page border border-surface-border space-y-1">
             <div className="text-[10px] font-bold text-typography-muted uppercase">{st.stage}</div>
             <div className="flex items-baseline justify-between">
@@ -163,16 +122,11 @@ export function RecruiterAnalyticsPanel() {
 }
 
 export function ExpertAnalyticsPanel() {
-  const { data = FALLBACK_EXPERT_ANALYTICS } = useQuery<ExpertAnalyticsPayload>({
+  const { data } = useQuery<ExpertAnalyticsPayload>({
     queryKey: ["expert-analytics"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<ExpertAnalyticsPayload>("/v1/analytics/expert");
-        if (typeof res.data?.completed_reviews_count === "number") return res.data;
-      } catch {
-        // Fallback
-      }
-      return FALLBACK_EXPERT_ANALYTICS;
+      const res = await apiClient.get<ExpertAnalyticsPayload>("/v1/analytics/expert");
+      return res.data;
     },
   });
 
@@ -185,14 +139,14 @@ export function ExpertAnalyticsPanel() {
             <h2 className="font-bold text-sm text-typography-main">Expert Reviewer Performance & Revenue Analytics</h2>
           </div>
           <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[11px]">
-            Net Payout: {data.net_payout_vnd.toLocaleString("vi-VN")}đ · Repeat Client: {data.repeat_client_rate_pct}%
+            Net Payout: {(data?.net_payout_vnd ?? 0).toLocaleString("vi-VN")}đ · Repeat Client: {data?.repeat_client_rate_pct ?? 0}%
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">Tổng CV Đã Review</div><div className="text-base font-extrabold text-typography-main">{data.completed_reviews_count} CVs</div></div>
-          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">Avg ATS Score Lift</div><div className="text-base font-extrabold text-emerald-700">+{data.avg_ats_score_lift} pts</div></div>
-          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">SLA Turnaround</div><div className="text-base font-extrabold text-brand-primary">{data.avg_turnaround_hours}h</div></div>
-          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">Gross Revenue</div><div className="text-base font-extrabold text-typography-main">{data.gross_earnings_vnd.toLocaleString("vi-VN")}đ</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">Tổng CV Đã Review</div><div className="text-base font-extrabold text-typography-main">{data?.completed_reviews_count ?? 0} CVs</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">Avg ATS Score Lift</div><div className="text-base font-extrabold text-emerald-700">+{data?.avg_ats_score_lift ?? 0} pts</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">SLA Turnaround</div><div className="text-base font-extrabold text-brand-primary">{data?.avg_turnaround_hours ?? 0}h</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-card border border-surface-border"><div className="text-[11px] text-typography-muted">Gross Revenue</div><div className="text-base font-extrabold text-typography-main">{(data?.gross_earnings_vnd ?? 0).toLocaleString("vi-VN")}đ</div></div>
         </div>
       </div>
     </section>
@@ -200,6 +154,22 @@ export function ExpertAnalyticsPanel() {
 }
 
 export function ExecutiveCashflowAndHeatmapPanels() {
+  const { data } = useQuery<{
+    wallet_topups_vnd?: number;
+    ats_deductions_vnd?: number;
+    expert_escrow_float_vnd?: number;
+    net_take_rate_pct?: number;
+    skill_shortages?: Array<{ skill: string; gap: string; salary: string }>;
+  }>({
+    queryKey: ["admin-cashflow-heatmap"],
+    queryFn: async () => {
+      const res = await apiClient.get("/v1/analytics/dashboard");
+      return res.data;
+    },
+  });
+
+  const shortages = data?.skill_shortages ?? [];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
       <div data-testid="admin-wallet-cashflow-panel" className="lg:col-span-6 p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-2.5">
@@ -208,12 +178,12 @@ export function ExecutiveCashflowAndHeatmapPanels() {
             <Wallet className="w-4 h-4 text-brand-primary" aria-hidden="true" />
             <span>Wallet Credit Velocity & Cashflow Breakdown</span>
           </span>
-          <span className="font-mono font-bold text-emerald-700">Net Take-Rate: 28.4%</span>
+          <span className="font-mono font-bold text-emerald-700">Net Take-Rate: {data?.net_take_rate_pct ?? 0}%</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <div className="p-2.5 rounded-lg bg-surface-page border border-surface-border"><div className="text-[10px] text-typography-muted">Wallet Top-ups</div><div className="font-mono font-bold text-sm text-typography-main">186.500.000đ</div></div>
-          <div className="p-2.5 rounded-lg bg-surface-page border border-surface-border"><div className="text-[10px] text-typography-muted">AI / ATS Deductions</div><div className="font-mono font-bold text-sm text-brand-primary">64.200.000đ</div></div>
-          <div className="p-2.5 rounded-lg bg-surface-page border border-surface-border"><div className="text-[10px] text-typography-muted">Expert Escrow Float</div><div className="font-mono font-bold text-sm text-emerald-700">92.800.000đ</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-page border border-surface-border"><div className="text-[10px] text-typography-muted">Wallet Top-ups</div><div className="font-mono font-bold text-sm text-typography-main">{(data?.wallet_topups_vnd ?? 0).toLocaleString("vi-VN")}đ</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-page border border-surface-border"><div className="text-[10px] text-typography-muted">AI / ATS Deductions</div><div className="font-mono font-bold text-sm text-brand-primary">{(data?.ats_deductions_vnd ?? 0).toLocaleString("vi-VN")}đ</div></div>
+          <div className="p-2.5 rounded-lg bg-surface-page border border-surface-border"><div className="text-[10px] text-typography-muted">Expert Escrow Float</div><div className="font-mono font-bold text-sm text-emerald-700">{(data?.expert_escrow_float_vnd ?? 0).toLocaleString("vi-VN")}đ</div></div>
         </div>
       </div>
 
@@ -226,11 +196,7 @@ export function ExecutiveCashflowAndHeatmapPanels() {
           <TrendingUp className="w-4 h-4 text-emerald-600" aria-hidden="true" />
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {[
-            { skill: "Golang / Microservices", gap: "+34% Shortage", salary: "$3,850" },
-            { skill: "AI Agent / RAG", gap: "+48% Shortage", salary: "$4,200" },
-            { skill: "Kubernetes / SRE", gap: "+29% Shortage", salary: "$3,600" },
-          ].map((item) => (
+          {shortages.map((item) => (
             <div key={item.skill} className="p-2.5 rounded-lg bg-surface-page border border-surface-border">
               <div className="font-bold text-typography-main truncate">{item.skill}</div>
               <div className="text-[10px] text-amber-700 font-semibold">{item.gap}</div>

@@ -97,7 +97,16 @@ export function useJobTracker() {
           return res.data;
         }
       } catch {
-        // Fallback to local persisted goal
+        return (
+          readLocalGoal() ?? {
+            id: "goal-default",
+            target_role: "Senior Backend / Golang Engineer",
+            target_salary: "55.000.000 VNĐ",
+            preferred_skills: "Golang, PostgreSQL, Kubernetes, System Design",
+            location: "Ho Chi Minh / Remote",
+            updated_at: new Date().toISOString(),
+          }
+        );
       }
       return (
         readLocalGoal() ?? {

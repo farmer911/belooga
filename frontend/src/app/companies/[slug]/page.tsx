@@ -37,7 +37,8 @@ export default function CompanyProfileDetailPage() {
         const res = await apiClient.get<CompanyProfileItem>(`/v1/companies/${slug}`);
         if (res.data?.name) return res.data;
       } catch {
-        // Fallback to local persisted company directory
+        const list = readCompanies();
+        return list.find((c) => c.slug === slug) ?? DEFAULT_COMPANIES[0];
       }
       const list = readCompanies();
       return list.find((c) => c.slug === slug) ?? DEFAULT_COMPANIES[0];

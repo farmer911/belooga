@@ -89,7 +89,7 @@ export function useWallet() {
           return res.data;
         }
       } catch {
-        // Fallback to local wallet ledger when backend endpoint is offline
+        return loadLocalWallet();
       }
       return loadLocalWallet();
     },

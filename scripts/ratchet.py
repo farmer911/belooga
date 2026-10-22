@@ -38,11 +38,21 @@ fe_src = files(FE, {".ts", ".tsx"}) + files(MOBILE_SRC, {".ts", ".tsx"}) + files
 be_src = files(BE, {".py"})
 pages = [p for p in fe_src if p.name == "page.tsx"]
 
+MOCK_FALLBACK_PAT = (
+    r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
+    r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
+    r"|FALLBACK_MARKET_JOBS|INITIAL_RECRUITER_PIPELINE|DEFAULT_USER_POSTS"
+    r"|DEFAULT_RANKED_EXPERTS|DEFAULT_TOP_CANDIDATES|DEFAULT_REFERRALS"
+    r"|DEFAULT_QUESTIONS|DEFAULT_ROADMAP)\b"
+    r"|//\s*Fallback to local"
+)
+
 current = {
     "fe_arbitrary_hex": count(r"\[#[0-9a-fA-F]{3,8}\]", fe_src),
     "fe_structural_emoji": count(r"[\U0001F300-\U0001FAFF\u2600-\u26FF]", fe_src),
     "fe_any": count(r":\s*any\b|\bas any\b|<any>", fe_src),
     "fe_ts_ignore": count(r"@ts-ignore|@ts-expect-error", fe_src),
+    "fe_mock_fallback_arrays": count(MOCK_FALLBACK_PAT, fe_src),
     "fe_max_page_lines": max((len(p.read_text().splitlines()) for p in pages), default=0),
     "fe_files_over_300_lines": sum(1 for p in fe_src if len(p.read_text().splitlines()) > 300),
     "be_files_over_300_lines": sum(1 for p in be_src if len(p.read_text().splitlines()) > 300),

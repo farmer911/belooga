@@ -9,7 +9,6 @@ import {
   QuickPostModal,
   UserPostItem,
   UserPostComment,
-  DEFAULT_USER_POSTS,
   readLocalPosts,
   writeLocalPosts,
 } from "@/components/features/posts/quick-post-modal";
@@ -26,14 +25,14 @@ export function UserProfilePostsSection({ username, authorName = username, isOwn
   const [editingPost, setEditingPost] = useState<UserPostItem | null>(null);
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
 
-  const { data: posts = DEFAULT_USER_POSTS } = useQuery<UserPostItem[]>({
+  const { data: posts = [] } = useQuery<UserPostItem[]>({
     queryKey: ["user-profile-posts", username],
     queryFn: async () => {
       try {
         const res = await apiClient.get<UserPostItem[]>(`/v1/posts/user/${username}`);
         if (Array.isArray(res.data) && res.data.length > 0) return res.data;
       } catch {
-        // Fallback to local persisted posts
+        return readLocalPosts();
       }
       return readLocalPosts();
     },

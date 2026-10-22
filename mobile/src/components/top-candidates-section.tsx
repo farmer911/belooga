@@ -9,35 +9,6 @@ import { useSendRecruiterInviteMutation } from '@/hooks/use-mobile-recruiter-hub
 import { ActionButton, BadgePill, SurfaceCard, mobileRouter } from '@/lib/native-runtime';
 import { getSemanticTokens } from '@/theme/tokens';
 
-const DEFAULT_TOP_CANDIDATES = [
-  {
-    rank: 1,
-    username: 'alexnguyen',
-    full_name: 'Alex Nguyen',
-    headline: 'Principal Distributed Systems Engineer',
-    location: 'Ho Chi Minh City',
-    potential_score: 98,
-    badge_tier: 'TOP_1_PCT' as const,
-    highlight_reason: '96% ATS Benchmark • Verified 60s Video Pitch • 10+ yrs Architecture',
-    skills: ['Python', 'FastAPI', 'PostgreSQL 16', 'React Native'],
-    has_video_pitch: true,
-    actively_looking: true,
-  },
-  {
-    rank: 2,
-    username: 'sarahchen',
-    full_name: 'Sarah Chen',
-    headline: 'Staff Mobile & Edge Systems Architect',
-    location: 'Singapore',
-    potential_score: 95,
-    badge_tier: 'TOP_5_PCT' as const,
-    highlight_reason: '94% Trust Score • Expo SDK 58 & ConnectRPC',
-    skills: ['React Native', 'TypeScript', 'Redis 7'],
-    has_video_pitch: true,
-    actively_looking: true,
-  },
-];
-
 export function TopCandidatesSection() {
   const tokens = getSemanticTokens('dark');
   const [category, setCategory] = useState<TopCandidateCategory>('all');
@@ -50,10 +21,7 @@ export function TopCandidatesSection() {
   });
   const inviteMutation = useSendRecruiterInviteMutation();
 
-  const items =
-    topQuery.data && topQuery.data.items.length > 0
-      ? topQuery.data.items
-      : DEFAULT_TOP_CANDIDATES;
+  const items = topQuery.data?.items ?? [];
 
   return (
     <div

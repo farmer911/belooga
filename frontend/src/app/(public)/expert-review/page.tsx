@@ -14,7 +14,6 @@ import { ExpertLiveMockBookingCard } from "@/components/features/growth/recruite
 import {
   BecomeExpertSection,
   RegisteredExpertApplication,
-  readLocalExpertMe,
   toExpertProfile,
   toRankedExpert,
 } from "@/components/features/expert-review/become-expert-modal";
@@ -22,7 +21,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 export default function ExpertReviewPage() {
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
-  const [registeredApp, setRegisteredApp] = useState<RegisteredExpertApplication | null>(() => readLocalExpertMe());
+  const [registeredApp, setRegisteredApp] = useState<RegisteredExpertApplication | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -60,7 +59,6 @@ export default function ExpertReviewPage() {
 
   return (
     <main className="min-h-screen bg-surface-card">
-      {/* 1. Hero Section */}
       <ExpertHero
         onBrowseExperts={scrollToExperts}
         onViewPricing={scrollToPricing}
@@ -88,14 +86,11 @@ export default function ExpertReviewPage() {
         </section>
       )}
 
-      {/* 2a. Become an Expert Registration Banner & Modal */}
       <BecomeExpertSection onExpertRegistered={(app) => setRegisteredApp(app)} />
 
-      {/* 2a-2. Expert Performance & Revenue Analytics */}
       <ExpertAnalyticsPanel />
       <ExpertLiveMockBookingCard />
 
-      {/* 2. Candidate Active Orders (if any) */}
       <CandidateOrdersList
         orders={myOrders}
         highlightedOrderId={highlightedOrderId}
@@ -105,13 +100,11 @@ export default function ExpertReviewPage() {
         onSubmitFeedback={submitOrderFeedback}
       />
 
-      {/* 2b. Expert Leaderboard & Podium */}
       <ExpertLeaderboardSection
         customExperts={registeredApp ? [toRankedExpert(registeredApp)] : []}
         onBookExpert={openBookingForExpert}
       />
 
-      {/* 3. Pricing Tiers */}
       {isLoading && packages.length === 0 ? (
         <div className="py-20 flex justify-center">
           <Spinner size="lg" variant="primary" />
@@ -123,10 +116,8 @@ export default function ExpertReviewPage() {
         />
       )}
 
-      {/* 4. Interactive Sample Feedback Report */}
       <SampleFeedbackReport />
 
-      {/* 5. Expert Reviewer Directory */}
       <ExpertDirectory
         experts={registeredApp ? [toExpertProfile(registeredApp), ...experts] : experts}
         selectedCategory={selectedCategory}
@@ -134,7 +125,6 @@ export default function ExpertReviewPage() {
         onRequestReview={openBookingForExpert}
       />
 
-      {/* 6. Multi-Step Review Booking Dialog */}
       <ReviewBookingDialog
         open={bookingModalOpen}
         onOpenChange={setBookingModalOpen}

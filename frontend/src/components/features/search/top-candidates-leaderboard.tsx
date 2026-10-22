@@ -22,79 +22,6 @@ export interface TopCandidateRankItem {
   has_video_pitch: boolean;
 }
 
-const DEFAULT_TOP_CANDIDATES: TopCandidateRankItem[] = [
-  {
-    rank: 1,
-    username: "phucnguyen",
-    full_name: "Nguyễn Minh Phúc",
-    headline: "Principal Distributed Systems & Golang Architect",
-    category: "backend",
-    location: "Ho Chi Minh",
-    potential_score: 98,
-    badge_tier: "TOP_1_PCT",
-    highlight_reason: "96% ATS Benchmark • Verified 60s Video Pitch • 7+ yrs High-Scale 25k CCU Architecture",
-    skills: ["Golang", "Python", "FastAPI", "PostgreSQL"],
-    actively_looking: true,
-    has_video_pitch: true,
-  },
-  {
-    rank: 2,
-    username: "huypham",
-    full_name: "Phạm Gia Huy",
-    headline: "Senior AI Infrastructure & PyTorch Engineer",
-    category: "ai",
-    location: "Ha Noi",
-    potential_score: 95,
-    badge_tier: "TOP_1_PCT",
-    highlight_reason: "Top 1% AI/LLM Pipeline & Async FastAPI • Verified Video Pitch",
-    skills: ["Python", "PyTorch", "FastAPI", "Kubernetes"],
-    actively_looking: true,
-    has_video_pitch: true,
-  },
-  {
-    rank: 3,
-    username: "maivo",
-    full_name: "Võ Thị Mai",
-    headline: "Staff Frontend React 19 & Design Systems Lead",
-    category: "frontend",
-    location: "Remote",
-    potential_score: 93,
-    badge_tier: "RISING_STAR",
-    highlight_reason: "React 19 App Router & Tailwind v4 Design System Lead • 92% ATS Match",
-    skills: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    actively_looking: true,
-    has_video_pitch: true,
-  },
-  {
-    rank: 4,
-    username: "khoatran",
-    full_name: "Trần Đăng Khoa",
-    headline: "Lead React Native & Expo Mobile Architect",
-    category: "mobile",
-    location: "Ho Chi Minh",
-    potential_score: 91,
-    badge_tier: "TOP_5_PCT",
-    highlight_reason: "Expo SDK 58 Clean-APK Pipeline & Native UIAutomator2 E2E Specialist",
-    skills: ["React Native", "TypeScript", "Expo", "Android"],
-    actively_looking: false,
-    has_video_pitch: true,
-  },
-  {
-    rank: 5,
-    username: "linhle",
-    full_name: "Lê Hoàng Linh",
-    headline: "Principal Cloud Native & Kubernetes SRE",
-    category: "devops",
-    location: "Da Nang / Remote",
-    potential_score: 90,
-    badge_tier: "TOP_5_PCT",
-    highlight_reason: "Zero-Downtime K8s HPA & Nginx Distributed Redis Gateway",
-    skills: ["Kubernetes", "Docker", "Golang", "AWS"],
-    actively_looking: true,
-    has_video_pitch: true,
-  },
-];
-
 const CATEGORIES = [
   { key: "all", label: "Tất cả" },
   { key: "backend", label: "Backend" },
@@ -120,18 +47,13 @@ export function TopCandidatesLeaderboard({ variant = "leaderboard" }: TopCandida
   const [invitedUsernames, setInvitedUsernames] = useState<string[]>([]);
   const { isBookmarked, toggleBookmark } = useBookmarks();
 
-  const { data: candidates = DEFAULT_TOP_CANDIDATES } = useQuery<TopCandidateRankItem[]>({
+  const { data: candidates = [] } = useQuery<TopCandidateRankItem[]>({
     queryKey: ["top-candidates", category, activelyLookingOnly],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<TopCandidateRankItem[]>("/v1/search/top-candidates", {
-          params: { category: category === "all" ? undefined : category, actively_looking_only: activelyLookingOnly },
-        });
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
-      } catch {
-        // Fallback to curated leaderboard
-      }
-      return DEFAULT_TOP_CANDIDATES;
+      const res = await apiClient.get<TopCandidateRankItem[]>("/v1/search/top-candidates", {
+        params: { category: category === "all" ? undefined : category, actively_looking_only: activelyLookingOnly },
+      });
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 
