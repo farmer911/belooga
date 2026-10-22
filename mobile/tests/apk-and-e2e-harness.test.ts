@@ -58,5 +58,8 @@ describe("Belooga Mobile RN 0.88.0 APK Pipeline & E2E Automation Harness (BEL-13
     expect(uiKitContent).toContain("GradientDrawable");
     expect(uiKitContent).toContain("setCornerRadius");
     expect(uiKitContent).toContain("setStroke");
+    expect(uiKitContent).toContain("NavIconView");
+    expect(uiKitContent).toContain("Canvas");
+    expect(uiKitContent).toContain("createSegmentedBar");
   });
 });

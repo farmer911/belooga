@@ -17,6 +17,15 @@ import {
   queueOrSyncMobileJobStatus,
   updateMobileTrackedJob,
 } from "@/hooks/use-mobile-tracker";
+import {
+  createMobileMomoPaymentQr,
+  fetchMobileCvDraft,
+  fetchMobileExecutiveAnalytics,
+  fetchMobileExpertPackages,
+  fetchMobileSalaryBenchmark,
+  generateMobileTalentShortlist,
+  saveMobileCvDraft,
+} from "@/hooks/use-mobile-career-tools";
 
 describe("Belooga Mobile Native Video Pitch Studio & Job Kanban Tracker (BEL-134)", () => {
   beforeEach(() => {
@@ -250,5 +259,106 @@ describe("Belooga Mobile Native Video Pitch Studio & Job Kanban Tracker (BEL-134
     });
     expect(updatedJob.position).toBe("Principal Mobile Architect");
     expect(updatedJob.salary).toBe("$225k");
+  });
+
+  it("integrates Expert CV Review, MoMo QR checkout, Salary Benchmark, CV Studio Drafts, AI Shortlist, and Executive BI on Mobile (BEL-141)", async () => {
+    setMobileFetchTransportForTesting((async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/v1/expert-review/packages/")) {
+        return new Response(
+          JSON.stringify([
+            { id: "pkg_staff", name: "Senior Staff Review", price_usd: 59, turnaround_hours: 24 },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/payments/momo/create-qr") && init?.method === "POST") {
+        return new Response(
+          JSON.stringify({
+            order_id: "momo_ord_99",
+            qr_code_url: "https://test-payment.momo.vn/qr/momo_ord_99",
+            amount_vnd: 1475000,
+            status: "PENDING",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.includes("/v1/catalogs/salary-benchmark")) {
+        return new Response(
+          JSON.stringify({
+            role: "Staff Backend Engineer",
+            location: "Ho Chi Minh City",
+            p25: 145000,
+            p50: 185000,
+            p75: 215000,
+            p90: 245000,
+            currency: "USD",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/profile/alexnguyen/cv-draft/")) {
+        if (init?.method === "PUT") {
+          return new Response(
+            JSON.stringify({ status: "saved", template_id: "executive-dark" }),
+            { status: 200, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            template_id: "executive-dark",
+            summary: "Principal Distributed Systems Architect",
+            skills: ["Python", "FastAPI", "PostgreSQL 16"],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/match/talent-shortlist") && init?.method === "POST") {
+        return new Response(
+          JSON.stringify({
+            role: "Staff Mobile Engineer",
+            candidates: [{ username: "alexnguyen", match_score: 96, headline: "Principal Engineer" }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/analytics/dashboard")) {
+        return new Response(
+          JSON.stringify({
+            total_gmv_usd: 48250,
+            momo_conversion_rate: 68.4,
+            search_p95_ms: 12.4,
+            active_candidates: 500000,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(JSON.stringify({}), { status: 404 });
+    }) as typeof fetch);
+
+    const pkgs = await fetchMobileExpertPackages();
+    expect(pkgs[0]?.name).toBe("Senior Staff Review");
+
+    const momo = await createMobileMomoPaymentQr({ packageId: "pkg_staff", amountVnd: 1475000 });
+    expect(momo.order_id).toBe("momo_ord_99");
+
+    const salary = await fetchMobileSalaryBenchmark("Staff Backend Engineer", "Ho Chi Minh City");
+    expect(salary.p50).toBe(185000);
+
+    const draft = await fetchMobileCvDraft("alexnguyen");
+    expect(draft.template_id).toBe("executive-dark");
+
+    const saved = await saveMobileCvDraft("alexnguyen", {
+      template_id: "executive-dark",
+      summary: "Updated Summary",
+      skills: ["Python", "FastAPI"],
+    });
+    expect(saved.status).toBe("saved");
+
+    const shortlist = await generateMobileTalentShortlist("Staff Mobile Engineer");
+    expect(shortlist.candidates[0]?.username).toBe("alexnguyen");
+
+    const bi = await fetchMobileExecutiveAnalytics();
+    expect(bi.total_gmv_usd).toBe(48250);
   });
 });

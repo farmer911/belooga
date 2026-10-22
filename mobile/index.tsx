@@ -5,6 +5,7 @@ import MobileTabsLayout from "./app/(tabs)/_layout";
 import MobileDiscoveryFeedScreen from "./app/(tabs)/index";
 import MobilePitchStudioScreen from "./app/(tabs)/studio";
 import MobileJobTrackerScreen from "./app/(tabs)/tracker";
+import MobileCareerHubScreen from "./app/(tabs)/career";
 import MobileWorkspaceProfileScreen from "./app/(tabs)/profile";
 import MobileLoginScreen from "./app/(auth)/login";
 import MobileRegisterScreen from "./app/(auth)/register";
@@ -41,6 +42,13 @@ export function BeloogaMobileApp() {
       return (
         <MobileTabsLayout>
           <MobileJobTrackerScreen />
+        </MobileTabsLayout>
+      );
+    }
+    if (path === "/(tabs)/career") {
+      return (
+        <MobileTabsLayout>
+          <MobileCareerHubScreen />
         </MobileTabsLayout>
       );
     }

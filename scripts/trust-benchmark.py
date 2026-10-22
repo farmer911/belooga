@@ -377,6 +377,20 @@ if os.getenv("CI") != "true":
     except Exception as gh_err:
         sys.stderr.write(f"[warn] GitHub open PR health check skipped: {gh_err}\n")
 
+# Mobile Vector Bottom Dock & Full-Platform Career Pro Guard (BEL-141)
+ui_kit_java = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "belooga" / "mobile" / "BeloogaUiKit.java"
+career_java = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "belooga" / "mobile" / "MobileCareerScreens.java"
+if ui_kit_java.exists():
+    ui_kit_src = ui_kit_java.read_text(encoding="utf-8")
+    if "class NavIconView" not in ui_kit_src or "createModernNavTab" not in ui_kit_src:
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            "mobile BeloogaUiKit.java missing custom Canvas vector NavIconView / createModernNavTab dock (BEL-141)"
+        )
+if not career_java.exists():
+    violations["3. Layer Purity (No Band-Aids)"].append(
+        "mobile MobileCareerScreens.java missing full-platform Career Pro screens (ATS, Expert Review, Salary, Exec BI)"
+    )
+
 # --- RENDER VISUAL BENCHMARK SCORECARD ---
 print("=" * 78)
 print("  BELOOGA ANTI-DECEPTION & PRODUCTION TRUST BENCHMARK (SUPERVISOR GATE)")

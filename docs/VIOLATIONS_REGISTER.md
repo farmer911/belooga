@@ -168,3 +168,8 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
    Mọi thay đổi liên quan đến hover, click, modal, dropdown, animation BẮT BUỘC phải được kiểm tra thực tế bằng Browser Subagent (hover kiểm tra computed styles và chụp ảnh xác thực). Nghiêm cấm trả lời "đã sửa" khi chưa chạy kiểm chứng visual.
 5. **Author Truth Alignment:**
    Nếu không tìm thấy asset hoặc logic cụ thể, bắt buộc phải báo cáo và xin xác nhận từ tác giả hệ thống (User), tuyệt đối không suy đoán.
+
+### V-020: Raw Bordered Button Bottom Navbar & Missing Mobile Career Ecosystem (2026-10-22)
+- **Where:** `mobile/android/app/src/main/java/com/belooga/mobile/{BeloogaUiKit.java,MainActivity.java,MobileCareerScreens.java}` and `mobile/src/hooks/use-mobile-career-tools.ts`.
+- **How / Why:** The initial mobile bottom bar rendered raw bordered `Button` boxes without vector iconography, and the mobile app lacked the Career Pro ecosystem (`Expert CV Review`, `MoMo QR Checkout`, `IT Salary Radar & Upskill ROI`, `Pro CV Studio Drafts`, `AI Shortlist`, `Executive BI`).
+- **Fix & Guard:** Built custom anti-aliased `Canvas` vector `NavIconView` + glowing indicator bar + translucent pill dock (`createModernNavTab`), segmented sub-navigation bars, `MobileCareerScreens.java`, and `use-mobile-career-tools.ts`, enforced by `scripts/trust-benchmark.py`.
