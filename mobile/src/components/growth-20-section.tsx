@@ -20,7 +20,7 @@ import {
 import { getSemanticTokens } from "@/theme/tokens";
 
 export function Growth20Section() {
-  const tokens = getSemanticTokens("dark");
+  const tokens = getSemanticTokens("neumorphic");
   const [mockAnswer, setMockAnswer] = useState("Migrated to asyncpg & GIN TSVECTOR reducing p95 to 11.4ms.");
   const [offerUsd, setOfferUsd] = useState("2600");
   const [cvImportText, setCvImportText] = useState("Principal Engineer • Go, Python, PostgreSQL 16");

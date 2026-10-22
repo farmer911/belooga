@@ -173,3 +173,21 @@ class SearchRepository:
         """)
         res = await self.db.execute(query, {"limit": limit})
         return [dict(r._mapping) for r in res.fetchall()]
+
+    async def get_skills_for_profiles(self, profile_ids: List[str]) -> Dict[str, List[str]]:
+        if not profile_ids:
+            return {}
+        res = await self.db.execute(
+            text("""
+                SELECT CAST(ps.profile_id AS text) AS pid, s.name AS skill_name
+                FROM profile_skills ps
+                JOIN skills s ON s.id = ps.skill_id
+                ORDER BY s.name ASC
+            """)
+        )
+        wanted = set(profile_ids)
+        out: Dict[str, List[str]] = {}
+        for row in res.fetchall():
+            if row.pid in wanted:
+                out.setdefault(row.pid, []).append(row.skill_name)
+        return out

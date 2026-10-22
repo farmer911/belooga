@@ -105,3 +105,50 @@ class ExpertMatchRecommendationResponse(BaseModel):
     match_confidence_pct: int
     estimated_ats_lift_points: int
     match_rationale: str
+
+
+class RankedExpertItemDTO(BaseModel):
+    id: str
+    rank: int = 1
+    full_name: str
+    role_title: str
+    company_name: str
+    category: str = "backend"
+    badge_title: str = "Verified Mentor"
+    ranking_score: float = 95.0
+    rating: float = 4.95
+    completed_reviews_count: int = 120
+    avg_ats_lift_points: int = 26
+    avg_turnaround_hours: int = 12
+    interview_callback_rate_pct: int = 90
+    specialties: List[str] = Field(default_factory=list)
+
+
+class ExpertApplicationRequest(BaseModel):
+    id: Optional[str] = None
+    full_name: str
+    role_title: str = "Senior Software Engineer"
+    company_name: str = "Belooga Tech Partner"
+    years_experience: int = 6
+    category: str = "backend"
+    specialties: List[str] = Field(default_factory=list)
+    turnaround_hours: int = 24
+    hourly_rate_vnd: int = 299000
+    linkedin_url: Optional[str] = ""
+    bio: str = "Senior Engineering Mentor & Hiring Committee Reviewer."
+
+
+class RegisteredExpertApplicationDTO(BaseModel):
+    id: str
+    full_name: str
+    role_title: str
+    company_name: str
+    years_experience: int = 6
+    category: str = "backend"
+    specialties: List[str] = Field(default_factory=list)
+    turnaround_hours: int = 24
+    hourly_rate_vnd: int = 299000
+    linkedin_url: str = ""
+    bio: str = ""
+
+

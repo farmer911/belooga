@@ -151,20 +151,6 @@ class ATSMatchingRepository:
 
     async def get_market_pulse_stats(self) -> Dict[str, Any]:
         query = text("""
-            WITH sampled AS (
-                SELECT video_pitch_url, seeking_status
-                FROM candidate_profiles
-                WHERE is_hidden = FALSE
-                LIMIT 2000
-            ),
-            top_skills AS (
-                SELECT LOWER(s.name) AS skill, COUNT(ps.profile_id)::int AS supply_cnt
-                FROM skills s
-                LEFT JOIN profile_skills ps ON ps.skill_id = s.id
-                GROUP BY s.id, s.name
-                ORDER BY supply_cnt DESC, s.name ASC
-                LIMIT 8
-            )
             SELECT
                 GREATEST(
                     (SELECT reltuples::bigint FROM pg_class WHERE oid = 'candidate_profiles'::regclass),
@@ -173,25 +159,35 @@ class ATSMatchingRepository:
                 (SELECT COUNT(*) FROM job_descriptions) AS total_jds_analyzed,
                 COUNT(*) FILTER (WHERE video_pitch_url IS NOT NULL) AS sampled_video,
                 COUNT(*) FILTER (WHERE seeking_status = 'Actively Looking') AS sampled_seeking,
-                GREATEST(COUNT(*), 1) AS sample_size,
-                COALESCE(
-                    (SELECT jsonb_object_agg(skill, supply_cnt) FROM top_skills),
-                    '{}'::jsonb
-                ) AS skill_counts
-            FROM sampled
+                GREATEST(COUNT(*), 1) AS sample_size
+            FROM (
+                SELECT video_pitch_url, seeking_status
+                FROM candidate_profiles
+                WHERE is_hidden = FALSE
+                LIMIT 2000
+            ) sampled
         """)
         res = await self.db.execute(query)
         row = res.mappings().first()
+        skill_res = await self.db.execute(
+            text("""
+                SELECT s.name AS skill, COUNT(ps.profile_id)::int AS supply_cnt
+                FROM skills s
+                LEFT JOIN profile_skills ps ON ps.skill_id = s.id
+                GROUP BY s.id, s.name
+                ORDER BY supply_cnt DESC, s.name ASC
+                LIMIT 8
+            """)
+        )
+        skill_counts = {r.skill.lower(): int(r.supply_cnt) for r in skill_res.fetchall()}
         if not row:
             return {
                 "total_visible": 0,
                 "total_jds_analyzed": 0,
                 "with_video": 0,
                 "actively_seeking": 0,
-                "skill_counts": {},
+                "skill_counts": skill_counts,
             }
-        raw_skills = row["skill_counts"] or {}
-        skill_counts = {str(k).lower(): int(v) for k, v in dict(raw_skills).items()}
         total_vis = int(row["total_visible"] or 0)
         sample_sz = int(row["sample_size"] or 1)
         scale = total_vis / sample_sz if total_vis > sample_sz else 1.0

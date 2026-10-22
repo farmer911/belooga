@@ -6,17 +6,20 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import AuthenticatedUser, get_current_user
-from app.modules.expert_review import ExpertReviewService
+from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
+from app.modules.expert_review import ExpertLeaderboardService, ExpertReviewService
 from app.schemas.expert_review import (
     CVReviewFeedbackResponse,
     CVReviewFeedbackSubmitRequest,
     CVReviewOrderCreateRequest,
     CVReviewOrderResponse,
     CVReviewPackageResponse,
+    ExpertApplicationRequest,
     ExpertMatchRecommendationResponse,
     ExpertProfileResponse,
     OrderCheckoutRequest,
+    RankedExpertItemDTO,
+    RegisteredExpertApplicationDTO,
 )
 
 router = APIRouter(prefix="/expert-review", tags=["Domain 9: Expert CV Review & Monetization"])
@@ -28,6 +31,37 @@ async def list_experts(
     db: AsyncSession = Depends(get_db),
 ):
     return await ExpertReviewService(db).list_experts(role_category=category)
+
+
+@router.get("/leaderboard", response_model=List[RankedExpertItemDTO])
+async def get_expert_leaderboard(
+    category: Optional[str] = Query(None, description="Filter by category: backend | frontend | ai | devops | management"),
+    sort_by: str = Query("rank", description="Sort by: rank | ats_lift | rating | speed | reviews_count"),
+    db: AsyncSession = Depends(get_db),
+):
+    """BEL-199: Expert Reviewer Ranking & Leaderboard Engine API."""
+    return await ExpertLeaderboardService(db).get_leaderboard(category=category, sort_by=sort_by)
+
+
+@router.post("/apply", response_model=RegisteredExpertApplicationDTO, status_code=status.HTTP_201_CREATED)
+async def apply_become_expert_reviewer(
+    payload: ExpertApplicationRequest,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """BEL-203: Register or update Expert Reviewer profile in PostgreSQL."""
+    return await ExpertLeaderboardService(db).apply_expert(current_user.id if current_user else None, payload)
+
+
+@router.get("/me", response_model=Optional[RegisteredExpertApplicationDTO])
+async def get_my_expert_reviewer_profile(
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """BEL-203: Retrieve current user's registered Expert Reviewer profile."""
+    return await ExpertLeaderboardService(db).get_my_expert_application(current_user.id if current_user else None)
+
+
 
 
 @router.get("/packages/", response_model=List[CVReviewPackageResponse])

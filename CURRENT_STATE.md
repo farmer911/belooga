@@ -50,7 +50,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 113 (111 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 169 (167 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -60,7 +60,10 @@
 | `GET` | `/health/ready` | `k8s_readiness_probe` | Public | `backend/app/main.py` | Health Probe |
 | `GET` | `/v1` | `api_root` | Public | `backend/app/main.py` | Root |
 | `GET` | `/v1/analytics/bi-export` | `export_bi_star_schema` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
+| `GET` | `/v1/analytics/candidate` | `get_candidate_analytics` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
 | `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
+| `GET` | `/v1/analytics/expert` | `get_expert_analytics` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
+| `GET` | `/v1/analytics/recruiter` | `get_recruiter_analytics` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
 | `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | Public | `backend/app/api/v1/endpoints/analytics.py` | Executive Analytics & Revenue |
 | `POST` | `/v1/auth/forgot-password/` | `request_password_reset` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/login/` | `login` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
@@ -80,11 +83,32 @@
 | `DELETE` | `/v1/bookmarks/{username}/` | `remove_candidate_bookmark` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/bookmarks/{username}/` | `add_candidate_bookmark` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
-| `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/career/jobs/` | `create_career_job_alias` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/careers/` | `list_careers` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/careers/` | `create_career_posting` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/careers/{career_id}/apply` | `apply_career_posting` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/catalogs/career-roi` | `get_career_upskill_roi` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/catalogs/locations/` | `list_catalog_locations` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/catalogs/salary-benchmark` | `get_salary_benchmark` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `POST` | `/v1/catalogs/salary-benchmark/crawl` | `trigger_salary_crawler` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/catalogs/skills` | `list_catalog_skills` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `POST` | `/v1/catalogs/skills` | `create_catalog_skill` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/catalogs/skills/` | `list_catalog_skills_slash` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `POST` | `/v1/catalogs/skills/` | `create_catalog_skill_slash` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/companies/` | `list_companies_directory` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `POST` | `/v1/companies/` | `create_company_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/companies/search` | `search_companies_directory` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/companies/{slug}` | `get_company_profile` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `PATCH` | `/v1/companies/{slug}` | `update_company_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `GET` | `/v1/companies/{slug}/interview-questions` | `list_company_interview_questions` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `POST` | `/v1/companies/{slug}/interview-questions` | `add_company_interview_question` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
+| `POST` | `/v1/companies/{slug}/reviews` | `add_company_review` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/expert-review/apply` | `apply_become_expert_reviewer` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/experts/` | `list_experts` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `GET` | `/v1/expert-review/leaderboard` | `get_expert_leaderboard` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `GET` | `/v1/expert-review/me` | `get_my_expert_reviewer_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `POST` | `/v1/expert-review/orders/` | `create_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/orders/me` | `list_candidate_orders_me` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
@@ -96,6 +120,19 @@
 | `GET` | `/v1/expert-review/packages/` | `list_packages` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/recommend` | `recommend_expert_reviewer` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/growth/career-roadmap` | `get_career_roadmap` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/claim-reward` | `claim_wallet_cashback_reward` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/cv-auto-import` | `auto_import_cv_to_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/cv-roasts` | `submit_anonymous_cv_roast` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/expert-mock-booking` | `book_expert_mock_interview` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/growth/hub` | `get_growth_hub` | Public | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/mock-interview` | `evaluate_mock_interview` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/outreach-generator` | `generate_outreach_scripts` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/pitch-script` | `generate_pitch_script` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/referrals` | `create_referral_request` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/salary-negotiation` | `generate_salary_negotiation` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/growth/skill-assessment` | `submit_skill_assessment` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `PATCH` | `/v1/growth/stealth-mode` | `update_stealth_mode` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/match/extract-cv-file` | `extract_cv_file_text` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `GET` | `/v1/match/history` | `list_ats_scan_history` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
@@ -113,6 +150,13 @@
 | `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 | `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | Public | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
+| `GET` | `/v1/posts/` | `list_user_posts` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/posts/` | `create_user_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/posts/user/{username}` | `list_user_posts_by_username` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `DELETE` | `/v1/posts/{post_id}` | `delete_user_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `PATCH` | `/v1/posts/{post_id}` | `update_user_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/posts/{post_id}/comments` | `comment_user_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/posts/{post_id}/like` | `like_user_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/profile/company/` | `suggest_companies` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/location/` | `suggest_locations` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
 | `GET` | `/v1/profile/school/` | `suggest_schools` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
@@ -153,13 +197,25 @@
 | `DELETE` | `/v1/profile/{username}/skills/{skill_name}/` | `remove_candidate_skill` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `GET` | `/v1/profile/{username}/trust-score` | `get_candidate_trust_score` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `GET` | `/v1/profile/{username}/video-status/` | `get_video_transcoding_status` | Public | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
+| `POST` | `/v1/recruiter/compare` | `compare_recruiter_candidates` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/recruiter/invite` | `invite_recruiter_candidate` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/recruiter/pipeline` | `list_recruiter_pipeline` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/recruiter/pipeline` | `add_recruiter_pipeline_candidate` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `PATCH` | `/v1/recruiter/pipeline/{item_id}` | `update_recruiter_pipeline_candidate` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/recruiter/reverse-bids` | `submit_recruiter_reverse_bid` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/search/candidates` | `search_candidates_multi_skill` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
+| `GET` | `/v1/search/top-candidates` | `get_top_high_potential_candidates` | Public | `backend/app/api/v1/endpoints/search.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/seo/sitemap-data` | `get_seo_sitemap_data` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/tracker/goals` | `get_career_goal` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `POST` | `/v1/tracker/goals` | `save_career_goal` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `POST` | `/v1/tracker/goals/{goal_id}/ai-match` | `ai_match_career_goal` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `PATCH` | `/v1/tracker/jobs/{job_id}` | `update_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `GET` | `/v1/tracker/search-market-jobs` | `search_market_jobs` | Public | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/users/exists/email/` | `check_email_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/users/exists/username/` | `check_username_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/users/register/` | `register_user` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
