@@ -50,7 +50,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 110 (108 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 113 (111 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -71,8 +71,11 @@
 | `POST` | `/v1/auth/reset-password/` | `reset_password` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/verify-email/` | `verify_email_token` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/auth/verify-email/request/` | `request_email_verification` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
-| `GET` | `/v1/blog/posts/` | `list_blog_posts` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
-| `GET` | `/v1/blog/posts/{slug}/` | `get_blog_post_detail` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/blog/posts/` | `list_blog_posts` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/blog/posts/` | `create_blog_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/blog/posts/{post_id}/comments` | `add_comment_blog_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `POST` | `/v1/blog/posts/{post_id}/like` | `toggle_like_blog_post` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/blog/posts/{slug}/` | `get_blog_post_detail` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/bookmarks/` | `list_candidate_bookmarks` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `DELETE` | `/v1/bookmarks/{username}/` | `remove_candidate_bookmark` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `POST` | `/v1/bookmarks/{username}/` | `add_candidate_bookmark` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Optional, Union
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -52,17 +52,49 @@ class JobApplicantRequest(BaseModel):
     resume_url: str = Field(..., min_length=1)
 
 
-class BlogPostResponse(BaseModel):
-    """CMS editorial blog article response."""
+class BlogCommentItemDTO(BaseModel):
+    id: str
+    author_name: str
+    author_username: str
+    content: str
+    created_at: str
 
+
+class BlogPostCreateRequest(BaseModel):
+    title: Optional[str] = ""
+    excerpt: Optional[str] = ""
+    content: List[str] = Field(default_factory=list)
+    post_type: str = "USER_STATUS"
+    tags: List[str] = Field(default_factory=list)
+    ats_score_badge: Optional[int] = None
+    category: str = "Community Feed"
+
+
+class BlogCommentCreateRequest(BaseModel):
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
+class BlogPostResponse(BaseModel):
+    """CMS editorial blog article and community social feed post response."""
+
+    id: Optional[str] = None
     slug: str
     title: str
     excerpt: str
     date: str
-    image: str
+    image: str = "/images/blog/blog-1.jpg"
     author: str
+    author_username: str = "alexnguyen"
+    author_headline: str = "Verified Member @ Belooga Talent Network"
+    author_avatar: str = "/images/avatar.jpg"
+    post_type: str = "EDITORIAL"
     category: str = "Career Insights"
+    tags: List[str] = Field(default_factory=list)
+    ats_score_badge: Optional[int] = None
     read_time_minutes: int = 4
-    content: list[str] = Field(default_factory=list)
-    key_takeaways: list[str] = Field(default_factory=list)
-
+    likes_count: int = 12
+    comments_count: int = 0
+    is_liked_by_me: bool = False
+    comments: List[BlogCommentItemDTO] = Field(default_factory=list)
+    content: List[str] = Field(default_factory=list)
+    key_takeaways: List[str] = Field(default_factory=list)

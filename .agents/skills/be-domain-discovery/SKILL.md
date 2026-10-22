@@ -21,8 +21,11 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 | `GET` | `/v1/catalogs/career-roi` | `get_career_upskill_roi` | public |
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | public |
 | `GET` | `/v1/faqs` | `get_faqs` | public |
-| `GET` | `/v1/blog/posts/` | `list_blog_posts` | public |
-| `GET` | `/v1/blog/posts/{slug}/` | `get_blog_post_detail` | public |
+| `GET` | `/v1/blog/posts/` | `list_blog_posts` | optional |
+| `POST` | `/v1/blog/posts/` | `create_blog_post` | optional |
+| `GET` | `/v1/blog/posts/{slug}/` | `get_blog_post_detail` | optional |
+| `POST` | `/v1/blog/posts/{post_id}/like` | `toggle_like_blog_post` | optional |
+| `POST` | `/v1/blog/posts/{post_id}/comments` | `add_comment_blog_post` | optional |
 | `GET` | `/v1/seo/sitemap-data` | `get_seo_sitemap_data` | public |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | public |
 | `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | public |
