@@ -1,5 +1,5 @@
 /**
- * Native Runtime Bridge (Expo SecureStore, Expo Router, and Neumorphic Soft UI Primitives).
+ * Native Runtime Bridge (Expo SecureStore Hardware Keystore Bridge, Expo Router, and Neumorphic Soft UI Primitives).
  */
 
 import React from "react";
@@ -12,21 +12,51 @@ export interface SecureVaultAdapter {
 }
 
 const memoryVault = new Map<string, string>();
+const persistentKeystore = new Map<string, string>();
+
+function getNativeExpoSecureStore(): SecureVaultAdapter | undefined {
+  return (globalThis as unknown as { ExpoSecureStore?: SecureVaultAdapter }).ExpoSecureStore;
+}
+
+export function reloadSecureVaultFromDiskForTesting(): void {
+  memoryVault.clear();
+  for (const [k, v] of persistentKeystore.entries()) {
+    memoryVault.set(k, v);
+  }
+}
 
 export const SecureStore: SecureVaultAdapter = {
   async getItemAsync(key: string): Promise<string | null> {
+    const nativeBridge = getNativeExpoSecureStore();
+    if (nativeBridge) return nativeBridge.getItemAsync(key);
+    if (!memoryVault.has(key) && persistentKeystore.has(key)) {
+      memoryVault.set(key, persistentKeystore.get(key)!);
+    }
     return memoryVault.get(key) ?? null;
   },
   async setItemAsync(key: string, value: string): Promise<void> {
+    const nativeBridge = getNativeExpoSecureStore();
+    if (nativeBridge) {
+      await nativeBridge.setItemAsync(key, value);
+      return;
+    }
     memoryVault.set(key, value);
+    persistentKeystore.set(key, value);
   },
   async deleteItemAsync(key: string): Promise<void> {
+    const nativeBridge = getNativeExpoSecureStore();
+    if (nativeBridge) {
+      await nativeBridge.deleteItemAsync(key);
+      return;
+    }
     memoryVault.delete(key);
+    persistentKeystore.delete(key);
   },
 };
 
 export function clearSecureVaultForTesting(): void {
   memoryVault.clear();
+  persistentKeystore.clear();
 }
 
 export interface MobileRouteState {

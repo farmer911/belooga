@@ -185,7 +185,7 @@ describe("BEL-179 (#101): Mobile Parity Part 2 — Wallet & Escrow, ATS PDF/DOCX
       const url = String(input);
       const method = init?.method ?? "GET";
 
-      if (url.endsWith("/v1/blog/posts") && method === "GET") {
+      if ((url.endsWith("/v1/blog/posts/") || url.endsWith("/v1/blog/posts")) && method === "GET") {
         return new Response(
           JSON.stringify([
             {
@@ -201,7 +201,7 @@ describe("BEL-179 (#101): Mobile Parity Part 2 — Wallet & Escrow, ATS PDF/DOCX
         );
       }
 
-      if (url.endsWith("/v1/blog/posts") && method === "POST") {
+      if ((url.endsWith("/v1/blog/posts/") || url.endsWith("/v1/blog/posts")) && method === "POST") {
         return new Response(
           JSON.stringify({
             id: "post_2",
