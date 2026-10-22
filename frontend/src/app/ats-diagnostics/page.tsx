@@ -41,7 +41,7 @@ export default function ATSDiagnosticsPage() {
   const {
     result, shortlist, interviewKit, isLoading, error,
     activeTab, previewMode, setActiveTab, setPreviewMode, scanCV, setResult,
-    scanHistory, refetchHistory, tailorCv,
+    scanHistory, marketPulse, refetchHistory, tailorCv,
   } = useATSScan();
 
   const loadProfileCvMutation = useMutation({
@@ -73,23 +73,17 @@ export default function ATSDiagnosticsPage() {
     if (text.trim()) setCvText(text);
     e.target.value = "";
   };
-
   const handleScan = async (overrideCvText?: string) => {
-    try {
-      await scanCV({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: overrideCvText ?? cvText });
-      void refetchHistory();
-    } catch { /* Error handled in hook state */ }
+    try { await scanCV({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: overrideCvText ?? cvText }); void refetchHistory(); } catch { /* handled */ }
   };
-
   const handlePaymentSuccess = async () => {
     try {
       const res = await tailorCv({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: cvText });
       if (res.tailored_cv_text) setCvText(res.tailored_cv_text);
       if (res.scan_result) setResult(res.scan_result);
       void refetchHistory();
-    } catch { /* Handled by hook fallback */ }
+    } catch { /* handled */ }
   };
-
   const handleSelectHistory = (item: ATSScanHistoryItem) => {
     setJobTitle(item.job_title); setCompanyName(item.company_name || "");
     setResult({
@@ -100,7 +94,6 @@ export default function ATSDiagnosticsPage() {
       created_at: item.created_at || new Date().toISOString(),
     });
   };
-
   const applyPreset = (preset: ATSScanPayload) => {
     setJobTitle(preset.job_title); setCompanyName(preset.company_name || ""); setJdText(preset.jd_text); setCvText(preset.cv_text);
   };
@@ -112,7 +105,12 @@ export default function ATSDiagnosticsPage() {
           <span className="font-semibold text-brand-primary">Belooga Studio</span>
           <span className="text-surface-border">/</span>
           <span className="text-typography-heading font-medium">ATS Diagnostics & JD Matcher</span>
-          <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-brand-dark border-brand-primary/40 bg-teal-50/50">Zero Dead-Space</Badge>
+          <Badge variant="outline" className="text-[10px] uppercase tracking-wider text-brand-dark border-brand-primary/40 bg-brand-overlay">Zero Dead-Space</Badge>
+          {marketPulse?.total_jds_analyzed !== undefined && (
+            <Badge data-testid="market-pulse-jds-badge" variant="outline" className="text-[10px] font-semibold text-typography-heading border-surface-border bg-surface-page">
+              {marketPulse.total_jds_analyzed} JDs Analyzed
+            </Badge>
+          )}
           <Suspense fallback={null}><SharedScoreBadge /></Suspense>
         </div>
 

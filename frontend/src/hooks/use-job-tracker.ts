@@ -67,6 +67,7 @@ export function useJobTracker() {
     const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
     queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => [response.data, ...prev]);
     void refetchAnalytics();
+    void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
     return response.data;
   }, [queryClient, refetchAnalytics]);
 
@@ -77,6 +78,7 @@ export function useJobTracker() {
     try {
       await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}/status`, { status: newStatus });
       void refetchAnalytics();
+      void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
     } catch (err: unknown) {
       await refetch();
       throw err;
@@ -90,6 +92,7 @@ export function useJobTracker() {
     try {
       await apiClient.delete(`/v1/tracker/jobs/${jobId}`);
       void refetchAnalytics();
+      void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
     } catch (err: unknown) {
       await refetch();
       throw err;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
 import { useATSDiagnostics, ATSScanPayload, ATSScanResult } from "./use-ats-diagnostics";
 
@@ -13,6 +13,15 @@ export interface ATSScanHistoryItem {
   matched_skills?: string[];
   missing_skills?: string[];
   created_at?: string;
+}
+
+export interface TalentMarketPulseDTO {
+  total_candidates: number;
+  video_verified_candidates: number;
+  actively_looking_candidates: number;
+  total_jds_analyzed?: number;
+  average_ats_score: number;
+  top_demanded_skills: Array<{ skill: string; count: number }>;
 }
 
 export interface TailorCVResponse {
@@ -36,8 +45,15 @@ export function useATSScanHistory() {
 }
 
 export function useATSScan() {
+  const queryClient = useQueryClient();
   const diagnostics = useATSDiagnostics();
   const { data: scanHistory = [], refetch: refetchHistory } = useATSScanHistory();
+  const { data: marketPulse = null } = useQuery<TalentMarketPulseDTO | null>({
+    queryKey: ["ats-market-pulse"],
+    queryFn: async () => (await apiClient.get<TalentMarketPulseDTO>("/v1/match/market-pulse")).data,
+    staleTime: 30_000,
+    retry: false,
+  });
 
   const tailorMutation = useMutation({
     mutationFn: async (payload: ATSScanPayload): Promise<TailorCVResponse> => {
@@ -67,7 +83,14 @@ export function useATSScan() {
   return {
     ...diagnostics,
     scanHistory,
-    refetchHistory,
+    marketPulse,
+    refetchHistory: async () => {
+      await Promise.all([
+        refetchHistory(),
+        queryClient.invalidateQueries({ queryKey: ["ats-market-pulse"] }),
+        queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] }),
+      ]);
+    },
     tailorCv: tailorMutation.mutateAsync,
     isTailoring: tailorMutation.isPending,
   };

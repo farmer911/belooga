@@ -29,6 +29,7 @@ export function useWebRTCStudio(
   const isRecordingRef = useRef(false);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const canvasAnimationRef = useRef({ current: true });
+  const streamReqIdRef = useRef(0);
 
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -83,12 +84,16 @@ export function useWebRTCStudio(
     audioId: string
   ) => {
     if (isRecordingRef.current) return;
+    const reqId = ++streamReqIdRef.current;
     const prevStream = mediaStream;
     const cfg = getResolutionConfig(res, ratio);
     const stream =
       (await acquireStream(devId, res, ratio, audioId)) ||
       createStudioPreviewStream(candidateName, cfg.width, cfg.height, ratio, canvasAnimationRef.current);
-    if (isRecordingRef.current) return;
+    if (isRecordingRef.current || reqId !== streamReqIdRef.current) {
+      stream.getTracks().forEach((t) => t.stop());
+      return;
+    }
     if (prevStream && prevStream !== stream) {
       prevStream.getTracks().forEach((t) => t.stop());
     }
