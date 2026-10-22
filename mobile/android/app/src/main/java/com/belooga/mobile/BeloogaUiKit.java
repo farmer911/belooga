@@ -446,6 +446,71 @@ public final class BeloogaUiKit {
         return tile;
     }
 
+    public static TextView createShortlistFilterChip(
+            Context ctx,
+            String text,
+            boolean active,
+            String testId,
+            View.OnClickListener listener
+    ) {
+        TextView chip = new TextView(ctx);
+        chip.setText(text);
+        chip.setGravity(Gravity.CENTER);
+        chip.setTextSize(11f);
+        chip.setTypeface(Typeface.DEFAULT_BOLD);
+        int bg = active ? COLOR_BRAND : COLOR_BRAND_MUTED;
+        int fg = active ? COLOR_TEXT_INVERSE : COLOR_BRAND;
+        chip.setTextColor(fg);
+        chip.setBackground(roundedDrawable(ctx, bg, COLOR_BRAND, 1f, 999f));
+        chip.setPadding(dp(ctx, 12f), dp(ctx, 6f), dp(ctx, 12f), dp(ctx, 6f));
+        chip.setMinimumHeight(dp(ctx, 44f));
+        chip.setMinHeight(dp(ctx, 44f));
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        if (testId != null && !testId.isEmpty()) {
+            chip.setContentDescription(testId);
+        }
+        chip.setOnClickListener(listener);
+        return chip;
+    }
+
+    public static TextView createBookmarkToggleBtn(
+            Context ctx,
+            boolean bookmarked,
+            String testId,
+            View.OnClickListener listener
+    ) {
+        TextView btn = new TextView(ctx);
+        btn.setText(bookmarked ? "Saved" : "Save");
+        btn.setGravity(Gravity.CENTER);
+        btn.setTextSize(11f);
+        btn.setTypeface(Typeface.DEFAULT_BOLD);
+        int bg = bookmarked ? COLOR_BRAND : COLOR_ELEVATED;
+        int fg = bookmarked ? COLOR_TEXT_INVERSE : COLOR_TEXT_HEADING;
+        int border = bookmarked ? COLOR_BRAND : COLOR_BORDER;
+        btn.setTextColor(fg);
+        btn.setBackground(roundedDrawable(ctx, bg, border, 1f, 10f));
+        int touchSize = dp(ctx, 44f);
+        btn.setMinimumWidth(touchSize);
+        btn.setMinWidth(touchSize);
+        btn.setMinimumHeight(touchSize);
+        btn.setMinHeight(touchSize);
+        btn.setPadding(dp(ctx, 10f), dp(ctx, 6f), dp(ctx, 10f), dp(ctx, 6f));
+        btn.setClickable(true);
+        btn.setFocusable(true);
+        if (testId != null && !testId.isEmpty()) {
+            btn.setContentDescription(testId);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                touchSize
+        );
+        lp.setMargins(dp(ctx, 6f), 0, 0, 0);
+        btn.setLayoutParams(lp);
+        btn.setOnClickListener(listener);
+        return btn;
+    }
+
     public static LinearLayout createRow(Context ctx, int bottomMarginDp) {
         LinearLayout row = new LinearLayout(ctx);
         row.setOrientation(LinearLayout.HORIZONTAL);
