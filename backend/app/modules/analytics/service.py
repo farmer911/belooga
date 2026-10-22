@@ -28,12 +28,18 @@ class AnalyticsService:
     async def get_dashboard(self, time_range: str = "7D") -> AnalyticsDashboardResponse:
         if os.getenv("ENVIRONMENT") == "testing":
             total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
+            bookmarks_count = await self.repo.get_bookmarks_count()
             db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
         else:
             counts = await platform_cache.get_or_set(
                 "analytics:platform_counts",
                 ttl_seconds=15,
                 loader=lambda: self.repo.get_platform_counts(),
+            )
+            bookmarks_count = await platform_cache.get_or_set(
+                "analytics:bookmarks_count",
+                ttl_seconds=15,
+                loader=lambda: self.repo.get_bookmarks_count(),
             )
             total_users, total_scans, active_jobs = counts[0], counts[1], counts[2]
             db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
@@ -74,13 +80,22 @@ class AnalyticsService:
 
         sc = max(effective_scans, 100)
         funnel = [
-            FunnelStage(stage=label, count=int(sc * rate / 100), conversion_rate=rate)
-            for label, rate in [
-                ("1. Khách truy cập & Quét ATS Free", 100.0),
-                ("2. Xem Phân tích Bot-Eye & Gap Kỹ Năng", 74.0),
-                ("3. Mua Micro-Pass 29k/59k Tối Ưu Lề", 21.0),
-                ("4. Đặt Chuyên Gia Review Chuyên Sâu (8% phí)", 6.0),
-            ]
+            FunnelStage(stage="1. Khách truy cập & Quét ATS Free", count=sc, conversion_rate=100.0),
+            FunnelStage(
+                stage="2. Xem Phân tích Bot-Eye & Gap Kỹ Năng",
+                count=int(sc * 0.74) + active_jobs + bookmarks_count,
+                conversion_rate=74.0,
+            ),
+            FunnelStage(
+                stage="3. Mua Micro-Pass 29k/59k Tối Ưu Lề",
+                count=int(sc * 0.21) + active_jobs + bookmarks_count,
+                conversion_rate=21.0,
+            ),
+            FunnelStage(
+                stage="4. Đặt Chuyên Gia Review Chuyên Sâu (8% phí)",
+                count=int(sc * 0.06) + len(db_orders),
+                conversion_rate=6.0,
+            ),
         ]
 
         tx_specs = [
