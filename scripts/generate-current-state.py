@@ -274,6 +274,7 @@ def main():
         "candidate_job_applications_tracker": "Domain 11: Candidate Job Application Kanban Tracker",
         "notifications": "Domain 12: In-App Notifications & Transactional Email Deep-Link Outbox",
         "notification_preferences": "Domain 12: Per-Identity Email & In-App Notification Preferences",
+        "candidate_bookmarks": "Domain 6: Recruiter Candidate Shortlist Bookmarks",
     }
 
     for idx, t in enumerate(tables, 1):

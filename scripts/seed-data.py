@@ -57,12 +57,25 @@ async def seed(db_url: str):
                 )
             """)
         )
+        await conn.execute(
+            text("""
+                CREATE TABLE IF NOT EXISTS candidate_bookmarks (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    recruiter_identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+                    candidate_profile_id UUID NOT NULL REFERENCES candidate_profiles(id) ON DELETE CASCADE,
+                    note TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    UNIQUE(recruiter_identity_id, candidate_profile_id)
+                )
+            """)
+        )
         for idx_sql in (
             "CREATE INDEX IF NOT EXISTS idx_notifications_identity_unread_created ON notifications (identity_id, is_read, created_at DESC)",
             "CREATE INDEX IF NOT EXISTS idx_cv_review_orders_candidate_created ON cv_review_orders (candidate_identity_id, created_at DESC)",
             "CREATE INDEX IF NOT EXISTS idx_cv_review_orders_status_created ON cv_review_orders (order_status, created_at DESC)",
             "CREATE INDEX IF NOT EXISTS idx_job_tracker_candidate_created ON candidate_job_applications_tracker (candidate_identity_id, created_at DESC)",
             "CREATE INDEX IF NOT EXISTS idx_resume_jd_matches_candidate_created ON resume_jd_matches (candidate_identity_id, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_candidate_bookmarks_recruiter_created ON candidate_bookmarks (recruiter_identity_id, created_at DESC)",
         ):
             await conn.execute(text(idx_sql))
         await conn.execute(text("DELETE FROM identities WHERE email LIKE '%@test.com'"))

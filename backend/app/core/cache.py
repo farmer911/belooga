@@ -249,3 +249,5 @@ async def invalidate_candidate_cache(username: str) -> None:
     await platform_cache.invalidate_prefix(f"trajectory:{clean}")
     await platform_cache.invalidate_prefix("search:")
     await platform_cache.invalidate_prefix("suggest:")
+    await platform_cache.invalidate_prefix("bookmarks:")
+
