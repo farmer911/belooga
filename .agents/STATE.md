@@ -1,12 +1,11 @@
-# Active Working Memory (`STATE.md`)
+🎯 Đang làm ticket: [BEL-149] (#63) — Post-Delivery Architecture Audit, FE/BE Performance Optimization & Skill/Platform Sync | Role: Architect | Cột: Testing
 
-🎯 Đang làm ticket: [BEL-147] (#57) — Candidate Shortlist Bookmark Parity on Expo & Android Native Discover Screen | Role: mobile | Cột: Testing
-
-## Objective & Hypothesis
-- **Completed Tickets in Session:**
-  1. `[BEL-150]` (#65 — Team Signal Handshake & Listen Onboarding): Transitioned `Todo -> In Progress -> Testing` (`7bd84c2d`).
-  2. `[BEL-147]` (#57 — Candidate Shortlist Bookmark Parity on Expo & Android Native Discover Screen):
-     - Implemented `mobile/src/hooks/use-mobile-bookmarks.ts` (`GET/POST/DELETE /v1/bookmarks/`) + `mobile/tests/bookmarks.test.ts` (20/20 unit tests pass).
-     - Added `filter-saved-shortlist-chip` (`>= 44dp`) and `bookmark-candidate-<username>` (`44x44dp`) on Expo Discover (`mobile/app/(tabs)/index.tsx`) and Android Native (`BeloogaUiKit.java`, `MainActivity.java`).
-     - Built clean signed APK (`belooga-mobile-v1.0.0.apk`) and verified UIAutomator2 E2E on `emulator-5554`.
-     - Opened PR #66 (`feature/BEL-147-mobile-bookmarks`) and moved #57 (`PVTI_lAHOAeXQP84BoMSnzhCoswg`) to `Testing` (`7bd84c2d`).
+## Active Task: [BEL-149] (#63) — Epic #62 Candidate Shortlist Bookmarks Audit
+- **Linked Upstream Tickets:** `#64` (`BEL-144` Design), `#55` (`BEL-145` BE PR `#68`), `#56` (`BEL-146` FE PR `#76`), `#57` (`BEL-147` mobile PR `#66`).
+- **Completed Architect Optimizations (`BEL-149`):**
+  1. **Ponytail Code Compression:**
+     - `backend/app/modules/bookmarks/repository.py`: `139` -> `86` lines (`-38%` LOC) + B-tree index-friendly `WHERE (cp.username = :username OR LOWER(cp.username) = :username)`.
+     - `backend/app/modules/bookmarks/service.py`: `71` -> `56` lines (`-21%` LOC) + cross-module `analytics:` SWR cache invalidation.
+     - `frontend/src/hooks/use-bookmarks.ts`: `136` -> `128` lines + memoized $O(1)$ `Set<string>` (`bookmarkedSet`) + immediate verified `200/201/204` `queryClient.setQueryData` cache update.
+     - `frontend/src/components/features/search/saved-shortlist-drawer.tsx`: `152` -> `115` lines (`-24%` LOC).
+  2. **Skill & Platform Sync:** Updated `be-domain-discovery/SKILL.md`, `fe-domain-public/SKILL.md`, `.agents/PRODUCT_THESIS.md`, and `CURRENT_STATE.md`.

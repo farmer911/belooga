@@ -335,7 +335,7 @@ if os.getenv("CI") != "true":
         )
         if pr_proc.returncode == 0 and pr_proc.stdout.strip():
             for pr_item in json.loads(pr_proc.stdout):
-                if pr_item.get("headRefName") == curr_branch:
+                if curr_branch != "main" and pr_item.get("headRefName") != curr_branch:
                     continue
                 failed_checks = [
                     c.get("name", "check")
