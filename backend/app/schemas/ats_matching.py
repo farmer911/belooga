@@ -98,6 +98,7 @@ class SkillScarcityItemDTO(BaseModel):
 
 class TalentMarketPulseResponse(BaseModel):
     total_visible_candidates: int
+    total_jds_analyzed: int = 0
     video_pitch_adoption_pct: float
     actively_seeking_pct: float
     hiring_velocity_index: float

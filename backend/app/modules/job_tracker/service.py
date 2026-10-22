@@ -98,6 +98,7 @@ class JobTrackerService:
             candidate_identity_id=candidate_identity_id,
         )
         await platform_cache.invalidate_prefix("tracker_analytics:")
+        await platform_cache.invalidate_prefix("analytics:")
         return TrackedJobResponse.model_validate(job)
 
     async def move_job_status(

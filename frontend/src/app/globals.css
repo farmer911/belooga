@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Figma Master Design System Foundations (wRnZwhWhwyQtafVdgMLeL0, node-id=1-2) */
 :root {
   --background: #f8f9fa;
   --foreground: #252525;

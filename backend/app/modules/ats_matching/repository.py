@@ -156,6 +156,7 @@ class ATSMatchingRepository:
                     (SELECT reltuples::bigint FROM pg_class WHERE oid = 'candidate_profiles'::regclass),
                     COUNT(*)
                 ) AS total_visible,
+                (SELECT COUNT(*) FROM job_descriptions) AS total_jds_analyzed,
                 COUNT(*) FILTER (WHERE video_pitch_url IS NOT NULL) AS sampled_video,
                 COUNT(*) FILTER (WHERE seeking_status = 'Actively Looking') AS sampled_seeking,
                 GREATEST(COUNT(*), 1) AS sample_size
@@ -180,12 +181,19 @@ class ATSMatchingRepository:
         )
         skill_counts = {r.skill.lower(): int(r.supply_cnt) for r in skill_res.fetchall()}
         if not row:
-            return {"total_visible": 0, "with_video": 0, "actively_seeking": 0, "skill_counts": skill_counts}
+            return {
+                "total_visible": 0,
+                "total_jds_analyzed": 0,
+                "with_video": 0,
+                "actively_seeking": 0,
+                "skill_counts": skill_counts,
+            }
         total_vis = int(row["total_visible"] or 0)
         sample_sz = int(row["sample_size"] or 1)
         scale = total_vis / sample_sz if total_vis > sample_sz else 1.0
         return {
             "total_visible": total_vis,
+            "total_jds_analyzed": int(row["total_jds_analyzed"] or 0),
             "with_video": int(round(int(row["sampled_video"] or 0) * scale)),
             "actively_seeking": int(round(int(row["sampled_seeking"] or 0) * scale)),
             "skill_counts": skill_counts,
