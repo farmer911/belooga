@@ -128,15 +128,64 @@ export function SurfaceCard({ testID, mode = "dark", children, style }: NativeCo
       style: {
         backgroundColor: tokens.surface.card,
         border: `1px solid ${tokens.surface.border}`,
-        borderRadius: 18,
+        borderRadius: 20,
         padding: 18,
         display: "flex",
         flexDirection: "column",
         gap: 12,
-        boxShadow: "0 10px 28px rgba(0, 0, 0, 0.28)",
+        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
         ...style,
       },
     },
+    children
+  );
+}
+
+export interface BottomSheetDrawerProps extends NativeContainerProps {
+  title?: string;
+}
+
+export function BottomSheetDrawer({
+  testID = "mobile-bottom-sheet-drawer",
+  title,
+  mode = "dark",
+  children,
+  style,
+}: BottomSheetDrawerProps) {
+  const tokens = getSemanticTokens(mode);
+  return React.createElement(
+    "div",
+    {
+      "data-testid": testID,
+      "aria-label": testID,
+      style: {
+        backgroundColor: tokens.surface.card,
+        border: `1px solid ${tokens.surface.border}`,
+        borderRadius: "24px 24px 16px 16px",
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        boxShadow: "0 -6px 24px rgba(0, 0, 0, 0.32)",
+        ...style,
+      },
+    },
+    React.createElement("div", {
+      style: {
+        width: 40,
+        height: 4,
+        borderRadius: 999,
+        backgroundColor: tokens.surface.border,
+        alignSelf: "center",
+      },
+    }),
+    title
+      ? React.createElement(
+          "strong",
+          { style: { fontSize: 15, color: tokens.typography.heading } },
+          title
+        )
+      : null,
     children
   );
 }
@@ -189,19 +238,23 @@ export function BadgePill({ testID, label, tone = "brand", mode = "dark" }: Badg
 
 export interface ActionButtonProps {
   testID?: string;
+  accessibilityLabel?: string;
   label: string;
   disabled?: boolean;
   variant?: "primary" | "secondary" | "danger" | "accent";
   mode?: ThemeMode;
+  style?: React.CSSProperties;
   onPress?: () => void;
 }
 
 export function ActionButton({
   testID,
+  accessibilityLabel,
   label,
   disabled = false,
   variant = "primary",
   mode = "dark",
+  style,
   onPress,
 }: ActionButtonProps) {
   const tokens = getSemanticTokens(mode);
@@ -223,19 +276,22 @@ export function ActionButton({
     "button",
     {
       "data-testid": testID,
+      "aria-label": accessibilityLabel ?? testID ?? label,
       disabled,
       onClick: onPress,
       style: {
         backgroundColor: bg,
         color: fg,
         border: `1px solid ${variant === "secondary" ? tokens.surface.border : "transparent"}`,
-        borderRadius: 12,
-        padding: "11px 16px",
+        borderRadius: 14,
+        padding: "12px 16px",
+        minHeight: 48,
         fontWeight: 700,
         fontSize: 13,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.55 : 1,
         transition: "all 150ms ease",
+        ...style,
       },
     },
     label

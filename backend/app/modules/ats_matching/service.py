@@ -114,6 +114,9 @@ class ATSMatchingService:
             star_analysis=star_critiques, parse_warnings=parse_warnings,
             candidate_identity_id=candidate_identity_id,
         )
+        await platform_cache.invalidate_prefix("market:pulse")
+        await platform_cache.invalidate_prefix("salary_benchmark:")
+        await platform_cache.invalidate_prefix("analytics:")
         return ATSScanResponse(
             match_id=match_record.id, ats_score=total_score,
             matched_skills=matched_skills, missing_skills=missing_skills,
@@ -236,6 +239,7 @@ class ATSMatchingService:
             ]
             return {
                 "total_visible_candidates": stats["total_visible"],
+                "total_jds_analyzed": stats.get("total_jds_analyzed", 0),
                 "video_pitch_adoption_pct": round((stats["with_video"] / total) * 100.0, 1),
                 "actively_seeking_pct": round((stats["actively_seeking"] / total) * 100.0, 1),
                 "hiring_velocity_index": 88.4, "skill_scarcity_index": scarcity,
@@ -243,7 +247,9 @@ class ATSMatchingService:
 
         raw = await _load_pulse() if os.getenv("ENVIRONMENT") == "testing" else await platform_cache.get_or_set("market:pulse", ttl_seconds=30, loader=_load_pulse)
         return TalentMarketPulseResponse(
-            total_visible_candidates=raw["total_visible_candidates"], video_pitch_adoption_pct=raw["video_pitch_adoption_pct"],
+            total_visible_candidates=raw["total_visible_candidates"],
+            total_jds_analyzed=raw.get("total_jds_analyzed", 0),
+            video_pitch_adoption_pct=raw["video_pitch_adoption_pct"],
             actively_seeking_pct=raw["actively_seeking_pct"], hiring_velocity_index=raw["hiring_velocity_index"],
             skill_scarcity_index=[SkillScarcityItemDTO(**item) for item in raw["skill_scarcity_index"]],
         )

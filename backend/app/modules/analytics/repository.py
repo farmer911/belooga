@@ -24,6 +24,11 @@ class AnalyticsRepository:
             return 0, 0, 0
         return int(row["total_users"] or 0), int(row["total_scans"] or 0), int(row["active_jobs"] or 0)
 
+    async def get_bookmarks_count(self) -> int:
+        """Count total candidate shortlist bookmarks in 1 DB hop."""
+        res = await self.db.execute(text("SELECT COUNT(*) FROM candidate_bookmarks"))
+        return int(res.scalar() or 0)
+
     async def get_paid_orders_ledger(self) -> tuple[float, List[Dict[str, Any]]]:
         """Aggregate paid CV review GMV (cents -> VND equivalent) and fetch latest settled DB orders."""
         res = await self.db.execute(

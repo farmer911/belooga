@@ -4,7 +4,11 @@ appId: com.belooga.mobile
 - assertVisible:
     id: "mobile-discovery-heading"
 - assertVisible:
+    id: "filter-saved-shortlist-chip"
+- assertVisible:
     id: "mobile-candidate-card-alexnguyen"
+- assertVisible:
+    id: "bookmark-candidate-alexnguyen"
 - tapOn:
     id: "mobile-tab-studio"
 - assertVisible:

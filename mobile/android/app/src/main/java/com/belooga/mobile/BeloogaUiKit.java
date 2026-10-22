@@ -181,13 +181,14 @@ public final class BeloogaUiKit {
 
         LinearLayout iconPill = new LinearLayout(ctx);
         iconPill.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams pillLp = new LinearLayout.LayoutParams(dp(ctx, 46f), dp(ctx, 26f));
+        LinearLayout.LayoutParams pillLp = new LinearLayout.LayoutParams(dp(ctx, 52f), dp(ctx, 30f));
         iconPill.setLayoutParams(pillLp);
 
         NavIconView iconView = new NavIconView(ctx, iconType, COLOR_TEXT_MUTED);
-        iconView.setLayoutParams(new LinearLayout.LayoutParams(dp(ctx, 20f), dp(ctx, 20f)));
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(dp(ctx, 22f), dp(ctx, 22f)));
         iconPill.addView(iconView);
         tab.addView(iconPill);
+        tab.setMinimumHeight(dp(ctx, 48f));
 
         TextView lbl = new TextView(ctx);
         lbl.setText(label);
@@ -311,8 +312,9 @@ public final class BeloogaUiKit {
     public static LinearLayout createSurfaceCard(Context ctx, String testId) {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1f, 16f));
-        int pad = dp(ctx, 14f);
+        card.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1f, 20f));
+        card.setElevation(dp(ctx, 4f));
+        int pad = dp(ctx, 16f);
         card.setPadding(pad, pad, pad, pad);
         if (testId != null && !testId.isEmpty()) {
             card.setContentDescription(testId);
@@ -321,9 +323,44 @@ public final class BeloogaUiKit {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        lp.setMargins(0, 0, 0, dp(ctx, 10f));
+        lp.setMargins(0, 0, 0, dp(ctx, 12f));
         card.setLayoutParams(lp);
         return card;
+    }
+
+    public static LinearLayout createBottomSheetDrawer(Context ctx, String title, String testId) {
+        LinearLayout sheet = new LinearLayout(ctx);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1.2f, 24f));
+        sheet.setElevation(dp(ctx, 6f));
+        int pad = dp(ctx, 16f);
+        sheet.setPadding(pad, dp(ctx, 10f), pad, pad);
+        sheet.setContentDescription((testId != null && !testId.isEmpty()) ? testId : "mobile-bottom-sheet-drawer");
+
+        View handle = new View(ctx);
+        handle.setBackground(roundedDrawable(ctx, COLOR_BORDER, COLOR_BORDER, 0f, 999f));
+        LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(dp(ctx, 40f), dp(ctx, 4f));
+        hLp.gravity = Gravity.CENTER_HORIZONTAL;
+        hLp.setMargins(0, 0, 0, dp(ctx, 8f));
+        handle.setLayoutParams(hLp);
+        sheet.addView(handle);
+
+        if (title != null && !title.isEmpty()) {
+            TextView tv = new TextView(ctx);
+            tv.setText(title);
+            tv.setTextColor(COLOR_TEXT_HEADING);
+            tv.setTextSize(13.5f);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+            sheet.addView(tv);
+        }
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        lp.setMargins(0, 0, 0, dp(ctx, 12f));
+        sheet.setLayoutParams(lp);
+        return sheet;
     }
 
     public static LinearLayout createSubtleBox(Context ctx) {
@@ -391,10 +428,10 @@ public final class BeloogaUiKit {
         btn.setTextSize(12.5f);
         btn.setTypeface(Typeface.DEFAULT_BOLD);
         btn.setTextColor(textColor);
-        btn.setBackground(roundedDrawable(ctx, bgColor, COLOR_BORDER, 0f, 11f));
-        btn.setPadding(dp(ctx, 11f), dp(ctx, 8f), dp(ctx, 11f), dp(ctx, 8f));
-        btn.setMinimumHeight(dp(ctx, 38f));
-        btn.setMinHeight(dp(ctx, 38f));
+        btn.setBackground(roundedDrawable(ctx, bgColor, COLOR_BORDER, 0f, 14f));
+        btn.setPadding(dp(ctx, 12f), dp(ctx, 10f), dp(ctx, 12f), dp(ctx, 10f));
+        btn.setMinimumHeight(dp(ctx, 48f));
+        btn.setMinHeight(dp(ctx, 48f));
         if (testId != null && !testId.isEmpty()) {
             btn.setContentDescription(testId);
         }
@@ -444,6 +481,71 @@ public final class BeloogaUiKit {
         tile.addView(lbl);
 
         return tile;
+    }
+
+    public static TextView createShortlistFilterChip(
+            Context ctx,
+            String text,
+            boolean active,
+            String testId,
+            View.OnClickListener listener
+    ) {
+        TextView chip = new TextView(ctx);
+        chip.setText(text);
+        chip.setGravity(Gravity.CENTER);
+        chip.setTextSize(11f);
+        chip.setTypeface(Typeface.DEFAULT_BOLD);
+        int bg = active ? COLOR_BRAND : COLOR_BRAND_MUTED;
+        int fg = active ? COLOR_TEXT_INVERSE : COLOR_BRAND;
+        chip.setTextColor(fg);
+        chip.setBackground(roundedDrawable(ctx, bg, COLOR_BRAND, 1f, 999f));
+        chip.setPadding(dp(ctx, 12f), dp(ctx, 6f), dp(ctx, 12f), dp(ctx, 6f));
+        chip.setMinimumHeight(dp(ctx, 44f));
+        chip.setMinHeight(dp(ctx, 44f));
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        if (testId != null && !testId.isEmpty()) {
+            chip.setContentDescription(testId);
+        }
+        chip.setOnClickListener(listener);
+        return chip;
+    }
+
+    public static TextView createBookmarkToggleBtn(
+            Context ctx,
+            boolean bookmarked,
+            String testId,
+            View.OnClickListener listener
+    ) {
+        TextView btn = new TextView(ctx);
+        btn.setText(bookmarked ? "Saved" : "Save");
+        btn.setGravity(Gravity.CENTER);
+        btn.setTextSize(11f);
+        btn.setTypeface(Typeface.DEFAULT_BOLD);
+        int bg = bookmarked ? COLOR_BRAND : COLOR_ELEVATED;
+        int fg = bookmarked ? COLOR_TEXT_INVERSE : COLOR_TEXT_HEADING;
+        int border = bookmarked ? COLOR_BRAND : COLOR_BORDER;
+        btn.setTextColor(fg);
+        btn.setBackground(roundedDrawable(ctx, bg, border, 1f, 10f));
+        int touchSize = dp(ctx, 44f);
+        btn.setMinimumWidth(touchSize);
+        btn.setMinWidth(touchSize);
+        btn.setMinimumHeight(touchSize);
+        btn.setMinHeight(touchSize);
+        btn.setPadding(dp(ctx, 10f), dp(ctx, 6f), dp(ctx, 10f), dp(ctx, 6f));
+        btn.setClickable(true);
+        btn.setFocusable(true);
+        if (testId != null && !testId.isEmpty()) {
+            btn.setContentDescription(testId);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                touchSize
+        );
+        lp.setMargins(dp(ctx, 6f), 0, 0, 0);
+        btn.setLayoutParams(lp);
+        btn.setOnClickListener(listener);
+        return btn;
     }
 
     public static LinearLayout createRow(Context ctx, int bottomMarginDp) {

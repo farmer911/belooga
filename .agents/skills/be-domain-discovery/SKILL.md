@@ -27,17 +27,21 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | public |
 | `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | public |
 | `POST` | `/v1/profile/{user_id}/report/` | `report_candidate_profile` | public |
+| `GET` | `/v1/bookmarks/` | `list_candidate_bookmarks` | required |
+| `POST` | `/v1/bookmarks/{username}/` | `add_candidate_bookmark` | required |
+| `DELETE` | `/v1/bookmarks/{username}/` | `remove_candidate_bookmark` | required |
 
-- Router: `backend/app/api/v1/endpoints/search.py`, `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/api/v1/endpoints/cms.py`
-- Service: `backend/app/modules/catalogs/service.py`, `backend/app/modules/cms/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/search/service.py`
-- Repository: `backend/app/modules/catalogs/repository.py`, `backend/app/modules/cms/repository.py`, `backend/app/modules/search/repository.py`
-- Tests: `backend/tests/test_backend_foundation.py`, `backend/tests/test_catalogs_salary.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_profile_privacy_and_pii.py`
+- Router: `backend/app/api/v1/endpoints/search.py`, `backend/app/api/v1/endpoints/catalogs.py`, `backend/app/api/v1/endpoints/cms.py`, `backend/app/api/v1/endpoints/bookmarks.py`
+- Service: `backend/app/modules/bookmarks/service.py`, `backend/app/modules/catalogs/service.py`, `backend/app/modules/cms/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/search/service.py`
+- Repository: `backend/app/modules/bookmarks/repository.py`, `backend/app/modules/catalogs/repository.py`, `backend/app/modules/cms/repository.py`, `backend/app/modules/search/repository.py`
+- Tests: `backend/tests/test_backend_foundation.py`, `backend/tests/test_bookmarks.py`, `backend/tests/test_catalogs_salary.py`, `backend/tests/test_high_scale_and_shortlist.py`, `backend/tests/test_profile_privacy_and_pii.py`
 <!-- AUTO:END -->
 
 ## Rules
 1. **ADR-005 Strict Index Search & Keyset Pagination (`search.py`):** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` with `ts_rank_cd` and filter `is_hidden = FALSE`. Support `cursor` keyset pagination (`(created_at, id) < (:cursor_ts, :cursor_id)`) backed by partial B-Tree index `idx_candidate_profiles_visible_created`. Never combine `search_vector @@` with `OR ILIKE`.
 2. **Master Taxonomies, Career ROI, Trending Insights & Singleflight Cache (`catalogs.py`, `search.py`, `app/core/cache.py`):** Normalize lookup queries (trim + lowercase), compute deterministic salary percentiles and upskill compensation deltas (`GET /v1/catalogs/salary-benchmark`, `GET /v1/catalogs/career-roi`), expose trending search telemetry (`GET /v1/profile/search/trending/`), and wrap hot DB read paths (`search_candidates`, `search_suggestions`, `list_skills`, `get_trending_search_insights`) in `platform_cache.get_or_set` to prevent cache-stampede DB overload at 10k–25k CCU.
 3. **CMS & Abuse Reports (`cms.py`):** Profile abuse reports (`POST /v1/profile/{user_id}/report/`) must validate a UUID `user_id`, not a username string.
+4. **Candidate Shortlist Bookmarks (`bookmarks.py`, `modules/bookmarks/`):** Enforce `get_current_user` IDOR isolation (`recruiter_identity_id = current_user.id`), composite index `idx_candidate_bookmarks_recruiter_created ON candidate_bookmarks (recruiter_identity_id, created_at DESC)`, single-roundtrip SQL `JOIN` / writeable CTE upsert, `is_hidden = TRUE` 404 privacy guard, and `platform_cache` Singleflight SWR invalidation (`bookmarks:recruiter:{id}` + `analytics:`).
 
 
 ## Known Traps

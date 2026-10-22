@@ -199,6 +199,57 @@ export const mobileNotificationItemSchema = z.object({
   message: z.string().default(""),
   is_read: z.boolean().default(false),
   created_at: z.string().default(""),
+  category: z.string().default("SYSTEM"),
+  deep_link: z.string().default(""),
+  action_label: z.string().default(""),
+  email_sent: z.boolean().default(true),
 });
 export type MobileNotificationItemDTO = z.infer<typeof mobileNotificationItemSchema>;
+
+export const candidateBookmarkItemSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform((val) => String(val)),
+  username: z.string().min(1),
+  full_name: z.string().default(""),
+  headline: z.string().default(""),
+  location: z.string().default(""),
+  seeking_status: z.string().default("Open to Offers"),
+  avatar_url: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+  skills: z.array(z.string()).default([]),
+  created_at: z.string().default(""),
+});
+export type CandidateBookmarkItemDTO = z.infer<typeof candidateBookmarkItemSchema>;
+
+export const skillCatalogItemSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform((val) => String(val)),
+  name: z.string().min(1),
+  category: z.string().default("General"),
+});
+export type SkillCatalogItemDTO = z.infer<typeof skillCatalogItemSchema>;
+
+export const careerGoalSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform((val) => String(val)),
+  target_role: z.string().min(1),
+  target_skills: z.array(z.string()).default([]),
+  min_salary: z.number().default(0),
+  preferred_location: z.string().default(""),
+});
+export type CareerGoalDTO = z.infer<typeof careerGoalSchema>;
+
+export const saveCareerGoalInputSchema = z.object({
+  target_role: z.string().trim().min(1, "Target role is required"),
+  target_skills: z.array(z.string()).default([]),
+  min_salary: z.number().min(0).default(0),
+  preferred_location: z.string().trim().default(""),
+});
+export type SaveCareerGoalInput = z.infer<typeof saveCareerGoalInputSchema>;
+
+export const aiJobMatchResponseSchema = z.object({
+  goal_id: z.union([z.string(), z.number()]).transform((val) => String(val)),
+  fee_vnd: z.number().default(29000),
+  matched_jobs: z.array(trackedJobItemSchema).default([]),
+});
+export type AiJobMatchResponseDTO = z.infer<typeof aiJobMatchResponseSchema>;
+
+
 

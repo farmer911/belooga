@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { ActionButton, BadgePill, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
 import {
+  extractMobileCvFile,
+  loadMobileProfileCvText,
+} from "@/hooks/use-mobile-parity-part2";
+import {
   createValidMobileUploadId,
   useMobileAtsHistoryQuery,
   useMobileAtsScanMutation,
@@ -13,6 +17,7 @@ export default function MobilePitchStudioScreen() {
   const tokens = getSemanticTokens("dark");
   const [targetRole, setTargetRole] = useState("Staff Backend Engineer");
   const [jobDescription, setJobDescription] = useState("");
+  const [cvText, setCvText] = useState("Python • FastAPI • PostgreSQL 16 • React Native");
   const [uploadPercent, setUploadPercent] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
 
@@ -25,11 +30,30 @@ export default function MobilePitchStudioScreen() {
     await teleprompterMutation.mutateAsync({ targetRole, jobDescription });
   };
 
-  const handleRunAtsScan = async () => {
+  const handleRunAtsScan = async (overrideCv?: string) => {
     await atsScanMutation.mutateAsync({
-      cvText: `${targetRole} • Python • FastAPI • PostgreSQL 16 • React Native`,
+      cvText: overrideCv ?? `${targetRole} • ${cvText}`,
       jdText: jobDescription || "Distributed systems with FastAPI and PostgreSQL 16",
     });
+  };
+
+  const handleUploadCvFile = async () => {
+    const res = await extractMobileCvFile({
+      filename: "alexnguyen_cv.pdf",
+      contentBase64: "JVBERi0xLjQK",
+    });
+    if (res.extracted_text) {
+      setCvText(res.extracted_text);
+      await handleRunAtsScan(res.extracted_text);
+    }
+  };
+
+  const handleLoadProfileCv = async () => {
+    const loaded = await loadMobileProfileCvText("alexnguyen");
+    if (loaded) {
+      setCvText(loaded);
+      await handleRunAtsScan(loaded);
+    }
   };
 
   const handleStartChunkUpload = async () => {
@@ -97,7 +121,23 @@ export default function MobilePitchStudioScreen() {
             label={atsScanMutation.isPending ? "Scanning..." : "Run ATS Match Scan"}
             variant="secondary"
             disabled={atsScanMutation.isPending}
-            onPress={handleRunAtsScan}
+            onPress={() => void handleRunAtsScan()}
+          />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <ActionButton
+            testID="mobile-ats-upload-file-btn"
+            accessibilityLabel="mobile-ats-upload-file-btn"
+            label="Tải File CV (PDF/DOCX)"
+            variant="secondary"
+            onPress={() => void handleUploadCvFile()}
+          />
+          <ActionButton
+            testID="mobile-ats-load-profile-btn"
+            accessibilityLabel="mobile-ats-load-profile-btn"
+            label="Nạp CV Hồ Sơ"
+            variant="secondary"
+            onPress={() => void handleLoadProfileCv()}
           />
         </div>
         {teleprompterMutation.data ? (

@@ -131,7 +131,15 @@ export async function mobileRequest<T>(
     throw new MobileApiError(response.status, detail);
   }
 
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const rawText = await response.text();
+  if (!rawText) {
+    return undefined as T;
+  }
+  return JSON.parse(rawText) as T;
 }
 
 export const mobileApiClient = {

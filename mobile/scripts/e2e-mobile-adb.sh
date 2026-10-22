@@ -97,8 +97,14 @@ EOF
 echo "[Mobile E2E 5/6] Executing UIAutomator2 E2E assertions across all 4 tabs..."
 
 # Tab 1: Discover Feed
+dump_and_assert "mobile-wallet-balance-pill"
 dump_and_assert "mobile-discovery-heading"
+dump_and_assert "filter-saved-shortlist-chip"
+dump_and_assert "mobile-custom-skill-input"
+dump_and_assert "mobile-add-custom-skill-btn"
 dump_and_assert "mobile-candidate-card-alexnguyen"
+dump_and_assert "mobile-skill-match-badge-alexnguyen"
+dump_and_assert "bookmark-candidate-alexnguyen"
 adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-01-discover.png"
 
 # Tab 2: Pitch Studio & Chunk Upload
@@ -111,6 +117,8 @@ adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-02-studio.png"
 # Tab 3: Job Kanban Tracker & Status Mutation
 tap_by_content_desc "mobile-tab-tracker"
 dump_and_assert "mobile-tracker-title"
+dump_and_assert "mobile-tracker-search-input"
+dump_and_assert "mobile-career-goal-card"
 tap_by_content_desc "mobile-tracker-move-job_101-INTERVIEW"
 dump_and_assert "[INTERVIEW] (Synced)"
 adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-03-tracker.png"
@@ -118,6 +126,8 @@ adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-03-tracker.png"
 # Tab 4: Career Pro (ATS Scanner, Expert CV Review & MoMo, Salary Radar, Exec BI)
 tap_by_content_desc "mobile-tab-career"
 dump_and_assert "mobile-career-ats-card"
+dump_and_assert "mobile-ats-upload-file-btn"
+dump_and_assert "mobile-ats-load-profile-btn"
 adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-05-career-pro.png"
 
 # Tab 5: Candidate Workspace

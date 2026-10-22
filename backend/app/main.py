@@ -25,6 +25,7 @@ from app.api.v1.endpoints.job_tracker import router as job_tracker_router
 from app.api.v1.endpoints.analytics import router as analytics_router
 from app.api.v1.endpoints.payments import router as payments_router
 from app.api.v1.endpoints.notifications import router as notifications_router
+from app.api.v1.endpoints.bookmarks import router as bookmarks_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -79,6 +80,7 @@ app.include_router(job_tracker_router, prefix="/v1")
 app.include_router(analytics_router, prefix="/v1")
 app.include_router(payments_router, prefix="/v1")
 app.include_router(notifications_router, prefix="/v1")
+app.include_router(bookmarks_router, prefix="/v1")
 app.include_router(gateway_router, prefix="/v1")
 app.include_router(rpc_router, prefix="/v1")
 app.include_router(events_router, prefix="/v1")

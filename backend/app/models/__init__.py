@@ -57,6 +57,9 @@ from app.models.notifications import (
     Notification,
     NotificationPreference,
 )
+from app.models.bookmarks import (
+    CandidateBookmark,
+)
 
 __all__ = [
     "Base",
@@ -94,4 +97,5 @@ __all__ = [
     "CandidateJobApplicationTracker",
     "Notification",
     "NotificationPreference",
+    "CandidateBookmark",
 ]

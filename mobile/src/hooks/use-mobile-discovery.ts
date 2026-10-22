@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import {
   CandidatePublicProfileDTO,
   candidatePublicProfileSchema,
@@ -9,14 +10,19 @@ import {
   CandidateTrustScoreDTO,
   candidateTrustScoreSchema,
   searchSuggestionsResponseSchema,
+  SkillCatalogItemDTO,
+  skillCatalogItemSchema,
   TrendingInsightsDTO,
   trendingInsightsSchema,
 } from "@/lib/schemas";
 import { MOBILE_API_BASE_URL, mobileApiClient } from "@/services/api-client";
 
+export const MOBILE_SKILL_CATALOG_QUERY_KEY = ["mobile", "discovery", "skills"] as const;
+
 export interface MobileSearchParams {
   q?: string;
   skill?: string;
+  skills?: string[];
   location?: string;
   cursor?: string;
 }
@@ -27,12 +33,75 @@ export interface MobileCandidateProfileBundle {
   trajectory: CandidateTrajectoryDTO;
 }
 
+export interface CandidateSkillMatchSummary {
+  matchedCount: number;
+  totalSelected: number;
+  matchedSkills: string[];
+  label: string;
+}
+
+export function computeCandidateSkillMatch(
+  candidateSkills: string[],
+  selectedSkills: string[]
+): CandidateSkillMatchSummary {
+  const cleanSelected = selectedSkills.map((s) => s.trim()).filter(Boolean);
+  if (cleanSelected.length === 0) {
+    return {
+      matchedCount: candidateSkills.length,
+      totalSelected: 0,
+      matchedSkills: candidateSkills,
+      label: `Khớp ${candidateSkills.length}/${candidateSkills.length} kỹ năng`,
+    };
+  }
+  const lowerCandidateSet = new Set(candidateSkills.map((s) => s.toLowerCase()));
+  const matchedSkills = cleanSelected.filter((sel) => lowerCandidateSet.has(sel.toLowerCase()));
+  return {
+    matchedCount: matchedSkills.length,
+    totalSelected: cleanSelected.length,
+    matchedSkills,
+    label: `Khớp ${matchedSkills.length}/${cleanSelected.length} kỹ năng`,
+  };
+}
+
+export async function fetchMobileSkillCatalog(): Promise<SkillCatalogItemDTO[]> {
+  const raw = await mobileApiClient.get<unknown>("/v1/catalogs/skills");
+  if (Array.isArray(raw)) {
+    return z.array(skillCatalogItemSchema).parse(raw);
+  }
+  const wrapped = raw as { items?: unknown };
+  return z.array(skillCatalogItemSchema).parse(wrapped.items ?? []);
+}
+
+export async function createMobileCustomSkill(
+  name: string,
+  category = "Custom"
+): Promise<SkillCatalogItemDTO> {
+  const cleanName = name.trim();
+  if (!cleanName) {
+    throw new Error("Skill name is required");
+  }
+  const raw = await mobileApiClient.post<unknown>("/v1/catalogs/skills", {
+    name: cleanName,
+    category,
+  });
+  return skillCatalogItemSchema.parse(raw);
+}
+
 export async function searchMobileCandidates(
   params: MobileSearchParams = {}
 ): Promise<CandidateSearchResponseDTO> {
   const query = new URLSearchParams();
   if (params.q?.trim()) query.set("q", params.q.trim());
   if (params.skill?.trim()) query.set("skill", params.skill.trim());
+  if (params.skills && params.skills.length > 0) {
+    const clean = params.skills.map((s) => s.trim()).filter(Boolean);
+    if (clean.length > 0) {
+      query.set("skills", clean.join(","));
+      if (!params.skill?.trim()) {
+        query.set("skill", clean[0]);
+      }
+    }
+  }
   if (params.location?.trim()) query.set("location", params.location.trim());
   if (params.cursor?.trim()) query.set("cursor", params.cursor.trim());
   const qs = query.toString();
@@ -119,3 +188,24 @@ export function useMobileSearchSuggestionsQuery(q: string) {
     staleTime: 30_000,
   });
 }
+
+export function useMobileSkillCatalogQuery() {
+  return useQuery({
+    queryKey: MOBILE_SKILL_CATALOG_QUERY_KEY,
+    queryFn: fetchMobileSkillCatalog,
+    staleTime: 120_000,
+  });
+}
+
+export function useCreateMobileCustomSkillMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, category }: { name: string; category?: string }) =>
+      createMobileCustomSkill(name, category),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MOBILE_SKILL_CATALOG_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["mobile", "discovery", "trending"] });
+    },
+  });
+}
+
