@@ -1,7 +1,8 @@
 /**
- * Native Runtime Bridge (Expo SecureStore, Expo Router, and Neumorphic Soft UI Primitives).
+ * Native Runtime Bridge (Expo SecureStore Hardware/Disk Vault, Expo Router, and Neumorphic Soft UI Primitives).
  */
 
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import React from "react";
 import { getSemanticTokens, NEUMORPHIC_TOKENS, ThemeMode } from "@/theme/tokens";
 
@@ -11,22 +12,76 @@ export interface SecureVaultAdapter {
   deleteItemAsync(key: string): Promise<void>;
 }
 
+const VAULT_FILE_PATH = "/tmp/belooga-mobile-secure-vault.json";
 const memoryVault = new Map<string, string>();
+
+function getNativeExpoSecureStore(): SecureVaultAdapter | undefined {
+  return (globalThis as unknown as { ExpoSecureStore?: SecureVaultAdapter }).ExpoSecureStore;
+}
+
+function readDiskVault(): Record<string, string> {
+  try {
+    if (!existsSync(VAULT_FILE_PATH)) return {};
+    return JSON.parse(readFileSync(VAULT_FILE_PATH, "utf8")) as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+function writeDiskVault(): void {
+  try {
+    const serialized = JSON.stringify(Object.fromEntries(memoryVault.entries()));
+    writeFileSync(VAULT_FILE_PATH, serialized, "utf8");
+  } catch {
+    // Ignore read-only fs errors in restricted sandboxes
+  }
+}
+
+export function reloadSecureVaultFromDiskForTesting(): void {
+  memoryVault.clear();
+  const data = readDiskVault();
+  for (const [k, v] of Object.entries(data)) {
+    memoryVault.set(k, v);
+  }
+}
 
 export const SecureStore: SecureVaultAdapter = {
   async getItemAsync(key: string): Promise<string | null> {
+    const nativeBridge = getNativeExpoSecureStore();
+    if (nativeBridge) return nativeBridge.getItemAsync(key);
+    if (!memoryVault.has(key)) {
+      const disk = readDiskVault();
+      if (key in disk) memoryVault.set(key, disk[key]!);
+    }
     return memoryVault.get(key) ?? null;
   },
   async setItemAsync(key: string, value: string): Promise<void> {
+    const nativeBridge = getNativeExpoSecureStore();
+    if (nativeBridge) {
+      await nativeBridge.setItemAsync(key, value);
+      return;
+    }
     memoryVault.set(key, value);
+    writeDiskVault();
   },
   async deleteItemAsync(key: string): Promise<void> {
+    const nativeBridge = getNativeExpoSecureStore();
+    if (nativeBridge) {
+      await nativeBridge.deleteItemAsync(key);
+      return;
+    }
     memoryVault.delete(key);
+    writeDiskVault();
   },
 };
 
 export function clearSecureVaultForTesting(): void {
   memoryVault.clear();
+  try {
+    if (existsSync(VAULT_FILE_PATH)) unlinkSync(VAULT_FILE_PATH);
+  } catch {
+    // Ignore cleanup errors
+  }
 }
 
 export interface MobileRouteState {

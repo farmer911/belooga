@@ -143,7 +143,7 @@ export async function bookMobileExpertReviewOrder(
   client: MobileApiClient = mobileApiClient
 ): Promise<z.infer<typeof bookExpertOrderResponseSchema>> {
   const validated = bookExpertOrderInputSchema.parse(input);
-  const raw = await client.post<unknown>('/v1/expert-review/orders', validated);
+  const raw = await client.post<unknown>('/v1/expert-review/orders/', validated);
   return bookExpertOrderResponseSchema.parse(raw);
 }
 
@@ -154,7 +154,7 @@ export async function submitMobileExpertOrderFeedback(
 ): Promise<z.infer<typeof expertOrderFeedbackResponseSchema>> {
   const validated = expertOrderFeedbackInputSchema.parse(input);
   const raw = await client.post<unknown>(
-    `/v1/expert-review/orders/${encodeURIComponent(orderId)}/feedback`,
+    `/v1/expert-review/orders/${encodeURIComponent(orderId)}/feedback/`,
     validated
   );
   return expertOrderFeedbackResponseSchema.parse(raw);
