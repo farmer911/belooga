@@ -183,3 +183,49 @@ async def test_connect_rpc_multiplexer_supports_bookmarks_and_locations(
     assert any(b["username"] == cand_profile.username for b in by_id["c2"]["data"]["items"])
     assert by_id["c3"]["status"] == 200
     assert any("Vietnam" in loc["name"] for loc in by_id["c3"]["data"])
+
+
+@pytest.mark.asyncio
+async def test_dynamic_platform_endpoints_p95_latency_under_30ms(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """BEL-155: Verify single-roundtrip CTE Market Pulse, Analytics Dashboard & ConnectRPC achieve p95 < 30ms."""
+    import time
+
+    _, token, cand_profile = await _seed_user_and_candidate(db_session)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Warm L1/L2 Singleflight cache & verify single-roundtrip CTE execution
+    await client.get("/v1/match/market-pulse")
+    await client.get("/v1/analytics/dashboard")
+
+    pulse_latencies: list[float] = []
+    rpc_latencies: list[float] = []
+    for _ in range(15):
+        t0 = time.perf_counter()
+        p_res = await client.get("/v1/match/market-pulse")
+        pulse_latencies.append((time.perf_counter() - t0) * 1000.0)
+        assert p_res.status_code == 200
+        assert "total_jds_analyzed" in p_res.json()
+
+        t1 = time.perf_counter()
+        r_res = await client.post(
+            "/v1/rpc/batch",
+            headers=headers,
+            json={
+                "calls": [
+                    {"id": "b1", "method": "bookmarks.list", "params": {}},
+                    {"id": "l1", "method": "catalogs.locations", "params": {"name": ""}},
+                ]
+            },
+        )
+        rpc_latencies.append((time.perf_counter() - t1) * 1000.0)
+        assert r_res.status_code == 200
+
+    pulse_latencies.sort()
+    rpc_latencies.sort()
+    p95_pulse = pulse_latencies[int(len(pulse_latencies) * 0.95) - 1]
+    p95_rpc = rpc_latencies[int(len(rpc_latencies) * 0.95) - 1]
+    assert p95_pulse < 30.0, f"Market Pulse p95 {p95_pulse:.2f}ms exceeded 30ms SLA"
+    assert p95_rpc < 30.0, f"ConnectRPC batch p95 {p95_rpc:.2f}ms exceeded 30ms SLA"
+

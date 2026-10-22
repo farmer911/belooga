@@ -54,6 +54,7 @@ BACKEND_TESTS = {
     "be-domain-monetization": [
         "test_analytics.py",
         "test_ats_matching.py",
+        "test_dynamic_platform_persistence.py",
         "test_expert_review.py",
         "test_high_scale_and_shortlist.py",
         "test_job_tracker.py",
