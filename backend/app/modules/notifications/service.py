@@ -181,6 +181,20 @@ class NotificationService:
 
     async def list_notifications(self, identity_id: uuid.UUID) -> NotificationListResponse:
         items = await self.repo.list_by_identity(identity_id)
+        if not items:
+            await self.repo.create_notification(
+                identity_id=identity_id,
+                event_type="SYSTEM_WELCOME",
+                title="Chào mừng đến với Belooga ATS & CV Studio",
+                message="Hãy nạp CV Hồ Sơ hoặc tải file PDF/DOCX để chấm điểm ATS & tối ưu từ khóa ngay.",
+                deep_link="/ats-diagnostics?notif_id=welcome",
+                send_email=False,
+                email_sent=False,
+                email_subject=None,
+                email_deeplink_url=None,
+            )
+            await self.db.commit()
+            items = await self.repo.list_by_identity(identity_id)
         unread = await self.repo.count_unread(identity_id)
         return NotificationListResponse(
             unread_count=unread,

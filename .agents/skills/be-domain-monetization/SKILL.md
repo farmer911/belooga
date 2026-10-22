@@ -16,6 +16,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `POST` | `/v1/expert-review/orders/` | `create_review_order` | required |
 | `POST` | `/v1/expert-review/orders/{order_id}/checkout/` | `checkout_review_order` | required |
 | `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | required |
+| `GET` | `/v1/expert-review/orders/me` | `list_candidate_orders_me` | required |
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | required |
 | `POST` | `/v1/expert-review/orders/{order_id}/feedback/` | `submit_order_feedback` | required |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
@@ -24,6 +25,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | optional |
+| `POST` | `/v1/match/extract-cv-file` | `extract_cv_file_text` | optional |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
 | `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | optional |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |

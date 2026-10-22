@@ -126,3 +126,13 @@ class InterviewKitResponse(BaseModel):
     star_interview_questions: List[InterviewQuestionDTO]
     closing_questions_for_hiring_manager: List[str]
 
+
+class CVFileExtractResponse(BaseModel):
+    filename: str
+    file_type: str
+    extracted_text: str
+    char_count: int
+    word_count: int
+    extracted_skills: List[str] = Field(default_factory=list)
+
+

@@ -50,7 +50,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 103 (101 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 105 (103 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -83,6 +83,7 @@
 | `POST` | `/v1/contact/` | `submit_contact_inquiry` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/expert-review/experts/` | `list_experts` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `POST` | `/v1/expert-review/orders/` | `create_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `GET` | `/v1/expert-review/orders/me` | `list_candidate_orders_me` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `POST` | `/v1/expert-review/orders/{order_id}/checkout/` | `checkout_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
@@ -91,6 +92,7 @@
 | `GET` | `/v1/expert-review/recommend` | `recommend_expert_reviewer` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
+| `POST` | `/v1/match/extract-cv-file` | `extract_cv_file_text` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `GET` | `/v1/match/history` | `list_ats_scan_history` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | Public | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |

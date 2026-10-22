@@ -68,9 +68,10 @@ class AnalyticsService:
         )
 
         today = datetime.now()
+        day_step = 4 if range_norm == "30D" else (14 if range_norm == "ALL" else 1)
         revenue_chart = [
             RevenueSeriesPoint(
-                date=(today - timedelta(days=i)).strftime("%Y-%m-%d"),
+                date=(today - timedelta(days=i * day_step)).strftime("%Y-%m-%d"),
                 micro_pass_rev=(m := round(micro_pass_rev / 7 * (0.8 + (i % 3) * 0.2), 0)),
                 expert_fee_rev=(e := round(expert_fee / 7 * (0.9 + (i % 2) * 0.25), 0)),
                 total=m + e,

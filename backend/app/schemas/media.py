@@ -56,6 +56,13 @@ class CVStudioExperienceItem(BaseModel):
     bullets: list[str] = Field(default_factory=list)
 
 
+class CVStudioEducationItem(BaseModel):
+    institution: str
+    degree: str = ""
+    field_of_study: str = ""
+    period: str = ""
+
+
 class CVStudioDraftPayload(BaseModel):
     full_name: str
     email: str = ""
@@ -68,4 +75,7 @@ class CVStudioDraftPayload(BaseModel):
     margin_size: float = 0.6
     snap_one_page: bool = True
     experience: list[CVStudioExperienceItem] = Field(default_factory=list)
+    education: list[CVStudioEducationItem] = Field(default_factory=list)
+    cv_text: str = ""
+
 

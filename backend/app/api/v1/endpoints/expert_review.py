@@ -76,6 +76,14 @@ async def list_candidate_orders(
     return await ExpertReviewService(db).list_my_orders(candidate_identity_id=current_user.id)
 
 
+@router.get("/orders/me", response_model=List[CVReviewOrderResponse])
+async def list_candidate_orders_me(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await ExpertReviewService(db).list_my_orders(candidate_identity_id=current_user.id)
+
+
 @router.get("/orders/{order_id}/feedback/", response_model=CVReviewFeedbackResponse)
 async def get_order_feedback(
     order_id: uuid.UUID,

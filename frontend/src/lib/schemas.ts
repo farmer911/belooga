@@ -89,6 +89,8 @@ export const forgotPasswordSchema = z.object({
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export const BOOKMARKS_API_ENDPOINT = "/v1/bookmarks/" as const;
+export const EXTRACT_CV_FILE_API_ENDPOINT = "/v1/match/extract-cv-file" as const;
+export const EXPERT_REVIEW_ORDERS_ME_ENDPOINT = "/v1/expert-review/orders/me" as const;
 
 export const candidateBookmarkItemSchema = z.object({
   id: z.string(),
