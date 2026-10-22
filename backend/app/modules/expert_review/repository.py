@@ -126,6 +126,19 @@ class ExpertReviewRepository:
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
+    async def is_expert_or_admin(self, identity_id: uuid.UUID) -> bool:
+        res = await self.db.execute(
+            text("""
+                SELECT EXISTS(
+                    SELECT 1 FROM identities WHERE id = :uid AND role IN ('admin', 'expert')
+                ) OR EXISTS(
+                    SELECT 1 FROM expert_profiles WHERE identity_id = :uid AND is_active = TRUE
+                )
+            """),
+            {"uid": identity_id},
+        )
+        return bool(res.scalar())
+
     async def upsert_order_feedback(
         self,
         order: CVReviewOrder,
@@ -140,8 +153,11 @@ class ExpertReviewRepository:
         video_feedback_url: Optional[str] = None,
     ) -> CVReviewFeedback:
         existing = await self.get_feedback_by_order_id(order.id)
+        is_update = existing is not None
         experts = await self.list_experts()
         assigned_expert_id = order.expert_id or (experts[0].id if experts else None)
+        if assigned_expert_id and not order.expert_id:
+            order.expert_id = assigned_expert_id
         if existing:
             existing.score_overall = score_overall
             existing.score_ats_compatibility = score_ats_compatibility
@@ -167,6 +183,15 @@ class ExpertReviewRepository:
                 video_feedback_url=video_feedback_url,
             )
             self.db.add(existing)
+        if assigned_expert_id:
+            exp = await self.get_expert_by_id(assigned_expert_id)
+            if exp:
+                prev_cnt = max(int(exp.total_reviews_count or 0), 0)
+                prev_rating = float(exp.rating or 5.0)
+                review_stars = max(1.0, min(5.0, round(score_overall / 20.0, 2)))
+                new_cnt = prev_cnt + (0 if is_update else 1)
+                exp.total_reviews_count = max(new_cnt, 1)
+                exp.rating = round(((prev_rating * prev_cnt) + review_stars) / max(new_cnt, 1), 2)
         order.order_status = "completed"
         await self.db.commit()
         return await self.get_feedback_by_order_id(order.id) or existing

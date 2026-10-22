@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { GripVertical, Trash2, Calendar, Briefcase } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Calendar, Briefcase } from "lucide-react";
 
 export interface TimelineItemCardProps {
   id: string;
@@ -18,6 +18,7 @@ export interface TimelineItemCardProps {
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   isEditable?: boolean;
 }
@@ -37,6 +38,7 @@ export const TimelineItemCard = React.memo(function TimelineItemCard({
   onDragStart,
   onDragOver,
   onDrop,
+  onEdit,
   onDelete,
   isEditable = true,
 }: TimelineItemCardProps) {
@@ -82,6 +84,17 @@ export const TimelineItemCard = React.memo(function TimelineItemCard({
               <Calendar className="w-3.5 h-3.5" />
               {dateText}
             </span>
+            {isEditable && onEdit && (
+              <button
+                type="button"
+                data-testid="edit-experience-btn"
+                onClick={onEdit}
+                className="text-slate-300 hover:text-brand-primary transition-colors p-1 cursor-pointer"
+                title="Edit experience"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
             {isEditable && onDelete && (
               <button
                 type="button"

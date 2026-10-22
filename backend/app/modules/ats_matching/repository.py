@@ -92,6 +92,12 @@ class ATSMatchingRepository:
             SELECT id, username, first_name, last_name, headline, bio,
                    location, seeking_status, avatar_url, video_pitch_url,
                    ts_rank,
+                   COALESCE((
+                       SELECT array_agg(s.name ORDER BY s.name)
+                       FROM profile_skills ps
+                       JOIN skills s ON s.id = ps.skill_id
+                       WHERE ps.profile_id = matched_pool.id
+                   ), ARRAY[]::text[]) AS db_skills,
                    COUNT(*) OVER() AS total_window_count
             FROM matched_pool
             ORDER BY
@@ -110,7 +116,40 @@ class ATSMatchingRepository:
         total_matched = int(rows[0]["total_window_count"]) if rows else 0
         return rows, total_matched
 
-    async def get_market_pulse_stats(self) -> Dict[str, int]:
+    async def list_scan_history(
+        self, candidate_identity_id: Optional[uuid.UUID] = None, limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        where_sql = "WHERE m.candidate_identity_id = :cid" if candidate_identity_id else "WHERE m.candidate_identity_id IS NULL"
+        query = text(f"""
+            SELECT m.id, m.id AS match_id, jd.job_title, jd.company_name,
+                   m.ats_score, m.matched_skills, m.missing_skills, m.created_at
+            FROM resume_jd_matches m
+            JOIN job_descriptions jd ON jd.id = m.job_description_id
+            {where_sql}
+            ORDER BY m.created_at DESC
+            LIMIT :lim
+        """)
+        params: Dict[str, Any] = {"lim": limit}
+        if candidate_identity_id:
+            params["cid"] = candidate_identity_id
+        res = await self.db.execute(query, params)
+        rows = [dict(r._mapping) for r in res.fetchall()]
+        if not rows and candidate_identity_id is None:
+            res2 = await self.db.execute(
+                text("""
+                    SELECT m.id, m.id AS match_id, jd.job_title, jd.company_name,
+                           m.ats_score, m.matched_skills, m.missing_skills, m.created_at
+                    FROM resume_jd_matches m
+                    JOIN job_descriptions jd ON jd.id = m.job_description_id
+                    ORDER BY m.created_at DESC
+                    LIMIT :lim
+                """),
+                {"lim": limit},
+            )
+            rows = [dict(r._mapping) for r in res2.fetchall()]
+        return rows
+
+    async def get_market_pulse_stats(self) -> Dict[str, Any]:
         query = text("""
             SELECT
                 GREATEST(
@@ -129,8 +168,19 @@ class ATSMatchingRepository:
         """)
         res = await self.db.execute(query)
         row = res.mappings().first()
+        skill_res = await self.db.execute(
+            text("""
+                SELECT s.name AS skill, COUNT(ps.profile_id)::int AS supply_cnt
+                FROM skills s
+                LEFT JOIN profile_skills ps ON ps.skill_id = s.id
+                GROUP BY s.id, s.name
+                ORDER BY supply_cnt DESC, s.name ASC
+                LIMIT 8
+            """)
+        )
+        skill_counts = {r.skill.lower(): int(r.supply_cnt) for r in skill_res.fetchall()}
         if not row:
-            return {"total_visible": 0, "with_video": 0, "actively_seeking": 0}
+            return {"total_visible": 0, "with_video": 0, "actively_seeking": 0, "skill_counts": skill_counts}
         total_vis = int(row["total_visible"] or 0)
         sample_sz = int(row["sample_size"] or 1)
         scale = total_vis / sample_sz if total_vis > sample_sz else 1.0
@@ -138,4 +188,5 @@ class ATSMatchingRepository:
             "total_visible": total_vis,
             "with_video": int(round(int(row["sampled_video"] or 0) * scale)),
             "actively_seeking": int(round(int(row["sampled_seeking"] or 0) * scale)),
+            "skill_counts": skill_counts,
         }

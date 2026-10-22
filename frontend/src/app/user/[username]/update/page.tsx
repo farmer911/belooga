@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Upload, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
+import { uploadAvatar } from "@/services/media-upload.service";
 import { CandidateProfile } from "@/hooks/use-candidate-profile";
 import { profileUpdateSchema, ProfileFormValues } from "@/lib/schemas";
 
@@ -20,73 +21,60 @@ export default function UpdateProfilePage() {
   const username = params.username as string;
   const router = useRouter();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const { data: profileData } = useQuery<CandidateProfile>({
     queryKey: ["candidate-profile", username],
-    queryFn: async () => {
-      const res = await apiClient.get<CandidateProfile>(`/v1/profile/${username}`);
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<CandidateProfile>(`/v1/profile/${username}`)).data,
     enabled: Boolean(username),
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileUpdateSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      headline: "",
-      location: "",
-      bio: "",
-      phone: "",
-      seekingStatus: "Actively Looking",
-    },
+    defaultValues: { firstName: "", lastName: "", headline: "", location: "", bio: "", phone: "", seekingStatus: "Actively Looking" },
     values: profileData
       ? {
-          firstName: profileData.first_name ?? "",
-          lastName: profileData.last_name ?? "",
-          headline: profileData.headline ?? "",
-          location: profileData.location ?? "",
-          bio: profileData.bio ?? "",
-          phone: profileData.phone ?? "",
+          firstName: profileData.first_name ?? "", lastName: profileData.last_name ?? "",
+          headline: profileData.headline ?? "", location: profileData.location ?? "",
+          bio: profileData.bio ?? "", phone: profileData.phone ?? "",
           seekingStatus: profileData.seeking_status ?? "Actively Looking",
         }
       : undefined,
   });
 
+  const locationQuery = watch("location") || "";
+  const { data: locationSuggestions = [] } = useQuery<Array<{ name: string }>>({
+    queryKey: ["catalog-locations", locationQuery],
+    queryFn: async () => (await apiClient.get<Array<{ name: string }>>(`/v1/profile/location/?name=${encodeURIComponent(locationQuery)}`)).data,
+  });
+
+  const avatarMutation = useMutation({
+    mutationFn: (file: File) => uploadAvatar(file, username),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidate-profile", username] });
+      setStatusMessage({ type: "success", text: "Avatar updated." });
+    },
+    onError: () => setStatusMessage({ type: "error", text: "Failed to upload avatar." }),
+  });
+
   const updateMutation = useMutation({
-    mutationFn: async (values: ProfileFormValues) => {
+    mutationFn: async (v: ProfileFormValues) => {
       await apiClient.patch(`/v1/profile/${username}`, {
-        first_name: values.firstName,
-        last_name: values.lastName,
-        headline: values.headline,
-        location: values.location,
-        bio: values.bio,
-        phone: values.phone,
-        seeking_status: values.seekingStatus,
+        first_name: v.firstName, last_name: v.lastName, headline: v.headline,
+        location: v.location, bio: v.bio, phone: v.phone, seeking_status: v.seekingStatus,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidate-profile", username] });
-      setIsSaved(true);
-      setTimeout(() => {
-        router.push(`/user/${username}`);
-      }, 1200);
+      setIsSaved(true); setStatusMessage(null);
+      setTimeout(() => router.push(`/user/${username}`), 1200);
     },
-    onError: (err) => {
-      console.error("Failed to update profile", err);
-      alert("Error saving profile to database.");
-    },
+    onError: () => setStatusMessage({ type: "error", text: "Error saving profile to database." }),
   });
 
-  const onSubmit = handleSubmit(async (values) => {
-    await updateMutation.mutateAsync(values);
-  });
+  const onSubmit = handleSubmit(async (values) => { await updateMutation.mutateAsync(values); });
 
   return (
     <div className="min-h-screen bg-surface-page py-10">
@@ -116,22 +104,47 @@ export default function UpdateProfilePage() {
             </div>
           )}
 
+          {statusMessage && (
+            <div
+              className={`p-3 rounded-lg border flex items-center gap-2 text-xs ${
+                statusMessage.type === "success"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                  : "bg-red-50 border-red-200 text-red-700"
+              }`}
+            >
+              {statusMessage.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+              <span>{statusMessage.text}</span>
+            </div>
+          )}
+
           <form onSubmit={onSubmit} noValidate className="space-y-5" data-testid="update-profile-form">
             <div className="flex items-center gap-5 p-4 rounded-lg bg-surface-page border border-surface-border">
               <img
-                src="/images/avatar.jpg"
+                src={profileData?.avatar_url || "/images/avatar.jpg"}
                 alt="Avatar"
                 className="w-16 h-16 rounded-full object-cover border"
               />
               <div className="space-y-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) avatarMutation.mutate(file);
+                  }}
+                />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
+                  data-testid="upload-avatar-button"
+                  disabled={avatarMutation.isPending}
                   className="gap-2 border-brand-primary text-brand-primary"
-                  onClick={() => alert("File picker opened for avatar.")}
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <Upload className="w-4 h-4" /> Change Avatar
+                  <Upload className="w-4 h-4" /> {avatarMutation.isPending ? "Uploading..." : "Change Avatar"}
                 </Button>
                 <p className="text-[11px] text-typography-muted">JPG, PNG or GIF. Max 5MB.</p>
               </div>
@@ -165,7 +178,18 @@ export default function UpdateProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-typography-heading">Location</label>
-                <input type="text" placeholder="San Francisco, CA" className={INPUT_CLS} {...register("location")} />
+                <input
+                  type="text"
+                  list="location-suggestions"
+                  placeholder="San Francisco, CA"
+                  className={INPUT_CLS}
+                  {...register("location")}
+                />
+                <datalist id="location-suggestions">
+                  {locationSuggestions.map((loc) => (
+                    <option key={loc.name} value={loc.name} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-typography-heading">Phone Number</label>

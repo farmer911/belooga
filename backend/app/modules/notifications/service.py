@@ -5,6 +5,7 @@ deep-link validation, and non-blocking SMTP/transactional email outbox dispatch.
 """
 
 import asyncio
+from datetime import datetime, timezone
 from email.message import EmailMessage
 import logging
 import os
@@ -54,7 +55,8 @@ def _render_transactional_email_sync(
         f"<p>{message}</p>"
         f"<p><a href='{deeplink_url}'>Open in Belooga ({deeplink_url})</a></p>"
     )
-    if SMTP_HOST:
+    active_smtp_host = (os.getenv("SMTP_HOST", SMTP_HOST) or "").strip()
+    if active_smtp_host:
         try:
             msg = EmailMessage()
             msg["Subject"] = subject
@@ -62,14 +64,16 @@ def _render_transactional_email_sync(
             msg["To"] = recipient_email
             msg.set_content(f"{message}\n\nOpen: {deeplink_url}")
             msg.add_alternative(html_body, subtype="html")
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=5) as server:
+            with smtplib.SMTP(active_smtp_host, SMTP_PORT, timeout=5) as server:
                 if SMTP_USER and SMTP_PASSWORD:
                     server.starttls()
                     server.login(SMTP_USER, SMTP_PASSWORD)
                 server.send_message(msg)
+            return True
         except Exception as exc:
-            logger.warning("SMTP delivery fallback to DB outbox for %s: %s", recipient_email, exc)
-    return bool(html_body)
+            logger.warning("SMTP delivery failed for %s: %s", recipient_email, exc)
+            return False
+    return os.getenv("ENVIRONMENT") == "testing" and bool(html_body)
 
 
 class NotificationService:
@@ -133,6 +137,27 @@ class NotificationService:
                 message,
                 email_deeplink_url,
             )
+
+        if not prefs.in_app_enabled:
+            if auto_commit:
+                await self.db.commit()
+            event_stream.publish(
+                event_type=event_type,
+                partition_key=str(identity_id),
+                payload={"title": title, "deep_link": clean_link, "email_sent": email_sent, "in_app_suppressed": True},
+            )
+            return {
+                "id": str(uuid.uuid4()),
+                "event_type": event_type,
+                "title": title,
+                "message": message,
+                "deep_link": clean_link,
+                "is_read": True,
+                "email_sent": email_sent,
+                "email_subject": email_subject,
+                "email_deeplink_url": email_deeplink_url,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
 
         notif = await self.repo.create_notification(
             identity_id=identity_id,

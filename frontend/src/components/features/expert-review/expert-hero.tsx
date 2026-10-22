@@ -10,7 +10,7 @@ interface ExpertHeroProps {
 
 export function ExpertHero({ onBrowseExperts, onViewPricing }: ExpertHeroProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-brand-overlay to-white border-b border-surface-border py-16 sm:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-b from-brand-overlay to-surface-card border-b border-surface-border py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           {/* Trust Badge */}

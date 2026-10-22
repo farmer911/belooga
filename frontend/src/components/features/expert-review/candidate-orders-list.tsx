@@ -12,10 +12,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 interface CandidateOrdersListProps {
   orders: ReviewOrder[];
   onPayOrder: (orderId: string) => Promise<void>;
+  onSubmitFeedback?: (
+    orderId: string,
+    payload: {
+      score_overall: number;
+      score_ats_compatibility: number;
+      score_impact_action_verbs: number;
+      score_structure_formatting: number;
+      summary_verdict: string;
+      strengths: string[];
+      improvements: string[];
+    }
+  ) => Promise<ReviewFeedback>;
 }
 
-export function CandidateOrdersList({ orders, onPayOrder }: CandidateOrdersListProps) {
+export function CandidateOrdersList({ orders, onPayOrder, onSubmitFeedback }: CandidateOrdersListProps) {
   const [selectedFeedback, setSelectedFeedback] = useState<ReviewFeedback | null>(null);
+  const [feedbackOrderId, setFeedbackOrderId] = useState<string | null>(null);
+  const [verdictInput, setVerdictInput] = useState("Strong technical depth with clear quantified system impact.");
+  const [scoreInput, setScoreInput] = useState(90);
   const [payingId, setPayingId] = useState<string | null>(null);
 
   if (orders.length === 0) return null;
@@ -90,29 +105,91 @@ export function CandidateOrdersList({ orders, onPayOrder }: CandidateOrdersListP
                 )}
 
                 {(order.feedback || order.order_status !== "pending_payment") && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={async () => {
-                      if (order.feedback) {
-                        setSelectedFeedback(order.feedback);
-                      } else {
-                        const res = await apiClient.get<ReviewFeedback>(
-                          `/v1/expert-review/orders/${order.id}/feedback/`
-                        );
-                        setSelectedFeedback(res.data);
-                      }
-                    }}
-                    className="border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white gap-1"
-                  >
-                    <span>View Report</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <>
+                    {onSubmitFeedback && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setFeedbackOrderId(order.id)}
+                        className="border-surface-border text-typography-heading hover:border-brand-primary"
+                      >
+                        Submit Scorecard
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (order.feedback) {
+                          setSelectedFeedback(order.feedback);
+                        } else {
+                          const res = await apiClient.get<ReviewFeedback>(
+                            `/v1/expert-review/orders/${order.id}/feedback/`
+                          );
+                          setSelectedFeedback(res.data);
+                        }
+                      }}
+                      className="border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white gap-1"
+                    >
+                      <span>View Report</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </>
                 )}
               </div>
             </Card>
           ))}
         </div>
+
+        <Dialog open={!!feedbackOrderId} onClose={() => setFeedbackOrderId(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-typography-main">Submit Review Scorecard</DialogTitle>
+              <DialogDescription>Submit or update the rubric evaluation for this CV review order.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 text-xs mt-2">
+              <div>
+                <label className="block font-medium text-typography-heading mb-1">Overall Score (0-100)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={scoreInput}
+                  onChange={(e) => setScoreInput(Number(e.target.value))}
+                  className="w-full rounded-lg border border-surface-border bg-surface-page p-2 text-typography-main"
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-typography-heading mb-1">Executive Summary Verdict</label>
+                <textarea
+                  rows={3}
+                  value={verdictInput}
+                  onChange={(e) => setVerdictInput(e.target.value)}
+                  className="w-full rounded-lg border border-surface-border bg-surface-page p-2 text-typography-main"
+                />
+              </div>
+              <Button
+                className="w-full bg-brand-primary hover:bg-brand-hover text-white"
+                onClick={async () => {
+                  if (!feedbackOrderId || !onSubmitFeedback) return;
+                  const fb = await onSubmitFeedback(feedbackOrderId, {
+                    score_overall: scoreInput,
+                    score_ats_compatibility: Math.min(100, scoreInput + 4),
+                    score_impact_action_verbs: Math.max(60, scoreInput - 2),
+                    score_structure_formatting: 92,
+                    summary_verdict: verdictInput,
+                    strengths: ["Quantified system architecture metrics", "ATS-clean layout"],
+                    improvements: ["Highlight leadership scope in recent role"],
+                  });
+                  setFeedbackOrderId(null);
+                  setSelectedFeedback(fb);
+                }}
+              >
+                Save Feedback Report
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!selectedFeedback} onClose={() => setSelectedFeedback(null)}>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">

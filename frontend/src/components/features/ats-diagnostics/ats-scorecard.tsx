@@ -60,21 +60,15 @@ export function ATSScorecard({
       <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
         <div className="p-2.5 bg-surface-page rounded-lg border border-surface-border">
           <div className="text-[10px] text-typography-muted font-medium">Kỹ Năng Cứng</div>
-          <div className="font-bold text-brand-primary text-sm">
-            {result.breakdown?.hard_skills_score ?? 0}/60
-          </div>
+          <div className="font-bold text-brand-primary text-sm">{result.breakdown?.hard_skills_score ?? 0}/60</div>
         </div>
         <div className="p-2.5 bg-surface-page rounded-lg border border-surface-border">
           <div className="text-[10px] text-typography-muted font-medium">Số Liệu STAR</div>
-          <div className="font-bold text-amber-700 text-sm">
-            {result.breakdown?.impact_score ?? 0}/25
-          </div>
+          <div className="font-bold text-amber-700 text-sm">{result.breakdown?.impact_score ?? 0}/25</div>
         </div>
         <div className="p-2.5 bg-surface-page rounded-lg border border-surface-border">
           <div className="text-[10px] text-typography-muted font-medium">Chuẩn Format</div>
-          <div className="font-bold text-emerald-700 text-sm">
-            {result.breakdown?.formatting_score ?? 0}/15
-          </div>
+          <div className="font-bold text-emerald-700 text-sm">{result.breakdown?.formatting_score ?? 0}/15</div>
         </div>
       </div>
 
@@ -83,9 +77,7 @@ export function ATSScorecard({
         <button
           onClick={() => setActiveTab("skills")}
           className={`px-2.5 py-2 font-medium transition-colors border-b-2 cursor-pointer ${
-            activeTab === "skills"
-              ? "border-brand-primary text-brand-primary font-bold"
-              : "border-transparent text-typography-muted hover:text-typography-main"
+            activeTab === "skills" ? "border-brand-primary text-brand-primary font-bold" : "border-transparent text-typography-muted hover:text-typography-main"
           }`}
         >
           Từ Khóa Thiếu ({result.missing_skills.length})
@@ -93,9 +85,7 @@ export function ATSScorecard({
         <button
           onClick={() => setActiveTab("star")}
           className={`px-2.5 py-2 font-medium transition-colors border-b-2 cursor-pointer ${
-            activeTab === "star"
-              ? "border-brand-primary text-brand-primary font-bold"
-              : "border-transparent text-typography-muted hover:text-typography-main"
+            activeTab === "star" ? "border-brand-primary text-brand-primary font-bold" : "border-transparent text-typography-muted hover:text-typography-main"
           }`}
         >
           STAR Audit ({result.star_analysis.length})
@@ -103,9 +93,7 @@ export function ATSScorecard({
         <button
           onClick={() => setActiveTab("warnings")}
           className={`px-2.5 py-2 font-medium transition-colors border-b-2 cursor-pointer ${
-            activeTab === "warnings"
-              ? "border-brand-primary text-brand-primary font-bold"
-              : "border-transparent text-typography-muted hover:text-typography-main"
+            activeTab === "warnings" ? "border-brand-primary text-brand-primary font-bold" : "border-transparent text-typography-muted hover:text-typography-main"
           }`}
         >
           Cảnh Báo ({result.parse_warnings.length})
@@ -114,9 +102,7 @@ export function ATSScorecard({
           data-testid="tab-recruiter-shortlist"
           onClick={() => setActiveTab("shortlist")}
           className={`px-2.5 py-2 font-medium transition-colors border-b-2 cursor-pointer flex items-center gap-1 ${
-            activeTab === "shortlist"
-              ? "border-brand-primary text-brand-primary font-bold"
-              : "border-transparent text-typography-muted hover:text-typography-main"
+            activeTab === "shortlist" ? "border-brand-primary text-brand-primary font-bold" : "border-transparent text-typography-muted hover:text-typography-main"
           }`}
         >
           <Users className="w-3.5 h-3.5" aria-hidden="true" />
@@ -135,10 +121,7 @@ export function ATSScorecard({
               <div className="flex flex-wrap gap-1.5">
                 {result.missing_skills.length > 0 ? (
                   result.missing_skills.map((skill, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-[11px] flex items-center gap-1 font-medium"
-                    >
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-[11px] flex items-center gap-1 font-medium">
                       <span>+</span> {skill}
                     </span>
                   ))
@@ -152,15 +135,10 @@ export function ATSScorecard({
             </div>
 
             <div>
-              <div className="text-[11px] font-semibold text-emerald-700 mb-1.5">
-                ✓ Kỹ năng đã khớp thành công:
-              </div>
+              <div className="text-[11px] font-semibold text-emerald-700 mb-1.5">✓ Kỹ năng đã khớp thành công:</div>
               <div className="flex flex-wrap gap-1.5">
                 {result.matched_skills.map((skill, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium"
-                  >
+                  <span key={i} className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium">
                     ✓ {skill}
                   </span>
                 ))}
@@ -172,10 +150,7 @@ export function ATSScorecard({
         {activeTab === "star" && (
           <div className="space-y-2.5">
             {interviewKit && (
-              <div
-                data-testid="interview-kit-pitch-script"
-                className="p-2.5 bg-teal-50/50 border border-teal-200 rounded-lg space-y-1.5"
-              >
+              <div data-testid="interview-kit-pitch-script" className="p-2.5 bg-teal-50/50 border border-teal-200 rounded-lg space-y-2">
                 <div className="font-bold text-brand-dark text-[11px] flex items-center gap-1">
                   <Video className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
                   <span>Kịch Bản Teleprompter Video Pitch 60s</span>
@@ -183,6 +158,30 @@ export function ATSScorecard({
                 <p className="text-[11px] text-typography-heading whitespace-pre-line leading-relaxed">
                   {interviewKit.video_pitch_script_60s}
                 </p>
+                {interviewKit.star_interview_questions?.length > 0 && (
+                  <div className="pt-1.5 border-t border-teal-200/70 space-y-1.5">
+                    <div className="font-semibold text-brand-dark text-[10px] uppercase tracking-wider">Câu hỏi phỏng vấn STAR trọng tâm:</div>
+                    {interviewKit.star_interview_questions.map((q, qIdx) => {
+                      const item = q as { focus_skill?: string; skill?: string; question: string; star_coaching_tip?: string; star_tip?: string };
+                      return (
+                        <div key={qIdx} className="p-2 rounded bg-surface-card border border-surface-border text-[11px] space-y-0.5">
+                          <div className="font-bold text-brand-primary">{item.skill || item.focus_skill}: <span className="text-typography-main font-medium">{item.question}</span></div>
+                          <div className="text-[10px] text-typography-muted">{item.star_tip || item.star_coaching_tip}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {interviewKit.closing_questions_for_hiring_manager?.length > 0 && (
+                  <div className="pt-1 border-t border-teal-200/70 space-y-1">
+                    <div className="font-semibold text-brand-dark text-[10px] uppercase tracking-wider">Câu hỏi ngược cho Hiring Manager:</div>
+                    <ul className="list-disc pl-4 text-[10px] text-typography-heading space-y-0.5">
+                      {interviewKit.closing_questions_for_hiring_manager.map((cq, cqIdx) => (
+                        <li key={cqIdx}>{cq}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
             {result.star_analysis.length > 0 ? (

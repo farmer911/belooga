@@ -23,8 +23,8 @@ interface OAuthTokenResponse {
 function OAuthCallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const provider = searchParams.get("provider") || "google";
-  const code = searchParams.get("code") || "belooga_oauth_handshake";
+  const provider = (searchParams.get("provider") || "google").toLowerCase();
+  const code = searchParams.get("code") || `oauth_${provider}_code`;
   const email = searchParams.get("email") || "alex@belooga.com";
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);

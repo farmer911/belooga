@@ -27,19 +27,10 @@ from app.modules.auth.repository import IdentityRepository
 from app.modules.notifications import NotificationService
 from app.modules.profile import ProfileService
 from app.schemas.auth import (
-    ChangePasswordRequest,
-    CheckAvailabilityResponse,
-    EmailVerificationRequestResponse,
-    ForgotPasswordRequest,
-    ForgotPasswordResponse,
-    LoginRequest,
-    OAuthCallbackRequest,
-    RegisterRequest,
-    ResetPasswordRequest,
-    TokenResponse,
-    UserProfileDTO,
-    VerifyEmailRequest,
-    VerifyEmailResponse,
+    ChangePasswordRequest, CheckAvailabilityResponse, EmailVerificationRequestResponse,
+    ForgotPasswordRequest, ForgotPasswordResponse, LoginRequest, OAuthCallbackRequest,
+    RegisterRequest, ResetPasswordRequest, TokenResponse, UserProfileDTO,
+    VerifyEmailRequest, VerifyEmailResponse,
 )
 
 IS_PRODUCTION = os.getenv("ENVIRONMENT", "development").lower() in ("production", "prod", "staging")
@@ -58,7 +49,7 @@ def _build_user_dto(row: Any, fallback_username: str = "", fallback_email: str =
         username=getattr(row, "username", fallback_username) or fallback_username,
         first_name=getattr(row, "first_name", "") or "", last_name=getattr(row, "last_name", "") or "",
         role=getattr(row, "role", "candidate") or "candidate",
-        avatar_url=getattr(row, "avatar_url", "/images/avatar.jpg") or "/images/avatar.jpg",
+        avatar_url=getattr(row, "avatar_url", None) or "/images/avatar.jpg",
     )
 
 
@@ -80,10 +71,8 @@ class AuthService:
         raw_refresh = generate_refresh_token()
         expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await self.identity_repo.create_refresh_session(
-            identity_id=user_dto.id,
-            family_id=family_id or uuid.uuid4(),
-            token_hash=hash_token(raw_refresh),
-            expires_at=expires_at,
+            identity_id=user_dto.id, family_id=family_id or uuid.uuid4(),
+            token_hash=hash_token(raw_refresh), expires_at=expires_at,
         )
         await self.db.commit()
         access_token = create_access_token({
@@ -139,12 +128,17 @@ class AuthService:
 
     async def oauth_callback(self, payload: OAuthCallbackRequest, response: Response) -> TokenResponse:
         provider = payload.provider.lower().strip()
-        puid = hash_token(f"{provider}:{payload.code.strip()}")[:32]
+        code_puid = hash_token(f"{provider}:{payload.code.strip()}")[:32]
+        puid = hash_token(f"{provider}:{payload.email.strip().lower()}")[:32] if payload.email else code_puid
         user_row = await self.identity_repo.get_identity_by_social_account(provider, puid)
+        if not user_row and code_puid != puid:
+            user_row = await self.identity_repo.get_identity_by_social_account(provider, code_puid)
         if not user_row and payload.email:
             user_row = await self.identity_repo.get_identity_with_profile_by_email(payload.email)
         if user_row:
             await self.identity_repo.link_social_account(user_row.id, provider, puid)
+            if code_puid != puid:
+                await self.identity_repo.link_social_account(user_row.id, provider, code_puid)
             return await self._issue_session(_build_user_dto(user_row), response)
 
         identity_id = uuid.uuid4()
@@ -158,6 +152,8 @@ class AuthService:
             first_name=payload.first_name or "Belooga", last_name=payload.last_name or "Candidate",
         )
         await self.identity_repo.link_social_account(identity_id, provider, puid)
+        if code_puid != puid:
+            await self.identity_repo.link_social_account(identity_id, provider, code_puid)
         user_dto = UserProfileDTO(
             id=identity_id, email=clean_email, username=clean_username,
             first_name=payload.first_name or "Belooga", last_name=payload.last_name or "Candidate",

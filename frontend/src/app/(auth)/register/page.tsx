@@ -56,13 +56,7 @@ export default function RegisterPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { firstName: "", lastName: "", username: "", email: "", password: "", agreeTerms: false },
   });

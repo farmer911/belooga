@@ -12,9 +12,11 @@ interface CVStudioSidebarProps {
   setMarginSize: (m: number) => void;
   snapOnePage: boolean;
   setSnapOnePage: (snap: boolean) => void;
+  sections?: string[];
+  onMoveSection?: (index: number, direction: -1 | 1) => void;
 }
 
-const DEFAULT_SECTIONS = [
+export const DEFAULT_SECTIONS = [
   "Thông tin liên hệ",
   "Tóm tắt sự nghiệp",
   "Kinh nghiệm làm việc",
@@ -32,15 +34,22 @@ export function CVStudioSidebar({
   setMarginSize,
   snapOnePage,
   setSnapOnePage,
+  sections: controlledSections,
+  onMoveSection,
 }: CVStudioSidebarProps) {
-  const [sections, setSections] = useState<string[]>(DEFAULT_SECTIONS);
+  const [localSections, setLocalSections] = useState<string[]>(DEFAULT_SECTIONS);
+  const sections = controlledSections ?? localSections;
 
   const moveSection = (index: number, direction: -1 | 1) => {
+    if (onMoveSection) {
+      onMoveSection(index, direction);
+      return;
+    }
     const target = index + direction;
     if (target < 0 || target >= sections.length) return;
     const next = [...sections];
     [next[index], next[target]] = [next[target], next[index]];
-    setSections(next);
+    setLocalSections(next);
   };
 
   return (

@@ -3,11 +3,8 @@
 import { useState, useRef, useCallback, SetStateAction } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
-import {
-  uploadAvatar,
-  uploadResume,
-  downloadCandidatePdf,
-} from "@/services/media-upload.service";
+import { uploadAvatar, uploadResume, deleteCandidateResume, getVideoTranscodingStatus, VideoTranscodingStatus, downloadCandidatePdf } from "@/services/media-upload.service";
+import type { AwardItem } from "@/components/features/timeline/awards-timeline";
 
 export interface JobExperience {
   id: string;
@@ -39,6 +36,7 @@ export interface EducationExperience {
 
 export interface CandidateProfile {
   id: string;
+  user_id?: string;
   username: string;
   full_name: string;
   headline?: string;
@@ -70,6 +68,12 @@ export function useCandidateProfile(username: string) {
     queryKey,
     queryFn: async () => (await apiClient.get<CandidateProfile>(`/v1/profile/${username}`)).data,
     enabled: Boolean(username),
+  });
+
+  const { data: videoStatus = null } = useQuery<VideoTranscodingStatus | null>({
+    queryKey: ["candidate-video-status", username],
+    queryFn: async () => await getVideoTranscodingStatus(username),
+    enabled: Boolean(username && profileData),
   });
 
   const [customResumeName, setCustomResumeName] = useState<string>("");
@@ -136,11 +140,7 @@ export function useCandidateProfile(username: string) {
 
   const handleAddExperience = async (payload: Omit<JobExperience, "id">) => {
     const res = await apiClient.post(`/v1/profile/${username}/job-experiences/`, payload);
-    const newEntry: JobExperience = {
-      id: res.data.id || String(Date.now()),
-      ...payload,
-      display_order: res.data.display_order ?? experiences.length,
-    };
+    const newEntry: JobExperience = { id: res.data.id || String(Date.now()), ...payload, display_order: res.data.display_order ?? experiences.length };
     setExperiences((prev) => [...prev, newEntry]);
     return newEntry;
   };
@@ -157,24 +157,42 @@ export function useCandidateProfile(username: string) {
 
   const handleReorderExperiences = async (updatedList: JobExperience[]) => {
     setExperiences(updatedList);
-    const orders = updatedList.map((item, idx) => ({ id: item.id, order: idx }));
-    await apiClient.post(`/v1/profile/${username}/job-experiences/order/`, { orders });
+    await apiClient.post(`/v1/profile/${username}/job-experiences/order/`, { orders: updatedList.map((item, idx) => ({ id: item.id, order: idx })) });
   };
 
   const handleAddEducation = async (payload: Omit<EducationExperience, "id">) => {
     const res = await apiClient.post(`/v1/profile/${username}/education/`, payload);
-    const newEntry: EducationExperience = {
-      id: res.data.id || String(Date.now()),
-      ...payload,
-      display_order: education.length,
-    };
+    const newEntry: EducationExperience = { id: res.data.id || String(Date.now()), ...payload, display_order: education.length };
     setEducation((prev) => [...prev, newEntry]);
     return newEntry;
+  };
+
+  const handleUpdateEducation = async (id: string, payload: Partial<EducationExperience>) => {
+    await apiClient.patch(`/v1/profile/${username}/education/${id}/`, payload);
+    setEducation((prev) => prev.map((item) => (item.id === id ? { ...item, ...payload } : item)));
   };
 
   const handleDeleteEducation = async (id: string) => {
     setEducation((prev) => prev.filter((item) => item.id !== id));
     await apiClient.delete(`/v1/profile/${username}/education/${id}/`);
+  };
+
+  const handleReorderEducation = async (updatedList: EducationExperience[]) => {
+    setEducation(updatedList);
+    await apiClient.post(`/v1/profile/${username}/education/order/`, { orders: updatedList.map((item, idx) => ({ id: item.id, order: idx })) });
+  };
+
+  const handleUpdateAward = async (id: string, payload: Partial<AwardItem>) => {
+    await apiClient.patch(`/v1/profile/${username}/awards/${id}/`, payload);
+    queryClient.setQueryData<AwardItem[]>(["candidate-awards", username], (prev = []) =>
+      prev.map((item) => (item.id === id ? { ...item, ...payload } : item))
+    );
+  };
+
+  const handleReorderAwards = async (updatedList: AwardItem[]) => {
+    queryClient.setQueryData<AwardItem[]>(["candidate-awards", username], updatedList);
+    const orders = updatedList.map((item, idx) => ({ id: item.id, order: idx }));
+    await apiClient.post(`/v1/profile/${username}/awards/order/`, { orders });
   };
 
   const handleAddSkill = async (skillToAdd: string) => {
@@ -238,20 +256,27 @@ export function useCandidateProfile(username: string) {
     }
   };
 
+  const handleDeleteResume = async () => {
+    await deleteCandidateResume(username);
+    setCustomResumeName("None Attached");
+    setProfile((prev) => (prev ? { ...prev, resume_url: undefined } : null));
+  };
+
   const handleDownloadPdf = () => downloadCandidatePdf(username);
 
   return {
-    profile, setProfile, isLoading,
+    profile, setProfile, isLoading, videoStatus,
     experiences, setExperiences, education, setEducation,
     skills, setSkills, languages, interests,
     resumeName, avatarPreview, isUploadingAvatar, isUploadingResume,
     resumeInputRef, avatarInputRef, fetchProfile,
     handleToggleVisibility, handleAddExperience, handleUpdateExperience,
     handleDeleteExperience, handleReorderExperiences,
-    handleAddEducation, handleDeleteEducation,
+    handleAddEducation, handleUpdateEducation, handleDeleteEducation, handleReorderEducation,
+    handleUpdateAward, handleReorderAwards,
     handleAddSkill, handleRemoveSkill,
     handleAddLanguage, handleRemoveLanguage,
     handleAddInterest, handleRemoveInterest,
-    handleAvatarFileChange, handleResumeFileChange, handleDownloadPdf,
+    handleAvatarFileChange, handleResumeFileChange, handleDeleteResume, handleDownloadPdf,
   };
 }

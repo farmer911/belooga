@@ -85,10 +85,10 @@ export default function AnalyticsDashboardPage() {
                   <Badge className="bg-teal-600 text-white border-none text-[11px]">
                     LTV/CAC: {unitEconomics.ltv_to_cac_ratio}x
                   </Badge>
-                  <Badge variant="outline" className="bg-white border-teal-200 text-teal-800 text-[11px]">
+                  <Badge variant="outline" className="bg-surface-card border-teal-200 text-teal-800 text-[11px]">
                     Payback: {unitEconomics.payback_period_days} ngày
                   </Badge>
-                  <Badge variant="outline" className="bg-white border-emerald-200 text-emerald-700 text-[11px]">
+                  <Badge variant="outline" className="bg-surface-card border-emerald-200 text-emerald-700 text-[11px]">
                     Retention D30: {unitEconomics.cohort_retention_d30_pct}% · D90: {unitEconomics.cohort_retention_d90_pct}%
                   </Badge>
                 </div>
@@ -120,7 +120,10 @@ export default function AnalyticsDashboardPage() {
                 </div>
                 <Button
                   data-testid="btn-copy-powerbi-m"
-                  onClick={() => setShowBiQuery((prev) => !prev)}
+                  onClick={() => {
+                    navigator.clipboard?.writeText(biExport.powerquery_m_script || biExport.power_bi_m_query_snippet);
+                    setShowBiQuery((prev) => !prev);
+                  }}
                   className="bg-surface-page hover:bg-surface-card text-typography-heading border border-surface-border text-[11px] px-2.5 h-7 rounded-lg gap-1"
                 >
                   {showBiQuery ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Code2 className="w-3.5 h-3.5" />}

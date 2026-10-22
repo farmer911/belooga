@@ -28,6 +28,12 @@ interface WorkspaceTrustScore {
   next_boost_action: string;
 }
 
+interface WorkspaceCareerTrajectory {
+  current_inferred_level: string;
+  next_target_level: string;
+  promotion_readiness_pct: number;
+}
+
 const WebRTCStudioModal = dynamic(
   () => import("@/components/features/studio/webrtc-studio-modal"),
   { ssr: false }
@@ -38,33 +44,13 @@ export default function WorkspacePage() {
   const username = (params.username as string).toLowerCase().trim();
 
   const {
-    profile,
-    setProfile,
-    isLoading,
-    experiences,
-    education,
-    skills,
-    resumeName,
-    avatarPreview,
-    isUploadingAvatar,
-    isUploadingResume,
-    resumeInputRef,
-    avatarInputRef,
-    handleToggleVisibility,
-    handleAddExperience,
-    handleDeleteExperience,
-    handleReorderExperiences,
-    handleAddEducation,
-    handleDeleteEducation,
-    handleAddSkill,
-    handleRemoveSkill,
-    handleAddLanguage,
-    handleRemoveLanguage,
-    handleAddInterest,
-    handleRemoveInterest,
-    handleAvatarFileChange,
-    handleResumeFileChange,
-    handleDownloadPdf,
+    profile, setProfile, isLoading, experiences, education, skills, resumeName, avatarPreview,
+    isUploadingAvatar, isUploadingResume, resumeInputRef, avatarInputRef, handleToggleVisibility,
+    handleAddExperience, handleUpdateExperience, handleDeleteExperience, handleReorderExperiences,
+    handleAddEducation, handleUpdateEducation, handleDeleteEducation, handleReorderEducation,
+    handleUpdateAward, handleReorderAwards, handleAddSkill, handleRemoveSkill, handleAddLanguage,
+    handleRemoveLanguage, handleAddInterest, handleRemoveInterest, handleAvatarFileChange,
+    handleResumeFileChange, handleDeleteResume, handleDownloadPdf,
   } = useCandidateProfile(username);
 
   const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -73,6 +59,12 @@ export default function WorkspacePage() {
   const { data: trustCopilot = null } = useQuery<WorkspaceTrustScore | null>({
     queryKey: ["workspace-trust-score", username, skills.length, experiences.length],
     queryFn: async () => (await apiClient.get<WorkspaceTrustScore>(`/v1/profile/${username}/trust-score`)).data,
+    enabled: Boolean(profile),
+  });
+
+  const { data: careerTrajectory = null } = useQuery<WorkspaceCareerTrajectory | null>({
+    queryKey: ["workspace-career-trajectory", username, experiences.length],
+    queryFn: async () => (await apiClient.get<WorkspaceCareerTrajectory>(`/v1/profile/${username}/career-trajectory`)).data,
     enabled: Boolean(profile),
   });
 
@@ -134,7 +126,10 @@ export default function WorkspacePage() {
                 </div>
                 <p className="text-[11px] text-slate-600 leading-relaxed flex items-start gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                  <span>{trustCopilot.next_boost_action}</span>
+                  <span>
+                    {trustCopilot.next_boost_action}
+                    {careerTrajectory ? ` · ${careerTrajectory.current_inferred_level} → ${careerTrajectory.next_target_level} (${careerTrajectory.promotion_readiness_pct}%)` : ""}
+                  </span>
                 </p>
               </div>
             )}
@@ -163,19 +158,28 @@ export default function WorkspacePage() {
             <ExperienceTimeline
               experiences={experiences}
               onAddExperience={handleAddExperience}
+              onUpdate={handleUpdateExperience}
+              onUpdateExperience={handleUpdateExperience}
               onDeleteExperience={handleDeleteExperience}
               onReorderExperiences={handleReorderExperiences}
             />
             <EducationTimeline
               education={education}
               onAddEducation={handleAddEducation}
+              onUpdateEducation={handleUpdateEducation}
               onDeleteEducation={handleDeleteEducation}
+              onReorderEducation={handleReorderEducation}
             />
-            <AwardsTimeline username={username} />
+            <AwardsTimeline
+              username={username}
+              onUpdateAward={handleUpdateAward}
+              onReorderAwards={handleReorderAwards}
+            />
             <ResumeAttachmentCard
               resumeName={resumeName}
               isUploadingResume={isUploadingResume}
               onUploadClick={() => resumeInputRef.current?.click()}
+              onDeleteResume={handleDeleteResume}
               onDownloadPdf={handleDownloadPdf}
             />
           </main>

@@ -12,6 +12,7 @@ from app.schemas.job_tracker import (
     JobPipelineAnalyticsResponse,
     TrackedJobCreateRequest,
     TrackedJobResponse,
+    TrackedJobUpdateRequest,
 )
 
 VALID_STATUSES = {"TARGETING", "TAILORED", "APPLIED", "INTERVIEW", "OFFER"}
@@ -117,10 +118,10 @@ class JobTrackerService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tracked job not found.")
 
         # IDOR check
-        if candidate_identity_id and job.candidate_identity_id and job.candidate_identity_id != candidate_identity_id:
+        if not candidate_identity_id or job.candidate_identity_id != candidate_identity_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: You do not own this tracked job.")
 
-        updated = await self.repo.update_status(job, status_val)
+        updated = await self.repo.update_status(job, status_val, candidate_identity_id=candidate_identity_id)
         await platform_cache.invalidate_prefix("tracker_analytics:")
         target_uid = candidate_identity_id or job.candidate_identity_id
         if target_uid and status_val in ("INTERVIEW", "OFFER"):
@@ -135,14 +136,53 @@ class JobTrackerService:
             )
         return TrackedJobResponse.model_validate(updated)
 
+    async def update_tracked_job(
+        self,
+        job_id: uuid.UUID,
+        request: TrackedJobUpdateRequest,
+        candidate_identity_id: Optional[uuid.UUID] = None,
+    ) -> TrackedJobResponse:
+        job = await self.repo.get_job_by_id(job_id)
+        if not job:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tracked job not found.")
+        if not candidate_identity_id or job.candidate_identity_id != candidate_identity_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: You do not own this tracked job.")
+
+        updates = request.model_dump(exclude_unset=True)
+        if "status" in updates and updates["status"] is not None:
+            status_val = str(updates["status"]).upper()
+            if status_val not in VALID_STATUSES:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid status '{updates['status']}'. Allowed: {', '.join(VALID_STATUSES)}",
+                )
+            updates["status"] = status_val
+
+        updated = await self.repo.update_job(job, updates, candidate_identity_id=candidate_identity_id)
+        await platform_cache.invalidate_prefix("tracker_analytics:")
+        new_st = updates.get("status")
+        if new_st in ("INTERVIEW", "OFFER"):
+            await NotificationService(self.db).dispatch_event(
+                identity_id=candidate_identity_id,
+                event_type="JOB_INTERVIEW_STAGE",
+                title=f"{new_st.title()} Stage Reached at {updated.company_name}",
+                message=f"Congratulations on advancing to {new_st} for {updated.position_title}. Open your Kanban board to prepare.",
+                deep_link=f"/workspace/jobs?highlight={updated.id}",
+                send_email=True,
+                category="career",
+            )
+        return TrackedJobResponse.model_validate(updated)
+
+    update_job = update_tracked_job
+
     async def remove_job(self, job_id: uuid.UUID, candidate_identity_id: Optional[uuid.UUID] = None) -> None:
         job = await self.repo.get_job_by_id(job_id)
         if not job:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tracked job not found.")
 
         # IDOR check
-        if candidate_identity_id and job.candidate_identity_id and job.candidate_identity_id != candidate_identity_id:
+        if not candidate_identity_id or job.candidate_identity_id != candidate_identity_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: You do not own this tracked job.")
 
-        await self.repo.delete_job(job)
+        await self.repo.delete_job(job, candidate_identity_id=candidate_identity_id)
         await platform_cache.invalidate_prefix("tracker_analytics:")

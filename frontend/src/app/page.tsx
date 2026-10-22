@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Brain, Video, Wand2, Play, X } from "lucide-react";
+import { Search, Brain, Video, Wand2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
 
@@ -206,14 +206,15 @@ export default function HomePage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="aspect-video bg-black flex items-center justify-center p-8 text-center">
-              <div className="space-y-4">
-                <div className="w-16 h-16 rounded-full bg-brand-primary/20 text-brand-primary flex items-center justify-center mx-auto">
-                  <Play className="w-8 h-8 fill-current ml-1" />
-                </div>
-                <p className="text-white text-base font-medium">{activeModal.title}</p>
-                <p className="text-slate-400 text-xs">Simulated HTML5 0:30 Video Elevator Pitch Playback</p>
-              </div>
+            <div className="aspect-video bg-black flex items-center justify-center overflow-hidden">
+              <video
+                src={activeModal.videoUrl || "/images/home/Ava_s_Video.mp4"}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+                data-testid="homepage-modal-video"
+              />
             </div>
           </div>
         </div>

@@ -14,7 +14,14 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
 
 
-def _build_pdf_sync(row: Any, jobs: List[Dict[str, Any]], education: List[Dict[str, Any]], skills: List[str], clean_username: str) -> bytes:
+def _build_pdf_sync(
+    row: Any,
+    jobs: List[Dict[str, Any]],
+    education: List[Dict[str, Any]],
+    skills: List[str],
+    clean_username: str,
+    is_owner: bool = False,
+) -> bytes:
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         pdf_buffer,
@@ -23,6 +30,7 @@ def _build_pdf_sync(row: Any, jobs: List[Dict[str, Any]], education: List[Dict[s
         leftMargin=40,
         topMargin=40,
         bottomMargin=40,
+        pageCompression=0,
     )
 
     styles = getSampleStyleSheet()
@@ -84,7 +92,14 @@ def _build_pdf_sync(row: Any, jobs: List[Dict[str, Any]], education: List[Dict[s
     elements.append(Paragraph(f"@{clean_username} • {row.headline or 'Candidate on Belooga'}", headline_style))
     elements.append(Spacer(1, 4))
 
-    contact_line = f"Email: {row.email}  |  Location: {row.location or 'Global'}  |  Status: {row.seeking_status or 'Actively Looking'}"
+    contact_parts = []
+    if is_owner and getattr(row, "email", None):
+        contact_parts.append(f"Email: {row.email}")
+    if is_owner and getattr(row, "phone", None):
+        contact_parts.append(f"Phone: {row.phone}")
+    contact_parts.append(f"Location: {row.location or 'Global'}")
+    contact_parts.append(f"Status: {row.seeking_status or 'Actively Looking'}")
+    contact_line = "  |  ".join(contact_parts)
     elements.append(Paragraph(contact_line, meta_style))
     elements.append(Spacer(1, 10))
     elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#5bbbae"), spaceAfter=14))
@@ -127,9 +142,10 @@ def _build_pdf_sync(row: Any, jobs: List[Dict[str, Any]], education: List[Dict[s
 
     # 5. Technical Skills
     elements.append(Paragraph("SKILLS & CORE PROFICIENCIES", section_title))
-    active_skills = skills if skills else ["Product Design", "React", "TypeScript", "FastAPI", "PostgreSQL"]
-    skills_text = " • ".join(active_skills)
-    elements.append(Paragraph(skills_text, body_style))
+    if skills:
+        elements.append(Paragraph(" • ".join(skills), body_style))
+    else:
+        elements.append(Paragraph("No skills listed.", meta_style))
     elements.append(Spacer(1, 16))
 
     # 6. Verification Footer
@@ -142,6 +158,16 @@ def _build_pdf_sync(row: Any, jobs: List[Dict[str, Any]], education: List[Dict[s
     return pdf_bytes
 
 
-async def generate_pdf_resume_async(row: Any, jobs: List[Dict[str, Any]], education: List[Dict[str, Any]], skills: List[str], clean_username: str) -> bytes:
+async def generate_pdf_resume_async(
+    row: Any,
+    jobs: List[Dict[str, Any]],
+    education: List[Dict[str, Any]],
+    skills: List[str],
+    clean_username: str,
+    is_owner: bool = False,
+) -> bytes:
     """Non-blocking PDF generation delegating ReportLab build to threadpool."""
-    return await asyncio.to_thread(_build_pdf_sync, row, jobs, education, skills, clean_username)
+    return await asyncio.to_thread(_build_pdf_sync, row, jobs, education, skills, clean_username, is_owner)
+
+
+generate_candidate_pdf_bytes = generate_pdf_resume_async

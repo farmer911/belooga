@@ -20,6 +20,16 @@ class TrackedJobStatusUpdateRequest(BaseModel):
     status: str = Field(..., description="TARGETING | TAILORED | APPLIED | INTERVIEW | OFFER")
 
 
+class TrackedJobUpdateRequest(BaseModel):
+    company_name: Optional[str] = Field(None, max_length=255)
+    position_title: Optional[str] = Field(None, max_length=255)
+    expected_salary: Optional[str] = Field(None, max_length=100)
+    match_score: Optional[int] = Field(None, ge=0, le=100)
+    status: Optional[str] = Field(None, description="TARGETING | TAILORED | APPLIED | INTERVIEW | OFFER")
+    notes: Optional[str] = None
+    interview_date: Optional[datetime] = None
+
+
 class TrackedJobResponse(BaseModel):
     id: uuid.UUID
     candidate_identity_id: Optional[uuid.UUID] = None

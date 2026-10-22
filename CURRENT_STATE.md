@@ -49,7 +49,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 95 (93 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 99 (97 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -87,6 +87,7 @@
 | `GET` | `/v1/expert-review/recommend` | `recommend_expert_reviewer` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
+| `GET` | `/v1/match/history` | `list_ats_scan_history` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | Public | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/ats_matching.py` | Domain 10: ATS Diagnostics & JD Matching |
@@ -111,20 +112,22 @@
 | `GET` | `/v1/profile/{username}` | `get_candidate_public_profile` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `PATCH` | `/v1/profile/{username}` | `update_candidate_profile` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `PATCH` | `/v1/profile/{username}/avatar/` | `upload_avatar` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
-| `GET` | `/v1/profile/{username}/awards/` | `list_awards` | Public | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
+| `GET` | `/v1/profile/{username}/awards/` | `list_awards` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/awards/` | `create_award` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
+| `POST` | `/v1/profile/{username}/awards/order/` | `reorder_awards` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `DELETE` | `/v1/profile/{username}/awards/{item_id}/` | `delete_award` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
+| `PATCH` | `/v1/profile/{username}/awards/{item_id}/` | `update_award` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `GET` | `/v1/profile/{username}/career-trajectory` | `get_candidate_career_trajectory` | Public | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `GET` | `/v1/profile/{username}/cv-draft/` | `get_cv_studio_draft` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
 | `PUT` | `/v1/profile/{username}/cv-draft/` | `save_cv_studio_draft` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/media.py` | Domain 4: Media & Uploads |
-| `GET` | `/v1/profile/{username}/education/` | `list_education_experiences` | Public | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
+| `GET` | `/v1/profile/{username}/education/` | `list_education_experiences` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/education/` | `create_education` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/education/order/` | `reorder_education_experiences` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `DELETE` | `/v1/profile/{username}/education/{item_id}/` | `delete_education` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `PATCH` | `/v1/profile/{username}/education/{item_id}/` | `update_education` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/interests/` | `add_candidate_interest` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
 | `DELETE` | `/v1/profile/{username}/interests/{interest_name}/` | `remove_candidate_interest` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/profile.py` | Domain 2: Candidate Profile |
-| `GET` | `/v1/profile/{username}/job-experiences/` | `list_job_experiences` | Public | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
+| `GET` | `/v1/profile/{username}/job-experiences/` | `list_job_experiences` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/job-experiences/` | `create_job_experience` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `POST` | `/v1/profile/{username}/job-experiences/order/` | `reorder_job_experiences` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
 | `DELETE` | `/v1/profile/{username}/job-experiences/{item_id}/` | `delete_job_experience` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/timeline.py` | Domain 3: Timeline CRUD & Reordering |
@@ -143,6 +146,7 @@
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
+| `PATCH` | `/v1/tracker/jobs/{job_id}` | `update_tracked_job` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/job_tracker.py` | Domain 11: Candidate Job Tracker & Kanban |
 | `GET` | `/v1/users/exists/email/` | `check_email_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/users/exists/username/` | `check_username_exists` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |

@@ -130,6 +130,19 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-011] Đứt gãy tích hợp Frontend-Backend (11 API Backend bị bỏ quên, UI dùng `alert()`/`Simulated` stub, thiếu `<AuthSessionBootstrap />` toàn cục & thiếu CRUD)
+* **Where (Sai ở đâu):** `frontend/src/app/layout.tsx`, `frontend/src/app/user/[username]/update/page.tsx`, `frontend/src/app/cv-studio/page.tsx`, `frontend/src/app/ats-diagnostics/page.tsx`, `frontend/src/app/salary-benchmark/page.tsx`, `frontend/src/components/features/{profile,timeline,media,expert-review,payments}/*`, và `backend/app/modules/{timeline,job_tracker,ats_matching,catalogs,payments,media}/*`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Tách rời phát triển Backend và Frontend:** Các phiên trước viết API ở Backend (test cô lập bằng `pytest`) nhưng ở Frontend lại dùng mảng tĩnh, state cục bộ hoặc `alert()`/`window.prompt()`/`"Simulated ..."` thay vì gọi API thật, dẫn tới 11 endpoint Backend bị bỏ quên hoàn toàn và 9 tính năng UI chỉ có giao diện rỗng.
+  2. **Thiếu cổng AST kiểm tra tích hợp FE-BE trong `trust-benchmark.py`:** `scripts/trust-benchmark.py` trước đó chỉ kiểm tra sự tồn tại của file `service.py`/`repository.py` chứ chưa đối chiếu xem mọi `@router.(get|post|put|patch|delete)` trong `backend/app/api/v1/endpoints/` có được gọi thật từ `frontend/src/` hay không, và chưa chặn `alert()`/`window.prompt()`/`Simulated`.
+* **Minimal Fix (Sửa làm sao):**
+  1. Gắn `<AuthSessionBootstrap />` toàn cục tại `frontend/src/app/layout.tsx`; nối toàn bộ 11 API bị bỏ quên (`skills/company/school/location` autocomplete, `GET /cv-draft/`, `PATCH/order` cho Kinh nghiệm/Học vấn/Giải thưởng, `DELETE /resume/`, `GET /video-status/`, `GET /momo/order-status/`, `GET /seo/sitemap-data`) và bổ sung `PATCH /v1/profile/{username}/awards/{id}/`, `POST /v1/profile/{username}/awards/order/`, `PATCH /v1/tracker/jobs/{id}`, `GET /v1/match/history`.
+  2. Khóa rò rỉ PII/IDOR ở `/cv-draft/`, `/pdf/`, `/timeline/*`, `/tracker/jobs/` và đồng bộ MoMo/Catalogs/Analytics với PostgreSQL.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Nâng cấp `scripts/trust-benchmark.py` (Axis 3) tự động quét mọi endpoint trong `backend/app/api/v1/endpoints/*.py` bắt buộc phải được tích hợp trong `frontend/src/`, cấm tuyệt đối `alert(`, `window.prompt(`, `"Simulated "`, `MOMO-MOCK`, bắt buộc `<AuthSessionBootstrap` trong `layout.tsx`, và bắt buộc mọi `repository.py` phải thực thi `.execute(` xuống PostgreSQL.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py` và `backend/tests/test_platform_option_b_remediation.py`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**

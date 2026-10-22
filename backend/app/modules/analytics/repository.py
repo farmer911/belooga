@@ -59,6 +59,31 @@ class AnalyticsRepository:
         db_gmv_vnd = float(row["paid_cents"] or 0) * 250.0
         return db_gmv_vnd, list(row["recent_orders"] or [])
 
+    async def get_unit_economics_telemetry(self) -> Dict[str, int]:
+        """Single-roundtrip PostgreSQL query across identities, candidate_profiles, resume_jd_matches, and cv_review_orders."""
+        res = await self.db.execute(
+            text("""
+                SELECT
+                    (SELECT COUNT(*) FROM identities) AS identity_count,
+                    (SELECT COUNT(*) FROM candidate_profiles WHERE is_hidden = FALSE) AS public_profiles,
+                    (SELECT COUNT(*) FROM candidate_profiles WHERE video_pitch_url IS NOT NULL) AS video_profiles,
+                    (SELECT COUNT(*) FROM resume_jd_matches) AS match_count,
+                    (SELECT COUNT(*) FROM cv_review_orders) AS total_orders,
+                    (SELECT COUNT(*) FROM cv_review_orders WHERE order_status IN ('paid', 'in_review', 'completed')) AS paid_orders
+            """)
+        )
+        row = res.mappings().first()
+        if not row:
+            return {
+                "identity_count": 0,
+                "public_profiles": 0,
+                "video_profiles": 0,
+                "match_count": 0,
+                "total_orders": 0,
+                "paid_orders": 0,
+            }
+        return {k: int(row[k] or 0) for k in row.keys()}
+
     async def get_bi_star_schema_export(self, limit: int = 100) -> Dict[str, List[Dict[str, Any]]]:
         """Single-roundtrip PostgreSQL 16 OLAP CTE assembling Star-Schema facts and skill supply/demand dimensions."""
         bounded_limit = max(5, min(limit, 500))

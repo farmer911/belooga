@@ -12,6 +12,7 @@ from app.schemas.job_tracker import (
     JobPipelineAnalyticsResponse,
     TrackedJobCreateRequest,
     TrackedJobStatusUpdateRequest,
+    TrackedJobUpdateRequest,
     TrackedJobResponse,
 )
 
@@ -50,6 +51,22 @@ async def create_tracked_job(
     """Add a new job application to the Kanban tracker."""
     service = JobTrackerService(db)
     return await service.add_tracked_job(request, candidate_identity_id=current_user.id)
+
+
+@router.patch("/jobs/{job_id}", response_model=TrackedJobResponse)
+async def update_tracked_job(
+    job_id: uuid.UUID,
+    request: TrackedJobUpdateRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update details of a tracked job application on the Kanban board."""
+    service = JobTrackerService(db)
+    return await service.update_tracked_job(
+        job_id=job_id,
+        request=request,
+        candidate_identity_id=current_user.id,
+    )
 
 
 @router.patch("/jobs/{job_id}/status", response_model=TrackedJobResponse)

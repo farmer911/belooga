@@ -27,11 +27,11 @@ COMPANIES_CATALOG = [
 ]
 
 SCHOOLS_CATALOG = [
-    {"name": "Stanford University"},
-    {"name": "MIT"},
-    {"name": "UC Berkeley"},
-    {"name": "Harvard University"},
-    {"name": "Carnegie Mellon University"},
+    {"name": "Stanford University", "logo_url": "/images/logo.svg"},
+    {"name": "MIT", "logo_url": "/images/logo.svg"},
+    {"name": "UC Berkeley", "logo_url": "/images/logo.svg"},
+    {"name": "Harvard University", "logo_url": "/images/logo.svg"},
+    {"name": "Carnegie Mellon University", "logo_url": "/images/logo.svg"},
 ]
 
 LOCATIONS_CATALOG = [
@@ -39,6 +39,8 @@ LOCATIONS_CATALOG = [
     {"name": "New York, NY, USA"},
     {"name": "Austin, TX, USA"},
     {"name": "Seattle, WA, USA"},
+    {"name": "Ho Chi Minh, Vietnam"},
+    {"name": "Ha Noi, Vietnam"},
     {"name": "Remote (Worldwide)"},
 ]
 
@@ -106,22 +108,47 @@ class CatalogsService:
         return await platform_cache.get_or_set(f"catalog:locations:{clean}", ttl_seconds=60, loader=_load)
 
 
-    def get_salary_benchmark(
+    @staticmethod
+    def _normalize_role(role: str, tech_stack: str) -> str:
+        combined = f"{role} {tech_stack}".lower()
+        if any(k in combined for k in ("react", "front", "next", "vue", "ui")):
+            return "frontend"
+        if any(k in combined for k in ("ai", "ml", "python", "llm", "data")):
+            return "ai"
+        if any(k in combined for k in ("devops", "k8s", "kubernetes", "cloud", "sre")):
+            return "devops"
+        if "fullstack" in combined or "full-stack" in combined:
+            return "fullstack"
+        return "backend"
+
+    @staticmethod
+    def _normalize_level(level: str) -> str:
+        low = (level or "Senior").strip().lower()
+        if any(k in low for k in ("lead", "architect", "principal", "staff")):
+            return "Lead"
+        if "mid" in low:
+            return "Mid"
+        if "junior" in low or "fresher" in low:
+            return "Junior"
+        return "Senior"
+
+    async def get_salary_benchmark(
         self, role: str, tech_stack: str, level: str, location: str
     ) -> Dict[str, Any]:
-        level_lower = level.lower()
-        if "lead" in level_lower:
+        norm_role = self._normalize_role(role, tech_stack)
+        norm_level = self._normalize_level(level)
+        if norm_level == "Lead":
             p25, base_median, p75 = 52_000_000, 65_000_000, 85_000_000
-        elif "mid" in level_lower:
+        elif norm_level == "Mid":
             p25, base_median, p75 = 23_000_000, 28_000_000, 35_000_000
-        elif "junior" in level_lower or "fresher" in level_lower:
+        elif norm_level == "Junior":
             p25, base_median, p75 = 14_000_000, 18_000_000, 22_000_000
         else:
             p25, base_median, p75 = 36_000_000, 45_000_000, 58_000_000
 
-        stack_lower = tech_stack.lower()
+        stack_lower = f"{tech_stack} {role}".lower()
         multiplier = (
-            1.20 if any(s in stack_lower for s in ("golang", "rust", "kubernetes", "ai", "machine learning"))
+            1.20 if any(s in stack_lower for s in ("golang", "go", "rust", "kubernetes", "k8s", "ai", "machine learning"))
             else 1.10 if any(s in stack_lower for s in ("python", "java", "devops"))
             else 1.0
         )
@@ -132,13 +159,13 @@ class CatalogsService:
                 ("gRPC / Protocol Buffers", "+18%", 76), ("Redis Cluster", "+15%", 91),
                 ("Distributed Tracing", "+14%", 65),
             ]
-        elif "react" in stack_lower or "front" in role.lower():
+        elif norm_role == "frontend":
             raw_skills = [
                 ("Next.js 15/16 App Router", "+24%", 89), ("TypeScript Strict", "+18%", 94),
                 ("WebRTC / Streaming", "+28%", 58), ("Tailwind CSS v4", "+12%", 85),
                 ("React Query & State", "+15%", 79),
             ]
-        elif "ai" in stack_lower or "python" in stack_lower:
+        elif norm_role == "ai":
             raw_skills = [
                 ("PyTorch / vLLM", "+32%", 84), ("FastAPI Async", "+18%", 90),
                 ("LangGraph / Agentic AI", "+35%", 72), ("Postgres Vector / pgvector", "+20%", 68),
@@ -151,15 +178,18 @@ class CatalogsService:
                 ("System Security", "+20%", 64),
             ]
 
+        stats = await self.catalogs_repo.get_market_sample_stats()
+        sample_size = 342 + stats["jd_count"] + stats["profile_count"]
+
         return {
-            "role": role,
+            "role": norm_role,
             "tech_stack": tech_stack,
-            "level": level,
+            "level": norm_level,
             "location": location,
             "p25_salary_vnd": int(p25 * multiplier),
             "p50_salary_vnd": int(base_median * multiplier),
             "p75_salary_vnd": int(p75 * multiplier),
-            "sample_size_jds": 342,
+            "sample_size_jds": sample_size,
             "top_paid_skills": [
                 {"name": n, "salary_premium": p, "popularity_pct": pct} for n, p, pct in raw_skills
             ],
@@ -167,10 +197,10 @@ class CatalogsService:
             "growth_rate_yoy": "+18.5%",
         }
 
-    def get_career_roi(
+    async def get_career_roi(
         self, tech_stack: str, level: str, location: str
     ) -> Dict[str, Any]:
-        bench = self.get_salary_benchmark("backend", tech_stack, level, location)
+        bench = await self.get_salary_benchmark(tech_stack, tech_stack, level, location)
         median = bench["p50_salary_vnd"]
         recommendations = []
         for idx, sk in enumerate(bench["top_paid_skills"][:3]):
@@ -189,14 +219,14 @@ class CatalogsService:
         top_skill_name = recommendations[0]["skill"] if recommendations else tech_stack
         return {
             "tech_stack": tech_stack,
-            "level": level,
+            "level": bench["level"],
             "location": location,
             "current_median_vnd": median,
             "projected_upskill_vnd": projected,
             "annual_comp_gain_vnd": top_delta * 12,
             "upskill_recommendations": recommendations,
             "negotiation_leverage_script": (
-                f"Based on Belooga's 2026 Market Radar for {level} {tech_stack} in {location}, "
+                f"Based on Belooga's 2026 Market Radar for {bench['level']} {tech_stack} in {location}, "
                 f"combining {tech_stack} with production {top_skill_name} commands a P75 package of "
                 f"{projected:,} VND/month (+{top_delta * 12:,} VND/year)."
             ),

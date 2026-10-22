@@ -178,7 +178,7 @@ export function Header() {
                   />
                   <span>{user.firstName}</span>
                 </Link>
-                <Button variant="outline" size="sm" onClick={logout}>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
               </>

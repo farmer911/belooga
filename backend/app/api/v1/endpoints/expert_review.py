@@ -95,5 +95,8 @@ async def submit_order_feedback(
     db: AsyncSession = Depends(get_db),
 ):
     return await ExpertReviewService(db).submit_order_feedback(
-        order_id=order_id, actor_identity_id=current_user.id, payload=payload
+        order_id=order_id,
+        actor_identity_id=current_user.id,
+        payload=payload,
+        actor_role=current_user.role,
     )

@@ -114,7 +114,7 @@ class MediaService:
             raise HTTPException(status_code=404, detail="Candidate not found")
 
         is_owner = current_user is not None and (
-            current_user.username.lower() == clean_username or current_user.role == "admin"
+            current_user.username.lower().strip() == clean_username or current_user.role == "admin"
         )
         if row.is_hidden and not is_owner:
             raise HTTPException(status_code=404, detail="Candidate not found")
@@ -123,7 +123,7 @@ class MediaService:
         education = await self.profile_facade.get_education(row.id)
         skills = await self.profile_facade.get_skills(row.id)
 
-        pdf_bytes = await generate_pdf_resume_async(row, jobs, education, skills, clean_username)
+        pdf_bytes = await generate_pdf_resume_async(row, jobs, education, skills, clean_username, is_owner=is_owner)
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
@@ -133,31 +133,20 @@ class MediaService:
             },
         )
 
+    generate_resume_pdf = generate_candidate_pdf
+
     async def upload_video_chunk(
-        self,
-        upload_id: str,
-        chunk_index: int,
-        total_chunks: int,
-        username: str,
-        file: UploadFile,
-        current_user: AuthenticatedUser,
+        self, upload_id: str, chunk_index: int, total_chunks: int,
+        username: str, file: UploadFile, current_user: AuthenticatedUser,
     ) -> Dict[str, Any]:
         verify_profile_owner(current_user, username)
         upload_dir = get_validated_upload_dir(upload_id, current_user.id)
         await asyncio.to_thread(os.makedirs, upload_dir, exist_ok=True)
-
-        chunk_filename = f"chunk_{chunk_index:05d}"
-        chunk_path = os.path.join(upload_dir, chunk_filename)
-
-        content = await file.read()
-        await write_bytes_async(chunk_path, content)
-
+        chunk_path = os.path.join(upload_dir, f"chunk_{chunk_index:05d}")
+        await write_bytes_async(chunk_path, await file.read())
         return {
-            "upload_id": upload_id,
-            "chunk_index": chunk_index,
-            "total_chunks": total_chunks,
-            "status": "chunk_received",
-            "message": f"Chunk {chunk_index + 1}/{total_chunks} received successfully",
+            "upload_id": upload_id, "chunk_index": chunk_index, "total_chunks": total_chunks,
+            "status": "chunk_received", "message": f"Chunk {chunk_index + 1}/{total_chunks} received successfully",
         }
 
     async def complete_chunked_video_upload(
@@ -201,37 +190,36 @@ class MediaService:
         if poster_url:
             await self.media_repo.upsert_pitch_poster(profile.id, poster_url)
         await NotificationService(self.db).dispatch_event(
-            identity_id=current_user.id,
-            event_type="VIDEO_PITCH_READY",
+            identity_id=current_user.id, event_type="VIDEO_PITCH_READY",
             title="Your Video Pitch Is Live",
             message="Your streaming MP4 video pitch and poster thumbnail have been published to your profile.",
-            deep_link=f"/user/{clean_username}?pitch=ready",
-            send_email=False,
-            category="general",
-            auto_commit=False,
+            deep_link=f"/user/{clean_username}?pitch=ready", send_email=False, category="general", auto_commit=False,
         )
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
 
         return {
-            "status": "completed",
-            "video_url": video_url,
-            "poster_url": poster_url,
-            "duration": duration_sec,
-            "filename": final_filename,
+            "status": "completed", "video_url": video_url, "poster_url": poster_url,
+            "duration": duration_sec, "filename": final_filename,
             "message": "All chunks assembled into optimized streaming video pitch, and thumbnail generated successfully!",
         }
 
     async def get_video_transcoding_status(self, username: str) -> Dict[str, Any]:
         p_row = await self.media_repo.get_video_status(username)
-        current_url = p_row.video_pitch_url if p_row and p_row.video_pitch_url else "/images/home/Ava_s_Video.mp4"
-        current_poster = p_row.video_pitch_poster if p_row and p_row.video_pitch_poster else "/images/home/matt-poster.png"
-
+        if not p_row:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+        if p_row.video_pitch_url:
+            return {
+                "status": "ready",
+                "video_url": p_row.video_pitch_url,
+                "poster_url": p_row.video_pitch_poster,
+                "duration_seconds": 30,
+            }
         return {
-            "status": "ready",
-            "video_url": current_url,
-            "poster_url": current_poster,
-            "duration_seconds": 30,
+            "status": "empty",
+            "video_url": None,
+            "poster_url": None,
+            "duration_seconds": 0,
         }
 
     async def get_cv_studio_draft(
@@ -240,31 +228,40 @@ class MediaService:
         clean_username = username.lower().strip()
         row = await self.media_repo.get_candidate_for_pdf(clean_username)
         if not row:
-            raise HTTPException(status_code=404, detail="Candidate not found")
+            raise HTTPException(status_code=404, detail="Profile is private or not found")
+
+        is_owner = current_user is not None and (
+            current_user.username.lower().strip() == clean_username or current_user.role == "admin"
+        )
+        if row.is_hidden and not is_owner:
+            raise HTTPException(status_code=404, detail="Profile is private or not found")
 
         saved_json = await self.media_repo.get_cv_studio_draft(row.id)
         if saved_json:
-            return json.loads(saved_json)
+            draft = json.loads(saved_json)
+            if not is_owner:
+                draft["email"] = ""
+                draft["phone"] = ""
+            return draft
 
         jobs = await self.profile_facade.get_jobs(row.id)
         skills = await self.profile_facade.get_skills(row.id)
         exp_items = [
             {
-                "company": j.get("company_name") or "Technology Corp",
-                "role": j.get("title") or "Software Engineer",
+                "company": j.get("company_name") or "",
+                "role": j.get("title") or "",
                 "period": f"{j.get('from_date_year', 2022)} - {'Present' if j.get('currently_work_here') else j.get('to_date_year', 2025)}",
-                "bullets": [b.strip() for b in (j.get("description") or "").split("\n") if b.strip()]
-                or ["Delivered production systems with measurable latency and throughput gains."],
+                "bullets": [b.strip() for b in (j.get("description") or "").split("\n") if b.strip()],
             }
             for j in jobs
         ]
         return {
             "full_name": f"{row.first_name or ''} {row.last_name or ''}".strip() or clean_username,
-            "email": row.email or "",
-            "phone": row.phone or "",
-            "headline": row.headline or "Senior Software Engineer",
+            "email": (row.email or "") if is_owner else "",
+            "phone": (row.phone or "") if is_owner else "",
+            "headline": row.headline or "Candidate",
             "summary": row.bio or "",
-            "skills": ", ".join(skills) if skills else "Python, FastAPI, PostgreSQL, Next.js",
+            "skills": ", ".join(skills) if skills else "",
             "font_size": 10.0,
             "line_height": 1.3,
             "margin_size": 0.6,

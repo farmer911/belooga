@@ -4,13 +4,14 @@ import hashlib
 import os
 import re
 import uuid
-from typing import List, Set, Dict, Any, Optional
+from typing import Any, Dict, List, Optional, Set
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
 from app.modules.ats_matching.repository import ATSMatchingRepository
 from app.schemas.ats_matching import (
+    ATSScanHistoryItem,
     ATSScanRequest,
     ATSScanResponse,
     InterviewKitRequest,
@@ -53,16 +54,11 @@ class ATSMatchingService:
         found: Set[str] = set()
         lowered = text.lower()
         for skill in CORE_TECH_TAXONOMY:
-            escaped = re.escape(skill.lower())
-            if skill.lower() == "go":
-                pattern = r"\bgo\b"
-            elif skill.lower() in ("c++", "c#"):
-                pattern = rf"(?<!\w){escaped}(?!\w)"
-            else:
-                pattern = rf"\b{escaped}\b"
-            if re.search(pattern, lowered):
+            esc = re.escape(skill.lower())
+            pat = r"\bgo\b" if skill.lower() == "go" else (rf"(?<!\w){esc}(?!\w)" if skill.lower() in ("c++", "c#") else rf"\b{esc}\b")
+            if re.search(pat, lowered):
                 found.add("Golang" if skill.lower() == "go" else skill)
-        return sorted(list(found))
+        return sorted(found)
 
     def _analyze_star_bullets(self, cv_text: str) -> List[Dict[str, Any]]:
         critiques: List[Dict[str, Any]] = []
@@ -111,41 +107,33 @@ class ATSMatchingService:
 
         skill_score = int((len(matched_skills) / max(len(jd_skills), 1)) * 60)
         bullets_analyzed = len(request.cv_text.splitlines())
-        impact_ratio = max(0.0, 1.0 - (len(star_critiques) / max(bullets_analyzed, 1)))
-        impact_score = int(impact_ratio * 25)
+        impact_score = int(max(0.0, 1.0 - (len(star_critiques) / max(bullets_analyzed, 1))) * 25)
         format_score = max(0, 15 - (len(parse_warnings) * 5))
         total_score = min(100, max(15, skill_score + impact_score + format_score))
 
         jd_record = await self.repo.create_job_description(
-            job_title=request.job_title,
-            raw_text=request.jd_text,
-            company_name=request.company_name,
-            skills_extracted=jd_skills,
-            commit=False,
+            job_title=request.job_title, raw_text=request.jd_text,
+            company_name=request.company_name, skills_extracted=jd_skills, commit=False,
         )
         match_record = await self.repo.create_match_record(
-            job_description_id=jd_record.id,
-            ats_score=total_score,
-            matched_skills=matched_skills,
-            missing_skills=missing_skills,
-            star_analysis=star_critiques,
-            parse_warnings=parse_warnings,
+            job_description_id=jd_record.id, ats_score=total_score,
+            matched_skills=matched_skills, missing_skills=missing_skills,
+            star_analysis=star_critiques, parse_warnings=parse_warnings,
             candidate_identity_id=candidate_identity_id,
         )
         return ATSScanResponse(
-            match_id=match_record.id,
-            ats_score=total_score,
-            matched_skills=matched_skills,
-            missing_skills=missing_skills,
-            star_analysis=star_critiques,
-            parse_warnings=parse_warnings,
-            breakdown={
-                "hard_skills_score": skill_score,
-                "impact_score": impact_score,
-                "formatting_score": format_score,
-            },
+            match_id=match_record.id, ats_score=total_score,
+            matched_skills=matched_skills, missing_skills=missing_skills,
+            star_analysis=star_critiques, parse_warnings=parse_warnings,
+            breakdown={"hard_skills_score": skill_score, "impact_score": impact_score, "formatting_score": format_score},
             created_at=match_record.created_at,
         )
+
+    async def list_scan_history(
+        self, candidate_identity_id: Optional[uuid.UUID] = None
+    ) -> List[ATSScanHistoryItem]:
+        rows = await self.repo.list_scan_history(candidate_identity_id=candidate_identity_id, limit=20)
+        return [ATSScanHistoryItem(**r) for r in rows]
 
     async def generate_talent_shortlist(
         self, request: TalentShortlistRequest
@@ -167,19 +155,19 @@ class ATSMatchingService:
             )
 
             shortlist: List[Dict[str, Any]] = []
-            video_count = 0
-            active_count = 0
+            video_count, active_count = 0, 0
 
             for r in rows:
-                cand_skills = self._extract_skills(f"{r.get('headline') or ''} {r.get('bio') or ''}")
+                db_skills = [str(s) for s in (r.get("db_skills") or [])]
+                cand_skills = set(self._extract_skills(f"{r.get('headline') or ''} {r.get('bio') or ''} {' '.join(db_skills)}"))
+                cand_skills.update(db_skills)
                 matched = [s for s in jd_skills if s in cand_skills]
                 missing = [s for s in jd_skills if s not in cand_skills]
 
                 skill_pts = int((len(matched) / max(len(jd_skills), 1)) * 70) if jd_skills else 55
                 has_video = bool(r.get("video_pitch_url"))
                 is_active = (r.get("seeking_status") or "Actively Looking") == "Actively Looking"
-                video_pts = 18 if has_video else 0
-                readiness_pts = 12 if is_active else 6
+                video_pts, readiness_pts = (18 if has_video else 0), (12 if is_active else 6)
                 total_score = min(100, max(25, skill_pts + video_pts + readiness_pts))
                 video_count += int(has_video)
                 active_count += int(is_active)
@@ -239,12 +227,13 @@ class ATSMatchingService:
         async def _load_pulse() -> Dict[str, Any]:
             stats = await self.repo.get_market_pulse_stats()
             total = max(stats["total_visible"], 1)
+            sk_cnt = stats.get("skill_counts") or {}
             scarcity = [
-                {"skill": "Golang / Distributed Systems", "candidate_supply": max(12, total // 14), "demand_index": 94, "scarcity_score": 9.1, "salary_premium_pct": "+24%"},
-                {"skill": "Kubernetes & Cloud Native", "candidate_supply": max(15, total // 16), "demand_index": 91, "scarcity_score": 8.7, "salary_premium_pct": "+22%"},
-                {"skill": "Python / FastAPI Async", "candidate_supply": max(24, total // 9), "demand_index": 89, "scarcity_score": 7.9, "salary_premium_pct": "+18%"},
-                {"skill": "Next.js 16 / TypeScript", "candidate_supply": max(28, total // 8), "demand_index": 86, "scarcity_score": 7.4, "salary_premium_pct": "+16%"},
-                {"skill": "PostgreSQL / High-Scale Indexing", "candidate_supply": max(19, total // 12), "demand_index": 88, "scarcity_score": 8.3, "salary_premium_pct": "+20%"},
+                {"skill": "Golang / Distributed Systems", "candidate_supply": sk_cnt.get("golang", 0) + max(12, total // 14), "demand_index": 94, "scarcity_score": 9.1, "salary_premium_pct": "+24%"},
+                {"skill": "Kubernetes & Cloud Native", "candidate_supply": sk_cnt.get("kubernetes", 0) + max(15, total // 16), "demand_index": 91, "scarcity_score": 8.7, "salary_premium_pct": "+22%"},
+                {"skill": "Python / FastAPI Async", "candidate_supply": sk_cnt.get("fastapi", 0) + max(24, total // 9), "demand_index": 89, "scarcity_score": 7.9, "salary_premium_pct": "+18%"},
+                {"skill": "Next.js 16 / TypeScript", "candidate_supply": sk_cnt.get("typescript", 0) + max(28, total // 8), "demand_index": 86, "scarcity_score": 7.4, "salary_premium_pct": "+16%"},
+                {"skill": "PostgreSQL / High-Scale Indexing", "candidate_supply": sk_cnt.get("postgresql", 0) + max(19, total // 12), "demand_index": 88, "scarcity_score": 8.3, "salary_premium_pct": "+20%"},
             ]
             return {
                 "total_visible_candidates": stats["total_visible"],
@@ -265,17 +254,28 @@ class ATSMatchingService:
 
     async def generate_interview_kit(self, request: InterviewKitRequest) -> InterviewKitResponse:
         jd_skills = self._extract_skills(f"{request.job_title} {request.jd_text}")
-        top_skills = jd_skills[:4] if jd_skills else ["System Design", "Backend Architecture", "PostgreSQL"]
+        cv_raw = (request.cv_text or "").strip()
+        cv_skills = self._extract_skills(cv_raw) if cv_raw else []
+        matched = [s for s in jd_skills if s in cv_skills]
+        missing = [s for s in jd_skills if s not in cv_skills]
+        ordered = matched + missing + [s for s in cv_skills if s not in jd_skills]
+        top_skills = ordered[:4] if ordered else ["System Design", "Backend Architecture", "PostgreSQL"]
+        cv_snippet = next((ln.strip("-•* \t") for ln in cv_raw.splitlines() if len(ln.strip()) > 12), "")
+        proof_clause = f" ({cv_snippet[:90]})" if cv_snippet else ""
+        gap_clause = f" while bridging {', '.join(missing[:2])}" if missing else ""
         org = request.company_name or "your engineering team"
         script = (
-            f"[00-15s Hook] Hi {org}, I'm applying for {request.job_title} with hands-on ownership in {', '.join(top_skills[:3])}.\n"
-            f"[15-45s Proof & Metrics] In my recent production systems, I architected {', '.join(top_skills[:2])} pipelines with measurable SLA and latency gains.\n"
+            f"[00-15s Hook] Hi {org}, I'm applying for {request.job_title} with hands-on ownership in {', '.join((matched or top_skills)[:3])}.\n"
+            f"[15-45s Proof & Metrics] In my recent production systems{proof_clause}, I architected {', '.join(top_skills[:2])} pipelines with measurable SLA gains{gap_clause}.\n"
             f"[45-60s Call-to-Action] I'd love to walk through how I can accelerate {org}'s roadmap in my full Belooga profile."
         )
         questions = [
             InterviewQuestionDTO(
                 focus_skill=sk,
-                question=f"Describe a high-stakes production bottleneck you resolved using {sk}. What trade-offs did you make?",
+                question=(
+                    f"Based on your CV experience{proof_clause if sk in matched else ''}, describe a production challenge you solved with {sk}."
+                    if sk in matched else f"How would you ramp up on {sk} and apply your {', '.join((matched or top_skills)[:2])} background to our stack?"
+                ),
                 star_coaching_tip=f"State baseline p95 latency/throughput, explain your {sk} architecture decision, and quantify the post-deployment delta.",
             )
             for sk in top_skills[:3]

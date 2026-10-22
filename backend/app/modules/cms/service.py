@@ -202,14 +202,23 @@ class CmsService:
     async def apply_career_job(self, job_id: str, payload: JobApplicantRequest) -> Dict[str, str]:
         jobs = await self.list_career_jobs()
         target_uuid: Optional[uuid.UUID] = None
+        clean_id = (job_id or "").strip()
         try:
-            parsed_uuid = uuid.UUID(job_id)
+            parsed_uuid = uuid.UUID(clean_id)
             posting = await self.cms_repo.get_career_posting_by_id(parsed_uuid)
             if posting:
                 target_uuid = posting.id
         except ValueError:
-            if jobs:
-                target_uuid = uuid.UUID(str(jobs[0]["id"]))
+            alias_map = {item["id"].lower(): item["title"].lower() for item in DEFAULT_CAREER_JOBS}
+            wanted_title = alias_map.get(clean_id.lower(), clean_id.lower().replace("-", " "))
+            for item in jobs:
+                item_title = str(item.get("title") or "").lower()
+                if str(item.get("id") or "").lower() == clean_id.lower() or item_title == wanted_title:
+                    try:
+                        target_uuid = uuid.UUID(str(item["id"]))
+                    except ValueError:
+                        target_uuid = None
+                    break
 
         if not target_uuid:
             raise HTTPException(status_code=404, detail="Career job posting not found")

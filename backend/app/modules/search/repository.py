@@ -143,3 +143,33 @@ class SearchRepository:
         """)
         res = await self.db.execute(query, {"q": f"%{clean_key}%", "limit": limit})
         return [dict(r._mapping) for r in res.fetchall()]
+
+    async def get_talent_pool_stats(self) -> tuple[int, float]:
+        query = text("""
+            SELECT
+                COUNT(*) FILTER (WHERE is_hidden = FALSE) AS total_visible,
+                COUNT(*) FILTER (
+                    WHERE is_hidden = FALSE
+                      AND video_pitch_url IS NOT NULL
+                      AND video_pitch_url <> ''
+                ) AS video_verified
+            FROM candidate_profiles
+        """)
+        row = (await self.db.execute(query)).fetchone()
+        total = int(row.total_visible or 0) if row else 0
+        verified = int(row.video_verified or 0) if row else 0
+        pct = round((verified * 100.0) / total, 1) if total > 0 else 0.0
+        return total, pct
+
+    async def get_top_trending_skills(self, limit: int = 5) -> List[Dict[str, Any]]:
+        query = text("""
+            SELECT s.name AS keyword, COUNT(ps.profile_id) AS profile_count
+            FROM skills s
+            JOIN profile_skills ps ON ps.skill_id = s.id
+            JOIN candidate_profiles p ON p.id = ps.profile_id AND p.is_hidden = FALSE
+            GROUP BY s.id, s.name
+            ORDER BY profile_count DESC, s.name ASC
+            LIMIT :limit
+        """)
+        res = await self.db.execute(query, {"limit": limit})
+        return [dict(r._mapping) for r in res.fetchall()]
