@@ -23,8 +23,6 @@ import { getSemanticTokens } from "@/theme/tokens";
 import { CompaniesDirectorySection } from "@/components/companies-directory-section";
 import { TopCandidatesSection } from "@/components/top-candidates-section";
 
-const DEFAULT_SKILL_CHIPS = ["Golang", "Python", "React", "TypeScript", "Kubernetes", "PostgreSQL", "AI/LLM"];
-
 export default function MobileDiscoveryFeedScreen() {
   const tokens = getSemanticTokens("dark");
   const [queryText, setQueryText] = useState("");
@@ -64,7 +62,6 @@ export default function MobileDiscoveryFeedScreen() {
       ...trendingSkills.map((s) => s.name),
       ...catalogSkills,
       ...customSkillsAdded,
-      ...DEFAULT_SKILL_CHIPS,
     ])
   );
 
@@ -78,18 +75,12 @@ export default function MobileDiscoveryFeedScreen() {
   const handleAddCustomSkill = async () => {
     const clean = customSkillInput.trim();
     if (!clean) return;
-    try {
-      const created = await createCustomSkillMutation.mutateAsync({ name: clean });
-      const addedName = created.name || clean;
-      setCustomSkillsAdded((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
-      setSelectedSkills((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
-      setCustomSkillInput("");
-      setCursor(undefined);
-    } catch {
-      setCustomSkillsAdded((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
-      setSelectedSkills((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
-      setCustomSkillInput("");
-    }
+    const created = await createCustomSkillMutation.mutateAsync({ name: clean });
+    const addedName = created.name || clean;
+    setCustomSkillsAdded((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
+    setSelectedSkills((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
+    setCustomSkillInput("");
+    setCursor(undefined);
   };
 
   const visibleCandidates = showSavedOnly

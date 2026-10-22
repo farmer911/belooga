@@ -19,33 +19,6 @@ import { useMobileAuthStore } from "@/store/auth-store";
 import { getSemanticTokens } from "@/theme/tokens";
 import { UserPostsSection } from "@/components/user-posts-section";
 
-const DEFAULT_NOTIFICATIONS: MobileNotificationItemDTO[] = [
-  {
-    id: "notif_default_1",
-    title: "Sarah Jenkins completed your Expert CV Review",
-    message:
-      "Line-by-line STAR rewrite ready for review. Inspect the detailed CV scorecard and release the $59 Escrow when satisfied.",
-    is_read: false,
-    created_at: "2 mins ago",
-    category: "EXPERT_REVIEW",
-    deep_link: "/(tabs)/career?sub=expert&order=ord_8841",
-    action_label: "Xem Báo Cáo Chấm CV & Escrow",
-    email_sent: true,
-  },
-  {
-    id: "notif_default_2",
-    title: "ATS Match Alert: 96% Match @ Anthropic",
-    message:
-      "Your persisted Career Goal (Staff Distributed Systems) matched Anthropic's opening with 96% ATS compatibility.",
-    is_read: false,
-    created_at: "14 mins ago",
-    category: "JOB_MATCH",
-    deep_link: "/(tabs)/tracker",
-    action_label: "Mở Thẻ Công Việc Trong Kanban",
-    email_sent: true,
-  },
-];
-
 export default function MobileWorkspaceProfileScreen() {
   const tokens = getSemanticTokens("dark");
   const user = useMobileAuthStore((s) => s.user);
@@ -56,10 +29,7 @@ export default function MobileWorkspaceProfileScreen() {
 
   const activeUser = sessionQuery.data ?? user;
   const [headlineDraft, setHeadlineDraft] = useState("Principal Distributed Systems Engineer");
-  const notifications =
-    (notificationsQuery.data && notificationsQuery.data.length > 0
-      ? notificationsQuery.data
-      : DEFAULT_NOTIFICATIONS);
+  const notifications = notificationsQuery.data ?? [];
   const [activeNotification, setActiveNotification] = useState<MobileNotificationItemDTO | null>(
     notifications[0] ?? null
   );

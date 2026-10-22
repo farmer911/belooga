@@ -34,21 +34,7 @@ export function CompaniesDirectorySection() {
   const createCompanyMutation = useCreateMobileCompanyMutation();
   const submitReviewMutation = useSubmitMobileCompanyReviewMutation();
 
-  const companies = searchQuery.data?.items ?? [
-    {
-      slug: 'databricks',
-      name: 'Databricks',
-      industry: 'AI / Cloud',
-      location: 'Ho Chi Minh',
-      company_size: '1000+',
-      avg_rating: 4.9,
-      review_count: 128,
-      avg_salary_usd: 3200,
-      open_jobs_count: 6,
-      tech_stack: ['Python', 'Spark', 'PostgreSQL 16'],
-      is_verified: true,
-    },
-  ];
+  const companies = searchQuery.data?.items ?? [];
   const profile = detailQuery.data;
 
   const inputStyle: React.CSSProperties = {
@@ -193,7 +179,7 @@ export function CompaniesDirectorySection() {
           {detailTab === 'overview' ? (
             <div style={{ fontSize: 12, color: tokens.typography.body }}>
               {profile?.description ?? 'Unified Data & AI Platform'} • Stack:{' '}
-              {(profile?.tech_stack ?? ['Python', 'PostgreSQL 16']).join(', ')}
+              {(profile?.tech_stack ?? []).join(', ')}
             </div>
           ) : null}
           {detailTab === 'jobs' ? (
