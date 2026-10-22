@@ -8,6 +8,7 @@ import { ExpertDirectory } from "@/components/features/expert-review/expert-dire
 import { SampleFeedbackReport } from "@/components/features/expert-review/sample-feedback-report";
 import { CandidateOrdersList } from "@/components/features/expert-review/candidate-orders-list";
 import { ReviewBookingDialog } from "@/components/features/expert-review/review-booking-dialog";
+import { ExpertLeaderboardSection } from "@/components/features/expert-review/expert-leaderboard-section";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ExpertReviewPage() {
@@ -86,6 +87,9 @@ export default function ExpertReviewPage() {
         }}
         onSubmitFeedback={submitOrderFeedback}
       />
+
+      {/* 2b. Expert Leaderboard & Podium */}
+      <ExpertLeaderboardSection onBookExpert={openBookingForExpert} />
 
       {/* 3. Pricing Tiers */}
       {isLoading && packages.length === 0 ? (
