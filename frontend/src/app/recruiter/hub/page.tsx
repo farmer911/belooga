@@ -17,6 +17,7 @@ import {
   INITIAL_RECRUITER_PIPELINE,
 } from "@/components/features/recruiter/recruiter-pipeline-board";
 import { TopCandidatesLeaderboard } from "@/components/features/search/top-candidates-leaderboard";
+import { RecruiterAnalyticsPanel } from "@/components/features/analytics/multi-persona-analytics";
 
 export default function RecruiterHiringHubPage() {
   const queryClient = useQueryClient();
@@ -186,6 +187,7 @@ export default function RecruiterHiringHubPage() {
       )}
 
       <main className="flex-1 p-4 space-y-5 max-w-[1440px] w-full mx-auto">
+        <RecruiterAnalyticsPanel />
         <TopCandidatesLeaderboard variant="spotlight" />
         <RecruiterPipelineBoard
           items={filteredPipeline}

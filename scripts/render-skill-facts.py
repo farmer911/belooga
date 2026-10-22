@@ -93,6 +93,7 @@ FRONTEND = {
         "salary-benchmark/page.tsx",
         "workspace/jobs/page.tsx",
         "workspace/wallet/page.tsx",
+        "workspace/analytics/page.tsx",
         "recruiter/hub/page.tsx",
         "admin/analytics/page.tsx",
     ],

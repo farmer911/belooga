@@ -40,17 +40,8 @@ interface JobSearchAndGoalPanelProps {
 }
 
 export function JobSearchAndGoalPanel({
-  careerGoal,
-  onSaveGoal,
-  isSavingGoal,
-  onAddJobToKanban,
-  statusFilter,
-  onStatusFilterChange,
-  minScoreFilter,
-  onMinScoreFilterChange,
-  sortBy,
-  onSortByChange,
-  onResetFilters,
+  careerGoal, onSaveGoal, isSavingGoal, onAddJobToKanban, statusFilter, onStatusFilterChange,
+  minScoreFilter, onMinScoreFilterChange, sortBy, onSortByChange, onResetFilters,
 }: JobSearchAndGoalPanelProps) {
   const { availableBalanceVnd, payWithWallet } = useWallet();
   const [roleInput, setRoleInput] = useState(careerGoal?.target_role ?? "Senior Backend / Golang Engineer");
@@ -75,12 +66,10 @@ export function JobSearchAndGoalPanel({
     queryKey: ["market-jobs-search", marketQuery],
     queryFn: async () => {
       try {
-        const res = await apiClient.get<MarketJobItem[]>("/v1/tracker/search-market-jobs", {
-          params: { q: marketQuery },
-        });
+        const res = await apiClient.get<MarketJobItem[]>("/v1/tracker/search-market-jobs", { params: { q: marketQuery } });
         if (Array.isArray(res.data) && res.data.length > 0) return res.data;
       } catch {
-        // Fallback to curated market jobs filtered by query
+        // Fallback
       }
       const q = marketQuery.trim().toLowerCase();
       if (!q) return FALLBACK_MARKET_JOBS;
@@ -111,7 +100,7 @@ export function JobSearchAndGoalPanel({
           preferred_skills: skillsInput,
         });
       } catch {
-        // Fallback local AI match generation
+        // Fallback
       }
       await onAddJobToKanban({
         company_name: "Grab Financial Group",
@@ -131,9 +120,7 @@ export function JobSearchAndGoalPanel({
       });
       return 2;
     },
-    onSuccess: (count) => {
-      setAiMatchedCount(count);
-    },
+    onSuccess: (count) => setAiMatchedCount(count),
   });
 
   const handleSaveGoal = async (e: React.FormEvent) => {
@@ -162,47 +149,15 @@ export function JobSearchAndGoalPanel({
 
   return (
     <div className="border-b border-surface-border bg-surface-card px-4 py-3 space-y-3 text-xs">
-      {/* 1. Saved Career Goal & Paid AI Job Matcher (Figma 9:901 & 9:902) */}
-      <form
-        data-testid="career-goal-panel"
-        onSubmit={handleSaveGoal}
-        className="p-3 rounded-xl bg-surface-page border border-surface-border flex flex-wrap items-center justify-between gap-2.5"
-      >
+      <form data-testid="career-goal-panel" onSubmit={handleSaveGoal} className="p-3 rounded-xl bg-surface-page border border-surface-border flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2 flex-1">
           <span className="inline-flex items-center gap-1 font-bold text-brand-dark">
-            <Target className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
-            <span>Mục Tiêu Săn Việc:</span>
+            <Target className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" /><span>Mục Tiêu Săn Việc:</span>
           </span>
-          <input
-            type="text"
-            data-testid="career-goal-role-input"
-            value={roleInput}
-            onChange={(e) => setRoleInput(e.target.value)}
-            placeholder="Vị trí mục tiêu..."
-            className="bg-surface-card border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main w-48 focus:outline-none focus:border-brand-primary"
-          />
-          <input
-            type="text"
-            data-testid="career-goal-salary-input"
-            value={salaryInput}
-            onChange={(e) => setSalaryInput(e.target.value)}
-            placeholder="Mức lương mục tiêu..."
-            className="bg-surface-card border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main w-36 font-mono focus:outline-none focus:border-brand-primary"
-          />
-          <input
-            type="text"
-            data-testid="career-goal-skills-input"
-            value={skillsInput}
-            onChange={(e) => setSkillsInput(e.target.value)}
-            placeholder="Kỹ năng trọng tâm..."
-            className="bg-surface-card border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main w-52 focus:outline-none focus:border-brand-primary"
-          />
-          <Button
-            type="submit"
-            data-testid="save-career-goal-btn"
-            disabled={isSavingGoal}
-            className="bg-brand-dark hover:bg-brand-primary text-white text-xs h-7 px-3 rounded-lg"
-          >
+          <input type="text" data-testid="career-goal-role-input" value={roleInput} onChange={(e) => setRoleInput(e.target.value)} placeholder="Vị trí mục tiêu..." className="bg-surface-card border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main w-48" />
+          <input type="text" data-testid="career-goal-salary-input" value={salaryInput} onChange={(e) => setSalaryInput(e.target.value)} placeholder="Mức lương mục tiêu..." className="bg-surface-card border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main w-36 font-mono" />
+          <input type="text" data-testid="career-goal-skills-input" value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} placeholder="Kỹ năng trọng tâm..." className="bg-surface-card border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main w-52" />
+          <Button type="submit" data-testid="save-career-goal-btn" disabled={isSavingGoal} className="bg-brand-dark hover:bg-brand-primary text-white text-xs h-7 px-3 rounded-lg">
             {isSavingGoal ? "Đang lưu..." : "Lưu Mục Tiêu"}
           </Button>
           {goalSavedBanner && (
@@ -212,53 +167,28 @@ export function JobSearchAndGoalPanel({
           )}
         </div>
 
-        <button
-          type="button"
-          data-testid="ai-job-matcher-btn"
-          disabled={aiMatchMutation.isPending}
-          onClick={() => aiMatchMutation.mutate()}
-          className="min-h-[34px] px-3.5 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-60"
-        >
+        <button type="button" data-testid="ai-job-matcher-btn" disabled={aiMatchMutation.isPending} onClick={() => aiMatchMutation.mutate()} className="min-h-[34px] px-3.5 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-60">
           <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>
-            {aiMatchMutation.isPending
-              ? "AI Đang Săn Job..."
-              : `Nhờ AI Tìm Job Phù Hợp (19.000đ · Ví: ${formatVnd(availableBalanceVnd)})`}
-          </span>
+          <span>{aiMatchMutation.isPending ? "AI Đang Săn Job..." : `Nhờ AI Tìm Job Phù Hợp (19.000đ · Ví: ${formatVnd(availableBalanceVnd)})`}</span>
         </button>
       </form>
 
       {aiMatchedCount !== null && (
-        <div
-          data-testid="ai-matched-jobs-receipt-banner"
-          className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between text-xs"
-        >
+        <div data-testid="ai-matched-jobs-receipt-banner" className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between text-xs">
           <span className="inline-flex items-center gap-1.5 font-semibold">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
             <span>Đã trừ 19.000đ từ Ví Belooga & tự động thêm {aiMatchedCount} công việc khớp &gt; 90% ATS vào cột Nhắm Mục Tiêu!</span>
           </span>
-          <button type="button" onClick={() => setAiMatchedCount(null)} className="text-[11px] underline cursor-pointer">
-            Đóng
-          </button>
+          <button type="button" onClick={() => setAiMatchedCount(null)} className="text-[11px] underline cursor-pointer">Đóng</button>
         </div>
       )}
 
-      {/* 2. Kanban Filter Bar & Market Job Discovery Toggle */}
-      <div
-        data-testid="kanban-search-filter-bar"
-        className="flex flex-wrap items-center justify-between gap-2"
-      >
+      <div data-testid="kanban-search-filter-bar" className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-typography-muted">
             <Filter className="w-3 h-3 text-brand-primary" aria-hidden="true" /> Bộ lọc Kanban:
           </span>
-          <select
-            aria-label="Lọc theo cột trạng thái"
-            data-testid="kanban-filter-status"
-            value={statusFilter}
-            onChange={(e) => onStatusFilterChange(e.target.value as KanbanStatus | "ALL")}
-            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main"
-          >
+          <select aria-label="Lọc theo cột trạng thái" data-testid="kanban-filter-status" value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value as KanbanStatus | "ALL")} className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main">
             <option value="ALL">Tất cả cột (5 giai đoạn)</option>
             <option value="TARGETING">Nhắm Mục Tiêu</option>
             <option value="TAILORED">Đã Tối Ưu CV</option>
@@ -267,124 +197,59 @@ export function JobSearchAndGoalPanel({
             <option value="OFFER">Nhận Offer / Hired</option>
           </select>
 
-          <select
-            aria-label="Lọc theo điểm ATS"
-            data-testid="kanban-filter-min-score"
-            value={minScoreFilter}
-            onChange={(e) => onMinScoreFilterChange(Number(e.target.value))}
-            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main"
-          >
+          <select aria-label="Lọc theo điểm ATS" data-testid="kanban-filter-min-score" value={minScoreFilter} onChange={(e) => onMinScoreFilterChange(Number(e.target.value))} className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main">
             <option value={0}>Mọi điểm khớp ATS</option>
             <option value={80}>Điểm ATS &gt;= 80%</option>
             <option value={90}>Điểm ATS &gt;= 90%</option>
           </select>
 
-          <select
-            aria-label="Sắp xếp công việc"
-            data-testid="kanban-sort-by"
-            value={sortBy}
-            onChange={(e) => onSortByChange(e.target.value as "created_at" | "match_score" | "interview_date")}
-            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main"
-          >
+          <select aria-label="Sắp xếp công việc" data-testid="kanban-sort-by" value={sortBy} onChange={(e) => onSortByChange(e.target.value as "created_at" | "match_score" | "interview_date")} className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1 text-xs text-typography-main">
             <option value="created_at">Sắp xếp: Mới cập nhật</option>
             <option value="match_score">Sắp xếp: Điểm ATS cao nhất</option>
             <option value="interview_date">Sắp xếp: Ngày phỏng vấn gần nhất</option>
           </select>
 
-          <button
-            type="button"
-            data-testid="kanban-clear-filters-btn"
-            onClick={onResetFilters}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-page border border-surface-border text-typography-muted hover:text-typography-main cursor-pointer"
-          >
-            <RotateCcw className="w-3 h-3" aria-hidden="true" />
-            <span>Xóa lọc</span>
+          <button type="button" data-testid="kanban-clear-filters-btn" onClick={onResetFilters} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-page border border-surface-border text-typography-muted hover:text-typography-main cursor-pointer">
+            <RotateCcw className="w-3 h-3" aria-hidden="true" /><span>Xóa lọc</span>
           </button>
         </div>
 
-        <button
-          type="button"
-          data-testid="toggle-market-job-search-btn"
-          onClick={() => setShowMarketSearch((prev) => !prev)}
-          className="px-3 py-1 rounded-lg bg-brand-overlay text-brand-dark border border-brand-primary/40 font-semibold text-xs inline-flex items-center gap-1.5 cursor-pointer"
-        >
+        <button type="button" data-testid="toggle-market-job-search-btn" onClick={() => setShowMarketSearch((prev) => !prev)} className="px-3 py-1 rounded-lg bg-brand-overlay text-brand-dark border border-brand-primary/40 font-semibold text-xs inline-flex items-center gap-1.5 cursor-pointer">
           <Search className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />
           <span>{showMarketSearch ? "Ẩn Kho Việc Làm" : "Tìm Việc Mới & Thêm Vào Kanban"}</span>
         </button>
       </div>
 
-      {/* 3. Live Market Job Search Drawer */}
       {showMarketSearch && (
-        <div
-          data-testid="market-job-search-panel"
-          className="p-3 rounded-xl bg-surface-page border border-surface-border space-y-2.5"
-        >
+        <div data-testid="market-job-search-panel" className="p-3 rounded-xl bg-surface-page border border-surface-border space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="relative flex-1 min-w-[240px]">
               <Search className="w-3.5 h-3.5 text-typography-muted absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
-              <input
-                type="text"
-                data-testid="market-job-search-input"
-                value={marketQuery}
-                onChange={(e) => setMarketQuery(e.target.value)}
-                placeholder="Tìm kiếm kho việc làm theo công ty, vị trí, kỹ năng (VD: VNG, Golang, Shopee, AI)..."
-                className="w-full bg-surface-card border border-surface-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary"
-              />
+              <input type="text" data-testid="market-job-search-input" value={marketQuery} onChange={(e) => setMarketQuery(e.target.value)} placeholder="Tìm kiếm kho việc làm theo công ty, vị trí, kỹ năng (VD: VNG, Golang, Shopee, AI)..." className="w-full bg-surface-card border border-surface-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-typography-main" />
             </div>
-            <span className="text-[11px] text-typography-muted">
-              Tìm thấy <strong>{marketJobs.length}</strong> cơ hội phù hợp
-            </span>
+            <span className="text-[11px] text-typography-muted">Tìm thấy <strong>{marketJobs.length}</strong> cơ hội phù hợp</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {marketJobs.map((mJob) => {
               const isAdded = addedMarketIds.includes(mJob.id);
               return (
-                <div
-                  key={mJob.id}
-                  data-testid={`market-job-card-${mJob.id}`}
-                  className="p-3 rounded-lg bg-surface-card border border-surface-border flex flex-col justify-between space-y-2"
-                >
+                <div key={mJob.id} data-testid={`market-job-card-${mJob.id}`} className="p-3 rounded-lg bg-surface-card border border-surface-border flex flex-col justify-between space-y-2">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between gap-1">
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-primary">
-                        <Building2 className="w-3 h-3" aria-hidden="true" />
-                        <span>{mJob.company_name}</span>
+                        <Building2 className="w-3 h-3" aria-hidden="true" /><span>{mJob.company_name}</span>
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
-                        {mJob.match_score}% ATS
-                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">{mJob.match_score}% ATS</span>
                     </div>
                     <div className="font-bold text-typography-main text-xs">{mJob.position_title}</div>
                     <div className="flex items-center justify-between text-[11px] text-typography-muted">
-                      <span className="inline-flex items-center gap-0.5">
-                        <MapPin className="w-3 h-3" aria-hidden="true" /> {mJob.location}
-                      </span>
+                      <span className="inline-flex items-center gap-0.5"><MapPin className="w-3 h-3" aria-hidden="true" /> {mJob.location}</span>
                       <span className="font-mono font-semibold text-typography-heading">{mJob.salary_range}</span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    data-testid={`add-market-job-btn-${mJob.id}`}
-                    disabled={isAdded}
-                    onClick={() => handleAddMarketJob(mJob)}
-                    className={`w-full py-1.5 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 cursor-pointer transition-colors ${
-                      isAdded
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-brand-primary hover:bg-brand-hover text-white"
-                    }`}
-                  >
-                    {isAdded ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>Đã Thêm Vào Kanban</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>+ Thêm Vào Kanban</span>
-                      </>
-                    )}
+                  <button type="button" data-testid={`add-market-job-btn-${mJob.id}`} disabled={isAdded} onClick={() => handleAddMarketJob(mJob)} className={`w-full py-1.5 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 cursor-pointer transition-colors ${isAdded ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-brand-primary hover:bg-brand-hover text-white"}`}>
+                    {isAdded ? <><CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /><span>Đã Thêm Vào Kanban</span></> : <><Plus className="w-3.5 h-3.5" aria-hidden="true" /><span>+ Thêm Vào Kanban</span></>}
                   </button>
                 </div>
               );
