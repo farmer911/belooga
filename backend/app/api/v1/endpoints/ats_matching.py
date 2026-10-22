@@ -1,7 +1,7 @@
 """ATS Diagnostics, Recruiter Talent Shortlist & Market Pulse Controller."""
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -12,6 +12,7 @@ from app.schemas.ats_matching import (
     ATSScanRequest,
     ATSScanResponse,
     ATSTailorResponse,
+    CVFileExtractResponse,
     InterviewKitRequest,
     InterviewKitResponse,
     TalentMarketPulseResponse,
@@ -88,4 +89,17 @@ async def generate_interview_kit_and_pitch_script(
     _ = current_user
     service = ATSMatchingService(db)
     return await service.generate_interview_kit(request=request)
+
+
+@router.post("/extract-cv-file", response_model=CVFileExtractResponse)
+async def extract_cv_file_text(
+    file: UploadFile = File(...),
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Extract clean plain text and technical skill taxonomy from an uploaded PDF, DOCX, or TXT CV file."""
+    _ = current_user
+    service = ATSMatchingService(db)
+    return await service.extract_cv_file_text(file=file)
+
 
