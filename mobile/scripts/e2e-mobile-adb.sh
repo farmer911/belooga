@@ -49,6 +49,7 @@ fi
 adb reverse tcp:8081 tcp:8081 >/dev/null 2>&1 || true
 adb reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true
 adb reverse tcp:8000 tcp:8000 >/dev/null 2>&1 || true
+adb uninstall com.belooga.mobile >/dev/null 2>&1 || true
 adb install -r "$APK_PATH" >/dev/null
 echo "  ✓ Installed $APK_PATH on $(adb devices | awk 'NR==2{print $1}')."
 
@@ -114,11 +115,19 @@ tap_by_content_desc "mobile-tracker-move-job_101-INTERVIEW"
 dump_and_assert "[INTERVIEW] (Synced)"
 adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-03-tracker.png"
 
-# Tab 4: Candidate Workspace
+# Tab 4: Career Pro (ATS Scanner, Expert CV Review & MoMo, Salary Radar, Exec BI)
+tap_by_content_desc "mobile-tab-career"
+dump_and_assert "mobile-career-ats-card"
+adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-05-career-pro.png"
+
+# Tab 5: Candidate Workspace
 tap_by_content_desc "mobile-tab-profile"
 dump_and_assert "mobile-workspace-heading"
 dump_and_assert "@alexnguyen"
 adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-04-workspace.png"
+
+# Return to Discover tab for interactive user inspection
+tap_by_content_desc "mobile-tab-discover"
 
 # 6. Verify Zero Native Crashes in Logcat
 echo "[Mobile E2E 6/6] Auditing Android logcat for runtime exceptions..."

@@ -35,7 +35,7 @@ describe("Belooga Mobile Platform Foundation & Dual-Mode Auth (BEL-132)", () => 
     const light = getSemanticTokens("light");
     expect(dark.brand.primary).toBe("rgb(91, 187, 174)");
     expect(light.surface.card).toBe("rgb(255, 255, 255)");
-    expect(MOBILE_TABS.length).toBe(4);
+    expect(MOBILE_TABS.length).toBe(5);
   });
 
   it("persists access_token and refresh_token in SecureStore upon login and hydrates cleanly", async () => {

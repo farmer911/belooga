@@ -1,16 +1,16 @@
 # Active Working Memory (`STATE.md`)
 
 ## Objective & Hypothesis
-- **Task (BEL-143 — Complete 30-Issue FE/BE/Router End-to-End Platform Remediation):**
-  1. **Router & Navigation (`R1`–`R12`):** Fixed mobile drawer missing 5 Ecosystem tools + `NotificationBell`, `sm` vs `md` header breakpoint overlap, logout redirect on `/workspace/*`/`/admin/*`/`/cv-studio`, OAuth email/next pass-through, login return-URL (`?next=` & `belooga_return_to`), `/forgot-password` post-reset CTA, `/search` `?key=` & pagination sync, `/search` `VideoPitchModal`, `/ats-diagnostics?score=` badge, and `/expert-review?order_id=` highlight.
-  2. **Frontend UI-Only -> Full-Stack Integration:** Wired `/cv-studio` `localStorage` auto-save, guest/cloud save, editable/reorderable Projects & Contact sections, ReportLab PDF export, and server ATS audit; `/ats-diagnostics` CV file/profile loader, clickable scan history, and `/v1/match/tailor-cv`; `/expert-review` PDF resume upload and live MoMo QR in booking modal; and `/workspace/jobs` direct Edit button on every `KanbanCard`.
-  3. **Backend APIs:** Added `POST /v1/match/tailor-cv`, enriched `GET /v1/match/history` with `matched_skills`/`missing_skills`, added city multipliers & dynamic YoY growth in `GET /v1/catalogs/salary-benchmark`, wired `POST /v1/contact/` recruiter inquiry notification to candidate `NotificationBell`, and prioritized real `db_orders` in `GET /v1/analytics/dashboard`.
+- **Task (BEL-141 — Mobile Vector Bottom Navbar Re-Skin & Full-Platform Feature Parity):**
+  1. **Bottom Navbar Overhaul:** Replace bordered rectangular buttons in `BeloogaUiKit.java` with custom anti-aliased `Canvas` vector icons (`NavIconView`), glowing top active indicator bar, translucent teal pill container, and 5-tab dock (`Discover`, `Studio`, `Tracker`, `Career Pro`, `Workspace`).
+  2. **Full-Platform Mobile Parity:** Add `MobileCareerScreens.java`, `use-mobile-career-tools.ts`, and `app/(tabs)/career.tsx` covering ATS Diagnostics & 1-Click AI Tailor, Expert CV Review & MoMo HMAC-SHA256 QR Checkout, IT Salary Benchmark & Upskill ROI, Pro CV Studio Builder, Recruiter AI Shortlist, and Executive BI.
+  3. **Live Desktop Simulator Proof:** Verify all 5 tabs via `mobile/scripts/e2e-mobile-adb.sh` on visible `Pixel_5` (`emulator-5554`).
 
 ## Pre-Mortem Risks
-- Enforce `be_files_over_300_lines = 0`, `fe_files_over_300_lines = 0`, `fe_max_page_lines <= 241`, `trust-benchmark.py = 100%`.
+- Enforce `fe_files_over_300_lines = 0`, `fe_arbitrary_hex = 0`, `fe_structural_emoji = 0`, `fe_any = 0`, `trust-benchmark.py = 100%`.
 
 ## Execution Checklist
-- [x] **Step 1 (Track A — Backend APIs & Pytest):** Implemented `/v1/match/tailor-cv`, enriched `/v1/match/history`, location-aware `/v1/catalogs/salary-benchmark`, recruiter contact notifications, and DB-first analytics (`96/96` Pytest passed).
-- [x] **Step 2 (Track B — Router, Header, Auth, Homepage & Search):** Fixed `R1`–`R10` and added `/search` facet filters + `VideoPitchModal`.
-- [x] **Step 3 (Track C — Career Tools & Admin):** Upgraded `/cv-studio`, `/ats-diagnostics`, `/expert-review`, and `/workspace/jobs`.
-- [x] **Step 4 (Verification & PR Gate):** Verified `audit-truth.sh` (`100%` trust benchmark) and `200/200` Playwright E2E tests across 5 browsers.
+- [x] **Step 1 (TDD Hooks & Schemas):** Added `use-mobile-career-tools.ts`, `schemas.ts` contracts, and 16/16 unit tests (`bun test`).
+- [x] **Step 2 (Vector Bottom Dock & Segmented UI Kit):** Built `NavIconView`, `createModernNavTab`, `createSegmentedBar`, and `MobileCareerScreens.java`.
+- [x] **Step 3 (APK Build & Visible Simulator E2E):** Built `belooga-mobile-v1.0.0.apk` and passed 5-tab `e2e-mobile-adb.sh` on `emulator-5554`.
+- [x] **Step 4 (Self-Learn & PR Gate):** Recorded V-020 in `docs/VIOLATIONS_REGISTER.md` and promoted guard to `scripts/trust-benchmark.py`.

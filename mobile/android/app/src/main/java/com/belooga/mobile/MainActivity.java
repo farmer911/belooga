@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -14,10 +13,17 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
     private LinearLayout contentContainer;
-    private Button tabDiscover;
-    private Button tabStudio;
-    private Button tabTracker;
-    private Button tabProfile;
+    private BeloogaUiKit.NavTabHolder tabDiscover;
+    private BeloogaUiKit.NavTabHolder tabStudio;
+    private BeloogaUiKit.NavTabHolder tabTracker;
+    private BeloogaUiKit.NavTabHolder tabCareer;
+    private BeloogaUiKit.NavTabHolder tabProfile;
+    private BeloogaUiKit.NavTabHolder[] allTabs;
+
+    private int discoverSubTab = 0;
+    private int studioSubTab = 0;
+    private int careerSubTab = 0;
+    private int workspaceSubTab = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +42,8 @@ public class MainActivity extends Activity {
         ScrollView scrollArea = new ScrollView(this);
         contentContainer = new LinearLayout(this);
         contentContainer.setOrientation(LinearLayout.VERTICAL);
-        int padH = BeloogaUiKit.dp(this, 14f);
-        int padV = BeloogaUiKit.dp(this, 12f);
+        int padH = BeloogaUiKit.dp(this, 13f);
+        int padV = BeloogaUiKit.dp(this, 11f);
         contentContainer.setPadding(padH, padV, padH, padV);
         contentContainer.setContentDescription("mobile-tabs-content");
         scrollArea.addView(contentContainer);
@@ -58,18 +64,20 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout buildTopHeader() {
+        LinearLayout wrapper = new LinearLayout(this);
+        wrapper.setOrientation(LinearLayout.VERTICAL);
+        wrapper.setBackgroundColor(BeloogaUiKit.COLOR_NAVDOCK);
+
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setBackgroundColor(BeloogaUiKit.COLOR_CARD);
         int pH = BeloogaUiKit.dp(this, 14f);
-        int pV = BeloogaUiKit.dp(this, 11f);
+        int pV = BeloogaUiKit.dp(this, 10f);
         topBar.setPadding(pH, pV, pH, pV);
 
-        TextView brandLogo = BeloogaUiKit.createAvatarCircle(
+        topBar.addView(BeloogaUiKit.createAvatarCircle(
                 this, "B", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_TEXT_INVERSE
-        );
-        topBar.addView(brandLogo);
+        ));
 
         LinearLayout titleCol = new LinearLayout(this);
         titleCol.setOrientation(LinearLayout.VERTICAL);
@@ -78,7 +86,7 @@ public class MainActivity extends Activity {
         TextView brandTitle = new TextView(this);
         brandTitle.setText("BELOOGA MOBILE (RN 0.88.0)");
         brandTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        brandTitle.setTextSize(14.5f);
+        brandTitle.setTextSize(14f);
         brandTitle.setTypeface(Typeface.DEFAULT_BOLD);
         brandTitle.setContentDescription("mobile-brand-header");
         titleCol.addView(brandTitle);
@@ -86,11 +94,29 @@ public class MainActivity extends Activity {
         TextView statusBanner = new TextView(this);
         statusBanner.setText("Edge Gateway :8080 • Keystore Vault Active");
         statusBanner.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        statusBanner.setTextSize(11f);
+        statusBanner.setTextSize(10.5f);
         statusBanner.setContentDescription("mobile-connection-status");
         titleCol.addView(statusBanner);
 
         topBar.addView(titleCol);
+
+        TextView alertsPill = BeloogaUiKit.createBadgePill(
+                this,
+                "3 ALERTS",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_BRAND_MUTED,
+                BeloogaUiKit.COLOR_BORDER,
+                "mobile-header-alerts-btn"
+        );
+        alertsPill.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                workspaceSubTab = 2;
+                renderWorkspaceScreen();
+            }
+        });
+        topBar.addView(alertsPill);
+        topBar.addView(BeloogaUiKit.createSpacer(this, 6));
         topBar.addView(BeloogaUiKit.createBadgePill(
                 this,
                 "LIVE 12ms",
@@ -99,84 +125,76 @@ public class MainActivity extends Activity {
                 BeloogaUiKit.COLOR_BORDER,
                 null
         ));
-        return topBar;
+        wrapper.addView(topBar);
+
+        View divider = new View(this);
+        divider.setBackgroundColor(BeloogaUiKit.COLOR_BORDER);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, BeloogaUiKit.dp(this, 1f)));
+        wrapper.addView(divider);
+        return wrapper;
     }
 
     private LinearLayout buildBottomNav() {
+        LinearLayout dockWrapper = new LinearLayout(this);
+        dockWrapper.setOrientation(LinearLayout.VERTICAL);
+        dockWrapper.setBackgroundColor(BeloogaUiKit.COLOR_NAVDOCK);
+
+        View topDivider = new View(this);
+        topDivider.setBackgroundColor(BeloogaUiKit.COLOR_BORDER);
+        topDivider.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                BeloogaUiKit.dp(this, 1f)
+        ));
+        dockWrapper.addView(topDivider);
+
         LinearLayout bottomNav = new LinearLayout(this);
         bottomNav.setOrientation(LinearLayout.HORIZONTAL);
-        bottomNav.setBackgroundColor(BeloogaUiKit.COLOR_CARD);
-        int pH = BeloogaUiKit.dp(this, 10f);
-        int pV = BeloogaUiKit.dp(this, 9f);
-        bottomNav.setPadding(pH, pV, pH, BeloogaUiKit.dp(this, 12f));
+        bottomNav.setGravity(Gravity.CENTER_VERTICAL);
+        int pH = BeloogaUiKit.dp(this, 6f);
+        bottomNav.setPadding(pH, BeloogaUiKit.dp(this, 4f), pH, BeloogaUiKit.dp(this, 10f));
         bottomNav.setContentDescription("mobile-bottom-tab-bar");
 
-        tabDiscover = createNavTab("Discover", "mobile-tab-discover", new Runnable() {
+        tabDiscover = BeloogaUiKit.createModernNavTab(this, "Discover", "mobile-tab-discover", BeloogaUiKit.ICON_DISCOVER, new Runnable() {
             @Override
             public void run() {
+                discoverSubTab = 0;
                 renderDiscoverScreen();
             }
         });
-        tabStudio = createNavTab("Pitch Studio", "mobile-tab-studio", new Runnable() {
+        tabStudio = BeloogaUiKit.createModernNavTab(this, "Studio", "mobile-tab-studio", BeloogaUiKit.ICON_STUDIO, new Runnable() {
             @Override
             public void run() {
+                studioSubTab = 0;
                 renderStudioScreen();
             }
         });
-        tabTracker = createNavTab("Job Tracker", "mobile-tab-tracker", new Runnable() {
+        tabTracker = BeloogaUiKit.createModernNavTab(this, "Tracker", "mobile-tab-tracker", BeloogaUiKit.ICON_TRACKER, new Runnable() {
             @Override
             public void run() {
                 renderTrackerScreen();
             }
         });
-        tabProfile = createNavTab("Workspace", "mobile-tab-profile", new Runnable() {
+        tabCareer = BeloogaUiKit.createModernNavTab(this, "Career Pro", "mobile-tab-career", BeloogaUiKit.ICON_CAREER, new Runnable() {
             @Override
             public void run() {
+                renderCareerScreen();
+            }
+        });
+        tabProfile = BeloogaUiKit.createModernNavTab(this, "Workspace", "mobile-tab-profile", BeloogaUiKit.ICON_WORKSPACE, new Runnable() {
+            @Override
+            public void run() {
+                workspaceSubTab = 0;
                 renderWorkspaceScreen();
             }
         });
 
-        bottomNav.addView(tabDiscover);
-        bottomNav.addView(tabStudio);
-        bottomNav.addView(tabTracker);
-        bottomNav.addView(tabProfile);
-        return bottomNav;
-    }
-
-    private Button createNavTab(String label, String testId, final Runnable onTap) {
-        Button btn = new Button(this);
-        btn.setText(label);
-        btn.setAllCaps(false);
-        btn.setContentDescription(testId);
-        btn.setTextSize(11.5f);
-        btn.setTypeface(Typeface.DEFAULT_BOLD);
-        btn.setMinimumHeight(BeloogaUiKit.dp(this, 38f));
-        btn.setMinHeight(BeloogaUiKit.dp(this, 38f));
-        btn.setPadding(BeloogaUiKit.dp(this, 4f), BeloogaUiKit.dp(this, 6f), BeloogaUiKit.dp(this, 4f), BeloogaUiKit.dp(this, 6f));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        lp.setMargins(BeloogaUiKit.dp(this, 3f), 0, BeloogaUiKit.dp(this, 3f), 0);
-        btn.setLayoutParams(lp);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onTap.run();
-            }
-        });
-        return btn;
-    }
-
-    private void highlightActiveTab(Button active) {
-        Button[] all = new Button[]{tabDiscover, tabStudio, tabTracker, tabProfile};
-        for (Button b : all) {
-            if (b == null) continue;
-            if (b == active) {
-                b.setBackground(BeloogaUiKit.roundedDrawable(this, BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND, 0f, 10f));
-                b.setTextColor(BeloogaUiKit.COLOR_TEXT_INVERSE);
-            } else {
-                b.setBackground(BeloogaUiKit.roundedDrawable(this, BeloogaUiKit.COLOR_SUBTLE, BeloogaUiKit.COLOR_BORDER, 1f, 10f));
-                b.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-            }
+        allTabs = new BeloogaUiKit.NavTabHolder[]{tabDiscover, tabStudio, tabTracker, tabCareer, tabProfile};
+        for (BeloogaUiKit.NavTabHolder holder : allTabs) {
+            bottomNav.addView(holder.root);
         }
+
+        dockWrapper.addView(bottomNav);
+        return dockWrapper;
     }
 
     private void addSkillChipsRow(LinearLayout parent, String[] chips) {
@@ -193,11 +211,34 @@ public class MainActivity extends Activity {
     }
 
     private void renderDiscoverScreen() {
-        highlightActiveTab(tabDiscover);
+        BeloogaUiKit.updateNavTabsState(this, allTabs, tabDiscover);
         contentContainer.removeAllViews();
 
+        contentContainer.addView(BeloogaUiKit.createSegmentedBar(
+                this,
+                new String[]{"Talent Feed (500k)", "AI Shortlist (2)", "Salary Radar"},
+                discoverSubTab,
+                new BeloogaUiKit.SegmentSelectListener() {
+                    @Override
+                    public void onSelect(int index) {
+                        if (index == 2) {
+                            careerSubTab = 2;
+                            renderCareerScreen();
+                            return;
+                        }
+                        discoverSubTab = index;
+                        renderDiscoverScreen();
+                    }
+                }
+        ));
+
+        if (discoverSubTab == 1) {
+            MobileCareerScreens.renderDiscoverShortlistSubScreen(this, contentContainer);
+            return;
+        }
+
         LinearLayout filterCard = BeloogaUiKit.createSurfaceCard(this, "mobile-search-filter-bar");
-        LinearLayout topBadges = BeloogaUiKit.createRow(this, 6);
+        LinearLayout topBadges = BeloogaUiKit.createRow(this, 5);
         topBadges.addView(BeloogaUiKit.createBadgePill(
                 this, "GIN TSVECTOR <15MS", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));
@@ -210,7 +251,7 @@ public class MainActivity extends Activity {
         TextView heading = new TextView(this);
         heading.setText("Talent Discovery & 60s Pitch Feed");
         heading.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        heading.setTextSize(17.5f);
+        heading.setTextSize(17f);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         heading.setContentDescription("mobile-discovery-heading");
         filterCard.addView(heading);
@@ -219,16 +260,16 @@ public class MainActivity extends Activity {
         searchInput.setHint("Search skills (FastAPI, PostgreSQL, React Native)...");
         searchInput.setHintTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
         searchInput.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        searchInput.setTextSize(13f);
+        searchInput.setTextSize(12.5f);
         searchInput.setSingleLine(true);
         searchInput.setBackground(BeloogaUiKit.roundedDrawable(this, BeloogaUiKit.COLOR_SUBTLE, BeloogaUiKit.COLOR_BORDER, 1f, 10f));
-        int sPad = BeloogaUiKit.dp(this, 10f);
+        int sPad = BeloogaUiKit.dp(this, 9f);
         searchInput.setPadding(sPad, sPad, sPad, sPad);
         searchInput.setContentDescription("mobile-search-input");
         LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        sLp.setMargins(0, BeloogaUiKit.dp(this, 8f), 0, BeloogaUiKit.dp(this, 8f));
+        sLp.setMargins(0, BeloogaUiKit.dp(this, 7f), 0, BeloogaUiKit.dp(this, 7f));
         searchInput.setLayoutParams(sLp);
         filterCard.addView(searchInput);
 
@@ -246,7 +287,7 @@ public class MainActivity extends Activity {
         TextView name = new TextView(this);
         name.setText("Alex Nguyen (@alexnguyen)");
         name.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        name.setTextSize(15.5f);
+        name.setTextSize(15f);
         name.setTypeface(Typeface.DEFAULT_BOLD);
         name.setContentDescription("mobile-candidate-name-alexnguyen");
         alexMeta.addView(name);
@@ -254,7 +295,7 @@ public class MainActivity extends Activity {
         TextView role = new TextView(this);
         role.setText("Principal Distributed Systems Engineer | Trust Score: 96%");
         role.setTextColor(BeloogaUiKit.COLOR_BRAND);
-        role.setTextSize(12.5f);
+        role.setTextSize(12f);
         role.setContentDescription("mobile-candidate-headline-alexnguyen");
         alexMeta.addView(role);
 
@@ -275,7 +316,7 @@ public class MainActivity extends Activity {
         TextView pitchQuote = new TextView(this);
         pitchQuote.setText("\"Architected two-phase bounded GIN CTE search & L1/L2 singleflight cache sustaining 25k RPS.\"");
         pitchQuote.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        pitchQuote.setTextSize(11.5f);
+        pitchQuote.setTextSize(11f);
         videoPreview.addView(pitchQuote);
         alexCard.addView(videoPreview);
 
@@ -305,13 +346,13 @@ public class MainActivity extends Activity {
         TextView sName = new TextView(this);
         sName.setText("Sarah Chen (@sarahchen)");
         sName.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        sName.setTextSize(15f);
+        sName.setTextSize(14.5f);
         sName.setTypeface(Typeface.DEFAULT_BOLD);
         sarahMeta.addView(sName);
         TextView sRole = new TextView(this);
         sRole.setText("Staff Mobile & Edge Systems Architect • Singapore");
         sRole.setTextColor(BeloogaUiKit.COLOR_BRAND);
-        sRole.setTextSize(12f);
+        sRole.setTextSize(11.5f);
         sarahMeta.addView(sRole);
         sarahHeader.addView(sarahMeta);
         sarahHeader.addView(BeloogaUiKit.createBadgePill(
@@ -329,7 +370,7 @@ public class MainActivity extends Activity {
         TextView title = new TextView(this);
         title.setText("Alex Nguyen — Verified Senior (96% Trust)");
         title.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        title.setTextSize(17.5f);
+        title.setTextSize(17f);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setContentDescription("mobile-profile-fullname");
         detailCard.addView(title);
@@ -357,11 +398,34 @@ public class MainActivity extends Activity {
     }
 
     private void renderStudioScreen() {
-        highlightActiveTab(tabStudio);
+        BeloogaUiKit.updateNavTabsState(this, allTabs, tabStudio);
         contentContainer.removeAllViews();
 
+        contentContainer.addView(BeloogaUiKit.createSegmentedBar(
+                this,
+                new String[]{"60s Video Studio", "Pro CV Studio", "ATS Scanner"},
+                studioSubTab,
+                new BeloogaUiKit.SegmentSelectListener() {
+                    @Override
+                    public void onSelect(int index) {
+                        if (index == 2) {
+                            careerSubTab = 0;
+                            renderCareerScreen();
+                            return;
+                        }
+                        studioSubTab = index;
+                        renderStudioScreen();
+                    }
+                }
+        ));
+
+        if (studioSubTab == 1) {
+            MobileCareerScreens.renderCvStudioSubScreen(this, contentContainer);
+            return;
+        }
+
         LinearLayout studioCard = BeloogaUiKit.createSurfaceCard(this, "mobile-pitch-studio-screen");
-        LinearLayout badges = BeloogaUiKit.createRow(this, 6);
+        LinearLayout badges = BeloogaUiKit.createRow(this, 5);
         badges.addView(BeloogaUiKit.createBadgePill(
                 this, "WEBRTC 60S STUDIO", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));
@@ -374,7 +438,7 @@ public class MainActivity extends Activity {
         TextView heading = new TextView(this);
         heading.setText("60s Video Elevator Pitch Studio");
         heading.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        heading.setTextSize(17.5f);
+        heading.setTextSize(17f);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         heading.setContentDescription("mobile-studio-title");
         studioCard.addView(heading);
@@ -383,14 +447,14 @@ public class MainActivity extends Activity {
         TextView vfHeader = new TextView(this);
         vfHeader.setText("AI TELEPROMPTER VIEWFINDER  •  ROLE: STAFF BACKEND ENGINEER");
         vfHeader.setTextColor(BeloogaUiKit.COLOR_BRAND);
-        vfHeader.setTextSize(10.5f);
+        vfHeader.setTextSize(10f);
         vfHeader.setTypeface(Typeface.DEFAULT_BOLD);
         viewfinderBox.addView(vfHeader);
 
         final TextView scriptOutput = new TextView(this);
         scriptOutput.setText("AI Teleprompter Ready: Tap below to generate script or upload chunks.");
         scriptOutput.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        scriptOutput.setTextSize(12.5f);
+        scriptOutput.setTextSize(12f);
         scriptOutput.setContentDescription("mobile-studio-script-output");
         viewfinderBox.addView(scriptOutput);
         studioCard.addView(viewfinderBox);
@@ -409,11 +473,11 @@ public class MainActivity extends Activity {
                 }
         ));
 
-        LinearLayout uploadBox = BeloogaUiKit.createSubtleBox(this);
+        final LinearLayout uploadBox = BeloogaUiKit.createSubtleBox(this);
         final TextView uploadProgress = new TextView(this);
         uploadProgress.setText("Upload Progress: 0%");
         uploadProgress.setTextColor(BeloogaUiKit.COLOR_BRAND);
-        uploadProgress.setTextSize(13f);
+        uploadProgress.setTextSize(12.5f);
         uploadProgress.setTypeface(Typeface.DEFAULT_BOLD);
         uploadProgress.setContentDescription("mobile-studio-upload-progress");
         uploadBox.addView(uploadProgress);
@@ -421,7 +485,7 @@ public class MainActivity extends Activity {
         TextView chunkMeta = new TextView(this);
         chunkMeta.setText("Pipeline: [Chunk 1: H.264]  •  [Chunk 2: AAC]  •  [Chunk 3: FastStart MP4]");
         chunkMeta.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        chunkMeta.setTextSize(11f);
+        chunkMeta.setTextSize(10.5f);
         uploadBox.addView(chunkMeta);
         studioCard.addView(uploadBox);
 
@@ -454,29 +518,23 @@ public class MainActivity extends Activity {
         TextView atsSummary = new TextView(this);
         atsSummary.setText("Matched Keywords: FastAPI • PostgreSQL 16 • AsyncIO • Redis 7 • React Native");
         atsSummary.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        atsSummary.setTextSize(12.5f);
+        atsSummary.setTextSize(12f);
         atsCard.addView(atsSummary);
-
-        TextView pulseSummary = new TextView(this);
-        pulseSummary.setText("Market Pulse: +34% YoY Demand  •  Median Comp: $195,000 USD");
-        pulseSummary.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        pulseSummary.setTextSize(11.5f);
-        atsCard.addView(pulseSummary);
         contentContainer.addView(atsCard);
     }
 
     private void renderTrackerScreen() {
-        highlightActiveTab(tabTracker);
+        BeloogaUiKit.updateNavTabsState(this, allTabs, tabTracker);
         contentContainer.removeAllViews();
 
-        LinearLayout kpiRow = BeloogaUiKit.createRow(this, 10);
+        LinearLayout kpiRow = BeloogaUiKit.createRow(this, 9);
         kpiRow.addView(BeloogaUiKit.createMetricTile(this, "12", "Active Pipeline", BeloogaUiKit.COLOR_BRAND));
         kpiRow.addView(BeloogaUiKit.createMetricTile(this, "92%", "Avg ATS Match", BeloogaUiKit.COLOR_SUCCESS));
         kpiRow.addView(BeloogaUiKit.createMetricTile(this, "33%", "Interview Rate", BeloogaUiKit.COLOR_WARNING));
         contentContainer.addView(kpiRow);
 
         LinearLayout trackerCard = BeloogaUiKit.createSurfaceCard(this, "mobile-job-tracker-screen");
-        LinearLayout badges = BeloogaUiKit.createRow(this, 6);
+        LinearLayout badges = BeloogaUiKit.createRow(this, 5);
         badges.addView(BeloogaUiKit.createBadgePill(
                 this, "CANDIDATE KANBAN CRM", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));
@@ -489,7 +547,7 @@ public class MainActivity extends Activity {
         TextView heading = new TextView(this);
         heading.setText("Job Application Kanban Pipeline");
         heading.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        heading.setTextSize(17.5f);
+        heading.setTextSize(17f);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         heading.setContentDescription("mobile-tracker-title");
         trackerCard.addView(heading);
@@ -500,7 +558,7 @@ public class MainActivity extends Activity {
         final TextView jobStatus = new TextView(this);
         jobStatus.setText("Stripe — Staff Mobile Engineer [APPLIED] (ATS Match: 92%)");
         jobStatus.setTextColor(BeloogaUiKit.COLOR_BRAND);
-        jobStatus.setTextSize(13.5f);
+        jobStatus.setTextSize(13f);
         jobStatus.setTypeface(Typeface.DEFAULT_BOLD);
         jobStatus.setContentDescription("mobile-tracker-job-status-job_101");
         stripeBox.addView(jobStatus);
@@ -508,7 +566,7 @@ public class MainActivity extends Activity {
         TextView stripeMeta = new TextView(this);
         stripeMeta.setText("Comp: $210,000 USD  •  San Francisco / Remote  •  Referral Verified");
         stripeMeta.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        stripeMeta.setTextSize(11.5f);
+        stripeMeta.setTextSize(11f);
         stripeBox.addView(stripeMeta);
         trackerCard.addView(stripeBox);
 
@@ -531,7 +589,7 @@ public class MainActivity extends Activity {
         TextView pipeTitle = new TextView(this);
         pipeTitle.setText("Active Interviews & Offers");
         pipeTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        pipeTitle.setTextSize(14.5f);
+        pipeTitle.setTextSize(14f);
         pipeTitle.setTypeface(Typeface.DEFAULT_BOLD);
         pipelineCard.addView(pipeTitle);
 
@@ -539,13 +597,13 @@ public class MainActivity extends Activity {
         TextView lTitle = new TextView(this);
         lTitle.setText("Linear — Principal Product Engineer  [INTERVIEW]");
         lTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        lTitle.setTextSize(12.5f);
+        lTitle.setTextSize(12f);
         lTitle.setTypeface(Typeface.DEFAULT_BOLD);
         linearBox.addView(lTitle);
         TextView lSub = new TextView(this);
         lSub.setText("$195,000 USD  •  ATS Match: 90%  •  Architecture Round Tomorrow");
         lSub.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        lSub.setTextSize(11f);
+        lSub.setTextSize(10.5f);
         linearBox.addView(lSub);
         pipelineCard.addView(linearBox);
 
@@ -553,25 +611,53 @@ public class MainActivity extends Activity {
         TextView aTitle = new TextView(this);
         aTitle.setText("Anthropic — Staff Distributed Systems  [OFFER RECEIVED]");
         aTitle.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
-        aTitle.setTextSize(12.5f);
+        aTitle.setTextSize(12f);
         aTitle.setTypeface(Typeface.DEFAULT_BOLD);
         anthropicBox.addView(aTitle);
         TextView aSub = new TextView(this);
         aSub.setText("$240,000 USD  •  ATS Match: 96%  •  Deadline: Nov 05");
         aSub.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        aSub.setTextSize(11f);
+        aSub.setTextSize(10.5f);
         anthropicBox.addView(aSub);
         pipelineCard.addView(anthropicBox);
-
         contentContainer.addView(pipelineCard);
     }
 
+    private void renderCareerScreen() {
+        BeloogaUiKit.updateNavTabsState(this, allTabs, tabCareer);
+        MobileCareerScreens.renderCareerHub(this, contentContainer, careerSubTab, new BeloogaUiKit.SegmentSelectListener() {
+            @Override
+            public void onSelect(int index) {
+                careerSubTab = index;
+                renderCareerScreen();
+            }
+        });
+    }
+
     private void renderWorkspaceScreen() {
-        highlightActiveTab(tabProfile);
+        BeloogaUiKit.updateNavTabsState(this, allTabs, tabProfile);
         contentContainer.removeAllViews();
 
+        contentContainer.addView(BeloogaUiKit.createSegmentedBar(
+                this,
+                new String[]{"Overview", "Timeline CRUD", "Alerts (3)", "Vault Auth"},
+                workspaceSubTab,
+                new BeloogaUiKit.SegmentSelectListener() {
+                    @Override
+                    public void onSelect(int index) {
+                        workspaceSubTab = index;
+                        renderWorkspaceScreen();
+                    }
+                }
+        ));
+
+        if (workspaceSubTab != 0) {
+            MobileCareerScreens.renderWorkspaceSubTabContent(this, contentContainer, workspaceSubTab);
+            return;
+        }
+
         LinearLayout profileCard = BeloogaUiKit.createSurfaceCard(this, "mobile-workspace-profile-screen");
-        LinearLayout badges = BeloogaUiKit.createRow(this, 6);
+        LinearLayout badges = BeloogaUiKit.createRow(this, 5);
         badges.addView(BeloogaUiKit.createBadgePill(
                 this, "VERIFIED CANDIDATE WORKSPACE", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));
@@ -584,26 +670,26 @@ public class MainActivity extends Activity {
         TextView heading = new TextView(this);
         heading.setText("Candidate Workspace");
         heading.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        heading.setTextSize(17.5f);
+        heading.setTextSize(17f);
         heading.setTypeface(Typeface.DEFAULT_BOLD);
         heading.setContentDescription("mobile-workspace-heading");
         profileCard.addView(heading);
 
-        LinearLayout idRow = BeloogaUiKit.createRow(this, 6);
+        LinearLayout idRow = BeloogaUiKit.createRow(this, 5);
         idRow.addView(BeloogaUiKit.createAvatarCircle(this, "AN", BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BRAND));
         LinearLayout idCol = new LinearLayout(this);
         idCol.setOrientation(LinearLayout.VERTICAL);
         TextView fullName = new TextView(this);
         fullName.setText("Alex Nguyen • Principal Distributed Systems Engineer");
         fullName.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        fullName.setTextSize(13.5f);
+        fullName.setTextSize(13f);
         fullName.setTypeface(Typeface.DEFAULT_BOLD);
         idCol.addView(fullName);
 
         TextView userLabel = new TextView(this);
         userLabel.setText("@alexnguyen • Dual-Mode SecureStore Token Vault Active");
         userLabel.setTextColor(BeloogaUiKit.COLOR_BRAND);
-        userLabel.setTextSize(12f);
+        userLabel.setTextSize(11.5f);
         userLabel.setContentDescription("mobile-workspace-username");
         idCol.addView(userLabel);
         idRow.addView(idCol);
@@ -618,39 +704,34 @@ public class MainActivity extends Activity {
 
         LinearLayout timelineCard = BeloogaUiKit.createSurfaceCard(this, "mobile-workspace-timeline-card");
         TextView tlHeading = new TextView(this);
-        tlHeading.setText("Verified Career Trajectory & Credentials");
+        tlHeading.setText("Verified Career Trajectory, Education & Notifications");
         tlHeading.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        tlHeading.setTextSize(14.5f);
+        tlHeading.setTextSize(14f);
         tlHeading.setTypeface(Typeface.DEFAULT_BOLD);
         timelineCard.addView(tlHeading);
 
         LinearLayout exp1 = BeloogaUiKit.createSubtleBox(this);
         TextView e1Title = new TextView(this);
-        e1Title.setText("2023–Present  •  Principal Architect @ Belooga");
+        e1Title.setText("2023–Present  •  Principal Architect @ Belooga  [Experience]");
         e1Title.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        e1Title.setTextSize(12.5f);
+        e1Title.setTextSize(12f);
         e1Title.setTypeface(Typeface.DEFAULT_BOLD);
         exp1.addView(e1Title);
         TextView e1Sub = new TextView(this);
         e1Sub.setText("PostgreSQL 16 GIN Search, ConnectRPC Batching & React Native 0.88");
         e1Sub.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        e1Sub.setTextSize(11f);
+        e1Sub.setTextSize(10.5f);
         exp1.addView(e1Sub);
         timelineCard.addView(exp1);
 
-        LinearLayout exp2 = BeloogaUiKit.createSubtleBox(this);
-        TextView e2Title = new TextView(this);
-        e2Title.setText("2020–2023  •  Senior Systems Engineer @ Stripe");
-        e2Title.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        e2Title.setTextSize(12.5f);
-        e2Title.setTypeface(Typeface.DEFAULT_BOLD);
-        exp2.addView(e2Title);
-        TextView e2Sub = new TextView(this);
-        e2Sub.setText("High-throughput payment settlement & idempotent ledger APIs");
-        e2Sub.setTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        e2Sub.setTextSize(11f);
-        exp2.addView(e2Sub);
-        timelineCard.addView(exp2);
+        LinearLayout edu1 = BeloogaUiKit.createSubtleBox(this);
+        TextView edTitle = new TextView(this);
+        edTitle.setText("B.Sc. Computer Science (GPA 3.9/4.0)  •  ACM ICPC Regional Winner  [Award]");
+        edTitle.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+        edTitle.setTextSize(11.5f);
+        edTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        edu1.addView(edTitle);
+        timelineCard.addView(edu1);
 
         timelineCard.addView(BeloogaUiKit.createActionButton(
                 this,

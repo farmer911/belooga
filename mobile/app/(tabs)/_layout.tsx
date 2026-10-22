@@ -12,6 +12,7 @@ export const MOBILE_TABS: readonly MobileTabDescriptor[] = [
   { key: "discover", title: "Discover", route: "/(tabs)" },
   { key: "studio", title: "Pitch Studio", route: "/(tabs)/studio" },
   { key: "tracker", title: "Job Tracker", route: "/(tabs)/tracker" },
+  { key: "career", title: "Career Pro", route: "/(tabs)/career" },
   { key: "profile", title: "Workspace", route: "/(tabs)/profile" },
 ] as const;
 
@@ -77,8 +78,8 @@ export default function MobileTabsLayout({ children }: { children?: React.ReactN
           borderTop: `1px solid ${tokens.surface.border}`,
           padding: "10px 12px 16px",
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 8,
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: 6,
         }}
       >
         {MOBILE_TABS.map((tab) => {
