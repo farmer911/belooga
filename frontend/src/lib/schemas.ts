@@ -87,3 +87,21 @@ export const forgotPasswordSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
 });
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+
+export const BOOKMARKS_API_ENDPOINT = "/v1/bookmarks/" as const;
+
+export const candidateBookmarkItemSchema = z.object({
+  id: z.string(),
+  recruiter_identity_id: z.string().optional(),
+  candidate_profile_id: z.string().optional(),
+  username: z.string().min(1),
+  full_name: z.string().default(""),
+  headline: z.string().default(""),
+  location: z.string().default(""),
+  seeking_status: z.string().default("Open to Offers"),
+  avatar_url: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+  created_at: z.string().default(""),
+});
+export type CandidateBookmarkItemDTO = z.infer<typeof candidateBookmarkItemSchema>;
+

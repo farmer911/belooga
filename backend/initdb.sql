@@ -411,3 +411,16 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 24. Domain 6: Recruiter Candidate Shortlist Bookmarks (BEL-145)
+CREATE TABLE IF NOT EXISTS candidate_bookmarks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recruiter_identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    candidate_profile_id UUID NOT NULL REFERENCES candidate_profiles(id) ON DELETE CASCADE,
+    note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(recruiter_identity_id, candidate_profile_id)
+);
+CREATE INDEX IF NOT EXISTS idx_candidate_bookmarks_recruiter_created
+    ON candidate_bookmarks(recruiter_identity_id, created_at DESC);
+
+

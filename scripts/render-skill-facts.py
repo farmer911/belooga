@@ -25,7 +25,7 @@ CHECK = "--check" in sys.argv
 # 100% coverage of all 12 backend router modules across 3 Bounded-Context skills
 BACKEND = {
     "be-domain-core": ["auth.py", "profile.py", "timeline.py", "media.py", "notifications.py"],
-    "be-domain-discovery": ["search.py", "catalogs.py", "cms.py"],
+    "be-domain-discovery": ["search.py", "catalogs.py", "cms.py", "bookmarks.py"],
     "be-domain-monetization": ["expert_review.py", "ats_matching.py", "job_tracker.py", "analytics.py", "payments.py"],
 }
 
@@ -46,6 +46,7 @@ BACKEND_TESTS = {
     ],
     "be-domain-discovery": [
         "test_backend_foundation.py",
+        "test_bookmarks.py",
         "test_catalogs_salary.py",
         "test_high_scale_and_shortlist.py",
         "test_profile_privacy_and_pii.py",

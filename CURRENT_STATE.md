@@ -7,7 +7,7 @@
 
 ## 1. Database Schema Truth (`backend/initdb.sql`)
 
-**Total Tables: 33** (Verified directly from PostgreSQL table creation statements)
+**Total Tables: 34** (Verified directly from PostgreSQL table creation statements)
 
 | # | Table Name | Purpose / Category |
 |---|---|---|
@@ -44,12 +44,13 @@
 | 31 | `candidate_job_applications_tracker` | Domain 11: Candidate Job Application Kanban Tracker |
 | 32 | `notifications` | Domain 12: In-App Notifications & Transactional Email Deep-Link Outbox |
 | 33 | `notification_preferences` | Domain 12: Per-Identity Email & In-App Notification Preferences |
+| 34 | `candidate_bookmarks` | Domain 6: Recruiter Candidate Shortlist Bookmarks |
 
 ---
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 100 (98 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 103 (101 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -72,6 +73,9 @@
 | `POST` | `/v1/auth/verify-email/request/` | `request_email_verification` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `GET` | `/v1/blog/posts/` | `list_blog_posts` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/blog/posts/{slug}/` | `get_blog_post_detail` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
+| `GET` | `/v1/bookmarks/` | `list_candidate_bookmarks` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `DELETE` | `/v1/bookmarks/{username}/` | `remove_candidate_bookmark` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
+| `POST` | `/v1/bookmarks/{username}/` | `add_candidate_bookmark` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/bookmarks.py` | Domain 6: Talent Discovery & Search |
 | `GET` | `/v1/career/jobs/` | `list_career_jobs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `POST` | `/v1/career/jobs/{job_id}/apply/` | `apply_career_job` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
 | `GET` | `/v1/catalogs/career-roi` | `get_career_upskill_roi` | Public | `backend/app/api/v1/endpoints/catalogs.py` | Domain 7: Master Catalogs |
