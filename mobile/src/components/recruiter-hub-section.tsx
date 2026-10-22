@@ -15,7 +15,7 @@ import { getSemanticTokens } from '@/theme/tokens';
 import { TopCandidatesSection } from '@/components/top-candidates-section';
 
 export function RecruiterHubSection() {
-  const tokens = getSemanticTokens('dark');
+  const tokens = getSemanticTokens('neumorphic');
   const [roleFilter, setRoleFilter] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [newRoleTitle, setNewRoleTitle] = useState('Senior Full-Stack Engineer');

@@ -10,7 +10,7 @@ import { ActionButton, BadgePill, SurfaceCard, mobileRouter } from '@/lib/native
 import { getSemanticTokens } from '@/theme/tokens';
 
 export function TopCandidatesSection() {
-  const tokens = getSemanticTokens('dark');
+  const tokens = getSemanticTokens('neumorphic');
   const [category, setCategory] = useState<TopCandidateCategory>('all');
   const [activelyLookingOnly, setActivelyLookingOnly] = useState(true);
 

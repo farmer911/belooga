@@ -14,7 +14,7 @@ import { ActionButton, BadgePill, BottomSheetDrawer, SurfaceCard } from '@/lib/n
 import { getSemanticTokens } from '@/theme/tokens';
 
 export function ExpertLeaderboardSection() {
-  const tokens = getSemanticTokens('dark');
+  const tokens = getSemanticTokens('neumorphic');
   const [category, setCategory] = useState<ExpertLeaderboardCategory>('all');
   const [sortBy, setSortBy] = useState<ExpertLeaderboardSortMode>('rank');
   const [feedbackComment, setFeedbackComment] = useState('STAR bullets boosted my ATS score by +28 pts.');

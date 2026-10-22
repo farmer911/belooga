@@ -170,11 +170,9 @@ public class MainActivity extends Activity {
         LinearLayout bottomNav = new LinearLayout(this);
         bottomNav.setOrientation(LinearLayout.HORIZONTAL);
         bottomNav.setGravity(Gravity.CENTER_VERTICAL);
-        bottomNav.setBackground(BeloogaUiKit.roundedDrawable(
+        bottomNav.setBackground(BeloogaUiKit.createNeumorphicExtrudedDrawable(
                 this,
                 BeloogaUiKit.COLOR_NAVDOCK,
-                BeloogaUiKit.COLOR_BORDER,
-                1f,
                 24f
         ));
         bottomNav.setElevation(BeloogaUiKit.dp(this, 8f));
@@ -302,33 +300,19 @@ public class MainActivity extends Activity {
         heading.setContentDescription("mobile-discovery-heading");
         filterCard.addView(heading);
 
-        EditText searchInput = new EditText(this);
-        searchInput.setHint("Search skills (FastAPI, PostgreSQL, React Native)...");
-        searchInput.setHintTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        searchInput.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        searchInput.setTextSize(12.5f);
-        searchInput.setSingleLine(true);
-        searchInput.setBackground(BeloogaUiKit.roundedDrawable(this, BeloogaUiKit.COLOR_SUBTLE, BeloogaUiKit.COLOR_BORDER, 1f, 10f));
-        int sPad = BeloogaUiKit.dp(this, 9f);
-        searchInput.setPadding(sPad, sPad, sPad, sPad);
-        searchInput.setContentDescription("mobile-search-input");
-        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        EditText searchInput = BeloogaUiKit.createNeumorphicInput(
+                this,
+                "Search skills (FastAPI, PostgreSQL, React Native)...",
+                "mobile-search-input"
         );
-        sLp.setMargins(0, BeloogaUiKit.dp(this, 7f), 0, BeloogaUiKit.dp(this, 5f));
-        searchInput.setLayoutParams(sLp);
         filterCard.addView(searchInput);
 
         LinearLayout customSkillRow = BeloogaUiKit.createRow(this, 6);
-        final EditText customSkillInput = new EditText(this);
-        customSkillInput.setHint("+ Nhập skill mới (Golang, Kubernetes, AI/LLM)...");
-        customSkillInput.setHintTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        customSkillInput.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        customSkillInput.setTextSize(11.5f);
-        customSkillInput.setSingleLine(true);
-        customSkillInput.setBackground(BeloogaUiKit.roundedDrawable(this, BeloogaUiKit.COLOR_SUBTLE, BeloogaUiKit.COLOR_BORDER, 1f, 10f));
-        customSkillInput.setPadding(sPad, BeloogaUiKit.dp(this, 7f), sPad, BeloogaUiKit.dp(this, 7f));
-        customSkillInput.setContentDescription("mobile-custom-skill-input");
+        final EditText customSkillInput = BeloogaUiKit.createNeumorphicInput(
+                this,
+                "+ Nhập skill mới (Golang, Kubernetes, AI/LLM)...",
+                "mobile-custom-skill-input"
+        );
         LinearLayout.LayoutParams csLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         csLp.setMargins(0, 0, BeloogaUiKit.dp(this, 6f), 0);
         customSkillInput.setLayoutParams(csLp);
@@ -723,21 +707,11 @@ public class MainActivity extends Activity {
         heading.setContentDescription("mobile-tracker-title");
         trackerCard.addView(heading);
 
-        EditText trackerSearchInput = new EditText(this);
-        trackerSearchInput.setHint("Tìm kiếm công việc theo công ty / vị trí...");
-        trackerSearchInput.setHintTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
-        trackerSearchInput.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
-        trackerSearchInput.setTextSize(12f);
-        trackerSearchInput.setSingleLine(true);
-        trackerSearchInput.setBackground(BeloogaUiKit.roundedDrawable(this, BeloogaUiKit.COLOR_SUBTLE, BeloogaUiKit.COLOR_BORDER, 1f, 10f));
-        int tsPad = BeloogaUiKit.dp(this, 8f);
-        trackerSearchInput.setPadding(tsPad, tsPad, tsPad, tsPad);
-        trackerSearchInput.setContentDescription("mobile-tracker-search-input");
-        LinearLayout.LayoutParams tsLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        EditText trackerSearchInput = BeloogaUiKit.createNeumorphicInput(
+                this,
+                "Tìm kiếm công việc theo công ty / vị trí...",
+                "mobile-tracker-search-input"
         );
-        tsLp.setMargins(0, BeloogaUiKit.dp(this, 6f), 0, BeloogaUiKit.dp(this, 6f));
-        trackerSearchInput.setLayoutParams(tsLp);
         trackerCard.addView(trackerSearchInput);
 
         LinearLayout stageFilterRow = BeloogaUiKit.createRow(this, 5);

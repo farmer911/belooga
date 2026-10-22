@@ -13,7 +13,7 @@ import { getSemanticTokens } from '@/theme/tokens';
 type CompanyDetailTab = 'overview' | 'jobs' | 'reviews' | 'alumni';
 
 export function CompaniesDirectorySection() {
-  const tokens = getSemanticTokens('dark');
+  const tokens = getSemanticTokens('neumorphic');
   const [q, setQ] = useState('');
   const [industry, setIndustry] = useState<string>('All');
   const [location, setLocation] = useState<string>('All');

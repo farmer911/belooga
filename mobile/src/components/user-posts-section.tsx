@@ -19,7 +19,7 @@ export interface UserPostsSectionProps {
 }
 
 export function UserPostsSection({ username, isOwner = true }: UserPostsSectionProps) {
-  const tokens = getSemanticTokens('dark');
+  const tokens = getSemanticTokens('neumorphic');
   const [composerOpen, setComposerOpen] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [title, setTitle] = useState('');

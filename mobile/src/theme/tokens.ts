@@ -1,10 +1,36 @@
 /**
- * Semantic Design Tokens for Belooga Mobile (Light & Dark Mode Parity).
- * Uses functional RGB/HSL values aligned 1:1 with frontend/src/app/globals.css @theme tokens.
- * Enforces Zero Arbitrary Hex Invariant (fe_arbitrary_hex == 0).
+ * Semantic & Neumorphism (Soft UI) Design Tokens for Belooga Mobile (BEL-224 / #194).
+ * Provides Neumorphic Porcelain (#E0E5EC), Recessed Well (#D1D9E6), Dual Bevel (#FFFFFF / #A3B1C6),
+ * and Soft Extruded Teal (#0F766E) alongside Light & Dark mode palettes.
  */
 
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "neumorphic" | "light" | "dark";
+
+export interface NeumorphicTokenSet {
+  canvas: string;
+  extrudedCard: string;
+  recessedWell: string;
+  highlightBevel: string;
+  shadowDark: string;
+  primaryTeal: string;
+  headingText: string;
+  bodyText: string;
+  dualExtrudedShadow: string;
+  insetRecessedShadow: string;
+}
+
+export const NEUMORPHIC_TOKENS: NeumorphicTokenSet = {
+  canvas: "#E0E5EC",
+  extrudedCard: "#E0E5EC",
+  recessedWell: "#D1D9E6",
+  highlightBevel: "#FFFFFF",
+  shadowDark: "#A3B1C6",
+  primaryTeal: "#0F766E",
+  headingText: "#1E293B",
+  bodyText: "#475569",
+  dualExtrudedShadow: "-6px -6px 12px #FFFFFF, 6px 6px 12px #A3B1C6",
+  insetRecessedShadow: "inset 4px 4px 8px #A3B1C6, inset -4px -4px 8px #FFFFFF",
+};
 
 export interface SemanticPalette {
   surface: {
@@ -33,6 +59,31 @@ export interface SemanticPalette {
 }
 
 export const MOBILE_THEME_TOKENS: Record<ThemeMode, SemanticPalette> = {
+  neumorphic: {
+    surface: {
+      page: "#E0E5EC",
+      card: "#E0E5EC",
+      elevated: "#D1D9E6",
+      border: "#A3B1C6",
+    },
+    brand: {
+      primary: "#0F766E",
+      primaryMuted: "rgba(15, 118, 110, 0.14)",
+      accent: "#0F766E",
+    },
+    typography: {
+      heading: "#1E293B",
+      main: "#1E293B",
+      body: "#475569",
+      muted: "#475569",
+      inverse: "#FFFFFF",
+    },
+    status: {
+      success: "rgb(15, 118, 110)",
+      warning: "rgb(180, 83, 9)",
+      danger: "rgb(185, 28, 28)",
+    },
+  },
   light: {
     surface: {
       page: "rgb(248, 250, 252)",
@@ -85,6 +136,6 @@ export const MOBILE_THEME_TOKENS: Record<ThemeMode, SemanticPalette> = {
   },
 };
 
-export function getSemanticTokens(mode: ThemeMode = "dark"): SemanticPalette {
+export function getSemanticTokens(mode: ThemeMode = "neumorphic"): SemanticPalette {
   return MOBILE_THEME_TOKENS[mode];
 }

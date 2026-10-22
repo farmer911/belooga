@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { ActionButton, BadgePill, BottomSheetDrawer, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
+import {
+  BadgePill,
+  BottomSheetDrawer,
+  NeumorphicButton,
+  NeumorphicCard,
+  NeumorphicInput,
+  ScreenShell,
+} from "@/lib/native-runtime";
 import { MobileJobStatus } from "@/lib/schemas";
 import {
   filterMobileTrackedJobs,
@@ -27,7 +34,7 @@ const KANBAN_STAGES: readonly MobileJobStatus[] = [
 const STAGE_FILTERS = ["ALL", "SAVED", "APPLIED", "INTERVIEW", "OFFER"] as const;
 
 export default function MobileJobTrackerScreen() {
-  const tokens = getSemanticTokens("dark");
+  const tokens = getSemanticTokens("neumorphic");
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,20 +95,13 @@ export default function MobileJobTrackerScreen() {
 
   const analytics = analyticsQuery.data;
   const visibleJobs = filterMobileTrackedJobs(jobsQuery.data ?? [], searchQuery, stageFilter);
-  const inputStyle = {
-    backgroundColor: tokens.surface.elevated,
-    color: tokens.typography.main,
-    border: `1px solid ${tokens.surface.border}`,
-    borderRadius: 12,
-    padding: "10px 12px",
-  };
 
   return (
-    <ScreenShell testID="mobile-job-tracker-screen" mode="dark">
-      <SurfaceCard testID="mobile-job-tracker-header" mode="dark">
+    <ScreenShell testID="mobile-job-tracker-screen" mode="neumorphic">
+      <NeumorphicCard testID="mobile-job-tracker-header">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <BadgePill label="CANDIDATE CRM • OFFLINE VAULT" tone="brand" />
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-tracker-toggle-online"
             label={isOnline ? "Network: Online" : "Network: Offline Outbox"}
             variant="secondary"
@@ -128,48 +128,45 @@ export default function MobileJobTrackerScreen() {
             <BadgePill label={`Interview Rate: ${analytics.interview_rate}%`} tone="neutral" />
           </div>
         ) : null}
-        <input
-          data-testid="mobile-tracker-search-input"
-          aria-label="mobile-tracker-search-input"
+        <NeumorphicInput
+          testID="mobile-tracker-search-input"
+          accessibilityLabel="mobile-tracker-search-input"
           value={searchQuery}
           placeholder="Tìm kiếm công việc theo công ty / vị trí..."
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={inputStyle}
         />
         <div data-testid="mobile-tracker-stage-filters" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {STAGE_FILTERS.map((st) => (
-            <ActionButton
+            <NeumorphicButton
               key={st}
               testID={`mobile-tracker-stage-filter-${st}`}
               accessibilityLabel={`mobile-tracker-stage-filter-${st}`}
               label={st}
-              variant={stageFilter === st ? "primary" : "secondary"}
+              variant={stageFilter === st ? "primary" : "inset"}
               onPress={() => setStageFilter(st)}
             />
           ))}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <input
-            data-testid="mobile-tracker-company-input"
+          <NeumorphicInput
+            testID="mobile-tracker-company-input"
             value={company}
             placeholder="Company (e.g. Stripe)"
             onChange={(e) => setCompany(e.target.value)}
-            style={inputStyle}
           />
-          <input
-            data-testid="mobile-tracker-position-input"
+          <NeumorphicInput
+            testID="mobile-tracker-position-input"
             value={position}
             placeholder="Role (e.g. Staff Mobile)"
             onChange={(e) => setPosition(e.target.value)}
-            style={inputStyle}
           />
         </div>
-        <ActionButton
+        <NeumorphicButton
           testID="mobile-tracker-add-job"
           label="Add Application to Pipeline"
           onPress={handleAddJob}
         />
-      </SurfaceCard>
+      </NeumorphicCard>
 
       <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Mục Tiêu Săn Việc & AI Job Matcher">
         <div data-testid="mobile-career-goal-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -177,44 +174,40 @@ export default function MobileJobTrackerScreen() {
           <BadgePill label={activeGoal ? `Synced (#${activeGoal.id})` : "Vault Ready"} tone="success" />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <input
-            data-testid="mobile-career-goal-role-input"
+          <NeumorphicInput
+            testID="mobile-career-goal-role-input"
             value={targetRole}
             placeholder="Target Role"
             onChange={(e) => setTargetRole(e.target.value)}
-            style={inputStyle}
           />
-          <input
-            data-testid="mobile-career-goal-salary-input"
+          <NeumorphicInput
+            testID="mobile-career-goal-salary-input"
             value={minSalary}
             placeholder="Min Salary ($/mo)"
             onChange={(e) => setMinSalary(e.target.value)}
-            style={inputStyle}
           />
         </div>
-        <input
-          data-testid="mobile-career-goal-skills-input"
+        <NeumorphicInput
+          testID="mobile-career-goal-skills-input"
           value={targetSkillsText}
           placeholder="Target Skills (comma separated)"
           onChange={(e) => setTargetSkillsText(e.target.value)}
-          style={inputStyle}
         />
-        <input
-          data-testid="mobile-career-goal-location-input"
+        <NeumorphicInput
+          testID="mobile-career-goal-location-input"
           value={preferredLocation}
           placeholder="Preferred Location"
           onChange={(e) => setPreferredLocation(e.target.value)}
-          style={inputStyle}
         />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-save-career-goal-btn"
             accessibilityLabel="mobile-save-career-goal-btn"
             label={saveGoalMutation.isPending ? "Đang lưu..." : "Lưu Mục Tiêu"}
             variant="secondary"
             onPress={() => void handleSaveCareerGoal()}
           />
-          <ActionButton
+          <NeumorphicButton
             testID="mobile-trigger-ai-job-match-btn"
             accessibilityLabel="mobile-trigger-ai-job-match-btn"
             label="Nhờ AI Săn Job Phù Hợp (29k • Ví / MoMo)"
@@ -233,7 +226,7 @@ export default function MobileJobTrackerScreen() {
 
       <div data-testid="mobile-tracker-kanban-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {visibleJobs.map((job) => (
-          <SurfaceCard key={job.id} testID={`mobile-tracker-card-${job.id}`} mode="dark">
+          <NeumorphicCard key={job.id} testID={`mobile-tracker-card-${job.id}`}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2
                 data-testid={`mobile-tracker-job-title-${job.id}`}
@@ -249,11 +242,11 @@ export default function MobileJobTrackerScreen() {
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {KANBAN_STAGES.map((stage) => (
-                <ActionButton
+                <NeumorphicButton
                   key={stage}
                   testID={`mobile-tracker-move-${job.id}-${stage}`}
                   label={stage}
-                  variant={job.status === stage ? "primary" : "secondary"}
+                  variant={job.status === stage ? "primary" : "inset"}
                   onPress={() =>
                     statusMutation.mutate({
                       jobId: job.id,
@@ -263,7 +256,7 @@ export default function MobileJobTrackerScreen() {
                   }
                 />
               ))}
-              <ActionButton
+              <NeumorphicButton
                 testID={`mobile-tracker-bump-salary-${job.id}`}
                 label="Edit Offer"
                 variant="secondary"
@@ -274,17 +267,16 @@ export default function MobileJobTrackerScreen() {
                   })
                 }
               />
-              <ActionButton
+              <NeumorphicButton
                 testID={`mobile-tracker-delete-${job.id}`}
                 label="Remove"
                 variant="danger"
                 onPress={() => deleteJobMutation.mutate(job.id)}
               />
             </div>
-          </SurfaceCard>
+          </NeumorphicCard>
         ))}
       </div>
     </ScreenShell>
   );
 }
-
