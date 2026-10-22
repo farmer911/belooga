@@ -148,15 +148,6 @@ export async function hydrateCandidateProfileCv(username: string): Promise<strin
     return combined;
   }
 
-  if (typeof window !== "undefined") {
-    const local = window.localStorage.getItem("belooga_cv_draft_local");
-    if (local) {
-      const parsed = JSON.parse(local) as { fullName?: string; headline?: string; summary?: string; skills?: string };
-      const localText = [parsed.fullName, parsed.headline, parsed.summary, parsed.skills].filter(Boolean).join("\n");
-      if (localText.trim().length > 10) return localText;
-    }
-  }
-
   return [
     `${fullName} — ${headline}`,
     "Skills: Golang, Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, React, TypeScript, System Design",

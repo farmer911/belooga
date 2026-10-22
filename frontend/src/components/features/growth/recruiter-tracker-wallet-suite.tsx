@@ -1,18 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Video, DollarSign, CalendarCheck2, Calculator, Gift, BellRing, CheckCircle2 } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 import { useWallet, formatVnd } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 
+interface ExpertMockSlot { id: string; expert_name: string; role: string; topic: string; price_vnd: number; }
+interface ReverseBidItem { id: string; username: string; role: string; salary_usd: number; status: string; }
+interface WalletRewardItem { id: string; title: string; bonus_vnd: number; }
+
 export function ExpertLiveMockBookingCard() {
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-
-  const slots = [
-    { id: "exp-1", expert_name: "Nguyễn Minh Phúc", role: "Principal Architect @ VNG Cloud", topic: "System Design & High-Concurrency Mock (45m)", price_vnd: 450000 },
-    { id: "exp-2", expert_name: "Võ Thị Mai", role: "Staff Full-Stack Lead @ MoMo", topic: "Behavioral STAR & Staff Leadership Mock (45m)", price_vnd: 390000 },
-  ];
+  const { data: slots = [] } = useQuery<ExpertMockSlot[]>({
+    queryKey: ["expert-mock-slots"],
+    queryFn: async () => (await apiClient.get<ExpertMockSlot[]>("/v1/growth/expert-mock-slots")).data ?? [],
+  });
+  const bookMutation = useMutation({
+    mutationFn: async (slotId: string) => { await apiClient.post("/v1/growth/expert-mock-booking", { slot_id: slotId }); return slotId; },
+    onSuccess: (slotId) => setBookedSlots((p) => [...p, slotId]),
+  });
 
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
@@ -35,11 +43,8 @@ export function ExpertLiveMockBookingCard() {
                 <Button
                   type="button"
                   data-testid={`expert-mock-book-btn-${s.id}`}
-                  disabled={isBooked}
-                  onClick={async () => {
-                    try { await apiClient.post("/v1/growth/expert-mock-booking", { slot_id: s.id }); } catch { /* fallback */ }
-                    setBookedSlots((p) => [...p, s.id]);
-                  }}
+                  disabled={isBooked || bookMutation.isPending}
+                  onClick={() => bookMutation.mutate(s.id)}
                   className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-8 px-3 rounded-lg shrink-0"
                 >
                   {isBooked ? "✓ Đã Giữ Lịch 1-1" : "Đặt Lịch Phỏng Vấn 1-1"}
@@ -54,19 +59,42 @@ export function ExpertLiveMockBookingCard() {
 }
 
 export function RecruiterReverseBidAndRoiSuite() {
-  const [candidateUsername, setCandidateUsername] = useState("phucnguyen");
+  const queryClient = useQueryClient();
+  const [candidateUsername, setCandidateUsername] = useState("");
   const [bidSalaryUsd, setBidSalaryUsd] = useState("3800");
-  const [bids, setBids] = useState([
-    { id: "bid-1", username: "phucnguyen", role: "Principal Golang Architect", salary_usd: 3800, status: "SENT" },
-  ]);
   const [hiresCount, setHiresCount] = useState(5);
+
+  const { data: bids = [] } = useQuery<ReverseBidItem[]>({
+    queryKey: ["recruiter-reverse-bids"],
+    queryFn: async () => {
+      const res = await apiClient.get<ReverseBidItem[]>("/v1/recruiter/reverse-bids");
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+
+  const submitBidMutation = useMutation({
+    mutationFn: async () => {
+      const usd = Number(bidSalaryUsd) || 3500;
+      const res = await apiClient.post<ReverseBidItem>("/v1/recruiter/reverse-bids", {
+        candidate_username: candidateUsername.trim(),
+        offered_salary_usd: usd,
+      });
+      return res.data;
+    },
+    onSuccess: (created) => {
+      if (created) {
+        queryClient.setQueryData<ReverseBidItem[]>(["recruiter-reverse-bids"], (prev = []) => [created, ...prev]);
+      }
+      setCandidateUsername("");
+      queryClient.invalidateQueries({ queryKey: ["recruiter-reverse-bids"] });
+    },
+  });
 
   const agencyFeeSavedUsd = hiresCount * 4200;
   const daysSaved = hiresCount * 14;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
-      {/* Feature #13: Recruiter Reverse Offer Bidding */}
       <div data-testid="growth-reverse-bidding-panel" className="lg:col-span-7 p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -92,11 +120,8 @@ export function RecruiterReverseBidAndRoiSuite() {
           <Button
             type="button"
             data-testid="reverse-bid-submit-btn"
-            onClick={async () => {
-              const usd = Number(bidSalaryUsd) || 3500;
-              try { await apiClient.post("/v1/recruiter/reverse-bids", { candidate_username: candidateUsername, offered_salary_usd: usd }); } catch { /* fallback */ }
-              setBids((prev) => [{ id: `bid-${Date.now()}`, username: candidateUsername, role: "Staff Engineer", salary_usd: usd, status: "SENT" }, ...prev]);
-            }}
+            disabled={submitBidMutation.isPending || !candidateUsername.trim()}
+            onClick={() => submitBidMutation.mutate()}
             className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-7 px-3 rounded-lg"
           >
             Gửi Reverse Offer Bid
@@ -112,7 +137,6 @@ export function RecruiterReverseBidAndRoiSuite() {
         </div>
       </div>
 
-      {/* Feature #17: B2B Hiring ROI & Time-to-Hire Calculator */}
       <div data-testid="growth-b2b-roi-calculator" className="lg:col-span-5 p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -148,7 +172,7 @@ export function RecruiterReverseBidAndRoiSuite() {
 }
 
 export function TrackerCalendarAndPulseSuite() {
-  const [checkedItems, setCheckedItems] = useState<string[]>(["prep-1"]);
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
   const togglePrep = (id: string) => {
     setCheckedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
@@ -156,7 +180,6 @@ export function TrackerCalendarAndPulseSuite() {
 
   return (
     <div className="px-4 py-2.5 border-b border-surface-border bg-surface-card grid grid-cols-1 lg:grid-cols-12 gap-3 text-xs">
-      {/* Feature #16: Centralized Interview Calendar & Prep Checklist */}
       <div data-testid="growth-interview-calendar-card" className="lg:col-span-6 p-3 rounded-xl bg-surface-page border border-surface-border flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 font-bold text-typography-main">
           <CalendarCheck2 className="w-4 h-4 text-brand-primary" aria-hidden="true" />
@@ -180,11 +203,10 @@ export function TrackerCalendarAndPulseSuite() {
         </div>
       </div>
 
-      {/* Feature #20: Smart Career Pulse & High-Match Job Alert Radar */}
       <div data-testid="growth-smart-career-pulse" className="lg:col-span-6 p-3 rounded-xl bg-teal-50/50 border border-teal-200 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 font-bold text-brand-dark">
           <BellRing className="w-4 h-4 text-brand-primary" aria-hidden="true" />
-          <span>Smart Career Pulse: 3 Job mới khớp &gt;92% ATS (VNG Cloud, MoMo, Shopee)</span>
+          <span>Smart Career Pulse: Thông báo vị trí mới khớp ATS từ PostgreSQL</span>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">Live Alert ON</span>
       </div>
@@ -196,10 +218,24 @@ export function WalletRewardsCashbackCard() {
   const { topupWallet } = useWallet();
   const [claimedIds, setClaimedIds] = useState<string[]>([]);
 
-  const rewards = [
-    { id: "rew-1", title: "Hoàn thiện 100% Hồ sơ & 0:30 Video Pitch", bonus_vnd: 50000 },
-    { id: "rew-2", title: "Giới thiệu 1 Kỹ sư Senior tham gia Belooga", bonus_vnd: 100000 },
-  ];
+  const { data: rewards = [] } = useQuery<WalletRewardItem[]>({
+    queryKey: ["wallet-rewards-list"],
+    queryFn: async () => {
+      const res = await apiClient.get<WalletRewardItem[]>("/v1/growth/rewards");
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+
+  const claimMutation = useMutation({
+    mutationFn: async (rew: WalletRewardItem) => {
+      await apiClient.post("/v1/growth/claim-reward", { reward_id: rew.id });
+      await topupWallet({ amount_vnd: rew.bonus_vnd, payment_method: "Belooga Career Cashback" });
+      return rew.id;
+    },
+    onSuccess: (id) => {
+      setClaimedIds((p) => [...p, id]);
+    },
+  });
 
   return (
     <div data-testid="growth-wallet-rewards-card" className="p-5 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-3 text-xs">
@@ -221,12 +257,8 @@ export function WalletRewardsCashbackCard() {
               <Button
                 type="button"
                 data-testid={`wallet-claim-reward-btn-${rew.id}`}
-                disabled={claimed}
-                onClick={async () => {
-                  try { await apiClient.post("/v1/growth/claim-reward", { reward_id: rew.id }); } catch { /* fallback */ }
-                  await topupWallet({ amount_vnd: rew.bonus_vnd, payment_method: "Belooga Career Cashback" });
-                  setClaimedIds((p) => [...p, rew.id]);
-                }}
+                disabled={claimed || claimMutation.isPending}
+                onClick={() => claimMutation.mutate(rew)}
                 className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-8 px-3 rounded-lg shrink-0"
               >
                 {claimed ? (

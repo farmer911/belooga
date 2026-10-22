@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Zap, Target, RotateCcw, Sparkles, CloudUpload, Check } from "lucide-react";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
 import { queueOfflineMutation } from "@/components/providers/service-worker-provider";
-import { CVStudioSidebar, DEFAULT_SECTIONS } from "@/components/features/cv-studio/cv-studio-sidebar";
+import { CVStudioSidebar, STANDARD_CV_SECTIONS } from "@/components/features/cv-studio/cv-studio-sidebar";
 import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studio-editor";
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
 
@@ -51,7 +51,7 @@ const SAMPLE_CV_DATA: CVData = {
   projects: [{ name: "Belooga High-Scale Talent Engine", role: "Lead Backend Architect", tech: "Golang, FastAPI, PostgreSQL 16 GIN, Redis 7", impact: "Reduced p95 full-text search latency to 11ms across 500k+ candidate profiles." }],
   education: [{ school: "Đại Học Bách Khoa / ĐH Quốc Gia", degree: "Kỹ sư Khoa học Máy tính (GPA: 3.6/4.0)", period: "2017 - 2021" }],
   skills: "Golang, Python, PostgreSQL, Redis, Kafka, Docker, Kubernetes, gRPC, CI/CD, Microservices Architecture, Linux",
-  sectionOrder: DEFAULT_SECTIONS,
+  sectionOrder: STANDARD_CV_SECTIONS,
 };
 
 export default function CVStudioPage() {
@@ -63,13 +63,7 @@ export default function CVStudioPage() {
   const [marginSize, setMarginSize] = useState<number>(0.6);
   const [snapOnePage, setSnapOnePage] = useState<boolean>(true);
   const [savedLabel, setSavedLabel] = useState<string | null>(null);
-  const [autoSaveLabel, setAutoSaveLabel] = useState("Đã tự động lưu nháp");
-  const hasMountedRef = useRef(false);
-
-  useEffect(() => {
-    if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
-    try { localStorage.setItem("belooga_cv_draft_local", JSON.stringify(cvData)); setAutoSaveLabel("Đã tự động lưu nháp"); } catch { /* noop */ }
-  }, [cvData]);
+  const autoSaveLabel = "Đã tự động lưu nháp";
 
   const { data: draftData } = useQuery<CVDraftResponse>({
     queryKey: ["cv-studio-draft", activeUsername],
@@ -110,14 +104,12 @@ export default function CVStudioPage() {
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
-      try { localStorage.setItem("belooga_cv_draft_local", JSON.stringify(cvData)); } catch { /* noop */ }
-      if (!user?.username) return { mode: "local" as const };
       const payload = {
         full_name: cvData.fullName, email: cvData.email, phone: cvData.phone, location: cvData.location,
         linkedin: cvData.linkedin, headline: cvData.headline, summary: cvData.summary, skills: cvData.skills,
         font_size: fontSize, line_height: lineHeight, margin_size: marginSize, snap_one_page: snapOnePage,
         experience: cvData.experience, projects: cvData.projects, education: cvData.education,
-        section_order: cvData.sectionOrder ?? DEFAULT_SECTIONS,
+        section_order: cvData.sectionOrder ?? STANDARD_CV_SECTIONS,
       };
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         queueOfflineMutation({ url: `/v1/profile/${activeUsername}/cv-draft/`, method: "PUT", body: payload });
@@ -126,8 +118,7 @@ export default function CVStudioPage() {
       await apiClient.put(`/v1/profile/${activeUsername}/cv-draft/`, payload);
       return { mode: "cloud" as const };
     },
-    onSuccess: (res) => { setSavedLabel(res.mode === "cloud" ? "Đã Lưu Cloud" : "Đã lưu nháp cục bộ"); setTimeout(() => setSavedLabel(null), 2500); },
-    onError: () => { setSavedLabel("Đã lưu nháp cục bộ"); setTimeout(() => setSavedLabel(null), 2500); },
+    onSuccess: () => { setSavedLabel("Đã Lưu Cloud"); setTimeout(() => setSavedLabel(null), 2500); },
   });
 
   const starAudit = useMemo(() => {
@@ -147,7 +138,7 @@ export default function CVStudioPage() {
     if (!cvData.skills.toLowerCase().includes(skill.toLowerCase())) setCvData({ ...cvData, skills: `${cvData.skills}, ${skill}` });
   };
   const handleMoveSection = (index: number, direction: -1 | 1) => {
-    const current = cvData.sectionOrder ?? DEFAULT_SECTIONS;
+    const current = cvData.sectionOrder ?? STANDARD_CV_SECTIONS;
     const target = index + direction;
     if (target < 0 || target >= current.length) return;
     const next = [...current];
@@ -219,7 +210,7 @@ export default function CVStudioPage() {
       </div>
 
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
-        <CVStudioSidebar fontSize={fontSize} setFontSize={setFontSize} lineHeight={lineHeight} setLineHeight={setLineHeight} marginSize={marginSize} setMarginSize={setMarginSize} snapOnePage={snapOnePage} setSnapOnePage={setSnapOnePage} sections={cvData.sectionOrder ?? DEFAULT_SECTIONS} onMoveSection={handleMoveSection} atsScore={liveAtsScore} />
+        <CVStudioSidebar fontSize={fontSize} setFontSize={setFontSize} lineHeight={lineHeight} setLineHeight={setLineHeight} marginSize={marginSize} setMarginSize={setMarginSize} snapOnePage={snapOnePage} setSnapOnePage={setSnapOnePage} sections={cvData.sectionOrder ?? STANDARD_CV_SECTIONS} onMoveSection={handleMoveSection} atsScore={liveAtsScore} />
         <CVStudioEditor cvData={cvData} onChange={setCvData} autoSaveLabel={autoSaveLabel} />
         <CVStudioPreview cvData={cvData} fontSize={fontSize} lineHeight={lineHeight} marginSize={marginSize} snapOnePage={snapOnePage} username={activeUsername} />
       </main>

@@ -23,6 +23,15 @@ interface InterviewQuestionItem {
   sample_answer_hint: string;
 }
 
+interface CvRoastItem {
+  id: string;
+  alias: string;
+  target_role: string;
+  summary: string;
+  votes: number;
+  ai_roast: string;
+}
+
 export function CompanyGrowthSuite({ slug, companyName }: { slug: string; companyName: string }) {
   const queryClient = useQueryClient();
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
@@ -37,70 +46,60 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
     },
   });
 
-  const { data: referralSlots = [] } = useQuery<ReferralSlotItem[]>({
-    queryKey: ["growth-referrals", slug],
+  const { data: referrals = [] } = useQuery<ReferralSlotItem[]>({
+    queryKey: ["company-referral-slots", slug],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<ReferralSlotItem[]>("/v1/growth/referrals", { params: { company_slug: slug } });
-        return Array.isArray(res.data) ? res.data : [];
-      } catch {
-        return [];
-      }
+      const res = await apiClient.get<ReferralSlotItem[]>("/v1/growth/referrals", {
+        params: { company_slug: slug },
+      });
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 
   const addQuestionMutation = useMutation({
     mutationFn: async () => {
-      const created: InterviewQuestionItem = {
-        id: `iq-${Date.now()}`,
-        role_title: `Senior Engineer @ ${companyName}`,
-        difficulty: "Hard",
-        question_text: newQuestion.trim(),
-        sample_answer_hint: newHint.trim() || "Trình bày theo cấu trúc STAR + số liệu benchmark thực tế.",
-      };
-      try {
-        await apiClient.post(`/v1/companies/${encodeURIComponent(slug)}/interview-questions`, created);
-      } catch {
-        // Optimistic question submission
-      }
-      return created;
+      const res = await apiClient.post<InterviewQuestionItem>(
+        `/v1/companies/${encodeURIComponent(slug)}/interview-questions`,
+        {
+          role_title: `Senior Engineer @ ${companyName}`,
+          difficulty: "Hard",
+          question_text: newQuestion.trim(),
+          sample_answer_hint: newHint.trim() || "Trình bày theo cấu trúc STAR + số liệu benchmark thực tế.",
+        }
+      );
+      return res.data;
     },
     onSuccess: (created) => {
-      queryClient.setQueryData<InterviewQuestionItem[]>(["company-interview-questions", slug], (prev = []) => [created, ...prev]);
+      if (created) {
+        queryClient.setQueryData<InterviewQuestionItem[]>(["company-interview-questions", slug], (prev = []) => [created, ...prev]);
+      }
       setNewQuestion("");
       setNewHint("");
+      queryClient.invalidateQueries({ queryKey: ["company-interview-questions", slug] });
+    },
+  });
+
+  const requestReferralMutation = useMutation({
+    mutationFn: async (slotId: string) => {
+      await apiClient.post("/v1/growth/referrals", { slot_id: slotId });
+      return slotId;
+    },
+    onSuccess: (slotId) => {
+      setRequestedIds((p) => [...p, slotId]);
     },
   });
 
   return (
     <div className="space-y-4 text-xs pt-2">
-      {/* Feature #14: Engineering Culture & Team Fit Radar */}
       <div data-testid="growth-culture-fit-radar" className="p-4 rounded-xl bg-surface-card border border-surface-border space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
             <Compass className="w-4 h-4 text-brand-primary" aria-hidden="true" />
             <span>Engineering Culture & Team Fit Radar ({companyName})</span>
           </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
-            94% Team Fit Match
-          </span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {[
-            { axis: "Engineering Autonomy", score: 95 },
-            { axis: "High-Concurrency Scale", score: 96 },
-            { axis: "Work-Life Sustainability", score: 88 },
-            { axis: "Compensation Velocity", score: 93 },
-          ].map((ax) => (
-            <div key={ax.axis} className="p-2.5 rounded-lg bg-surface-page border border-surface-border">
-              <div className="text-[11px] text-typography-muted">{ax.axis}</div>
-              <div className="font-mono font-extrabold text-sm text-brand-primary">{ax.score}/100</div>
-            </div>
-          ))}
         </div>
       </div>
 
-      {/* Feature #12: Company Interview Question Bank */}
       <div data-testid="company-interview-questions-section" className="p-4 rounded-xl bg-surface-card border border-surface-border space-y-3">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -148,7 +147,6 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
         </form>
       </div>
 
-      {/* Feature #6: Employee Referral Marketplace */}
       <div data-testid="growth-referral-marketplace" className="p-4 rounded-xl bg-surface-card border border-surface-border space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -157,7 +155,7 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
           </span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          {referralSlots.map((slot) => {
+          {referrals.map((slot) => {
             const sent = requestedIds.includes(slot.id);
             return (
               <div key={slot.id} className="p-3 rounded-lg bg-surface-page border border-surface-border flex items-center justify-between gap-2">
@@ -168,11 +166,8 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
                 <Button
                   type="button"
                   data-testid={`referral-request-btn-${slot.id}`}
-                  disabled={sent}
-                  onClick={async () => {
-                    try { await apiClient.post("/v1/growth/referrals", { slot_id: slot.id }); } catch { /* fallback */ }
-                    setRequestedIds((p) => [...p, slot.id]);
-                  }}
+                  disabled={sent || requestReferralMutation.isPending}
+                  onClick={() => requestReferralMutation.mutate(slot.id)}
                   className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-7 px-3 rounded-lg shrink-0"
                 >
                   {sent ? "✓ Đã Gửi Hồ Sơ" : "Xin Referral"}
@@ -187,11 +182,44 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
 }
 
 export function CommunityCvRoastSection() {
-  const [roasts, setRoasts] = useState([
-    { id: "roast-1", alias: "Anonymous Senior Go #402", target_role: "Principal Backend @ Shopee", summary: "8 năm KN Golang/Kafka nhưng phần mô tả dự án chưa có chỉ số P99 latency và quy mô RPS.", votes: 29, ai_roast: "Thêm ngay số liệu throughput & kết quả kinh doanh vào 3 gạch đầu dòng đầu tiên." },
-    { id: "roast-2", alias: "Anonymous AI Engineer #118", target_role: "Staff AI Engineer @ VNG Cloud", summary: "Triển khai RAG + vLLM phục vụ 50k người dùng nội bộ, giảm 60% chi phí token.", votes: 44, ai_roast: "Điểm mạnh rất rõ! Nên đưa kiến trúc Hybrid Search lên mục Summary." },
-  ]);
+  const queryClient = useQueryClient();
   const [summaryInput, setSummaryInput] = useState("");
+
+  const { data: roasts = [] } = useQuery<CvRoastItem[]>({
+    queryKey: ["community-cv-roasts"],
+    queryFn: async () => {
+      const res = await apiClient.get<CvRoastItem[]>("/v1/growth/cv-roasts");
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+
+  const submitRoastMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<CvRoastItem>("/v1/growth/cv-roasts", {
+        summary: summaryInput.trim(),
+      });
+      return res.data;
+    },
+    onSuccess: (created) => {
+      if (created) {
+        queryClient.setQueryData<CvRoastItem[]>(["community-cv-roasts"], (prev = []) => [created, ...prev]);
+      }
+      setSummaryInput("");
+      queryClient.invalidateQueries({ queryKey: ["community-cv-roasts"] });
+    },
+  });
+
+  const voteMutation = useMutation({
+    mutationFn: async (roastId: string) => {
+      await apiClient.post(`/v1/growth/cv-roasts/${roastId}/vote`, {});
+      return roastId;
+    },
+    onSuccess: (roastId) => {
+      queryClient.setQueryData<CvRoastItem[]>(["community-cv-roasts"], (prev = []) =>
+        prev.map((item) => (item.id === roastId ? { ...item, votes: item.votes + 1 } : item))
+      );
+    },
+  });
 
   return (
     <section data-testid="growth-cv-roast-section" className="p-5 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-3.5 text-xs">
@@ -212,14 +240,8 @@ export function CommunityCvRoastSection() {
         <Button
           type="button"
           data-testid="cv-roast-submit-btn"
-          onClick={() => {
-            if (!summaryInput.trim()) return;
-            setRoasts((prev) => [
-              { id: `roast-${Date.now()}`, alias: "Anonymous Candidate #889", target_role: "Senior Software Engineer", summary: summaryInput.trim(), votes: 1, ai_roast: "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng hoặc chi phí tiết kiệm được." },
-              ...prev,
-            ]);
-            setSummaryInput("");
-          }}
+          disabled={submitRoastMutation.isPending || !summaryInput.trim()}
+          onClick={() => submitRoastMutation.mutate()}
           className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-8 px-3.5 rounded-lg"
         >
           Đăng CV Ẩn Danh
@@ -233,7 +255,7 @@ export function CommunityCvRoastSection() {
               <button
                 type="button"
                 data-testid={`cv-roast-vote-btn-${r.id}`}
-                onClick={() => setRoasts((prev) => prev.map((item) => (item.id === r.id ? { ...item, votes: item.votes + 1 } : item)))}
+                onClick={() => voteMutation.mutate(r.id)}
                 className="px-2 py-0.5 rounded bg-surface-card border border-surface-border font-semibold inline-flex items-center gap-1 cursor-pointer"
               >
                 <ThumbsUp className="w-3 h-3 text-brand-primary" aria-hidden="true" /> {r.votes}

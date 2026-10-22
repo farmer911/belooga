@@ -1,12 +1,6 @@
-🎯 Đang làm ticket: [BEL-219] (#177) — [P0-NO-MOCKUP] Purge All Mock/Fallback Data in mobile/ — 100% Real FastAPI + PostgreSQL Integration | Role: mobile | Cột: Testing
+🎯 Đang làm ticket: [BEL-218] (#176) — [P0-NO-MOCKUP] Purge All Mock/Fallback Arrays & LocalStorage Fake DBs in frontend/src/ — 100% Real FastAPI + PostgreSQL Integration | Role: FE | Cột: Testing
 
-## Active Ticket Context
-- **Issue:** #177 (`[BEL-219]`)
-- **Kanban Item ID:** `PVTI_lAHOAeXQP84BoMSnzhCvblQ`
-- **Branch:** `feature/BEL-219-mobile-no-mockup` (PR #182)
-- **Status:** PR #182 opened; waiting on CI checks to complete and transition `#177` to `Testing` (`7bd84c2d`).
-
-## Verification Summary
-- `cd mobile && bun test && bun x tsc --noEmit`: 64/64 tests pass, 0 TS errors.
-- `python3 scripts/trust-benchmark.py`: 100% (0 violations).
-- `bash mobile/scripts/build-apk.sh && bash mobile/scripts/e2e-mobile-adb.sh`: Signed APK verified across all 4 tabs on `emulator-5554`.
+## Summary
+- Rebased `feature/BEL-218-fe-purge-mockups` (PR #186) onto `origin/main` cleanly (`mergeable: MERGEABLE`).
+- Purged 100% of `FALLBACK_*`, `INITIAL_*`, `DEFAULT_*`, `MOCK_*` mock arrays, localStorage/in-memory fake DBs, and catch-fallback returns across `frontend/src/`.
+- Verified `grep -rn -E "FALLBACK_|INITIAL_|DEFAULT_|MOCK_" frontend/src/` returns 0 matches, `tsc --noEmit` & `bun test` pass, and `trust-benchmark.py` scores 100%.

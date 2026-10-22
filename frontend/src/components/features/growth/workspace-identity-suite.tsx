@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export function WorkspaceGrowthSuite({ username, fullName }: { username: string; fullName: string }) {
   const [quizOpen, setQuizOpen] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(0);
-  const [verifiedSkills, setVerifiedSkills] = useState<string[]>(["Golang", "System Design"]);
+  const [verifiedSkills, setVerifiedSkills] = useState<string[]>([]);
 
   const [teleprompterScript, setTeleprompterScript] = useState<string | null>(null);
   const [cvImportText, setCvImportText] = useState("");
@@ -21,15 +21,11 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
 
   const quizMutation = useMutation({
     mutationFn: async () => {
-      try {
-        await apiClient.post("/v1/growth/skill-assessment", {
-          skill_name: "PostgreSQL High-Scale",
-          score_pct: 96,
-        });
-      } catch {
-        // Fallback
-      }
-      return "PostgreSQL High-Scale";
+      const res = await apiClient.post<{ skill_name?: string }>("/v1/growth/skill-assessment", {
+        skill_name: "PostgreSQL High-Scale",
+        score_pct: 96,
+      });
+      return res.data?.skill_name || "PostgreSQL High-Scale";
     },
     onSuccess: (badge) => {
       setVerifiedSkills((prev) => (prev.includes(badge) ? prev : [...prev, badge]));
@@ -39,28 +35,21 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
 
   const scriptMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await apiClient.post<{ script_text: string }>("/v1/growth/pitch-script", {
-          username,
-          target_role: "Principal Software Engineer",
-        });
-        if (res.data?.script_text) return res.data.script_text;
-      } catch {
-        // Fallback
-      }
-      return `[00:00 - 00:15] Xin chào, tôi là ${fullName} (@${username}), kỹ sư hệ thống phân tán chuyên sâu Golang & PostgreSQL.\n[00:15 - 00:40] Tôi đã trực tiếp kiến trúc hệ thống xử lý 25.000 RPS với độ trễ P99 dưới 25ms.\n[00:40 - 00:60] Sẵn sàng đóng góp ngay vào đội ngũ Core Platform của quý công ty!`;
+      const res = await apiClient.post<{ script_text: string }>("/v1/growth/pitch-script", {
+        username,
+        target_role: "Principal Software Engineer",
+      });
+      return res.data.script_text;
     },
     onSuccess: (text) => setTeleprompterScript(text),
   });
 
   const importMutation = useMutation({
     mutationFn: async () => {
-      try {
-        await apiClient.post("/v1/growth/cv-auto-import", { raw_cv_text: cvImportText });
-      } catch {
-        // Fallback
-      }
-      return 6;
+      const res = await apiClient.post<{ imported_count?: number }>("/v1/growth/cv-auto-import", {
+        raw_cv_text: cvImportText,
+      });
+      return res.data?.imported_count ?? 1;
     },
     onSuccess: (count) => {
       setImportedCount(count);
@@ -70,14 +59,10 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
 
   const stealthMutation = useMutation({
     mutationFn: async (nextState: boolean) => {
-      try {
-        await apiClient.patch("/v1/growth/stealth-mode", {
-          stealth_enabled: nextState,
-          blocked_companies: blockedCompanies.split(",").map((s) => s.trim()).filter(Boolean),
-        });
-      } catch {
-        // Fallback
-      }
+      await apiClient.patch("/v1/growth/stealth-mode", {
+        stealth_enabled: nextState,
+        blocked_companies: blockedCompanies.split(",").map((s) => s.trim()).filter(Boolean),
+      });
       return nextState;
     },
     onSuccess: (nextState) => setStealthEnabled(nextState),
@@ -90,7 +75,6 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
           Candidate Viral Growth, Verified Badges & AI Studio Toolkit
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Feature #19: Instant QR Digital Career Card */}
           <button
             type="button"
             data-testid="qr-career-card-open-btn"
@@ -117,7 +101,6 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-        {/* Feature #3: Verified Skill Micro-Assessments & Badges */}
         <div data-testid="growth-skill-quiz-card" className="p-3.5 rounded-xl bg-surface-page border border-surface-border space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -162,6 +145,7 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
               <Button
                 type="button"
                 data-testid="skill-quiz-submit-btn"
+                disabled={quizMutation.isPending}
                 onClick={() => quizMutation.mutate()}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-3 rounded-lg"
               >
@@ -171,7 +155,6 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
           )}
         </div>
 
-        {/* Feature #4: 60s Video Pitch AI Teleprompter & Auto-Captions */}
         <div data-testid="growth-pitch-teleprompter-card" className="p-3.5 rounded-xl bg-surface-page border border-surface-border space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -181,6 +164,7 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
             <button
               type="button"
               data-testid="teleprompter-generate-btn"
+              disabled={scriptMutation.isPending}
               onClick={() => scriptMutation.mutate()}
               className="px-2.5 py-1 rounded-md bg-brand-primary text-white font-semibold text-[11px] cursor-pointer"
             >
@@ -192,23 +176,15 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
           </div>
         </div>
 
-        {/* Feature #7: GitHub & Live Project Impact Card */}
         <div data-testid="growth-github-impact-card" className="p-3.5 rounded-xl bg-surface-page border border-surface-border space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-typography-main flex items-center gap-1.5">
               <Code2 className="w-4 h-4 text-brand-primary" aria-hidden="true" />
               <span>GitHub & Live Project Impact Card</span>
             </span>
-            <span className="font-mono font-bold text-emerald-700">1,420 Commits · Top 2%</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="p-2 rounded bg-surface-card border border-surface-border"><div className="text-[10px] text-typography-muted">Merged PRs</div><div className="font-bold">184</div></div>
-            <div className="p-2 rounded bg-surface-card border border-surface-border"><div className="text-[10px] text-typography-muted">OSS Stars</div><div className="font-bold">640</div></div>
-            <div className="p-2 rounded bg-surface-card border border-surface-border"><div className="text-[10px] text-typography-muted">Uptime SLA</div><div className="font-bold text-emerald-700">99.99%</div></div>
           </div>
         </div>
 
-        {/* Feature #8: 10-Second CV-to-Profile Auto-Importer */}
         <div data-testid="growth-cv-auto-import-card" className="p-3.5 rounded-xl bg-surface-page border border-surface-border space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -229,6 +205,7 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
             <Button
               type="button"
               data-testid="cv-import-submit-btn"
+              disabled={importMutation.isPending || !cvImportText.trim()}
               onClick={() => importMutation.mutate()}
               className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-7 px-3 rounded-lg"
             >
@@ -238,7 +215,6 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
         </div>
       </div>
 
-      {/* Feature #9: Stealth Job Seeking Mode */}
       <div data-testid="growth-stealth-mode-toggle" className="p-3 rounded-xl bg-surface-page border border-surface-border flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <EyeOff className="w-4 h-4 text-amber-600" aria-hidden="true" />
@@ -257,6 +233,7 @@ export function WorkspaceGrowthSuite({ username, fullName }: { username: string;
           />
           <button
             type="button"
+            disabled={stealthMutation.isPending}
             onClick={() => stealthMutation.mutate(!stealthEnabled)}
             className={`px-3 py-1 rounded-lg font-bold cursor-pointer ${stealthEnabled ? "bg-emerald-600 text-white" : "bg-surface-card border border-surface-border text-typography-heading"}`}
           >

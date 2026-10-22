@@ -38,48 +38,29 @@ export function MockInterviewAndOutreachSuite({ jobTitle, companyName }: { jobTi
 
   const mockMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await apiClient.post<MockInterviewEvalResult>("/v1/growth/mock-interview", {
-          job_title: jobTitle,
-          question: "Hãy mô tả một lần bạn xử lý nghẽn cổ chai hiệu năng hệ thống ở môi trường Production.",
-          answer_text: answer,
-        });
-        if (typeof res.data?.overall_score === "number") return res.data;
-      } catch {
-        // Fallback deterministic evaluation
-      }
-      return {
-        overall_score: 92,
-        star_breakdown: { situation: 90, task: 92, action: 95, result: 91 },
-        coach_feedback: "Câu trả lời có số liệu định lượng rõ ràng (P99 420ms -> 28ms). Nên bổ sung quy trình rollout an toàn.",
-        upgraded_answer: `[STAR Optimized] Tại ${companyName || "hệ thống Production"}, khi P99 tăng lên 420ms ở đỉnh tải, tôi đã chủ trì thay thế truy vấn tuần tự bằng asyncpg + GIN TSVECTOR, giúp giảm 93% độ trễ xuống 28ms và tiết kiệm 40% CPU DB.`,
-      };
+      const res = await apiClient.post<MockInterviewEvalResult>("/v1/growth/mock-interview", {
+        job_title: jobTitle,
+        question: "Hãy mô tả một lần bạn xử lý nghẽn cổ chai hiệu năng hệ thống ở môi trường Production.",
+        answer_text: answer,
+      });
+      return res.data;
     },
     onSuccess: (data) => setEvalRes(data),
   });
 
   const outreachMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await apiClient.post<OutreachResult>("/v1/growth/outreach-generator", {
-          job_title: jobTitle,
-          company_name: companyName || "VNG Corporation",
-        });
-        if (res.data?.cover_letter) return res.data;
-      } catch {
-        // Fallback
-      }
-      return {
-        cover_letter: `Kính gửi Hiring Manager tại ${companyName || "Quý công ty"}, với kinh nghiệm tối ưu hệ thống phân tán Golang/FastAPI đạt chuẩn SLA 99.99%, tôi tự tin đóng góp trực tiếp vào vị trí ${jobTitle}.`,
-        cold_dm: `Chào anh/chị, mình vừa quét điểm khớp ATS đạt 94/100 cho vị trí ${jobTitle} tại ${companyName || "công ty"}. Rất mong được chia sẻ bản kiến trúc demo 0:30 Video Pitch cùng team!`,
-      };
+      const res = await apiClient.post<OutreachResult>("/v1/growth/outreach-generator", {
+        job_title: jobTitle,
+        company_name: companyName || "VNG Corporation",
+      });
+      return res.data;
     },
     onSuccess: (data) => setOutreachRes(data),
   });
 
   return (
     <div className="space-y-3 text-xs pt-2">
-      {/* Feature #1: AI Mock Interview Simulator */}
       <div data-testid="growth-mock-interview-card" className="p-3.5 rounded-xl bg-surface-page border border-surface-border space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -119,7 +100,6 @@ export function MockInterviewAndOutreachSuite({ jobTitle, companyName }: { jobTi
         )}
       </div>
 
-      {/* Feature #10: 1-Click AI Cover Letter & Recruiter Cold Outreach Generator */}
       <div data-testid="growth-outreach-generator-card" className="p-3.5 rounded-xl bg-surface-page border border-surface-border space-y-2">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -155,22 +135,12 @@ export function SalaryNegotiationAndRoadmapSuite({ techStack, level }: { techSta
   const negMutation = useMutation({
     mutationFn: async () => {
       const base = Math.max(800, Number(offerUsd) || 2600);
-      try {
-        const res = await apiClient.post<NegotiationResult>("/v1/growth/salary-negotiation", {
-          current_offer_usd: base,
-          tech_stack: techStack,
-          level,
-        });
-        if (res.data?.negotiation_script) return res.data;
-      } catch {
-        // Fallback
-      }
-      const counter = Math.round(base * 1.18);
-      return {
-        recommended_counter_usd: counter,
-        uplift_pct: 18.0,
-        negotiation_script: `Dựa trên dữ liệu P75 của vị trí ${level} ${techStack} và năng lực thiết kế hệ thống đã kiểm chứng, mức đề xuất hợp lý để chốt Offer ngay trong tuần này là $${counter.toLocaleString("en-US")}/tháng (+18%).`,
-      };
+      const res = await apiClient.post<NegotiationResult>("/v1/growth/salary-negotiation", {
+        current_offer_usd: base,
+        tech_stack: techStack,
+        level,
+      });
+      return res.data;
     },
     onSuccess: (data) => setNegResult(data),
   });
@@ -187,7 +157,6 @@ export function SalaryNegotiationAndRoadmapSuite({ techStack, level }: { techSta
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
-      {/* Feature #2: Offer Salary Negotiation Copilot */}
       <div data-testid="growth-salary-negotiation-card" className="lg:col-span-6 p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <span className="font-bold text-typography-main flex items-center gap-1.5">
@@ -208,6 +177,7 @@ export function SalaryNegotiationAndRoadmapSuite({ techStack, level }: { techSta
           <Button
             type="button"
             data-testid="negotiation-generate-btn"
+            disabled={negMutation.isPending}
             onClick={() => negMutation.mutate()}
             className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-8 px-3.5 rounded-lg"
           >
@@ -225,7 +195,6 @@ export function SalaryNegotiationAndRoadmapSuite({ techStack, level }: { techSta
         )}
       </div>
 
-      {/* Feature #5: Career Path & Promotion Roadmap Simulator */}
       <div data-testid="growth-career-roadmap-card" className="lg:col-span-6 p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-3">
         <div className="flex items-center justify-between gap-2">
           <span className="font-bold text-typography-main flex items-center gap-1.5">

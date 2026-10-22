@@ -47,98 +47,29 @@ export interface CareerGoal {
   updated_at: string;
 }
 
-let memoryJobs: TrackedJob[] = [];
-let memoryGoal: CareerGoal | null = null;
-let localJobSeq = 1;
-
-function readLocalJobs(): TrackedJob[] {
-  return memoryJobs;
-}
-
-function writeLocalJobs(items: TrackedJob[]): void {
-  memoryJobs = items;
-}
-
-function readLocalGoal(): CareerGoal | null {
-  return memoryGoal;
-}
-
-function writeLocalGoal(goal: CareerGoal): void {
-  memoryGoal = goal;
-}
-
 export function useJobTracker() {
   const queryClient = useQueryClient();
 
   const { data: jobs = [], isLoading, error: rawError, refetch } = useQuery<TrackedJob[]>({
     queryKey: ["tracked-jobs"],
     queryFn: async () => {
-      try {
-        const response = await apiClient.get<TrackedJob[]>("/v1/tracker/jobs/");
-        const serverJobs = response.data || [];
-        const localJobs = readLocalJobs();
-        const serverIds = new Set(serverJobs.map((j) => j.id));
-        const merged = [...serverJobs, ...localJobs.filter((lj) => !serverIds.has(lj.id))];
-        writeLocalJobs(merged);
-        return merged;
-      } catch {
-        return readLocalJobs();
-      }
+      const response = await apiClient.get<TrackedJob[]>("/v1/tracker/jobs/");
+      return Array.isArray(response.data) ? response.data : [];
     },
   });
 
   const { data: careerGoal } = useQuery<CareerGoal>({
     queryKey: ["career-goal"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<CareerGoal>("/v1/tracker/goals");
-        if (res.data?.target_role) {
-          writeLocalGoal(res.data);
-          return res.data;
-        }
-      } catch {
-        return (
-          readLocalGoal() ?? {
-            id: "goal-default",
-            target_role: "Senior Backend / Golang Engineer",
-            target_salary: "55.000.000 VNĐ",
-            preferred_skills: "Golang, PostgreSQL, Kubernetes, System Design",
-            location: "Ho Chi Minh / Remote",
-            updated_at: new Date().toISOString(),
-          }
-        );
-      }
-      return (
-        readLocalGoal() ?? {
-          id: "goal-default",
-          target_role: "Senior Backend / Golang Engineer",
-          target_salary: "55.000.000 VNĐ",
-          preferred_skills: "Golang, PostgreSQL, Kubernetes, System Design",
-          location: "Ho Chi Minh / Remote",
-          updated_at: new Date().toISOString(),
-        }
-      );
+      const res = await apiClient.get<CareerGoal>("/v1/tracker/goals");
+      return res.data;
     },
   });
 
   const saveGoalMutation = useMutation({
     mutationFn: async (payload: Omit<CareerGoal, "id" | "updated_at">) => {
-      const nextGoal: CareerGoal = {
-        id: careerGoal?.id || "goal-1",
-        ...payload,
-        updated_at: new Date().toISOString(),
-      };
-      writeLocalGoal(nextGoal);
-      try {
-        const res = await apiClient.post<CareerGoal>("/v1/tracker/goals", payload);
-        if (res.data?.target_role) {
-          writeLocalGoal(res.data);
-          return res.data;
-        }
-      } catch {
-        // Persisted locally as fallback
-      }
-      return nextGoal;
+      const res = await apiClient.post<CareerGoal>("/v1/tracker/goals", payload);
+      return res.data;
     },
     onSuccess: (saved) => {
       queryClient.setQueryData(["career-goal"], saved);
@@ -160,61 +91,30 @@ export function useJobTracker() {
   }, [refetch, refetchAnalytics]);
 
   const addJob = useCallback(async (payload: CreateTrackedJobPayload) => {
-    let created: TrackedJob;
-    try {
-      const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
-      created = response.data;
-    } catch {
-      created = {
-        id: `local-job-${Date.now()}-${localJobSeq++}`,
-        company_name: payload.company_name,
-        position_title: payload.position_title,
-        status: payload.status ?? "TARGETING",
-        expected_salary: payload.expected_salary,
-        match_score: payload.match_score ?? 85,
-        notes: payload.notes,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-    }
-    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => {
-      const next = [created, ...prev];
-      writeLocalJobs(next);
-      return next;
-    });
+    const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
+    const created = response.data;
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => [created, ...prev]);
     void refetchAnalytics();
     void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
     return created;
   }, [queryClient, refetchAnalytics]);
 
   const moveStatus = useCallback(async (jobId: string, newStatus: KanbanStatus) => {
-    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => {
-      const next = prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j));
-      writeLocalJobs(next);
-      return next;
-    });
-    try {
-      await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}/status`, { status: newStatus });
-      void refetchAnalytics();
-      void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
-    } catch {
-      // Keep local update if guest/local job
-    }
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
+      prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j))
+    );
+    await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}/status`, { status: newStatus });
+    void refetchAnalytics();
+    void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
   }, [queryClient, refetchAnalytics]);
 
   const deleteJob = useCallback(async (jobId: string) => {
-    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => {
-      const next = prev.filter((j) => j.id !== jobId);
-      writeLocalJobs(next);
-      return next;
-    });
-    try {
-      await apiClient.delete(`/v1/tracker/jobs/${jobId}`);
-      void refetchAnalytics();
-      void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
-    } catch {
-      // Keep local deletion
-    }
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
+      prev.filter((j) => j.id !== jobId)
+    );
+    await apiClient.delete(`/v1/tracker/jobs/${jobId}`);
+    void refetchAnalytics();
+    void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
   }, [queryClient, refetchAnalytics]);
 
   return {

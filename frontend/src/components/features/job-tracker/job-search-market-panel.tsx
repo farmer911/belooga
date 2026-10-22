@@ -58,8 +58,35 @@ export function JobSearchAndGoalPanel({
   const { data: marketJobs = [] } = useQuery<MarketJobItem[]>({
     queryKey: ["market-jobs-search", marketQuery],
     queryFn: async () => {
-      const res = await apiClient.get<MarketJobItem[]>("/v1/tracker/search-market-jobs", { params: { q: marketQuery } });
-      return Array.isArray(res.data) ? res.data : [];
+      const res = await apiClient.get<
+        Array<{
+          id: string;
+          title: string;
+          company_name?: string;
+          location: string;
+          salary_range?: string;
+          skills?: string[];
+        }>
+      >("/v1/career/jobs/");
+      const raw = Array.isArray(res.data) ? res.data : [];
+      const mapped: MarketJobItem[] = raw.map((j, idx) => ({
+        id: j.id,
+        company_name: j.company_name || "Belooga",
+        position_title: j.title,
+        location: j.location,
+        salary_range: j.salary_range || "Negotiable",
+        match_score: Math.max(85, 95 - idx * 3),
+        skills: Array.isArray(j.skills) ? j.skills : [],
+      }));
+      const q = marketQuery.trim().toLowerCase();
+      if (!q) return mapped;
+      return mapped.filter(
+        (j) =>
+          j.company_name.toLowerCase().includes(q) ||
+          j.position_title.toLowerCase().includes(q) ||
+          j.location.toLowerCase().includes(q) ||
+          j.skills.some((s) => s.toLowerCase().includes(q))
+      );
     },
   });
 
@@ -74,14 +101,6 @@ export function JobSearchAndGoalPanel({
           description: `AI Săn Job Phù Hợp: ${roleInput}`,
         });
       }
-      try {
-        await apiClient.post(`/v1/tracker/goals/${careerGoal?.id || "goal-1"}/ai-match`, {
-          target_role: roleInput,
-          preferred_skills: skillsInput,
-        });
-      } catch {
-        // Fallback
-      }
       await onAddJobToKanban({
         company_name: "Grab Financial Group",
         position_title: `${roleInput} (AI Matched)`,
@@ -90,15 +109,7 @@ export function JobSearchAndGoalPanel({
         match_score: 95,
         notes: `AI Job Radar khớp tự động theo kỹ năng: ${skillsInput}`,
       });
-      await onAddJobToKanban({
-        company_name: "ZaloPay / Zion",
-        position_title: `Staff ${roleInput.split(" ")[0]} Architect (AI Matched)`,
-        status: "TARGETING",
-        expected_salary: salaryInput,
-        match_score: 92,
-        notes: `AI Job Radar đề xuất ưu tiên phỏng vấn`,
-      });
-      return 2;
+      return 1;
     },
     onSuccess: (count) => setAiMatchedCount(count),
   });

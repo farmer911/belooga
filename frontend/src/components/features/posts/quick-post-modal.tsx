@@ -27,16 +27,6 @@ export interface UserPostItem {
   created_at: string;
 }
 
-let memoryPosts: UserPostItem[] = [];
-
-export function readLocalPosts(): UserPostItem[] {
-  return memoryPosts;
-}
-
-export function writeLocalPosts(posts: UserPostItem[]): void {
-  memoryPosts = posts;
-}
-
 interface QuickPostModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -77,20 +67,17 @@ export function QuickPostModal({
     mutationFn: async () => {
       const tags = tagsText.split(",").map((s) => s.trim()).filter(Boolean);
       if (editingPost) {
-        try {
-          await apiClient.patch(`/v1/posts/${editingPost.id}`, { title, category, body, tags, attachment_link: link });
-        } catch {
-          // Fallback local update
-        }
-        const updated = readLocalPosts().map((p) =>
-          p.id === editingPost.id ? { ...p, title, category, body, tags, attachment_link: link || undefined } : p
-        );
-        writeLocalPosts(updated);
-        return updated;
+        const res = await apiClient.patch<UserPostItem>(`/v1/posts/${editingPost.id}`, {
+          title: title.trim(),
+          category,
+          body: body.trim(),
+          tags,
+          attachment_link: link.trim() || undefined,
+        });
+        return res.data;
       }
 
-      const newPost: UserPostItem = {
-        id: `upost-${Date.now()}`,
+      const res = await apiClient.post<UserPostItem>("/v1/posts/", {
         username,
         author_name: authorName,
         title: title.trim() || "Chia sẻ chuyên môn từ Belooga Workspace",
@@ -98,24 +85,8 @@ export function QuickPostModal({
         body: body.trim(),
         tags,
         attachment_link: link.trim() || undefined,
-        likes_count: 1,
-        comments: [],
-        created_at: "Vừa xong",
-      };
-      try {
-        await apiClient.post("/v1/posts/", {
-          title: newPost.title,
-          category: newPost.category,
-          body: newPost.body,
-          tags: newPost.tags,
-          attachment_link: newPost.attachment_link,
-        });
-      } catch {
-        // Fallback local save
-      }
-      const next = [newPost, ...readLocalPosts()];
-      writeLocalPosts(next);
-      return next;
+      });
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-profile-posts"] });
