@@ -124,14 +124,22 @@ public class MainActivity extends Activity {
         });
         topBar.addView(alertsPill);
         topBar.addView(BeloogaUiKit.createSpacer(this, 6));
-        topBar.addView(BeloogaUiKit.createBadgePill(
+        TextView walletPill = BeloogaUiKit.createBadgePill(
                 this,
-                "LIVE 12ms",
+                "VÍ 1.5M • ESCROW",
                 BeloogaUiKit.COLOR_SUCCESS,
                 BeloogaUiKit.COLOR_SUCCESS_MUTED,
                 BeloogaUiKit.COLOR_BORDER,
-                null
-        ));
+                "mobile-wallet-balance-pill"
+        );
+        walletPill.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                careerSubTab = 1;
+                renderCareerScreen();
+            }
+        });
+        topBar.addView(walletPill);
         wrapper.addView(topBar);
 
         View divider = new View(this);
