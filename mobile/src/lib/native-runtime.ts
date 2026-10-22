@@ -189,19 +189,23 @@ export function BadgePill({ testID, label, tone = "brand", mode = "dark" }: Badg
 
 export interface ActionButtonProps {
   testID?: string;
+  accessibilityLabel?: string;
   label: string;
   disabled?: boolean;
   variant?: "primary" | "secondary" | "danger" | "accent";
   mode?: ThemeMode;
+  style?: React.CSSProperties;
   onPress?: () => void;
 }
 
 export function ActionButton({
   testID,
+  accessibilityLabel,
   label,
   disabled = false,
   variant = "primary",
   mode = "dark",
+  style,
   onPress,
 }: ActionButtonProps) {
   const tokens = getSemanticTokens(mode);
@@ -223,6 +227,7 @@ export function ActionButton({
     "button",
     {
       "data-testid": testID,
+      "aria-label": accessibilityLabel ?? testID ?? label,
       disabled,
       onClick: onPress,
       style: {
@@ -231,11 +236,13 @@ export function ActionButton({
         border: `1px solid ${variant === "secondary" ? tokens.surface.border : "transparent"}`,
         borderRadius: 12,
         padding: "11px 16px",
+        minHeight: 44,
         fontWeight: 700,
         fontSize: 13,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.55 : 1,
         transition: "all 150ms ease",
+        ...style,
       },
     },
     label

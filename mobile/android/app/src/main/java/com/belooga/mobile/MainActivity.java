@@ -24,6 +24,13 @@ public class MainActivity extends Activity {
     private int studioSubTab = 0;
     private int careerSubTab = 0;
     private int workspaceSubTab = 0;
+    private boolean alexBookmarked = true;
+    private boolean sarahBookmarked = true;
+    private boolean filterSavedOnly = false;
+
+    private int getSavedShortlistCount() {
+        return (alexBookmarked ? 1 : 0) + (sarahBookmarked ? 1 : 0);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -243,8 +250,18 @@ public class MainActivity extends Activity {
                 this, "GIN TSVECTOR <15MS", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));
         topBadges.addView(BeloogaUiKit.createSpacer(this, 6));
-        topBadges.addView(BeloogaUiKit.createBadgePill(
-                this, "500K+ VERIFIED", BeloogaUiKit.COLOR_SUCCESS, BeloogaUiKit.COLOR_SUCCESS_MUTED, BeloogaUiKit.COLOR_BORDER, null
+        topBadges.addView(BeloogaUiKit.createShortlistFilterChip(
+                this,
+                "Saved Shortlist (" + getSavedShortlistCount() + ")",
+                filterSavedOnly,
+                "filter-saved-shortlist-chip",
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        filterSavedOnly = !filterSavedOnly;
+                        renderDiscoverScreen();
+                    }
+                }
         ));
         filterCard.addView(topBadges);
 
@@ -303,6 +320,18 @@ public class MainActivity extends Activity {
         alexHeader.addView(BeloogaUiKit.createBadgePill(
                 this, "96% TRUST", BeloogaUiKit.COLOR_SUCCESS, BeloogaUiKit.COLOR_SUCCESS_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));
+        alexHeader.addView(BeloogaUiKit.createBookmarkToggleBtn(
+                this,
+                alexBookmarked,
+                "bookmark-candidate-alexnguyen",
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alexBookmarked = !alexBookmarked;
+                        renderDiscoverScreen();
+                    }
+                }
+        ));
         alexCard.addView(alexHeader);
 
         LinearLayout videoPreview = BeloogaUiKit.createSubtleBox(this);
@@ -357,6 +386,18 @@ public class MainActivity extends Activity {
         sarahHeader.addView(sarahMeta);
         sarahHeader.addView(BeloogaUiKit.createBadgePill(
                 this, "94% TRUST", BeloogaUiKit.COLOR_SUCCESS, BeloogaUiKit.COLOR_SUCCESS_MUTED, BeloogaUiKit.COLOR_BORDER, null
+        ));
+        sarahHeader.addView(BeloogaUiKit.createBookmarkToggleBtn(
+                this,
+                sarahBookmarked,
+                "bookmark-candidate-sarahchen",
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        sarahBookmarked = !sarahBookmarked;
+                        renderDiscoverScreen();
+                    }
+                }
         ));
         sarahCard.addView(sarahHeader);
         addSkillChipsRow(sarahCard, new String[]{"Expo SDK 58", "TypeScript", "ConnectRPC", "Redis 7"});

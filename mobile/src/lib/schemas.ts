@@ -202,3 +202,17 @@ export const mobileNotificationItemSchema = z.object({
 });
 export type MobileNotificationItemDTO = z.infer<typeof mobileNotificationItemSchema>;
 
+export const candidateBookmarkItemSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform((val) => String(val)),
+  username: z.string().min(1),
+  full_name: z.string().default(""),
+  headline: z.string().default(""),
+  location: z.string().default(""),
+  seeking_status: z.string().default("Open to Offers"),
+  avatar_url: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+  created_at: z.string().default(""),
+});
+export type CandidateBookmarkItemDTO = z.infer<typeof candidateBookmarkItemSchema>;
+
+
