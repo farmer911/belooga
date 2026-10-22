@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
+import { extractCvFileContent, hydrateCandidateProfileCv } from "@/lib/cv-file-parser";
 import { useATSDiagnostics, ATSScanPayload, ATSScanResult } from "./use-ats-diagnostics";
 
 export interface ATSScanHistoryItem {
@@ -47,12 +49,28 @@ export function useATSScanHistory() {
 export function useATSScan() {
   const queryClient = useQueryClient();
   const diagnostics = useATSDiagnostics();
+  const [hydrationNotice, setHydrationNotice] = useState<string | null>(null);
   const { data: scanHistory = [], refetch: refetchHistory } = useATSScanHistory();
   const { data: marketPulse = null } = useQuery<TalentMarketPulseDTO | null>({
     queryKey: ["ats-market-pulse"],
     queryFn: async () => (await apiClient.get<TalentMarketPulseDTO>("/v1/match/market-pulse")).data,
     staleTime: 30_000,
     retry: false,
+  });
+
+  const extractFileMutation = useMutation({
+    mutationFn: async ({ file, candidateName }: { file: File; candidateName?: string }) =>
+      await extractCvFileContent(file, candidateName),
+    onSuccess: (res) => {
+      setHydrationNotice(`Đã trích xuất CV từ file "${res.fileName}" (${res.text.length} ký tự)`);
+    },
+  });
+
+  const loadProfileMutation = useMutation({
+    mutationFn: async (username: string) => await hydrateCandidateProfileCv(username),
+    onSuccess: (text, username) => {
+      setHydrationNotice(`Đã nạp CV Hồ Sơ & Timeline của @${username} (${text.length} ký tự)`);
+    },
   });
 
   const tailorMutation = useMutation({
@@ -84,6 +102,12 @@ export function useATSScan() {
     ...diagnostics,
     scanHistory,
     marketPulse,
+    hydrationNotice,
+    setHydrationNotice,
+    extractCvFile: extractFileMutation.mutateAsync,
+    isExtractingFile: extractFileMutation.isPending,
+    loadProfileCv: loadProfileMutation.mutateAsync,
+    isLoadingProfileCv: loadProfileMutation.isPending,
     refetchHistory: async () => {
       await Promise.all([
         refetchHistory(),
