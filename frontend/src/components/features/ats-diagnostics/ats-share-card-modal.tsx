@@ -24,7 +24,7 @@ export function ATSShareCardModal({
   if (!isOpen) return null;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://belooga.vn/ats?score=${score}&ref=flex_card`);
+    navigator.clipboard.writeText(`https://belooga.vn/ats-diagnostics?score=${score}&ref=flex_card`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -95,7 +95,7 @@ export function ATSShareCardModal({
 
           <div className="flex justify-between items-center text-[10px] text-white/60 font-mono pt-1">
             <span>Powered by Belooga AI Engine</span>
-            <span>belooga.vn/ats</span>
+            <span>belooga.vn/ats-diagnostics</span>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export function ATSShareCardModal({
             onClick={() => {
               window.open(
                 `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  `https://belooga.vn/ats?score=${score}`
+                  `https://belooga.vn/ats-diagnostics?score=${score}&ref=flex_card`
                 )}`,
                 "_blank"
               );

@@ -24,7 +24,14 @@ export function useAuthSessionBootstrap() {
           { withCredentials: true }
         );
         const token = res.data?.access_token;
-        const normalized = normalizeAuthUser(res.data?.user);
+        let rawUser = res.data?.user;
+        if (token && !rawUser) {
+          const meRes = await axios.get(`${API_BASE_URL}/v1/auth/me/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          rawUser = meRes.data;
+        }
+        const normalized = normalizeAuthUser(rawUser);
         if (token && normalized) {
           setUser(normalized);
           setAccessToken(token);

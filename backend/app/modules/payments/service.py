@@ -39,7 +39,9 @@ def compute_momo_ipn_signature(order_id: str, amount: float, trans_id: str) -> s
 
 class PaymentService:
     @staticmethod
-    def create_qr(payload: MomoCreatePaymentRequest) -> MomoCreatePaymentResponse:
+    async def create_qr(
+        payload: MomoCreatePaymentRequest, db: Optional[AsyncSession] = None
+    ) -> MomoCreatePaymentResponse:
         order_id = f"MOMO-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
         raw_sig = f"amount={payload.amount}&orderId={order_id}&package={payload.package_type}"
         sig = hmac.new(get_momo_secret_key().encode("utf-8"), raw_sig.encode("utf-8"), hashlib.sha256).hexdigest()
@@ -50,7 +52,11 @@ class PaymentService:
         )
         pay_url = f"https://test-payment.momo.vn/v2/gateway/pay?orderId={order_id}&signature={sig}"
 
-        PaymentRepository.create_order(order_id, payload.amount, payload.package_type)
+        PaymentRepository.create_order(order_id, payload.amount, payload.package_type, payload.review_order_id)
+        if db is not None:
+            await PaymentRepository.persist_order_to_db(
+                db, order_id, payload.amount, payload.package_type, payload.review_order_id
+            )
         return MomoCreatePaymentResponse(
             order_id=order_id,
             pay_url=pay_url,
@@ -69,7 +75,7 @@ class PaymentService:
                 detail="Chữ ký MoMo HMAC-SHA256 không hợp lệ.",
             )
 
-        order = PaymentRepository.get_order(payload.order_id)
+        order = await PaymentRepository.get_order_with_db(payload.order_id, db)
         if not order:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -91,8 +97,8 @@ class PaymentService:
         )
 
     @staticmethod
-    def get_order_status(order_id: str) -> OrderStatusResponse:
-        order = PaymentRepository.get_order(order_id)
+    async def get_order_status(order_id: str, db: Optional[AsyncSession] = None) -> OrderStatusResponse:
+        order = await PaymentRepository.get_order_with_db(order_id, db)
         if not order:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

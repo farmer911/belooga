@@ -229,11 +229,9 @@ export function useWebRTCStudio(
     try {
       const res = await uploadChunkedVideo(recordedBlob, username, (p) => setChunkProgress(p));
       onUploadSuccess?.(res.video_url, res.poster_url);
-      alert("Video elevator pitch successfully uploaded via streaming chunks and published with auto-generated thumbnail!");
       closeStudio();
     } catch (err) {
       console.error("Chunked video upload error", err);
-      alert("Error uploading video chunks. Please check connection.");
     } finally {
       setIsUploadingChunks(false);
     }

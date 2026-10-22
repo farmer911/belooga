@@ -19,12 +19,14 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | required |
 | `POST` | `/v1/expert-review/orders/{order_id}/feedback/` | `submit_order_feedback` | required |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
+| `GET` | `/v1/match/history` | `list_ats_scan_history` | optional |
 | `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | optional |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
 | `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | optional |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |
+| `PATCH` | `/v1/tracker/jobs/{job_id}` | `update_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | required |
 | `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | public |

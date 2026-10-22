@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ServiceWorkerProvider } from "@/components/providers/service-worker-provider";
+import { AuthSessionBootstrap } from "@/components/providers/auth-guard";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://belooga.com";
 
@@ -103,6 +104,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-surface-page text-typography-main transition-colors duration-200">
         <QueryProvider>
+          <AuthSessionBootstrap />
           <ServiceWorkerProvider />
           <Header />
           <main className="flex-1">{children}</main>

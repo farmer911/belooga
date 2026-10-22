@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Loader2, QrCode } from "lucide-react";
 import { ReviewPackage, ExpertProfile, ReviewOrder } from "@/hooks/use-expert-review";
 import { getApiErrorDetail } from "@/services/api-client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -31,7 +31,7 @@ interface ReviewBookingDialogProps {
     target_companies?: string;
     candidate_notes?: string;
   }) => Promise<ReviewOrder>;
-  onCheckout: (orderId: string) => Promise<unknown>;
+  onCheckout: (orderId: string, paymentMethod?: string) => Promise<unknown>;
 }
 
 export function ReviewBookingDialog({
@@ -46,6 +46,8 @@ export function ReviewBookingDialog({
   const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState<"details" | "payment">("details");
   const activePackageSlug = selectedPackage?.slug || (packages[0]?.slug ?? "pro");
+  const [resumeUrl, setResumeUrl] = useState<string>("/uploads/resumes/candidate_cv.pdf");
+  const [paymentMethod, setPaymentMethod] = useState<"momo_qr" | "card">("momo_qr");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export function ReviewBookingDialog({
       const order = await onSubmitOrder({
         package_slug: activePackageSlug,
         expert_id: selectedExpert?.id,
-        resume_url: "/uploads/resumes/default_resume.pdf",
+        resume_url: resumeUrl.trim() || "/uploads/resumes/candidate_cv.pdf",
         target_role: values.targetRole,
         target_companies: values.targetCompanies,
         candidate_notes: values.candidateNotes,
@@ -92,7 +94,7 @@ export function ReviewBookingDialog({
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await onCheckout(createdOrderId);
+      await onCheckout(createdOrderId, paymentMethod);
       onOpenChange(false);
       setStep("details");
       setCreatedOrderId(null);
@@ -118,7 +120,7 @@ export function ReviewBookingDialog({
           <DialogDescription>
             {step === "details"
               ? "Share your target career aspirations to help the reviewer personalize advice."
-              : "Review your order summary and simulate payment."}
+              : "Review your order summary and select a payment method."}
           </DialogDescription>
         </DialogHeader>
 
@@ -158,6 +160,14 @@ export function ReviewBookingDialog({
               </div>
               <Badge variant="outline" className="text-xs">{currentPkg?.turn_around_hours}h Turnaround</Badge>
             </Card>
+
+            <FormField label="Resume / CV File URL" required>
+              <Input
+                value={resumeUrl}
+                onChange={(e) => setResumeUrl(e.target.value)}
+                placeholder="/uploads/resumes/candidate_cv.pdf"
+              />
+            </FormField>
 
             <FormField label="Target Role / Job Title" required error={errors.targetRole?.message}>
               <Input
@@ -210,14 +220,34 @@ export function ReviewBookingDialog({
               </div>
             </Card>
 
-            <div className="p-3.5 rounded-lg border border-surface-border bg-surface-card space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-typography-main">
-                <CreditCard className="h-4 w-4 text-brand-primary" />
-                <span>Simulated Secure Card Payment</span>
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-typography-main">Phương thức thanh toán (Escrow Bảo Đảm)</div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("momo_qr")}
+                  className={`p-3 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-2 ${
+                    paymentMethod === "momo_qr"
+                      ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold"
+                      : "border-surface-border bg-surface-card text-typography-heading"
+                  }`}
+                >
+                  <QrCode className="h-4 w-4 text-brand-primary shrink-0" />
+                  <span className="text-xs">MoMo QR / VietQR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={`p-3 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-2 ${
+                    paymentMethod === "card"
+                      ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold"
+                      : "border-surface-border bg-surface-card text-typography-heading"
+                  }`}
+                >
+                  <CreditCard className="h-4 w-4 text-brand-primary shrink-0" />
+                  <span className="text-xs">Thẻ Quốc Tế</span>
+                </button>
               </div>
-              <p className="text-[11px] text-typography-muted">
-                Test card environment enabled. Click confirm to simulate a successful payment transaction.
-              </p>
             </div>
 
             <div className="flex gap-3">

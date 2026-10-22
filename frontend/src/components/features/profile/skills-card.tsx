@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { apiClient } from "@/services/api-client";
 import {
   Dialog,
   DialogOverlay,
@@ -20,7 +22,7 @@ export interface SkillsCardProps {
   isEditable?: boolean;
 }
 
-const SUGGESTIONS = ["Next.js", "Python", "Docker", "Figma", "Tailwind CSS"];
+const DEFAULT_SUGGESTIONS = ["Next.js", "Python", "Docker", "Figma", "Tailwind CSS"];
 
 export function SkillsCard({
   skills,
@@ -30,6 +32,17 @@ export function SkillsCard({
 }: SkillsCardProps) {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [newSkillText, setNewSkillText] = React.useState("");
+
+  const { data: catalogSkills = DEFAULT_SUGGESTIONS } = useQuery<string[]>({
+    queryKey: ["catalog-skills"],
+    queryFn: async () => {
+      const res = await apiClient.get<string[]>("/v1/profile/skills/");
+      return res.data?.length ? res.data : DEFAULT_SUGGESTIONS;
+    },
+    staleTime: 60_000,
+  });
+
+  const availableSuggestions = catalogSkills.filter((s) => !skills.includes(s)).slice(0, 8);
 
   const handleAdd = (skillToAdd: string) => {
     const trimmed = skillToAdd.trim();
@@ -85,7 +98,7 @@ export function SkillsCard({
         <div className="pt-2 border-t border-surface-divider">
           <p className="text-[11px] text-typography-muted mb-1.5">Suggested additions:</p>
           <div className="flex flex-wrap gap-1.5">
-            {SUGGESTIONS.filter((s) => !skills.includes(s)).map((s) => (
+            {availableSuggestions.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -111,6 +124,7 @@ export function SkillsCard({
           <div className="space-y-3">
             <Input
               data-testid="skill-autocomplete-input"
+              list="skill-catalog-options"
               autoFocus
               placeholder="e.g. Next.js, Kubernetes, FastAPI"
               value={newSkillText}
@@ -121,6 +135,11 @@ export function SkillsCard({
                 }
               }}
             />
+            <datalist id="skill-catalog-options">
+              {catalogSkills.map((sk) => (
+                <option key={sk} value={sk} />
+              ))}
+            </datalist>
 
             <DialogFooter className="flex items-center justify-end gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={() => setModalOpen(false)}>

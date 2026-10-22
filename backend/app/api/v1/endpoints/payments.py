@@ -17,9 +17,12 @@ router = APIRouter(prefix="/payments/momo", tags=["Domain 13: MoMo Payments & Es
 
 
 @router.post("/create-qr", response_model=MomoCreatePaymentResponse, status_code=status.HTTP_201_CREATED)
-async def create_momo_payment_qr(payload: MomoCreatePaymentRequest):
+async def create_momo_payment_qr(
+    payload: MomoCreatePaymentRequest,
+    db: AsyncSession = Depends(get_db),
+):
     """BEL-202: Generates MoMo dynamic QR code and creates a PENDING order."""
-    return PaymentService.create_qr(payload)
+    return await PaymentService.create_qr(payload, db)
 
 
 @router.post("/ipn", response_model=MomoIpnResponse, status_code=status.HTTP_200_OK)
@@ -29,6 +32,6 @@ async def momo_ipn_webhook(payload: MomoIpnRequest, db: AsyncSession = Depends(g
 
 
 @router.get("/order-status/{order_id}", response_model=OrderStatusResponse, status_code=status.HTTP_200_OK)
-async def check_order_status(order_id: str):
+async def check_order_status(order_id: str, db: AsyncSession = Depends(get_db)):
     """Poll order status for frontend payment dialog."""
-    return PaymentService.get_order_status(order_id)
+    return await PaymentService.get_order_status(order_id, db)

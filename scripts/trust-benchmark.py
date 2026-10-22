@@ -130,6 +130,11 @@ if MODULES_DIR.exists():
         for req_f in ("__init__.py", "service.py", "repository.py"):
             if not (mod_dir / req_f).exists():
                 violations["3. Layer Purity (No Band-Aids)"].append(f"backend/app/modules/{mod_name}/{req_f} missing in vertical slice")
+        repo_f = mod_dir / "repository.py"
+        if repo_f.exists() and ".execute(" not in repo_f.read_text(encoding="utf-8"):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"backend/app/modules/{mod_name}/repository.py must execute real PostgreSQL queries (.execute)"
+            )
         for py_f in mod_dir.rglob("*.py"):
             py_txt = py_f.read_text(encoding="utf-8")
             py_rel = py_f.relative_to(ROOT)
@@ -160,6 +165,42 @@ for p in ui_files:
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> apiClient called inside useEffect (must use @tanstack/react-query)")
     if re.search(r"catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)", txt, re.DOTALL):
         violations["2. Error Transparency (No Pass)"].append(f"{rel} -> fake success state inside catch block")
+    if "frontend/src/" in rel.as_posix():
+        for stub_pat, stub_label in (
+            (r"\balert\s*\(", "browser alert() stub prohibited"),
+            (r"window\.prompt\s*\(", "window.prompt() stub prohibited"),
+            (r"Simulated ", "hardcoded 'Simulated ' UI placeholder prohibited"),
+            (r"MOMO-MOCK", "fake MOMO-MOCK fallback prohibited"),
+        ):
+            if re.search(stub_pat, txt):
+                violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> {stub_label}")
+
+root_layout = FE_SRC / "app" / "layout.tsx"
+if root_layout.exists() and "<AuthSessionBootstrap" not in root_layout.read_text(encoding="utf-8"):
+    violations["3. Layer Purity (No Band-Aids)"].append(
+        "frontend/src/app/layout.tsx missing global <AuthSessionBootstrap /> mount"
+    )
+
+# Enforce 100% FE-to-BE Endpoint Wiring (Zero Dead/Unintegrated Backend Endpoints)
+fe_all_blob = "\n".join(
+    p.read_text(encoding="utf-8", errors="ignore")
+    for p in FE_SRC.rglob("*")
+    if p.suffix in (".ts", ".tsx")
+)
+for ep_file in sorted((BE_APP / "api" / "v1" / "endpoints").glob("*.py")):
+    ep_txt = ep_file.read_text(encoding="utf-8")
+    pref_m = re.search(r"APIRouter\(prefix=[\"']([^\"']+)[\"']", ep_txt)
+    pref = pref_m.group(1) if pref_m else ""
+    for m in re.finditer(r"@router\.(get|post|put|patch|delete)\([\"']([^\"']*)[\"']", ep_txt):
+        method, sub = m.group(1).upper(), m.group(2)
+        full_path = ("/v1" + pref + sub).replace("//", "/")
+        norm_path = re.sub(r"\{[^}]+\}", "{}", full_path).rstrip("/")
+        segs = [s for s in norm_path.split("/") if s and s != "{}" and s != "v1"]
+        rx = r"/v1/" + r".*?".join(re.escape(s) for s in segs)
+        if not re.search(rx, fe_all_blob):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{ep_file.relative_to(ROOT)} -> {method} {full_path} is not integrated/called anywhere in frontend/src/"
+            )
 
 if not (ROOT / "backend" / "alembic" / "env.py").exists():
     violations["3. Layer Purity (No Band-Aids)"].append("backend/alembic/env.py missing -> Alembic migration environment required")

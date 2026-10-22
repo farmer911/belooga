@@ -135,15 +135,20 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            {["Google", "LinkedIn", "Facebook"].map((provider) => (
-              <button
-                key={provider}
-                type="button"
-                className="flex items-center justify-center py-2.5 px-4 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-slate-50 transition-colors"
-              >
-                {provider}
-              </button>
-            ))}
+            {["Google", "LinkedIn", "Facebook"].map((provider) => {
+              const slug = provider.toLowerCase();
+              return (
+                <button
+                  key={provider}
+                  type="button"
+                  data-testid={`oauth-${slug}-btn`}
+                  onClick={() => router.push(`/callback?provider=${slug}&code=oauth_${slug}_code`)}
+                  className="flex items-center justify-center py-2.5 px-4 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  {provider}
+                </button>
+              );
+            })}
           </div>
 
           <p className="text-center text-sm text-typography-muted">

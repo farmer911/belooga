@@ -34,25 +34,33 @@ export function MomoCheckoutDialog({
   const { data: qrData } = useQuery<MomoQrResponse>({
     queryKey: ["momo-qr", packageType, amount, orderInfo],
     queryFn: async () => {
-      try {
-        const res = await apiClient.post<MomoQrResponse>("/v1/payments/momo/create-qr", {
-          package_type: packageType,
-          amount: amount,
-          order_info: orderInfo,
-        });
-        return res.data;
-      } catch {
-        return {
-          order_id: `MOMO-MOCK-${Date.now()}`,
-          qr_code_url: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=momo_mock_transfer",
-        };
-      }
+      const res = await apiClient.post<MomoQrResponse>("/v1/payments/momo/create-qr", {
+        package_type: packageType,
+        amount: amount,
+        order_info: orderInfo,
+      });
+      return res.data;
     },
     enabled: isOpen,
   });
 
   const orderId = qrData?.order_id ?? "";
   const qrUrl = qrData?.qr_code_url ?? "";
+
+  const { data: orderStatusData } = useQuery<{ order_id: string; status: string }>({
+    queryKey: ["momo-order-status", orderId],
+    queryFn: async () =>
+      (await apiClient.get<{ order_id: string; status: string }>(`/v1/payments/momo/order-status/${orderId}`)).data,
+    enabled: isOpen && Boolean(orderId) && !isPaid,
+    refetchInterval: isOpen && Boolean(orderId) && !isPaid ? 3000 : false,
+  });
+
+  useEffect(() => {
+    if (orderStatusData?.status === "PAID" && !isPaid) {
+      setIsPaid(true);
+      if (onPaymentSuccess) onPaymentSuccess();
+    }
+  }, [orderStatusData?.status, isPaid, onPaymentSuccess]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -93,7 +101,10 @@ export function MomoCheckoutDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
+    <div
+      data-testid="momo-checkout-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in"
+    >
       <div className="bg-surface-card border border-surface-border rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl relative text-xs">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-surface-divider pb-3">

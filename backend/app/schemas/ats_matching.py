@@ -26,6 +26,19 @@ class ATSScanResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ATSScanHistoryItem(BaseModel):
+    id: uuid.UUID
+    match_id: uuid.UUID
+    job_title: str
+    company_name: Optional[str] = None
+    ats_score: int = Field(..., ge=0, le=100)
+    matched_skills: List[str] = Field(default_factory=list)
+    missing_skills: List[str] = Field(default_factory=list)
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TalentShortlistRequest(BaseModel):
     job_title: str = Field(..., max_length=255, description="Target role title for recruiter shortlist")
     company_name: Optional[str] = Field(None, max_length=255, description="Hiring organization")

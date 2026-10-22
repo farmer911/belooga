@@ -90,12 +90,49 @@ export async function uploadResume(
   return res.data;
 }
 
-export function downloadCandidatePdf(username: string) {
-  const url = `${API_BASE_URL}/v1/profile/${username}/pdf/`;
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", `${username}_CV_2026.pdf`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+export async function deleteCandidateResume(
+  username: string
+): Promise<{ message: string }> {
+  const res = await apiClient.delete(`/v1/profile/${username}/resume/`);
+  return res.data;
+}
+
+export interface VideoTranscodingStatus {
+  username: string;
+  has_video?: boolean;
+  status: string;
+  video_url?: string | null;
+  poster_url?: string | null;
+  [key: string]: unknown;
+}
+
+export async function getVideoTranscodingStatus(
+  username: string
+): Promise<VideoTranscodingStatus> {
+  const res = await apiClient.get<VideoTranscodingStatus>(`/v1/profile/${username}/video-status/`);
+  return res.data;
+}
+
+export async function downloadCandidatePdf(username: string) {
+  try {
+    const res = await apiClient.get(`/v1/profile/${username}/pdf/`, {
+      responseType: "blob",
+    });
+    const blobUrl = URL.createObjectURL(res.data);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.setAttribute("download", `${username}_CV_2026.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+  } catch {
+    const url = `${API_BASE_URL}/v1/profile/${username}/pdf/`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${username}_CV_2026.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }

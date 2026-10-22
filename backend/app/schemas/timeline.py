@@ -112,13 +112,32 @@ class AwardCertificationCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=255)
     location_name: Optional[str] = "Global"
+    issuer: Optional[str] = None
     from_date_month: Optional[int] = Field(1, ge=1, le=12)
     from_date_year: Optional[int] = Field(2023, ge=1900, le=2100)
+    issued_year: Optional[int] = Field(None, ge=1900, le=2100)
     currently_work_here: bool = False
     to_date_month: Optional[int] = None
     to_date_year: Optional[int] = None
     description: Optional[str] = ""
     logo_url: Optional[str] = None
+
+
+class AwardUpdate(BaseModel):
+    """Payload for updating an existing award or certificate."""
+
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    location_name: Optional[str] = Field(None, max_length=255)
+    issuer: Optional[str] = Field(None, max_length=255)
+    from_date_month: Optional[int] = Field(None, ge=1, le=12)
+    from_date_year: Optional[int] = Field(None, ge=1900, le=2100)
+    issued_year: Optional[int] = Field(None, ge=1900, le=2100)
+    currently_work_here: Optional[bool] = None
+    to_date_month: Optional[int] = Field(None, ge=1, le=12)
+    to_date_year: Optional[int] = Field(None, ge=1900, le=2100)
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    display_order: Optional[int] = None
 
 
 class AwardCertificationResponse(BaseModel):
@@ -127,7 +146,7 @@ class AwardCertificationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: Union[UUID, str]
-    title: str
+    title: str = ""
     location_name: Optional[str] = None
     from_date_month: Optional[int] = None
     from_date_year: Optional[int] = None
@@ -137,23 +156,44 @@ class AwardCertificationResponse(BaseModel):
     description: Optional[str] = None
     logo_url: Optional[str] = None
     display_order: int = 0
+    message: Optional[str] = None
+
+
+AwardResponse = AwardCertificationResponse
+
+
+class MessageResponse(BaseModel):
+    """Standard timeline mutation confirmation response."""
+
+    id: Optional[Union[UUID, str]] = None
+    message: str
 
 
 class ReorderItem(BaseModel):
     """Individual item for timeline reordering."""
 
-    id: str
-    order: int
+    id: Union[UUID, str]
+    order: Optional[int] = None
+    display_order: Optional[int] = None
+
+    @property
+    def resolved_order(self) -> int:
+        if self.order is not None:
+            return self.order
+        return self.display_order if self.display_order is not None else 0
 
 
 class ReorderPayload(BaseModel):
     """Batch reordering payload with sequence of items."""
 
-    orders: List[ReorderItem]
+    orders: List[Union[ReorderItem, UUID, str]] = Field(default_factory=list)
+    items: Optional[List[Union[ReorderItem, UUID, str]]] = None
+    award_ids: Optional[List[Union[UUID, str]]] = None
 
 
-# Backward-compatible alias
+# Backward-compatible aliases
 ReorderRequest = ReorderPayload
+AwardOrderList = ReorderPayload
 
 
 class CareerTrajectoryResponse(BaseModel):

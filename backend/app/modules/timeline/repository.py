@@ -229,8 +229,48 @@ class TimelineRepository:
         await self.db.flush()
         return item_id
 
+    async def update_award(self, profile_id: uuid.UUID, item_id: uuid.UUID, **fields) -> Optional[Dict[str, Any]]:
+        valid = {k: v for k, v in fields.items() if v is not None}
+        if valid:
+            stmt = update(AwardCertification).where(
+                AwardCertification.id == item_id, AwardCertification.profile_id == profile_id
+            ).values(**valid)
+            if (await self.db.execute(stmt)).rowcount == 0:
+                return None
+        row = (
+            await self.db.execute(
+                text("""
+                    SELECT id, title, location_name, from_date_month, from_date_year,
+                           currently_work_here, to_date_month, to_date_year, description,
+                           logo_url, display_order
+                    FROM award_certifications
+                    WHERE id = :id AND profile_id = :pid
+                    LIMIT 1
+                """),
+                {"id": item_id, "pid": profile_id},
+            )
+        ).fetchone()
+        return dict(row._mapping) if row else None
+
     async def delete_award(self, profile_id: uuid.UUID, item_id: uuid.UUID) -> bool:
         stmt = delete(AwardCertification).where(
             AwardCertification.id == item_id, AwardCertification.profile_id == profile_id
         )
         return (await self.db.execute(stmt)).rowcount > 0
+
+    async def lock_awards_for_update(self, profile_id: uuid.UUID) -> None:
+        await self.db.execute(
+            select(AwardCertification.id).where(AwardCertification.profile_id == profile_id).with_for_update()
+        )
+
+    async def bulk_update_award_orders(
+        self, profile_id: uuid.UUID, order_pairs: List[tuple[uuid.UUID, int]]
+    ) -> None:
+        if not order_pairs:
+            return
+        whens = {item_id: order_val for item_id, order_val in order_pairs}
+        await self.db.execute(
+            update(AwardCertification)
+            .where(AwardCertification.profile_id == profile_id, AwardCertification.id.in_(list(whens.keys())))
+            .values(display_order=case(whens, value=AwardCertification.id))
+        )

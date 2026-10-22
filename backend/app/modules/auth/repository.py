@@ -54,7 +54,7 @@ class IdentityRepository:
     async def get_identity_with_profile_by_email(self, email: str):
         query = text("""
             SELECT i.id, i.email, i.password_hash, i.role, i.status,
-                   p.username, p.first_name, p.last_name
+                   p.username, p.first_name, p.last_name, p.avatar_url
             FROM identities i
             JOIN candidate_profiles p ON p.identity_id = i.id
             WHERE i.email = :email

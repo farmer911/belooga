@@ -17,6 +17,7 @@ import { VideoPitchCard } from "@/components/features/media/video-pitch-card";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { TimelineItemCard } from "@/components/features/timeline/timeline-item-card";
 import { EducationTimeline } from "@/components/features/timeline/education-timeline";
+import { AwardsTimeline } from "@/components/features/timeline/awards-timeline";
 
 interface TrustScoreResponse {
   username: string;
@@ -205,6 +206,7 @@ export default function PublicCandidatePage() {
             </div>
 
             <EducationTimeline education={education} isEditable={false} />
+            <AwardsTimeline username={username} isEditable={false} />
           </div>
         </div>
       </div>
@@ -216,18 +218,16 @@ export default function PublicCandidatePage() {
         videoUrl={profile.video_pitch_url}
         posterUrl={profile.video_pitch_poster}
       />
-
       <PublicContactModal
         isOpen={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
         username={username}
         fullName={profile.full_name}
       />
-
       <ReportProfileModal
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
-        candidateId={profile.id}
+        candidateId={String(profile.user_id || profile.id || username)}
         username={username}
       />
     </div>

@@ -28,6 +28,8 @@ interface SalaryBenchmarkData {
   p75_salary_vnd: number;
   sample_size_jds: number;
   top_paid_skills: SalarySkill[];
+  growth_rate_yoy?: string;
+  market_demand?: string;
 }
 
 interface CareerRoiData {
@@ -36,10 +38,12 @@ interface CareerRoiData {
   annual_comp_gain_vnd: number;
   upskill_recommendations: Array<{
     skill: string;
-    salary_premium_pct: string;
-    monthly_delta_vnd: number;
+    salary_premium_pct?: string;
+    salary_boost_pct?: string | number;
+    monthly_delta_vnd?: number;
     learning_weeks: number;
-    roi_score: number;
+    roi_score?: number;
+    roi_verdict?: string;
   }>;
   negotiation_leverage_script: string;
 }
@@ -50,26 +54,34 @@ export default function SalaryBenchmarkPage() {
   const [location, setLocation] = useState<string>("Ho Chi Minh");
 
   const queryStack = techStack.split(" ")[0];
-  const queryLevel = level.split(" ")[0];
+  const role = techStack.toLowerCase().includes("react")
+    ? "frontend"
+    : techStack.toLowerCase().includes("devops")
+    ? "devops"
+    : techStack.toLowerCase().includes("ai")
+    ? "ai"
+    : "backend";
+  const city = location;
+  const normalizedLevel = level.replace("-Level", "").split(" ")[0];
 
   const { data: benchmark } = useQuery<SalaryBenchmarkData>({
-    queryKey: ["salary-benchmark", techStack, level, location],
+    queryKey: ["salary-benchmark", role, techStack, level, location],
     queryFn: async () => {
-      const res = await apiClient.get<SalaryBenchmarkData>(
-        `/v1/catalogs/salary-benchmark?tech_stack=${encodeURIComponent(queryStack)}&level=${encodeURIComponent(queryLevel)}&location=${encodeURIComponent(location)}`,
-        { timeout: 3000 }
-      );
+      const res = await apiClient.get<SalaryBenchmarkData>("/v1/catalogs/salary-benchmark", {
+        params: { role, tech_stack: queryStack, level: level.replace("-Level", ""), city, location },
+        timeout: 3000,
+      });
       return res.data;
     },
   });
 
   const { data: careerRoi } = useQuery<CareerRoiData>({
-    queryKey: ["career-upskill-roi", techStack, level, location],
+    queryKey: ["career-upskill-roi", techStack, normalizedLevel, location],
     queryFn: async () => {
-      const res = await apiClient.get<CareerRoiData>(
-        `/v1/catalogs/career-roi?tech_stack=${encodeURIComponent(queryStack)}&level=${encodeURIComponent(queryLevel)}&location=${encodeURIComponent(location)}`,
-        { timeout: 3000 }
-      );
+      const res = await apiClient.get<CareerRoiData>("/v1/catalogs/career-roi", {
+        params: { tech_stack: queryStack, level: level.replace("-Level", ""), city, location },
+        timeout: 3000,
+      });
       return res.data;
     },
   });
@@ -108,11 +120,8 @@ export default function SalaryBenchmarkPage() {
         </div>
       </div>
 
-      {/* Main Container */}
       <main className="flex-1 p-4 space-y-4 max-w-[1400px] w-full mx-auto overflow-y-auto">
-        {/* Dynamic Filters Bar */}
         <div className="p-4 rounded-xl bg-surface-card border border-surface-border space-y-3 shadow-xs">
-          {/* Tech Stack Selection */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-typography-heading w-28">Ngôn ngữ / Stack:</span>
             <div className="flex flex-wrap gap-1.5">
@@ -121,9 +130,7 @@ export default function SalaryBenchmarkPage() {
                   key={s}
                   onClick={() => setTechStack(s)}
                   className={`px-3 py-1 rounded-md text-xs transition-colors font-mono cursor-pointer ${
-                    techStack === s
-                      ? "bg-brand-primary text-white font-bold shadow-xs"
-                      : "bg-surface-page border border-surface-border text-typography-heading hover:bg-surface-divider"
+                    techStack === s ? "bg-brand-primary text-white font-bold shadow-xs" : "bg-surface-page border border-surface-border text-typography-heading hover:bg-surface-divider"
                   }`}
                 >
                   {s}
@@ -132,7 +139,6 @@ export default function SalaryBenchmarkPage() {
             </div>
           </div>
 
-          {/* Level Selection */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-typography-heading w-28">Cấp bậc / Level:</span>
             <div className="flex flex-wrap gap-1.5">
@@ -141,9 +147,7 @@ export default function SalaryBenchmarkPage() {
                   key={l}
                   onClick={() => setLevel(l)}
                   className={`px-3 py-1 rounded-md text-xs transition-colors cursor-pointer ${
-                    level === l
-                      ? "bg-brand-dark text-white font-bold shadow-xs"
-                      : "bg-surface-page border border-surface-border text-typography-heading hover:bg-surface-divider"
+                    level === l ? "bg-brand-dark text-white font-bold shadow-xs" : "bg-surface-page border border-surface-border text-typography-heading hover:bg-surface-divider"
                   }`}
                 >
                   {l}
@@ -152,7 +156,6 @@ export default function SalaryBenchmarkPage() {
             </div>
           </div>
 
-          {/* Location Selection */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-typography-heading w-28">Địa điểm làm việc:</span>
             <div className="flex flex-wrap gap-1.5">
@@ -161,9 +164,7 @@ export default function SalaryBenchmarkPage() {
                   key={loc}
                   onClick={() => setLocation(loc)}
                   className={`px-2.5 py-1 rounded-md text-xs transition-colors inline-flex items-center gap-1 cursor-pointer ${
-                    location === loc
-                      ? "bg-brand-overlay text-brand-dark font-semibold border border-teal-200"
-                      : "bg-surface-page border border-surface-border text-typography-muted hover:text-typography-main"
+                    location === loc ? "bg-brand-overlay text-brand-dark font-semibold border border-teal-200" : "bg-surface-page border border-surface-border text-typography-muted hover:text-typography-main"
                   }`}
                 >
                   <MapPin className="w-3 h-3" aria-hidden="true" />
@@ -174,22 +175,10 @@ export default function SalaryBenchmarkPage() {
           </div>
         </div>
 
-        {/* 2-Column High-Density Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-7">
-            <SalaryPercentileCard
-              techStack={techStack}
-              level={level}
-              location={location}
-              p25={p25}
-              p50={p50}
-              p75={p75}
-              sampleSize={sampleSize}
-              growthRate="+18.5%"
-              marketDemand="RẤT CAO"
-            />
+            <SalaryPercentileCard techStack={techStack} level={level} location={location} p25={p25} p50={p50} p75={p75} sampleSize={sampleSize} growthRate={benchmark?.growth_rate_yoy || "+18.5%"} marketDemand={benchmark?.market_demand || "RẤT CAO"} />
           </div>
-
           <div className="lg:col-span-5">
             <SkillPremiumRadar skills={skills} techStack={techStack} />
           </div>
@@ -208,6 +197,22 @@ export default function SalaryBenchmarkPage() {
                 +{(careerRoi.annual_comp_gain_vnd / 1_000_000).toFixed(0)}M VNĐ / Năm
               </span>
             </div>
+            {careerRoi.upskill_recommendations?.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {careerRoi.upskill_recommendations.map((rec) => (
+                  <div key={rec.skill} className="p-2.5 rounded-lg bg-surface-page border border-surface-border text-xs space-y-1">
+                    <div className="flex items-center justify-between font-bold text-typography-main">
+                      <span>{rec.skill}</span>
+                      <span className="text-emerald-700">{rec.salary_boost_pct ?? rec.salary_premium_pct}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-typography-muted">
+                      <span>Lộ trình: {rec.learning_weeks} tuần</span>
+                      <span className="font-semibold text-brand-primary">{rec.roi_verdict ?? `ROI ${rec.roi_score ?? 9.5}/10`}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             <p className="text-xs text-typography-heading bg-teal-50/50 border border-teal-200 rounded-lg p-2.5">
               {careerRoi.negotiation_leverage_script}
             </p>

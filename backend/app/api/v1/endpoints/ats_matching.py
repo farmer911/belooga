@@ -1,6 +1,6 @@
 """ATS Diagnostics, Recruiter Talent Shortlist & Market Pulse Controller."""
 
-from typing import Optional
+from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user_optional
 from app.modules.ats_matching import ATSMatchingService
 from app.schemas.ats_matching import (
+    ATSScanHistoryItem,
     ATSScanRequest,
     ATSScanResponse,
     InterviewKitRequest,
@@ -30,6 +31,17 @@ async def scan_and_match_cv_jd(
     candidate_id = current_user.id if current_user else None
     service = ATSMatchingService(db)
     return await service.scan_and_match(request=request, candidate_identity_id=candidate_id)
+
+
+@router.get("/history", response_model=List[ATSScanHistoryItem])
+async def list_ats_scan_history(
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """List recent ATS scan history from PostgreSQL."""
+    candidate_id = current_user.id if current_user else None
+    service = ATSMatchingService(db)
+    return await service.list_scan_history(candidate_identity_id=candidate_id)
 
 
 @router.post("/talent-shortlist", response_model=TalentShortlistResponse)

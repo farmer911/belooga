@@ -1,9 +1,11 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 class MomoCreatePaymentRequest(BaseModel):
     package_type: str = Field(..., description="MICRO_PASS_29K, MICRO_PASS_59K, EXPERT_REVIEW")
     amount: float = Field(..., description="Payment amount in VND")
     order_info: str = Field(..., description="Short order description")
+    review_order_id: Optional[str] = Field(None, description="Optional CV review order UUID to link payment_reference")
 
 class MomoCreatePaymentResponse(BaseModel):
     order_id: str

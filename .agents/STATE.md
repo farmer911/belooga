@@ -1,18 +1,18 @@
 # Active Working Memory (`STATE.md`)
 
-## Objective & Expected Outcome
-- **Task (BEL-138 — Full Service, Workflow, Skill, README & E2E Gateway Alignment):**
-  1. Update Backend services (`profile/service.py`, `media/service.py`, `analytics/service.py`, `services/media_transcoder.py`) to emit Gateway URLs (`PUBLIC_API_URL=http://localhost:8080`) instead of hardcoded `:8000`.
-  2. Synchronize Skills, Rules, Workflows (`GEMINI.md`, `.agents/ROUTER.md`, `.agents/rules/backend.md`, `belooga-backend-engineering`, `belooga-frontend-engineering`, `belooga-qc-engineering`, `render-skill-facts.py`) and `README.md` with the `:8080` Edge + Distributed Redis API Gateway architecture.
-  3. Migrate all Playwright E2E API calls (`qc/tests/e2e/workspace.spec.ts`, `expert-review.spec.ts`) and Frontend BI snippets (`use-analytics-dashboard.ts`) from `:8000` to `:8080` and verify live E2E execution.
+## Objective & Hypothesis
+- **Task (BEL-139 — Full Platform Option B Remediation & Anti-Recurrence Gates):**
+  1. Fix all 32 FE/BE integration gaps, UI stubs, missing CRUD endpoints, and BE in-memory/hardcoded mocks across all 4 domain tracks.
+  2. Upgrade `scripts/trust-benchmark.py` with automated AST gates blocking uncalled BE endpoints, UI `alert()`/`window.prompt()`/`Simulated` stubs, and unpersisted repositories.
 
 ## Pre-Mortem Risks
-- Register `PUBLIC_API_URL` in `.env.example` so `scripts/trust-benchmark.py` passes with 100% score.
-- Keep all `backend/app/` files <= 300 lines (`be_files_over_300_lines = 0`) and all `SKILL.md` files <= 200 lines (`scripts/lint-skills.py`).
-- Ensure `nginx/gateway.conf` proxies `/redoc` in addition to `/docs` and `/openapi.json`.
+- Enforce `be_files_over_300_lines = 0`, `fe_files_over_300_lines = 0`, `fe_max_page_lines <= 238`, `fe_arbitrary_hex = 0`, `fe_structural_emoji = 0`, `fe_any = 0`.
+- All new `@router` endpoints must declare `response_model` and `get_current_user` on mutations.
 
 ## Execution Checklist
-- [x] **Phase 1 (TDD RED):** Add failing test in `backend/tests/test_gateway_and_cache_optimization.py` checking service URLs, E2E specs, and README gateway alignment
-- [x] **Phase 2 (TDD GREEN Services & E2E):** Update backend services, `use-analytics-dashboard.ts`, `qc/tests/e2e/*.spec.ts`, and `nginx/gateway.conf` to `:8080`
-- [x] **Phase 3 (Skills, Workflows & README):** Update `GEMINI.md`, `README.md`, `.agents/ROUTER.md`, `.agents/rules/backend.md`, and `.agents/skills/*`
-- [x] **Phase 4 (Verification & PR):** Run `pytest`, Playwright E2E, `audit-truth.sh`, `trust-benchmark.py`, and merge PR
+- [x] **Phase 1:** Full-platform forensic audit (`platform_forensic_audit.md`)
+- [x] **Phase 2 (Track 1 BE Core):** Fix Auth avatar/OAuth, Timeline Award PATCH/order & privacy, Media/PDF PII & video-status, Search & DB schema
+- [x] **Phase 3 (Track 2 BE Tools):** Fix Job Tracker PATCH & leak, ATS History & dynamic kit/pulse, Catalogs DB queries, Payments DB sync, CMS/Analytics
+- [x] **Phase 4 (Track 3 FE Core):** Mount global `AuthSessionBootstrap`, fix Mobile Logout, Homepage `<video>`, Avatar upload, Catalogs autocomplete, Timeline Edit/Reorder, PDF auth blob
+- [x] **Phase 5 (Track 4 FE Tools):** Fix CV Studio GET draft/reorder/education, ATS MoMo Tailor callback & History/Questions, Expert Review, Salary params, Kanban Edit, Analytics Copy
+- [x] **Phase 6 (Anti-Recurrence Lock & Verification):** Promote FE-BE wiring & stub gates into `scripts/trust-benchmark.py`, run `pytest`, `tsc`, E2E, and PR checks

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Upload, Download, Loader2 } from "lucide-react";
+import { FileText, Upload, Download, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface ResumeAttachmentCardProps {
@@ -9,6 +9,7 @@ export interface ResumeAttachmentCardProps {
   isUploadingResume?: boolean;
   onUploadClick?: () => void;
   onDownloadPdf: () => void;
+  onDeleteResume?: () => void;
   isEditable?: boolean;
 }
 
@@ -17,6 +18,7 @@ export function ResumeAttachmentCard({
   isUploadingResume = false,
   onUploadClick,
   onDownloadPdf,
+  onDeleteResume,
   isEditable = true,
 }: ResumeAttachmentCardProps) {
   return (
@@ -55,13 +57,26 @@ export function ResumeAttachmentCard({
           </div>
         </div>
 
-        <Button
-          size="sm"
-          className="bg-brand-primary hover:bg-brand-hover text-white gap-2 cursor-pointer"
-          onClick={onDownloadPdf}
-        >
-          <Download className="w-4 h-4" /> Download PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          {isEditable && onDeleteResume && (
+            <Button
+              size="sm"
+              variant="outline"
+              data-testid="delete-resume-btn"
+              className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5 cursor-pointer"
+              onClick={onDeleteResume}
+            >
+              <Trash2 className="w-4 h-4" /> Delete
+            </Button>
+          )}
+          <Button
+            size="sm"
+            className="bg-brand-primary hover:bg-brand-hover text-white gap-2 cursor-pointer"
+            onClick={onDownloadPdf}
+          >
+            <Download className="w-4 h-4" /> Download PDF
+          </Button>
+        </div>
       </div>
     </div>
   );

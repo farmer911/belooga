@@ -49,7 +49,7 @@ async def get_salary_benchmark(
     db: AsyncSession = Depends(get_db),
 ):
     """Programmatic SEO & Market Radar Engine delegating to CatalogsService."""
-    return CatalogsService(db).get_salary_benchmark(role, tech_stack, level, location)
+    return await CatalogsService(db).get_salary_benchmark(role, tech_stack, level, location)
 
 
 @router.get("/catalogs/career-roi", response_model=CareerRoiResponse, tags=["Domain 7: Master Catalogs"])
@@ -60,6 +60,6 @@ async def get_career_upskill_roi(
     db: AsyncSession = Depends(get_db),
 ):
     """Calculate Career Upskill ROI & Salary Negotiation Leverage Script."""
-    return CatalogsService(db).get_career_roi(tech_stack, level, location)
+    return await CatalogsService(db).get_career_roi(tech_stack, level, location)
 
 

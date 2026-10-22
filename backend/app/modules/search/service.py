@@ -71,8 +71,8 @@ class SearchService:
                     "seeking_status": r["seeking_status"] or "Actively Looking",
                     "avatar_url": r.get("avatar_url") or "/images/avatar.jpg",
                     "video_pitch_poster": "/images/home/matt-poster.png",
-                    "video_pitch_url": r.get("video_pitch_url") or "/images/home/Ava_s_Video.mp4",
-                    "duration": "0:30",
+                    "video_pitch_url": r.get("video_pitch_url") or "",
+                    "duration": "0:30" if r.get("video_pitch_url") else "0:00",
                 }
                 for r in rows
             ]
@@ -121,18 +121,42 @@ class SearchService:
 
     async def get_trending_search_insights(self) -> Dict[str, Any]:
         async def _compute() -> Dict[str, Any]:
-            total = await self.search_repo.count_candidates_fulltext("")
+            total, video_pct = await self.search_repo.get_talent_pool_stats()
+            top_skills = await self.search_repo.get_top_trending_skills(limit=5)
+            cat_map = {
+                "golang": "Backend", "python": "AI / Backend", "fastapi": "Backend",
+                "react": "Frontend", "next.js": "Frontend", "typescript": "Frontend",
+                "kubernetes": "DevOps", "docker": "DevOps", "postgresql": "Data",
+            }
+            queries = [
+                {
+                    "keyword": row["keyword"],
+                    "demand_growth": f"+{min(48, 20 + int(row['profile_count']) * 5)}%",
+                    "category": cat_map.get(str(row["keyword"]).lower(), "Engineering"),
+                }
+                for row in top_skills
+            ]
+            fallbacks = [
+                {"keyword": "Golang", "demand_growth": "+38%", "category": "Backend"},
+                {"keyword": "Python", "demand_growth": "+34%", "category": "AI / Backend"},
+                {"keyword": "React", "demand_growth": "+26%", "category": "Frontend"},
+                {"keyword": "Kubernetes", "demand_growth": "+29%", "category": "DevOps"},
+                {"keyword": "PostgreSQL", "demand_growth": "+24%", "category": "Data"},
+            ]
+            seen = {q["keyword"].lower() for q in queries}
+            for fb in fallbacks:
+                if len(queries) >= 5:
+                    break
+                if fb["keyword"].lower() not in seen:
+                    queries.append(fb)
             return {
                 "total_searchable_profiles": max(total, 1),
-                "video_verified_pct": 64.8,
-                "trending_queries": [
-                    {"keyword": "Golang", "demand_growth": "+38%", "category": "Backend"},
-                    {"keyword": "Python", "demand_growth": "+34%", "category": "AI / Backend"},
-                    {"keyword": "React", "demand_growth": "+26%", "category": "Frontend"},
-                    {"keyword": "Kubernetes", "demand_growth": "+29%", "category": "DevOps"},
-                    {"keyword": "PostgreSQL", "demand_growth": "+24%", "category": "Data"},
-                ],
+                "video_verified_pct": video_pct if video_pct > 0 else 64.8,
+                "trending_queries": queries,
                 "recruiter_tip": "Filter by Video-Verified candidates to achieve 2.4x faster interview-to-offer conversion.",
             }
+
+        if os.getenv("ENVIRONMENT") == "testing":
+            return await _compute()
 
         return await platform_cache.get_or_set("search:trending_insights", ttl_seconds=60, loader=_compute)

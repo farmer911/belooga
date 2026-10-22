@@ -130,78 +130,104 @@ export function CVStudioPreview({
               )}
               <span className="inline-flex items-center gap-1">
                 <MapPin className="w-3 h-3" aria-hidden="true" />
-                <span>Hồ Chí Minh, Việt Nam</span>
+                <span>{cvData.location || "Hồ Chí Minh, Việt Nam"}</span>
               </span>
               <span className="inline-flex items-center gap-1">
                 <Link2 className="w-3 h-3" aria-hidden="true" />
-                <span>linkedin.com/in/belooga-talent</span>
+                <span>{cvData.linkedin || "linkedin.com/in/belooga-talent"}</span>
               </span>
             </div>
           </div>
 
-          {/* Professional Summary */}
-          {cvData.summary && (
-            <div className="mb-3">
-              <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
-                Tóm Tắt Sự Nghiệp
-              </h2>
-              <p className="text-typography-heading text-justify font-normal leading-relaxed">
-                {cvData.summary}
-              </p>
-            </div>
-          )}
-
-          {/* Work Experience */}
-          <div data-testid="cv-preview-experience" className="mb-3">
-            <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1.5 text-[1em]">
-              Kinh Nghiệm Chuyên Môn
-            </h2>
-            <div className="space-y-2.5">
-              {cvData.experience.map((exp, idx) => (
-                <div key={idx} className="space-y-0.5">
-                  <div className="flex justify-between items-baseline">
-                    <span className="font-bold text-typography-main">{exp.company}</span>
-                    <span className="text-typography-muted font-mono text-[0.85em]">{exp.period}</span>
-                  </div>
-                  <div className="italic text-typography-heading font-medium text-[0.95em]">{exp.role}</div>
-                  <ul className="list-disc list-outside pl-4 space-y-0.5 text-typography-heading">
-                    {exp.bullets.map((bullet, bIdx) => (
-                      <li key={bIdx} className="leading-snug">
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
+          {(cvData.sectionOrder ?? [
+            "Thông tin liên hệ",
+            "Tóm tắt sự nghiệp",
+            "Kinh nghiệm làm việc",
+            "Dự án tiêu biểu",
+            "Kỹ năng chuyên môn",
+            "Học vấn & Bằng cấp",
+          ]).map((sectionName) => {
+            if (sectionName === "Tóm tắt sự nghiệp" && cvData.summary) {
+              return (
+                <div key={sectionName} className="mb-3">
+                  <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
+                    Tóm Tắt Sự Nghiệp
+                  </h2>
+                  <p className="text-typography-heading text-justify font-normal leading-relaxed">
+                    {cvData.summary}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Skills */}
-          {cvData.skills && (
-            <div data-testid="cv-preview-skills" className="mb-3">
-              <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
-                Kỹ Năng Kỹ Thuật & Công Nghệ
-              </h2>
-              <p className="text-typography-heading leading-snug">
-                <span className="font-semibold text-typography-main">Tech Stack: </span>
-                {cvData.skills}
-              </p>
-            </div>
-          )}
-
-          {/* Education */}
-          <div>
-            <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
-              Học Vấn & Bằng Cấp
-            </h2>
-            <div className="flex justify-between items-baseline">
-              <div>
-                <span className="font-bold text-typography-main">Đại Học Bách Khoa / ĐH Quốc Gia</span>
-                <span className="text-typography-muted block italic text-[0.95em]">Kỹ sư Khoa học Máy tính (GPA: 3.6/4.0)</span>
-              </div>
-              <span className="text-typography-muted font-mono text-[0.85em]">2017 - 2021</span>
-            </div>
-          </div>
+              );
+            }
+            if (sectionName === "Kinh nghiệm làm việc") {
+              return (
+                <div key={sectionName} data-testid="cv-preview-experience" className="mb-3">
+                  <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1.5 text-[1em]">
+                    Kinh Nghiệm Chuyên Môn
+                  </h2>
+                  <div className="space-y-2.5">
+                    {cvData.experience.map((exp, idx) => (
+                      <div key={idx} className="space-y-0.5">
+                        <div className="flex justify-between items-baseline">
+                          <span className="font-bold text-typography-main">{exp.company}</span>
+                          <span className="text-typography-muted font-mono text-[0.85em]">{exp.period}</span>
+                        </div>
+                        <div className="italic text-typography-heading font-medium text-[0.95em]">{exp.role}</div>
+                        <ul className="list-disc list-outside pl-4 space-y-0.5 text-typography-heading">
+                          {exp.bullets.map((bullet, bIdx) => (
+                            <li key={bIdx} className="leading-snug">
+                              {bullet}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+            if (sectionName === "Kỹ năng chuyên môn" && cvData.skills) {
+              return (
+                <div key={sectionName} data-testid="cv-preview-skills" className="mb-3">
+                  <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
+                    Kỹ Năng Kỹ Thuật & Công Nghệ
+                  </h2>
+                  <p className="text-typography-heading leading-snug">
+                    <span className="font-semibold text-typography-main">Tech Stack: </span>
+                    {cvData.skills}
+                  </p>
+                </div>
+              );
+            }
+            if (sectionName === "Học vấn & Bằng cấp") {
+              const eduItems = cvData.education ?? [
+                {
+                  school: "Đại Học Bách Khoa / ĐH Quốc Gia",
+                  degree: "Kỹ sư Khoa học Máy tính (GPA: 3.6/4.0)",
+                  period: "2017 - 2021",
+                },
+              ];
+              return (
+                <div key={sectionName} className="mb-2">
+                  <h2 className="font-bold uppercase tracking-wider text-typography-main border-b border-surface-border pb-0.5 mb-1 text-[1em]">
+                    Học Vấn & Bằng Cấp
+                  </h2>
+                  <div className="space-y-1.5">
+                    {eduItems.map((edu, idx) => (
+                      <div key={idx} className="flex justify-between items-baseline">
+                        <div>
+                          <span className="font-bold text-typography-main">{edu.school}</span>
+                          <span className="text-typography-muted block italic text-[0.95em]">{edu.degree}</span>
+                        </div>
+                        <span className="text-typography-muted font-mono text-[0.85em]">{edu.period}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })}
         </div>
       </div>
     </div>

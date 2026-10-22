@@ -9,6 +9,13 @@ interface AnalyticsFunnelCardProps {
 }
 
 export function AnalyticsFunnelCard({ funnel }: AnalyticsFunnelCardProps) {
+  const topCount = funnel[0]?.count || 0;
+  const paidCount = funnel.slice(2).reduce((sum, item) => sum + item.count, 0);
+  const paidConversionPct =
+    topCount > 0
+      ? ((paidCount / topCount) * 100).toFixed(1)
+      : funnel.slice(2).reduce((sum, item) => sum + item.conversion_rate, 0).toFixed(1);
+
   return (
     <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-3.5 shadow-xs">
       <div className="flex items-center justify-between border-b border-surface-divider pb-3">
@@ -17,7 +24,7 @@ export function AnalyticsFunnelCard({ funnel }: AnalyticsFunnelCardProps) {
           <span>Phễu Chuyển Đổi Tự Nguyện (PLG Conversion Funnel)</span>
         </h4>
         <span className="text-[10px] text-brand-dark font-mono font-semibold bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-200">
-          Tỷ lệ trả phí: 27.0%
+          Tỷ lệ trả phí: {paidConversionPct}%
         </span>
       </div>
 

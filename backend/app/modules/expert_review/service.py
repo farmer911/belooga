@@ -168,12 +168,18 @@ class ExpertReviewService:
         return self._serialize_feedback(feedback)
 
     async def submit_order_feedback(
-        self, order_id: uuid.UUID, actor_identity_id: uuid.UUID, payload: CVReviewFeedbackSubmitRequest
+        self,
+        order_id: uuid.UUID,
+        actor_identity_id: uuid.UUID,
+        payload: CVReviewFeedbackSubmitRequest,
+        actor_role: str = "candidate",
     ) -> CVReviewFeedbackResponse:
         order = await self.repo.get_order_by_id(order_id)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-        if order.candidate_identity_id != actor_identity_id:
+        is_owner = order.candidate_identity_id == actor_identity_id
+        is_privileged = actor_role in ("admin", "expert") or await self.repo.is_expert_or_admin(actor_identity_id)
+        if not (is_owner or is_privileged):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
 
         feedback = await self.repo.upsert_order_feedback(
@@ -188,6 +194,7 @@ class ExpertReviewService:
             annotated_cv_url=payload.annotated_cv_url,
             video_feedback_url=payload.video_feedback_url,
         )
+        await platform_cache.invalidate_prefix("expert_")
         await NotificationService(self.db).dispatch_event(
             identity_id=order.candidate_identity_id,
             event_type="EXPERT_FEEDBACK_READY",

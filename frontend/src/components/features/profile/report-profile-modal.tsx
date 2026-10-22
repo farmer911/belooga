@@ -23,6 +23,7 @@ export function ReportProfileModal({
   username,
 }: ReportProfileModalProps) {
   const [submitted, setSubmitted] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -33,11 +34,14 @@ export function ReportProfileModal({
     defaultValues: { reason: "" },
   });
 
+  const targetId = candidateId || username;
+
   const reportMutation = useMutation({
     mutationFn: async ({ reason }: ReportProfileFormValues) => {
-      await apiClient.post(`/v1/profile/${candidateId}/report/`, { reason });
+      await apiClient.post(`/v1/profile/${targetId}/report/`, { reason });
     },
     onSuccess: () => {
+      setErrorMsg(null);
       setSubmitted(true);
       setTimeout(() => {
         onClose();
@@ -46,14 +50,15 @@ export function ReportProfileModal({
       }, 2000);
     },
     onError: () => {
-      alert("Failed to submit report. Please try again.");
+      setErrorMsg("Failed to submit report. Please try again.");
     },
   });
 
   if (!isOpen) return null;
 
   const onSubmit = handleSubmit(async (values) => {
-    if (!candidateId) return;
+    if (!targetId) return;
+    setErrorMsg(null);
     await reportMutation.mutateAsync(values);
   });
 
@@ -73,6 +78,9 @@ export function ReportProfileModal({
           </div>
         ) : (
           <form onSubmit={onSubmit} noValidate className="space-y-4">
+            {errorMsg && (
+              <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{errorMsg}</div>
+            )}
             <p className="text-xs text-typography-muted">
               Please specify the reason for reporting @{username}&apos;s profile (e.g. misleading credentials, inappropriate content).
             </p>

@@ -24,6 +24,7 @@ export default function ExpertReviewPage() {
     handleCategoryFilter,
     createOrder,
     checkoutOrder,
+    submitOrderFeedback,
     openBookingForPackage,
     openBookingForExpert,
   } = useExpertReview();
@@ -72,6 +73,7 @@ export default function ExpertReviewPage() {
         onPayOrder={async (id) => {
           await checkoutOrder(id);
         }}
+        onSubmitFeedback={submitOrderFeedback}
       />
 
       {/* 3. Pricing Tiers */}

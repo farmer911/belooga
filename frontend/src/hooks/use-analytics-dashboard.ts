@@ -68,6 +68,7 @@ export interface BIStarSchemaExportData {
   schema_version: string;
   generated_at: string;
   power_bi_m_query_snippet: string;
+  powerquery_m_script?: string;
   duckdb_sql_snippet: string;
   fact_ats_scans: Array<{
     scan_id: string;
@@ -133,6 +134,8 @@ const DEFAULT_BI_EXPORT: BIStarSchemaExportData = {
   schema_version: "belooga-star-v1",
   generated_at: "2026-10-21T06:00:00Z",
   power_bi_m_query_snippet:
+    'let\n    Source = Json.Document(Web.Contents("http://localhost:8080/v1/analytics/bi-export?limit=200")),\n    FactATSScans = Table.FromRecords(Source[fact_ats_scans])\nin\n    FactATSScans',
+  powerquery_m_script:
     'let\n    Source = Json.Document(Web.Contents("http://localhost:8080/v1/analytics/bi-export?limit=200")),\n    FactATSScans = Table.FromRecords(Source[fact_ats_scans])\nin\n    FactATSScans',
   duckdb_sql_snippet: "SELECT * FROM read_json_auto('http://localhost:8080/v1/analytics/bi-export?limit=200');",
   fact_ats_scans: [],
