@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
 
 export type KanbanStatus = "TARGETING" | "TAILORED" | "APPLIED" | "INTERVIEW" | "OFFER";
@@ -38,14 +38,122 @@ export interface JobPipelineAnalytics {
   next_recommended_action: string;
 }
 
+export interface CareerGoal {
+  id: string;
+  target_role: string;
+  target_salary: string;
+  preferred_skills: string;
+  location: string;
+  updated_at: string;
+}
+
+const LOCAL_JOBS_KEY = "belooga_tracked_jobs_v1";
+const LOCAL_GOAL_KEY = "belooga_career_goal_v1";
+
+function readLocalJobs(): TrackedJob[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LOCAL_JOBS_KEY);
+    return raw ? (JSON.parse(raw) as TrackedJob[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalJobs(items: TrackedJob[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCAL_JOBS_KEY, JSON.stringify(items));
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+function readLocalGoal(): CareerGoal | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LOCAL_GOAL_KEY);
+    return raw ? (JSON.parse(raw) as CareerGoal) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalGoal(goal: CareerGoal): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCAL_GOAL_KEY, JSON.stringify(goal));
+  } catch {
+    // ignore
+  }
+}
+
 export function useJobTracker() {
   const queryClient = useQueryClient();
 
   const { data: jobs = [], isLoading, error: rawError, refetch } = useQuery<TrackedJob[]>({
     queryKey: ["tracked-jobs"],
     queryFn: async () => {
-      const response = await apiClient.get<TrackedJob[]>("/v1/tracker/jobs/");
-      return response.data;
+      try {
+        const response = await apiClient.get<TrackedJob[]>("/v1/tracker/jobs/");
+        const serverJobs = response.data || [];
+        const localJobs = readLocalJobs();
+        const serverIds = new Set(serverJobs.map((j) => j.id));
+        const merged = [...serverJobs, ...localJobs.filter((lj) => !serverIds.has(lj.id))];
+        writeLocalJobs(merged);
+        return merged;
+      } catch {
+        return readLocalJobs();
+      }
+    },
+  });
+
+  const { data: careerGoal } = useQuery<CareerGoal>({
+    queryKey: ["career-goal"],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<CareerGoal>("/v1/tracker/goals");
+        if (res.data?.target_role) {
+          writeLocalGoal(res.data);
+          return res.data;
+        }
+      } catch {
+        // Fallback to local persisted goal
+      }
+      return (
+        readLocalGoal() ?? {
+          id: "goal-default",
+          target_role: "Senior Backend / Golang Engineer",
+          target_salary: "55.000.000 VNĐ",
+          preferred_skills: "Golang, PostgreSQL, Kubernetes, System Design",
+          location: "Ho Chi Minh / Remote",
+          updated_at: new Date().toISOString(),
+        }
+      );
+    },
+  });
+
+  const saveGoalMutation = useMutation({
+    mutationFn: async (payload: Omit<CareerGoal, "id" | "updated_at">) => {
+      const nextGoal: CareerGoal = {
+        id: careerGoal?.id || "goal-1",
+        ...payload,
+        updated_at: new Date().toISOString(),
+      };
+      writeLocalGoal(nextGoal);
+      try {
+        const res = await apiClient.post<CareerGoal>("/v1/tracker/goals", payload);
+        if (res.data?.target_role) {
+          writeLocalGoal(res.data);
+          return res.data;
+        }
+      } catch {
+        // Persisted locally as fallback
+      }
+      return nextGoal;
+    },
+    onSuccess: (saved) => {
+      queryClient.setQueryData(["career-goal"], saved);
     },
   });
 
@@ -64,44 +172,69 @@ export function useJobTracker() {
   }, [refetch, refetchAnalytics]);
 
   const addJob = useCallback(async (payload: CreateTrackedJobPayload) => {
-    const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
-    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => [response.data, ...prev]);
+    let created: TrackedJob;
+    try {
+      const response = await apiClient.post<TrackedJob>("/v1/tracker/jobs/", payload);
+      created = response.data;
+    } catch {
+      created = {
+        id: `local-job-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        company_name: payload.company_name,
+        position_title: payload.position_title,
+        status: payload.status ?? "TARGETING",
+        expected_salary: payload.expected_salary,
+        match_score: payload.match_score ?? 85,
+        notes: payload.notes,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => {
+      const next = [created, ...prev];
+      writeLocalJobs(next);
+      return next;
+    });
     void refetchAnalytics();
     void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
-    return response.data;
+    return created;
   }, [queryClient, refetchAnalytics]);
 
   const moveStatus = useCallback(async (jobId: string, newStatus: KanbanStatus) => {
-    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
-      prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j))
-    );
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => {
+      const next = prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j));
+      writeLocalJobs(next);
+      return next;
+    });
     try {
       await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}/status`, { status: newStatus });
       void refetchAnalytics();
       void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
-    } catch (err: unknown) {
-      await refetch();
-      throw err;
+    } catch {
+      // Keep local update if guest/local job
     }
-  }, [queryClient, refetch, refetchAnalytics]);
+  }, [queryClient, refetchAnalytics]);
 
   const deleteJob = useCallback(async (jobId: string) => {
-    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
-      prev.filter((j) => j.id !== jobId)
-    );
+    queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) => {
+      const next = prev.filter((j) => j.id !== jobId);
+      writeLocalJobs(next);
+      return next;
+    });
     try {
       await apiClient.delete(`/v1/tracker/jobs/${jobId}`);
       void refetchAnalytics();
       void queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
-    } catch (err: unknown) {
-      await refetch();
-      throw err;
+    } catch {
+      // Keep local deletion
     }
-  }, [queryClient, refetch, refetchAnalytics]);
+  }, [queryClient, refetchAnalytics]);
 
   return {
     jobs,
     analytics,
+    careerGoal,
+    saveGoal: saveGoalMutation.mutateAsync,
+    isSavingGoal: saveGoalMutation.isPending,
     isLoading,
     error,
     fetchJobs,
@@ -110,4 +243,3 @@ export function useJobTracker() {
     deleteJob,
   };
 }
-

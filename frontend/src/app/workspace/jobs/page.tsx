@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Briefcase, Trophy, Plus, Target, Zap, Send, PenLine, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,16 @@ import { apiClient } from "@/services/api-client";
 import { useJobTracker, KanbanStatus, TrackedJob } from "@/hooks/use-job-tracker";
 import { KanbanColumn } from "@/components/features/job-tracker/kanban-column";
 import { AddJobDialog } from "@/components/features/job-tracker/add-job-dialog";
+import { JobSearchAndGoalPanel } from "@/components/features/job-tracker/job-search-market-panel";
 
 export default function JobTrackerKanbanPage() {
   const queryClient = useQueryClient();
-  const { jobs, analytics, isLoading, addJob, moveStatus, deleteJob } = useJobTracker();
+  const { jobs, analytics, careerGoal, saveGoal, isSavingGoal, isLoading, addJob, moveStatus, deleteJob } = useJobTracker();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<KanbanStatus | "ALL">("ALL");
+  const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
+  const [sortBy, setSortBy] = useState<"created_at" | "match_score" | "interview_date">("created_at");
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     company_name: "",
@@ -27,14 +31,25 @@ export default function JobTrackerKanbanPage() {
 
   const editJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      const res = await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}`, {
-        company_name: editForm.company_name,
-        position_title: editForm.position_title,
-        expected_salary: editForm.expected_salary || undefined,
-        notes: editForm.notes || undefined,
-        interview_date: editForm.interview_date || undefined,
-      });
-      return res.data;
+      try {
+        const res = await apiClient.patch<TrackedJob>(`/v1/tracker/jobs/${jobId}`, {
+          company_name: editForm.company_name,
+          position_title: editForm.position_title,
+          expected_salary: editForm.expected_salary || undefined,
+          notes: editForm.notes || undefined,
+          interview_date: editForm.interview_date || undefined,
+        });
+        return res.data;
+      } catch {
+        return {
+          id: jobId,
+          company_name: editForm.company_name,
+          position_title: editForm.position_title,
+          expected_salary: editForm.expected_salary || undefined,
+          notes: editForm.notes || undefined,
+          interview_date: editForm.interview_date || undefined,
+        } as Partial<TrackedJob> & { id: string };
+      }
     },
     onSuccess: (updated) => {
       queryClient.setQueryData<TrackedJob[]>(["tracked-jobs"], (prev = []) =>
@@ -55,15 +70,37 @@ export default function JobTrackerKanbanPage() {
     });
   };
 
-  const filteredJobs = jobs.filter(
-    (j) =>
-      j.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.position_title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredJobs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return jobs
+      .filter((j) => {
+        if (statusFilter !== "ALL" && j.status !== statusFilter) return false;
+        if (minScoreFilter > 0 && (j.match_score ?? 0) < minScoreFilter) return false;
+        if (!q) return true;
+        return (
+          j.company_name.toLowerCase().includes(q) ||
+          j.position_title.toLowerCase().includes(q) ||
+          (j.expected_salary ?? "").toLowerCase().includes(q) ||
+          (j.notes ?? "").toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (sortBy === "match_score") return (b.match_score ?? 0) - (a.match_score ?? 0);
+        if (sortBy === "interview_date") return (a.interview_date || "9999").localeCompare(b.interview_date || "9999");
+        return (b.created_at || "").localeCompare(a.created_at || "");
+      });
+  }, [jobs, searchQuery, statusFilter, minScoreFilter, sortBy]);
 
   const getJobsByStatus = (status: KanbanStatus) => filteredJobs.filter((j) => j.status === status);
   const interviewCount = jobs.filter((j) => j.status === "INTERVIEW").length;
   const offerCount = jobs.filter((j) => j.status === "OFFER").length;
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("ALL");
+    setMinScoreFilter(0);
+    setSortBy("created_at");
+  };
 
   return (
     <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
@@ -80,10 +117,11 @@ export default function JobTrackerKanbanPage() {
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <input
             type="text"
+            data-testid="kanban-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Lọc công ty hoặc vị trí..."
-            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-surface-card w-40 sm:w-48"
+            className="bg-surface-page border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-typography-main focus:outline-none focus:border-brand-primary focus:bg-surface-card w-44 sm:w-56"
           />
 
           <div className="hidden sm:flex items-center gap-2 text-[11px]">
@@ -106,6 +144,20 @@ export default function JobTrackerKanbanPage() {
           </Button>
         </div>
       </div>
+
+      <JobSearchAndGoalPanel
+        careerGoal={careerGoal}
+        onSaveGoal={saveGoal}
+        isSavingGoal={isSavingGoal}
+        onAddJobToKanban={addJob}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        minScoreFilter={minScoreFilter}
+        onMinScoreFilterChange={setMinScoreFilter}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        onResetFilters={resetFilters}
+      />
 
       {analytics && (
         <div
@@ -133,9 +185,7 @@ export default function JobTrackerKanbanPage() {
                 type="button"
                 onClick={() => startEditingJob(job)}
                 className={`px-2 py-0.5 rounded border text-[11px] cursor-pointer transition-colors ${
-                  editingJobId === job.id
-                    ? "bg-brand-primary text-white border-brand-primary font-semibold"
-                    : "bg-surface-page text-typography-heading border-surface-border hover:border-brand-primary"
+                  editingJobId === job.id ? "bg-brand-primary text-white border-brand-primary font-semibold" : "bg-surface-page text-typography-heading border-surface-border hover:border-brand-primary"
                 }`}
               >
                 {job.company_name} — {job.position_title}
@@ -151,47 +201,16 @@ export default function JobTrackerKanbanPage() {
               }}
               className="grid grid-cols-1 sm:grid-cols-6 gap-2 pt-1 items-center"
             >
-              <input
-                type="text"
-                value={editForm.company_name}
-                onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
-                placeholder="Tên công ty"
-                className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main"
-              />
-              <input
-                type="text"
-                value={editForm.position_title}
-                onChange={(e) => setEditForm({ ...editForm, position_title: e.target.value })}
-                placeholder="Vị trí ứng tuyển"
-                className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main"
-              />
-              <input
-                type="text"
-                value={editForm.expected_salary}
-                onChange={(e) => setEditForm({ ...editForm, expected_salary: e.target.value })}
-                placeholder="Mức lương kỳ vọng"
-                className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main"
-              />
-              <input
-                type="date"
-                value={editForm.interview_date}
-                onChange={(e) => setEditForm({ ...editForm, interview_date: e.target.value })}
-                className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main"
-              />
-              <input
-                type="text"
-                value={editForm.notes}
-                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                placeholder="Ghi chú phỏng vấn"
-                className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main"
-              />
+              <input type="text" value={editForm.company_name} onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })} placeholder="Tên công ty" className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main" />
+              <input type="text" value={editForm.position_title} onChange={(e) => setEditForm({ ...editForm, position_title: e.target.value })} placeholder="Vị trí ứng tuyển" className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main" />
+              <input type="text" value={editForm.expected_salary} onChange={(e) => setEditForm({ ...editForm, expected_salary: e.target.value })} placeholder="Mức lương kỳ vọng" className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main" />
+              <input type="date" value={editForm.interview_date} onChange={(e) => setEditForm({ ...editForm, interview_date: e.target.value })} className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main" />
+              <input type="text" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} placeholder="Ghi chú phỏng vấn" className="bg-surface-page border border-surface-border rounded-lg px-2 py-1 text-xs text-typography-main" />
               <div className="flex items-center gap-1.5">
                 <Button type="submit" disabled={editJobMutation.isPending} className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-7 px-2.5 rounded-lg gap-1">
                   <Check className="w-3 h-3" /> Lưu
                 </Button>
-                <button type="button" onClick={() => setEditingJobId(null)} className="px-2 py-1 text-typography-muted hover:text-typography-main text-xs cursor-pointer">
-                  Hủy
-                </button>
+                <button type="button" onClick={() => setEditingJobId(null)} className="px-2 py-1 text-typography-muted hover:text-typography-main text-xs cursor-pointer">Hủy</button>
               </div>
             </form>
           )}
@@ -200,9 +219,7 @@ export default function JobTrackerKanbanPage() {
 
       <main className="flex-1 p-4 overflow-x-auto flex gap-3.5 min-h-[calc(100vh-140px)]">
         {isLoading && jobs.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Spinner className="w-8 h-8 text-brand-primary" />
-          </div>
+          <div className="flex-1 flex items-center justify-center"><Spinner className="w-8 h-8 text-brand-primary" /></div>
         ) : (
           <>
             <KanbanColumn id="TARGETING" title="Nhắm Mục Tiêu" icon={<Target className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-brand-primary" jobs={getJobsByStatus("TARGETING")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
@@ -215,14 +232,6 @@ export default function JobTrackerKanbanPage() {
       </main>
 
       <AddJobDialog isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={addJob} />
-
-      <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
-        <div>Hệ điều hành theo dõi ứng tuyển: <strong className="text-typography-main">Belooga Kanban OS</strong></div>
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-emerald-700 font-medium">Đồng bộ đám mây thời gian thực</span>
-        </div>
-      </footer>
     </div>
   );
 }
