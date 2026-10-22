@@ -8,10 +8,21 @@ import { ExpertDirectory } from "@/components/features/expert-review/expert-dire
 import { SampleFeedbackReport } from "@/components/features/expert-review/sample-feedback-report";
 import { CandidateOrdersList } from "@/components/features/expert-review/candidate-orders-list";
 import { ReviewBookingDialog } from "@/components/features/expert-review/review-booking-dialog";
+import { ExpertLeaderboardSection } from "@/components/features/expert-review/expert-leaderboard-section";
+import { ExpertAnalyticsPanel } from "@/components/features/analytics/multi-persona-analytics";
+import { ExpertLiveMockBookingCard } from "@/components/features/growth/recruiter-tracker-wallet-suite";
+import {
+  BecomeExpertSection,
+  RegisteredExpertApplication,
+  readLocalExpertMe,
+  toExpertProfile,
+  toRankedExpert,
+} from "@/components/features/expert-review/become-expert-modal";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ExpertReviewPage() {
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const [registeredApp, setRegisteredApp] = useState<RegisteredExpertApplication | null>(() => readLocalExpertMe());
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -77,6 +88,13 @@ export default function ExpertReviewPage() {
         </section>
       )}
 
+      {/* 2a. Become an Expert Registration Banner & Modal */}
+      <BecomeExpertSection onExpertRegistered={(app) => setRegisteredApp(app)} />
+
+      {/* 2a-2. Expert Performance & Revenue Analytics */}
+      <ExpertAnalyticsPanel />
+      <ExpertLiveMockBookingCard />
+
       {/* 2. Candidate Active Orders (if any) */}
       <CandidateOrdersList
         orders={myOrders}
@@ -85,6 +103,12 @@ export default function ExpertReviewPage() {
           await checkoutOrder(id);
         }}
         onSubmitFeedback={submitOrderFeedback}
+      />
+
+      {/* 2b. Expert Leaderboard & Podium */}
+      <ExpertLeaderboardSection
+        customExperts={registeredApp ? [toRankedExpert(registeredApp)] : []}
+        onBookExpert={openBookingForExpert}
       />
 
       {/* 3. Pricing Tiers */}
@@ -104,7 +128,7 @@ export default function ExpertReviewPage() {
 
       {/* 5. Expert Reviewer Directory */}
       <ExpertDirectory
-        experts={experts}
+        experts={registeredApp ? [toExpertProfile(registeredApp), ...experts] : experts}
         selectedCategory={selectedCategory}
         onSelectCategory={handleCategoryFilter}
         onRequestReview={openBookingForExpert}

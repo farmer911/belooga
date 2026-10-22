@@ -13,6 +13,7 @@ import { ATSScorecard } from "@/components/features/ats-diagnostics/ats-scorecar
 import { ATSPreviewCanvas } from "@/components/features/ats-diagnostics/ats-preview-canvas";
 import { ATSShareCardModal } from "@/components/features/ats-diagnostics/ats-share-card-modal";
 import { MomoCheckoutDialog } from "@/components/features/payments/momo-checkout-dialog";
+import { MockInterviewAndOutreachSuite } from "@/components/features/growth/career-acceleration-suite";
 
 function SharedScoreBadge() {
   const searchParams = useSearchParams();
@@ -186,12 +187,12 @@ export default function ATSDiagnosticsPage() {
           {result ? (
             <ATSScorecard result={result} shortlist={shortlist} interviewKit={interviewKit} activeTab={activeTab} setActiveTab={setActiveTab} onPayClick={() => setIsMomoOpen(true)} />
           ) : (
-            <div className="p-8 border border-dashed border-surface-border rounded-xl text-center text-typography-muted text-xs space-y-2 bg-surface-page/50 flex flex-col items-center">
+            <div className="p-6 border border-dashed border-surface-border rounded-xl text-center text-typography-muted text-xs space-y-2 bg-surface-page/50 flex flex-col items-center">
               <Zap className="w-6 h-6 text-brand-primary" aria-hidden="true" />
               <div>Bấm nút <strong>&quot;Quét Điểm ATS Ngay&quot;</strong> ở thanh trên để bắt đầu phân tích đa tác nhân.</div>
             </div>
           )}
-
+          <MockInterviewAndOutreachSuite jobTitle={jobTitle} companyName={companyName} />
           {scanHistory.length > 0 && (
             <div className="p-3 rounded-xl bg-surface-page border border-surface-border space-y-1.5 text-xs">
               <div className="font-semibold text-typography-main flex items-center gap-1.5 text-[11px]">

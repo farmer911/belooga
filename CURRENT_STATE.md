@@ -163,7 +163,7 @@
 
 ## 3. Frontend Routes Inventory (`frontend/src/app`)
 
-**Total Pages/Boundaries: 24** (Next.js App Router)
+**Total Pages/Boundaries: 29** (Next.js App Router)
 
 | Route URL | File Path | Route Type |
 |---|---|---|
@@ -175,6 +175,8 @@
 | `/blog/[slug]` | `frontend/src/app/(public)/blog/[slug]/page.tsx` | Page |
 | `/callback` | `frontend/src/app/(auth)/callback/page.tsx` | Page |
 | `/careers` | `frontend/src/app/(public)/careers/page.tsx` | Page |
+| `/companies` | `frontend/src/app/companies/page.tsx` | Page |
+| `/companies/[slug]` | `frontend/src/app/companies/[slug]/page.tsx` | Page |
 | `/contact-us` | `frontend/src/app/(public)/contact-us/page.tsx` | Page |
 | `/cv-studio` | `frontend/src/app/cv-studio/page.tsx` | Page |
 | `/expert-review` | `frontend/src/app/(public)/expert-review/page.tsx` | Page |
@@ -183,6 +185,7 @@
 | `/login` | `frontend/src/app/(auth)/login/page.tsx` | Page |
 | `/privacy-policy` | `frontend/src/app/(public)/privacy-policy/page.tsx` | Page |
 | `/public/[username]` | `frontend/src/app/public/[username]/page.tsx` | Page |
+| `/recruiter/hub` | `frontend/src/app/recruiter/hub/page.tsx` | Page |
 | `/register` | `frontend/src/app/(auth)/register/page.tsx` | Page |
 | `/salary-benchmark` | `frontend/src/app/salary-benchmark/page.tsx` | Page |
 | `/search` | `frontend/src/app/search/page.tsx` | Page |
@@ -190,7 +193,9 @@
 | `/user/[username]` | `frontend/src/app/user/[username]/page.tsx` | Page |
 | `/user/[username]/settings` | `frontend/src/app/user/[username]/settings/page.tsx` | Page |
 | `/user/[username]/update` | `frontend/src/app/user/[username]/update/page.tsx` | Page |
+| `/workspace/analytics` | `frontend/src/app/workspace/analytics/page.tsx` | Page |
 | `/workspace/jobs` | `frontend/src/app/workspace/jobs/page.tsx` | Page |
+| `/workspace/wallet` | `frontend/src/app/workspace/wallet/page.tsx` | Page |
 
 ---
 

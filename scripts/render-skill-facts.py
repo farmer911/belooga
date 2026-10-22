@@ -77,6 +77,8 @@ FRONTEND = {
     "fe-domain-public": [
         "page.tsx",
         "search/page.tsx",
+        "companies/page.tsx",
+        "companies/[slug]/page.tsx",
         "public/[username]/page.tsx",
         "(public)/blog/page.tsx",
         "(public)/blog/[slug]/page.tsx",
@@ -92,6 +94,9 @@ FRONTEND = {
         "cv-studio/page.tsx",
         "salary-benchmark/page.tsx",
         "workspace/jobs/page.tsx",
+        "workspace/wallet/page.tsx",
+        "workspace/analytics/page.tsx",
+        "recruiter/hub/page.tsx",
         "admin/analytics/page.tsx",
     ],
 }

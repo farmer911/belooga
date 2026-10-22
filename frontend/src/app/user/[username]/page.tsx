@@ -20,6 +20,9 @@ import { AwardsTimeline } from "@/components/features/timeline/awards-timeline";
 import { VideoPitchCard } from "@/components/features/media/video-pitch-card";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { ResumeAttachmentCard } from "@/components/features/media/resume-attachment-card";
+import { UserProfilePostsSection } from "@/components/features/posts/user-posts-section";
+import { CandidateAnalyticsWidget } from "@/components/features/analytics/multi-persona-analytics";
+import { WorkspaceGrowthSuite } from "@/components/features/growth/workspace-identity-suite";
 
 interface WorkspaceTrustScore {
   trust_score: number;
@@ -149,6 +152,8 @@ export default function WorkspacePage() {
           </aside>
 
           <main className="lg:col-span-8 space-y-8">
+            <CandidateAnalyticsWidget />
+            <WorkspaceGrowthSuite username={username} fullName={profile.full_name} />
             <VideoPitchCard
               posterUrl={profile.video_pitch_poster}
               onPlayClick={() => setVideoModalOpen(true)}
@@ -182,6 +187,7 @@ export default function WorkspacePage() {
               onDeleteResume={handleDeleteResume}
               onDownloadPdf={handleDownloadPdf}
             />
+            <UserProfilePostsSection username={username} authorName={profile.full_name} isOwner={true} />
           </main>
         </div>
       </div>

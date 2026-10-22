@@ -11,6 +11,7 @@ import { AnalyticsKpiCards } from "@/components/features/analytics/analytics-kpi
 import { AnalyticsRevenueChart } from "@/components/features/analytics/analytics-revenue-chart";
 import { AnalyticsFunnelCard } from "@/components/features/analytics/analytics-funnel-card";
 import { AnalyticsTransactionsTable } from "@/components/features/analytics/analytics-transactions-table";
+import { ExecutiveCashflowAndHeatmapPanels } from "@/components/features/analytics/multi-persona-analytics";
 
 export default function AnalyticsDashboardPage() {
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "ALL">("7D");
@@ -73,6 +74,7 @@ export default function AnalyticsDashboardPage() {
         ) : (
           <>
             <AnalyticsKpiCards overview={data.overview} />
+            <ExecutiveCashflowAndHeatmapPanels />
 
             {/* Unit Economics & Cohort Retention Telemetry Banner */}
             {unitEconomics && (
