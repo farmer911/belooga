@@ -18,13 +18,6 @@ export interface MarketJobItem {
   skills: string[];
 }
 
-const FALLBACK_MARKET_JOBS: MarketJobItem[] = [
-  { id: "mkt-vng-go", company_name: "VNG Digital Business", position_title: "Senior Golang Microservices Engineer", location: "Ho Chi Minh", salary_range: "55M - 75M VNĐ", match_score: 94, skills: ["Golang", "Kafka", "Kubernetes"] },
-  { id: "mkt-shopee-be", company_name: "Shopee Vietnam", position_title: "Lead Distributed Systems Engineer", location: "Ho Chi Minh / Hybrid", salary_range: "65M - 90M VNĐ", match_score: 91, skills: ["Golang", "Redis", "PostgreSQL"] },
-  { id: "mkt-momo-ai", company_name: "M_Service (MoMo)", position_title: "Staff AI & Payment Platform Engineer", location: "Ho Chi Minh", salary_range: "60M - 85M VNĐ", match_score: 89, skills: ["Python", "FastAPI", "PostgreSQL"] },
-  { id: "mkt-fpt-fe", company_name: "FPT Smart Cloud", position_title: "Senior Full-Stack Next.js / TypeScript", location: "Ha Noi / Remote", salary_range: "42M - 58M VNĐ", match_score: 86, skills: ["React", "Next.js", "TypeScript"] },
-];
-
 interface JobSearchAndGoalPanelProps {
   careerGoal?: CareerGoal;
   onSaveGoal: (goal: Omit<CareerGoal, "id" | "updated_at">) => Promise<CareerGoal>;
@@ -62,24 +55,11 @@ export function JobSearchAndGoalPanel({
     }
   }, [careerGoal]);
 
-  const { data: marketJobs = FALLBACK_MARKET_JOBS } = useQuery<MarketJobItem[]>({
+  const { data: marketJobs = [] } = useQuery<MarketJobItem[]>({
     queryKey: ["market-jobs-search", marketQuery],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<MarketJobItem[]>("/v1/tracker/search-market-jobs", { params: { q: marketQuery } });
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
-      } catch {
-        // Fallback
-      }
-      const q = marketQuery.trim().toLowerCase();
-      if (!q) return FALLBACK_MARKET_JOBS;
-      return FALLBACK_MARKET_JOBS.filter(
-        (j) =>
-          j.company_name.toLowerCase().includes(q) ||
-          j.position_title.toLowerCase().includes(q) ||
-          j.location.toLowerCase().includes(q) ||
-          j.skills.some((s) => s.toLowerCase().includes(q))
-      );
+      const res = await apiClient.get<MarketJobItem[]>("/v1/tracker/search-market-jobs", { params: { q: marketQuery } });
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 

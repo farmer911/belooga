@@ -203,13 +203,9 @@ export async function applyMobileExpertReviewer(
 export async function fetchMobileMyExpertProfile(
   client: MobileApiClient = mobileApiClient
 ): Promise<ExpertProfileMe | null> {
-  try {
-    const raw = await client.get<unknown>('/v1/expert-review/me');
-    if (!raw) return null;
-    return expertProfileMeSchema.parse(raw);
-  } catch {
-    return null;
-  }
+  const raw = await client.get<unknown>('/v1/expert-review/me');
+  if (!raw) return null;
+  return expertProfileMeSchema.parse(raw);
 }
 
 export function useMyExpertProfileQuery(client: MobileApiClient = mobileApiClient) {

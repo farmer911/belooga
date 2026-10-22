@@ -229,3 +229,52 @@ async def test_dynamic_platform_endpoints_p95_latency_under_30ms(
     assert p95_pulse < 30.0, f"Market Pulse p95 {p95_pulse:.2f}ms exceeded 30ms SLA"
     assert p95_rpc < 30.0, f"ConnectRPC batch p95 {p95_rpc:.2f}ms exceeded 30ms SLA"
 
+
+@pytest.mark.asyncio
+async def test_bel220_anti_mockup_gate_and_fe_be_postgresql_persistence(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """BEL-220 (#178): Verify fe_mock_fallback_arrays == 0 gate and real PostgreSQL persistence for Wallet & Social Feed."""
+    import ast
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent.parent
+    ratchet_data = json.loads((root / ".agents" / "ratchet.json").read_text(encoding="utf-8"))
+    assert ratchet_data.get("fe_mock_fallback_arrays") == 0
+
+    tb_src = (root / "scripts" / "trust-benchmark.py").read_text(encoding="utf-8")
+    ast.parse(tb_src)
+    assert "fe_mock_fallback_arrays == 0" in tb_src
+
+    _, token, _ = await _seed_user_and_candidate(db_session)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    topup_res = await client.post(
+        "/v1/wallet/topup",
+        headers=headers,
+        json={"amount_vnd": 500000, "payment_method": "MoMo QR"},
+    )
+    assert topup_res.status_code in (200, 201)
+    wallet_res = await client.get("/v1/wallet/", headers=headers)
+    assert wallet_res.status_code == 200
+    assert wallet_res.json()["available_balance_vnd"] >= 500000
+
+    post_res = await client.post(
+        "/v1/blog/posts/",
+        headers=headers,
+        json={
+            "title": "BEL-220 Real PostgreSQL Persistence Verification",
+            "excerpt": "Zero frontend mockups — 100% backed by PostgreSQL 16.",
+            "content": ["Verified end-to-end DB persistence."],
+            "post_type": "USER_STATUS",
+            "tags": ["PostgreSQL", "FastAPI"],
+            "ats_score_badge": 95,
+        },
+    )
+    assert post_res.status_code in (200, 201)
+    feed_res = await client.get("/v1/blog/posts/")
+    assert feed_res.status_code == 200
+    assert any(p["title"] == "BEL-220 Real PostgreSQL Persistence Verification" for p in feed_res.json())
+
+

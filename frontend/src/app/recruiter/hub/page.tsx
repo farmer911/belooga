@@ -12,10 +12,7 @@ import {
   RecruiterStage,
 } from "@/components/features/recruiter/recruiter-comparison-matrix";
 import { RecruiterInviteModal } from "@/components/features/recruiter/recruiter-invite-modal";
-import {
-  RecruiterPipelineBoard,
-  INITIAL_RECRUITER_PIPELINE,
-} from "@/components/features/recruiter/recruiter-pipeline-board";
+import { RecruiterPipelineBoard } from "@/components/features/recruiter/recruiter-pipeline-board";
 import { TopCandidatesLeaderboard } from "@/components/features/search/top-candidates-leaderboard";
 import { RecruiterAnalyticsPanel } from "@/components/features/analytics/multi-persona-analytics";
 import { RecruiterReverseBidAndRoiSuite } from "@/components/features/growth/recruiter-tracker-wallet-suite";
@@ -23,36 +20,27 @@ import { RecruiterReverseBidAndRoiSuite } from "@/components/features/growth/rec
 export default function RecruiterHiringHubPage() {
   const queryClient = useQueryClient();
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
-  const [selectedUsernames, setSelectedUsernames] = useState<string[]>(["phucnguyen", "huypham"]);
+  const [selectedUsernames, setSelectedUsernames] = useState<string[]>([]);
   const [inviteTarget, setInviteTarget] = useState<RecruiterPipelineItem | null>(null);
   const [showDossier, setShowDossier] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const { data: pipeline = INITIAL_RECRUITER_PIPELINE } = useQuery<RecruiterPipelineItem[]>({
+  const { data: pipeline = [] } = useQuery<RecruiterPipelineItem[]>({
     queryKey: ["recruiter-pipeline"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<RecruiterPipelineItem[]>("/v1/recruiter/pipeline");
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
-      } catch {
-        // Fallback to initial curated pipeline
-      }
-      return INITIAL_RECRUITER_PIPELINE;
+      const res = await apiClient.get<RecruiterPipelineItem[]>("/v1/recruiter/pipeline");
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 
   const stageMutation = useMutation({
     mutationFn: async ({ id, stage, evaluation_notes }: { id: string; stage: RecruiterStage; evaluation_notes?: string }) => {
-      try {
-        await apiClient.patch(`/v1/recruiter/pipeline/${id}`, { stage, evaluation_notes });
-      } catch {
-        // Optimistic fallback
-      }
+      await apiClient.patch(`/v1/recruiter/pipeline/${id}`, { stage, evaluation_notes });
       return { id, stage, evaluation_notes };
     },
     onSuccess: ({ id, stage, evaluation_notes }) => {
-      queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = INITIAL_RECRUITER_PIPELINE) =>
+      queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = []) =>
         prev.map((item) =>
           item.id === id ? { ...item, stage, evaluation_notes: evaluation_notes ?? item.evaluation_notes } : item
         )
@@ -62,32 +50,18 @@ export default function RecruiterHiringHubPage() {
 
   const addCandidateMutation = useMutation({
     mutationFn: async (username: string) => {
-      const clean = username.trim().replace(/^@/, "") || "ungvien_moi";
-      const newItem: RecruiterPipelineItem = {
-        id: `pipe-${Date.now()}`,
+      const clean = username.trim().replace(/^@/, "");
+      const res = await apiClient.post<RecruiterPipelineItem>("/v1/recruiter/pipeline", {
         username: clean,
-        full_name: clean.toUpperCase(),
-        headline: "Senior Software Engineer",
         target_role: "Principal Engineer",
-        stage: "SHORTLISTED",
-        ats_score: 88,
-        years_experience: 4,
-        expected_salary: "52.000.000 VNĐ",
-        video_pitch_url: "/videos/pitch.mp4",
-        matched_skills: ["Golang", "React", "PostgreSQL"],
-        missing_skills: ["Kubernetes"],
-        recruiter_rating: 4,
-        evaluation_notes: "Thêm trực tiếp từ Recruiter Command Center.",
-      };
-      try {
-        await apiClient.post("/v1/recruiter/pipeline", { username: clean, target_role: newItem.target_role });
-      } catch {
-        // Fallback
-      }
-      return newItem;
+      });
+      return res.data;
     },
     onSuccess: (created) => {
-      queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = INITIAL_RECRUITER_PIPELINE) => [created, ...prev]);
+      if (created) {
+        queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = []) => [created, ...prev]);
+      }
+      queryClient.invalidateQueries({ queryKey: ["recruiter-pipeline"] });
       setNewUsername("");
       setShowAddForm(false);
     },
@@ -211,7 +185,7 @@ export default function RecruiterHiringHubPage() {
         candidate={inviteTarget}
         onClose={() => setInviteTarget(null)}
         onInvited={(username, interviewDate, unlocked) => {
-          queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = INITIAL_RECRUITER_PIPELINE) =>
+          queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = []) =>
             prev.map((item) =>
               item.username === username
                 ? { ...item, stage: "INTERVIEW_INVITED", interview_datetime: interviewDate, contact_unlocked: unlocked }

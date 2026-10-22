@@ -15,11 +15,6 @@ interface ReferralSlotItem {
   bonus_vnd: number;
 }
 
-const DEFAULT_REFERRALS: ReferralSlotItem[] = [
-  { id: "ref-1", company_name: "VNG Cloud", referrer_name: "Nguyễn Minh Phúc", referrer_role: "Principal Architect", target_positions: ["Senior Golang", "Staff SRE"], bonus_vnd: 15000000 },
-  { id: "ref-2", company_name: "MoMo Fintech", referrer_name: "Võ Thị Mai", referrer_role: "Staff Full-Stack Lead", target_positions: ["Payment Core Engineer", "AI Engineer"], bonus_vnd: 20000000 },
-];
-
 interface InterviewQuestionItem {
   id: string;
   role_title: string;
@@ -28,27 +23,29 @@ interface InterviewQuestionItem {
   sample_answer_hint: string;
 }
 
-const DEFAULT_QUESTIONS: InterviewQuestionItem[] = [
-  { id: "iq-1", role_title: "Principal Golang Engineer", difficulty: "Hard", question_text: "Thiết kế cơ chế chống Double-Spend cho ví điện tử ở mức 20,000 TPS?", sample_answer_hint: "Sử dụng Idempotency Key + pg_advisory_xact_lock + Outbox Ledger." },
-  { id: "iq-2", role_title: "Senior AI Infrastructure", difficulty: "Medium", question_text: "Tối ưu độ trễ RAG hybrid search trên PostgreSQL 16 như thế nào?", sample_answer_hint: "Kết hợp GIN TSVECTOR + pg_trgm pre-filter trước khi rerank." },
-];
-
 export function CompanyGrowthSuite({ slug, companyName }: { slug: string; companyName: string }) {
   const queryClient = useQueryClient();
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [newHint, setNewHint] = useState("");
 
-  const { data: questions = DEFAULT_QUESTIONS } = useQuery<InterviewQuestionItem[]>({
+  const { data: questions = [] } = useQuery<InterviewQuestionItem[]>({
     queryKey: ["company-interview-questions", slug],
     queryFn: async () => {
+      const res = await apiClient.get<InterviewQuestionItem[]>(`/v1/companies/${encodeURIComponent(slug)}/interview-questions`);
+      return Array.isArray(res.data) ? res.data : [];
+    },
+  });
+
+  const { data: referralSlots = [] } = useQuery<ReferralSlotItem[]>({
+    queryKey: ["growth-referrals", slug],
+    queryFn: async () => {
       try {
-        const res = await apiClient.get<InterviewQuestionItem[]>(`/v1/companies/${encodeURIComponent(slug)}/interview-questions`);
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
+        const res = await apiClient.get<ReferralSlotItem[]>("/v1/growth/referrals", { params: { company_slug: slug } });
+        return Array.isArray(res.data) ? res.data : [];
       } catch {
-        // Fallback
+        return [];
       }
-      return DEFAULT_QUESTIONS;
     },
   });
 
@@ -64,12 +61,12 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
       try {
         await apiClient.post(`/v1/companies/${encodeURIComponent(slug)}/interview-questions`, created);
       } catch {
-        // Fallback
+        // Optimistic question submission
       }
       return created;
     },
     onSuccess: (created) => {
-      queryClient.setQueryData<InterviewQuestionItem[]>(["company-interview-questions", slug], (prev = DEFAULT_QUESTIONS) => [created, ...prev]);
+      queryClient.setQueryData<InterviewQuestionItem[]>(["company-interview-questions", slug], (prev = []) => [created, ...prev]);
       setNewQuestion("");
       setNewHint("");
     },
@@ -160,7 +157,7 @@ export function CompanyGrowthSuite({ slug, companyName }: { slug: string; compan
           </span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          {DEFAULT_REFERRALS.map((slot) => {
+          {referralSlots.map((slot) => {
             const sent = requestedIds.includes(slot.id);
             return (
               <div key={slot.id} className="p-3 rounded-lg bg-surface-page border border-surface-border flex items-center justify-between gap-2">

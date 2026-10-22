@@ -36,18 +36,14 @@ export function RecruiterInviteModal({ candidate, onClose, onInvited }: Recruite
           description: `B2B Recruiter Unlock & Interview Invite: @${candidate.username}`,
         });
       }
-      try {
-        await apiClient.post("/v1/recruiter/invite", {
-          username: candidate.username,
-          job_title: jobTitle,
-          interview_datetime: interviewDatetime,
-          offered_salary_range: offeredSalary,
-          custom_video_prompt: customPrompt,
-          unlock_contact_via_wallet: unlockViaWallet,
-        });
-      } catch {
-        // Fallback optimistic sync
-      }
+      await apiClient.post("/v1/recruiter/invite", {
+        username: candidate.username,
+        job_title: jobTitle,
+        interview_datetime: interviewDatetime,
+        offered_salary_range: offeredSalary,
+        custom_video_prompt: customPrompt,
+        unlock_contact_via_wallet: unlockViaWallet,
+      });
     },
     onSuccess: () => {
       if (!candidate) return;

@@ -4,64 +4,90 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, Award } from "lucide-react";
 import { apiClient } from "@/services/api-client";
-import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { SocialFeedCard, BlogPostDTO, FALLBACK_POSTS } from "@/components/features/blog/social-feed-card";
+import { SocialFeedCard, BlogPostDTO } from "@/components/features/blog/social-feed-card";
 import { CommunityCvRoastSection } from "@/components/features/growth/community-company-suite";
 
 export type { BlogPostDTO };
 
 export default function BlogListPage() {
-  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [feedTab, setFeedTab] = useState<"ALL" | "USER_STATUS" | "EDITORIAL">("ALL");
   const [statusTitle, setStatusTitle] = useState("");
   const [statusContent, setStatusContent] = useState("");
   const [statusTags, setStatusTags] = useState("Golang, SystemDesign, Career");
   const [attachAtsBadge, setAttachAtsBadge] = useState(true);
-  const [localPosts, setLocalPosts] = useState<BlogPostDTO[]>([]);
 
-  const { data: apiPosts = FALLBACK_POSTS } = useQuery<BlogPostDTO[]>({
+  const { data: apiPosts = [] } = useQuery<BlogPostDTO[]>({
     queryKey: ["cms-blog-posts"],
     queryFn: async () => {
       const res = await apiClient.get<BlogPostDTO[]>("/v1/blog/posts/");
-      return Array.isArray(res.data) && res.data.length > 0 ? res.data : FALLBACK_POSTS;
+      return Array.isArray(res.data) ? res.data : [];
     },
-    placeholderData: FALLBACK_POSTS,
   });
 
-  const mergedPosts = [
-    ...localPosts,
-    ...apiPosts.map((p) => ({
-      ...p,
-      post_type: p.post_type || (p.slug.includes("pitch") || p.slug.includes("video") || p.slug.includes("candidate") ? "EDITORIAL" : "USER_STATUS"),
-    })),
-    ...FALLBACK_POSTS.filter((fp) => !apiPosts.some((ap) => ap.slug === fp.slug)),
-  ];
+  const normalizedPosts = apiPosts.map((p) => ({
+    ...p,
+    post_type:
+      p.post_type ||
+      (p.slug.includes("pitch") || p.slug.includes("video") || p.slug.includes("candidate")
+        ? "EDITORIAL"
+        : "USER_STATUS"),
+  }));
 
-  const visiblePosts = mergedPosts.filter((p) => (feedTab === "ALL" ? true : p.post_type === feedTab));
+  const visiblePosts = normalizedPosts.filter((p) => (feedTab === "ALL" ? true : p.post_type === feedTab));
 
   const createPostMutation = useMutation({
-    mutationFn: async (newPost: BlogPostDTO) => {
-      try {
-        await apiClient.post("/v1/blog/posts/", {
-          title: newPost.title,
-          excerpt: newPost.excerpt,
-          content: [newPost.excerpt],
-          post_type: "USER_STATUS",
-          tags: newPost.tags,
-          ats_score_badge: newPost.ats_score_badge,
-        });
-      } catch {
-        // Optimistic social feed fallback
-      }
-      return newPost;
+    mutationFn: async () => {
+      const parsedTags = statusTags
+        .split(",")
+        .map((t) => t.trim().replace(/^#/, ""))
+        .filter(Boolean);
+      const res = await apiClient.post<BlogPostDTO>("/v1/blog/posts/", {
+        title: statusTitle.trim() || statusContent.trim().slice(0, 72),
+        excerpt: statusContent.trim(),
+        content: [statusContent.trim()],
+        post_type: "USER_STATUS",
+        tags: parsedTags,
+        ats_score_badge: attachAtsBadge ? 92 : null,
+      });
+      return res.data;
     },
     onSuccess: (created) => {
-      setLocalPosts((prev) => [created, ...prev]);
+      if (created) {
+        queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = []) => [created, ...old]);
+      }
       setStatusTitle("");
       setStatusContent("");
+      void queryClient.invalidateQueries({ queryKey: ["cms-blog-posts"] });
+    },
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: async (target: BlogPostDTO) => {
+      const res = await apiClient.post<BlogPostDTO>(`/v1/blog/posts/${target.id || target.slug}/like`, {});
+      return res.data;
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = []) =>
+        old.map((p) => (p.slug === updated.slug ? updated : p))
+      );
+      void queryClient.invalidateQueries({ queryKey: ["cms-blog-posts"] });
+    },
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: async ({ target, content }: { target: BlogPostDTO; content: string }) => {
+      const res = await apiClient.post<BlogPostDTO>(`/v1/blog/posts/${target.id || target.slug}/comments`, {
+        content,
+      });
+      return res.data;
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = []) =>
+        old.map((p) => (p.slug === updated.slug ? updated : p))
+      );
       void queryClient.invalidateQueries({ queryKey: ["cms-blog-posts"] });
     },
   });
@@ -69,49 +95,7 @@ export default function BlogListPage() {
   const handlePublishStatus = (e: React.FormEvent) => {
     e.preventDefault();
     if (!statusContent.trim()) return;
-    const authorName = user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Alex Nguyen";
-    const parsedTags = statusTags.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean);
-    const newPost: BlogPostDTO = {
-      id: `user-post-${Date.now()}`,
-      slug: `status-${Date.now()}`,
-      title: statusTitle.trim() || statusContent.trim().slice(0, 72),
-      excerpt: statusContent.trim(),
-      date: "Vừa xong",
-      author: authorName,
-      author_username: user?.username || "alexnguyen",
-      author_headline: "Verified Candidate @ Belooga Talent Network",
-      post_type: "USER_STATUS",
-      tags: parsedTags,
-      ats_score_badge: attachAtsBadge ? 92 : null,
-      likes_count: 1,
-      comments_count: 0,
-      is_liked_by_me: true,
-      comments: [],
-    };
-    createPostMutation.mutate(newPost);
-  };
-
-  const handleToggleLike = async (target: BlogPostDTO) => {
-    try { await apiClient.post(`/v1/blog/posts/${target.id || target.slug}/like`, {}); } catch { /* optimistic */ }
-    const updateItem = (p: BlogPostDTO): BlogPostDTO =>
-      p.slug === target.slug ? { ...p, is_liked_by_me: !p.is_liked_by_me, likes_count: (p.likes_count ?? 12) + (p.is_liked_by_me ? -1 : 1) } : p;
-    setLocalPosts((prev) => prev.map(updateItem));
-    queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = FALLBACK_POSTS) => old.map(updateItem));
-  };
-
-  const handleAddComment = async (target: BlogPostDTO, content: string) => {
-    try { await apiClient.post(`/v1/blog/posts/${target.id || target.slug}/comments`, { content }); } catch { /* optimistic */ }
-    const newComment = {
-      id: `cm-${Date.now()}`,
-      author_name: user?.firstName || "Alex Nguyen",
-      author_username: user?.username || "alexnguyen",
-      content,
-      created_at: "Vừa xong",
-    };
-    const updateItem = (p: BlogPostDTO): BlogPostDTO =>
-      p.slug === target.slug ? { ...p, comments: [...(p.comments ?? []), newComment], comments_count: (p.comments_count ?? 0) + 1 } : p;
-    setLocalPosts((prev) => prev.map(updateItem));
-    queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = FALLBACK_POSTS) => old.map(updateItem));
+    createPostMutation.mutate();
   };
 
   return (
@@ -156,7 +140,7 @@ export default function BlogListPage() {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-border pb-3">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <button type="button" data-testid="blog-tab-all" onClick={() => setFeedTab("ALL")} className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${feedTab === "ALL" ? "bg-brand-primary text-white" : "bg-surface-card border border-surface-border text-typography-heading"}`}>
-              Tất cả bảng tin ({mergedPosts.length})
+              Tất cả bảng tin ({normalizedPosts.length})
             </button>
             <button type="button" data-testid="blog-tab-user" onClick={() => setFeedTab("USER_STATUS")} className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${feedTab === "USER_STATUS" ? "bg-brand-primary text-white" : "bg-surface-card border border-surface-border text-typography-heading"}`}>
               Bài đăng từ User (Community Feed)
@@ -169,7 +153,12 @@ export default function BlogListPage() {
 
         <div data-testid="blog-social-feed-list" className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {visiblePosts.map((post) => (
-            <SocialFeedCard key={post.slug} post={post} onToggleLike={handleToggleLike} onAddComment={handleAddComment} />
+            <SocialFeedCard
+              key={post.slug}
+              post={post}
+              onToggleLike={(target) => likeMutation.mutate(target)}
+              onAddComment={(target, content) => commentMutation.mutate({ target, content })}
+            />
           ))}
         </div>
       </div>

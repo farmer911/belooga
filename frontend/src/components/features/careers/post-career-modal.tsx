@@ -17,42 +17,6 @@ export interface CareerJobItem {
   description: string;
 }
 
-export const FALLBACK_CAREER_JOBS: CareerJobItem[] = [
-  {
-    id: "career-1",
-    title: "Staff Full-Stack Engineer",
-    company_name: "Belooga",
-    department: "Platform Engineering",
-    location: "Ho Chi Minh City / Remote",
-    salary_range: "$4,500 - $6,500 / month",
-    skills: ["Next.js", "FastAPI", "PostgreSQL", "TypeScript", "Redis"],
-    is_partner: false,
-    description: "Architect low-latency candidate search (PostgreSQL 16 GIN TSVECTOR) and real-time WebRTC video pitch pipelines.",
-  },
-  {
-    id: "career-2",
-    title: "Lead Product Designer",
-    company_name: "Belooga",
-    department: "Design Systems",
-    location: "Singapore / Remote",
-    salary_range: "$4,000 - $5,800 / month",
-    skills: ["Figma", "Design Systems", "UX Research", "Prototyping"],
-    is_partner: false,
-    description: "Lead the Belooga High-Density Studio & Mobile Discovery design language across web and native Android.",
-  },
-  {
-    id: "career-3",
-    title: "Senior Distributed Systems Engineer (Golang)",
-    company_name: "VNG Corporation",
-    department: "Cloud & Payment Infrastructure",
-    location: "Ho Chi Minh City",
-    salary_range: "65M - 95M VNĐ / tháng",
-    skills: ["Golang", "Kubernetes", "Kafka", "PostgreSQL", "gRPC"],
-    is_partner: true,
-    description: "Build high-throughput payment & escrow microservices handling 50,000+ RPS with 99.99% availability.",
-  },
-];
-
 interface PostCareerModalProps {
   open: boolean;
   onClose: () => void;

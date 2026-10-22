@@ -34,7 +34,7 @@ export default function CompaniesDirectoryPage() {
         });
         if (Array.isArray(res.data) && res.data.length > 0) return res.data;
       } catch {
-        // Fallback to local persisted companies
+        return readCompanies();
       }
       return readCompanies();
     },

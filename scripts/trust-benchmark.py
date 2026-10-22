@@ -165,6 +165,18 @@ for p in ui_files:
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> apiClient called inside useEffect (must use @tanstack/react-query)")
     if re.search(r"catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)", txt, re.DOTALL):
         violations["2. Error Transparency (No Pass)"].append(f"{rel} -> fake success state inside catch block")
+    mock_fallback_hits = re.findall(
+        r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
+        r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
+        r"|FALLBACK_MARKET_JOBS|INITIAL_RECRUITER_PIPELINE|DEFAULT_USER_POSTS"
+        r"|DEFAULT_RANKED_EXPERTS|DEFAULT_TOP_CANDIDATES|DEFAULT_REFERRALS"
+        r"|DEFAULT_QUESTIONS|DEFAULT_ROADMAP)\b|//\s*Fallback to local",
+        txt,
+    )
+    if mock_fallback_hits:
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            f"{rel} -> prohibited mock/fallback data ({', '.join(sorted(set(mock_fallback_hits)))}) (fe_mock_fallback_arrays == 0)"
+        )
     if "frontend/src/" in rel.as_posix():
         for stub_pat, stub_label in (
             (r"\balert\s*\(", "browser alert() stub prohibited"),

@@ -27,27 +27,7 @@ export interface UserPostItem {
   created_at: string;
 }
 
-const LOCAL_POSTS_KEY = "belooga_user_posts_v1";
-
-export const DEFAULT_USER_POSTS: UserPostItem[] = [
-  {
-    id: "upost-1",
-    username: "phucnguyen",
-    author_name: "Nguyễn Minh Phúc",
-    title: "Kiến trúc tối ưu FastAPI Async & Singleflight Cache chịu tải 25,000 CCU",
-    category: "Chia sẻ kiến thức",
-    body: "Khi thiết kế hệ thống tìm kiếm ứng viên thời gian thực với TSVECTOR trên PostgreSQL 16, việc kết hợp Singleflight Cache và Keyset Pagination giúp giảm 84% độ trễ P99.",
-    tags: ["Python", "FastAPI", "PostgreSQL", "System Design"],
-    attachment_link: "https://github.com/farmer911/belooga",
-    likes_count: 34,
-    comments: [
-      { id: "uc-1", author_name: "Tech Recruiter @ VNG", content: "Bài viết rất thực chiến, bên mình đang tuyển Principal Backend!", created_at: "2 giờ trước" },
-    ],
-    created_at: "2026-10-22",
-  },
-];
-
-let memoryPosts: UserPostItem[] = DEFAULT_USER_POSTS;
+let memoryPosts: UserPostItem[] = [];
 
 export function readLocalPosts(): UserPostItem[] {
   return memoryPosts;
