@@ -15,6 +15,7 @@ import {
   writeCompanies,
 } from "@/components/features/companies/company-data";
 import { RecruiterAnalyticsPanel } from "@/components/features/analytics/multi-persona-analytics";
+import { CompanyGrowthSuite } from "@/components/features/growth/community-company-suite";
 
 export default function CompanyProfileDetailPage() {
   const params = useParams();
@@ -129,6 +130,7 @@ export default function CompanyProfileDetailPage() {
           <div className="p-5 rounded-xl bg-surface-card border border-surface-border space-y-4">
             <p className="text-sm text-typography-body leading-relaxed">{company.description}</p>
             <RecruiterAnalyticsPanel />
+            <CompanyGrowthSuite slug={slug} companyName={company.name} />
             <div className="space-y-1.5">
               <div className="font-bold text-typography-main">Tech Stack Chủ Lực:</div>
               <div className="flex flex-wrap gap-1.5">

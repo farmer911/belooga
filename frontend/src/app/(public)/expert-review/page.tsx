@@ -10,6 +10,7 @@ import { CandidateOrdersList } from "@/components/features/expert-review/candida
 import { ReviewBookingDialog } from "@/components/features/expert-review/review-booking-dialog";
 import { ExpertLeaderboardSection } from "@/components/features/expert-review/expert-leaderboard-section";
 import { ExpertAnalyticsPanel } from "@/components/features/analytics/multi-persona-analytics";
+import { ExpertLiveMockBookingCard } from "@/components/features/growth/recruiter-tracker-wallet-suite";
 import {
   BecomeExpertSection,
   RegisteredExpertApplication,
@@ -92,6 +93,7 @@ export default function ExpertReviewPage() {
 
       {/* 2a-2. Expert Performance & Revenue Analytics */}
       <ExpertAnalyticsPanel />
+      <ExpertLiveMockBookingCard />
 
       {/* 2. Candidate Active Orders (if any) */}
       <CandidateOrdersList

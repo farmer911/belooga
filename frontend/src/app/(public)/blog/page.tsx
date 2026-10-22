@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SocialFeedCard, BlogPostDTO, FALLBACK_POSTS } from "@/components/features/blog/social-feed-card";
+import { CommunityCvRoastSection } from "@/components/features/growth/community-company-suite";
 
 export type { BlogPostDTO };
 
@@ -151,6 +152,7 @@ export default function BlogListPage() {
           </form>
         </Card>
 
+        <CommunityCvRoastSection />
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-border pb-3">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <button type="button" data-testid="blog-tab-all" onClick={() => setFeedTab("ALL")} className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${feedTab === "ALL" ? "bg-brand-primary text-white" : "bg-surface-card border border-surface-border text-typography-heading"}`}>

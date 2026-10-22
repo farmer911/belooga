@@ -7,6 +7,7 @@ import { useWallet, formatVnd, WalletTxType } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { WalletRewardsCashbackCard } from "@/components/features/growth/recruiter-tracker-wallet-suite";
 
 const TOPUP_PRESETS = [100000, 250000, 500000, 1000000, 2000000];
 
@@ -102,6 +103,7 @@ export default function UserWalletPage() {
           </Card>
         </div>
 
+        <WalletRewardsCashbackCard />
         <Card data-testid="wallet-topup-panel" className="p-5 bg-surface-card border border-surface-border space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>

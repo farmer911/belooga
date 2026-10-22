@@ -11,6 +11,7 @@ import { useJobTracker, KanbanStatus, TrackedJob } from "@/hooks/use-job-tracker
 import { KanbanColumn } from "@/components/features/job-tracker/kanban-column";
 import { AddJobDialog } from "@/components/features/job-tracker/add-job-dialog";
 import { JobSearchAndGoalPanel } from "@/components/features/job-tracker/job-search-market-panel";
+import { TrackerCalendarAndPulseSuite } from "@/components/features/growth/recruiter-tracker-wallet-suite";
 
 export default function JobTrackerKanbanPage() {
   const queryClient = useQueryClient();
@@ -146,18 +147,11 @@ export default function JobTrackerKanbanPage() {
       </div>
 
       <JobSearchAndGoalPanel
-        careerGoal={careerGoal}
-        onSaveGoal={saveGoal}
-        isSavingGoal={isSavingGoal}
-        onAddJobToKanban={addJob}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        minScoreFilter={minScoreFilter}
-        onMinScoreFilterChange={setMinScoreFilter}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        onResetFilters={resetFilters}
+        careerGoal={careerGoal} onSaveGoal={saveGoal} isSavingGoal={isSavingGoal} onAddJobToKanban={addJob}
+        statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} minScoreFilter={minScoreFilter}
+        onMinScoreFilterChange={setMinScoreFilter} sortBy={sortBy} onSortByChange={setSortBy} onResetFilters={resetFilters}
       />
+      <TrackerCalendarAndPulseSuite />
 
       {analytics && (
         <div

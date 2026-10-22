@@ -22,6 +22,7 @@ import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { ResumeAttachmentCard } from "@/components/features/media/resume-attachment-card";
 import { UserProfilePostsSection } from "@/components/features/posts/user-posts-section";
 import { CandidateAnalyticsWidget } from "@/components/features/analytics/multi-persona-analytics";
+import { WorkspaceGrowthSuite } from "@/components/features/growth/workspace-identity-suite";
 
 interface WorkspaceTrustScore {
   trust_score: number;
@@ -152,6 +153,7 @@ export default function WorkspacePage() {
 
           <main className="lg:col-span-8 space-y-8">
             <CandidateAnalyticsWidget />
+            <WorkspaceGrowthSuite username={username} fullName={profile.full_name} />
             <VideoPitchCard
               posterUrl={profile.video_pitch_poster}
               onPlayClick={() => setVideoModalOpen(true)}

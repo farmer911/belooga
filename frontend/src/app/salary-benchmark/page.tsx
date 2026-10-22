@@ -11,6 +11,7 @@ import { SalaryPercentileCard } from "@/components/features/salary-benchmark/sal
 import { SkillPremiumRadar, SalarySkill } from "@/components/features/salary-benchmark/skill-premium-radar";
 import { SalaryCrawlerPanel, CrawlerSourceMeta } from "@/components/features/salary-benchmark/salary-crawler-panel";
 import { SalaryHistoricalChart, HistoricalSalaryPoint, buildFallbackHistory } from "@/components/features/salary-benchmark/salary-historical-chart";
+import { SalaryNegotiationAndRoadmapSuite } from "@/components/features/growth/career-acceleration-suite";
 
 const STACKS = ["Golang", "Python / AI", "React / Frontend", "Java / Spring", "DevOps / K8s"];
 const LEVELS = ["Junior", "Mid-Level", "Senior", "Lead / Architect"];
@@ -194,14 +195,10 @@ export default function SalaryBenchmarkPage() {
         <SalaryHistoricalChart selectedYear={selectedYear} onSelectYear={setSelectedYear} series={historicalSeries} techStack={techStack} level={level} location={location} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-7">
-            <SalaryPercentileCard techStack={techStack} level={level} location={location} p25={p25} p50={p50} p75={p75} sampleSize={sampleSize} growthRate={benchmark?.growth_rate_yoy || "+18.5%"} marketDemand={benchmark?.market_demand || "RẤT CAO"} />
-          </div>
-          <div className="lg:col-span-5">
-            <SkillPremiumRadar skills={skills} techStack={techStack} />
-          </div>
+          <div className="lg:col-span-7"><SalaryPercentileCard techStack={techStack} level={level} location={location} p25={p25} p50={p50} p75={p75} sampleSize={sampleSize} growthRate={benchmark?.growth_rate_yoy || "+18.5%"} marketDemand={benchmark?.market_demand || "RẤT CAO"} /></div>
+          <div className="lg:col-span-5"><SkillPremiumRadar skills={skills} techStack={techStack} /></div>
         </div>
-
+        <SalaryNegotiationAndRoadmapSuite techStack={techStack} level={level} />
         {careerRoi && (
           <div data-testid="career-upskill-roi-card" className="p-4 rounded-xl bg-surface-card border border-surface-border shadow-xs space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
