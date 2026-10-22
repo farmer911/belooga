@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
 import { downloadCandidatePdf } from "@/services/media-upload.service";
 import { CandidateProfile, JobExperience } from "@/hooks/use-candidate-profile";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 import { PublicHeaderCard } from "@/components/features/profile/public-header-card";
 import { PublicContactModal } from "@/components/features/profile/public-contact-modal";
 import { ReportProfileModal } from "@/components/features/profile/report-profile-modal";
@@ -20,20 +21,11 @@ import { EducationTimeline } from "@/components/features/timeline/education-time
 import { AwardsTimeline } from "@/components/features/timeline/awards-timeline";
 
 interface TrustScoreResponse {
-  username: string;
-  trust_score: number;
-  readiness_tier: string;
-  recruiter_conversion_multiplier: number;
-  pillars: Array<{ pillar: string; score: number; max_score: number; status: string; detail: string }>;
-  next_boost_action: string;
+  username: string; trust_score: number; readiness_tier: string; recruiter_conversion_multiplier: number;
+  pillars: Array<{ pillar: string; score: number; max_score: number; status: string; detail: string }>; next_boost_action: string;
 }
-
 interface CareerTrajectoryResponse {
-  username: string;
-  current_inferred_level: string;
-  next_target_level: string;
-  promotion_readiness_pct: number;
-  trajectory_velocity: string;
+  username: string; current_inferred_level: string; next_target_level: string; promotion_readiness_pct: number; trajectory_velocity: string;
 }
 
 export default function PublicCandidatePage() {
@@ -43,6 +35,7 @@ export default function PublicCandidatePage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const { isBookmarked, isPendingFor, toggleBookmark } = useBookmarks();
 
   const { data: dossier, isLoading } = useQuery({
     queryKey: ["public-candidate-dossier-rpc", username],
@@ -99,13 +92,15 @@ export default function PublicCandidatePage() {
           seekingStatus={profile.seeking_status}
           headline={profile.headline}
           location={profile.location}
+          isBookmarked={isBookmarked(username)}
+          isBookmarkPending={isPendingFor(username)}
+          onBookmarkToggle={() => toggleBookmark(username)}
           onReportClick={() => setReportModalOpen(true)}
           onContactClick={() => setContactModalOpen(true)}
           onDownloadResume={() => downloadCandidatePdf(username)}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Bio & Credentials (4 cols) */}
           <div className="lg:col-span-4 space-y-6">
             {trustData && (
               <div data-testid="profile-trust-score-card" className="bg-surface-card rounded-xl border border-surface-border p-5 shadow-sm space-y-3">
@@ -121,8 +116,8 @@ export default function PublicCandidatePage() {
                 <div className="grid grid-cols-2 gap-2">
                   {trustData.pillars.map((p) => (
                     <div key={p.pillar} className="bg-surface-page rounded-lg p-2 border border-surface-border">
-                      <p className="text-[10px] font-semibold text-slate-500 truncate">{p.pillar}</p>
-                      <p className="text-xs font-bold text-slate-800">{p.score}/{p.max_score} · {p.status}</p>
+                      <p className="text-[10px] font-semibold text-typography-muted truncate">{p.pillar}</p>
+                      <p className="text-xs font-bold text-typography-main">{p.score}/{p.max_score} · {p.status}</p>
                     </div>
                   ))}
                 </div>
@@ -135,8 +130,8 @@ export default function PublicCandidatePage() {
               <p className="text-xs text-typography-body leading-relaxed">{profile.bio}</p>
               {(profile.email || profile.phone) && (
                 <div className="pt-4 border-t border-surface-divider space-y-2 text-xs text-typography-heading">
-                  {profile.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-slate-400" /><span>{profile.email}</span></div>}
-                  {profile.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /><span>{profile.phone}</span></div>}
+                  {profile.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-typography-muted" /><span>{profile.email}</span></div>}
+                  {profile.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-typography-muted" /><span>{profile.phone}</span></div>}
                 </div>
               )}
             </div>
@@ -145,9 +140,7 @@ export default function PublicCandidatePage() {
               <h3 className="text-sm font-bold uppercase tracking-wider text-typography-main">Skills & Strengths</h3>
               <div className="flex flex-wrap gap-2">
                 {skills.map((s, idx) => (
-                  <span key={idx} className="px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading">
-                    {s}
-                  </span>
+                  <span key={idx} className="px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading">{s}</span>
                 ))}
               </div>
             </div>
@@ -155,7 +148,6 @@ export default function PublicCandidatePage() {
             <LanguagesInterestsCard languages={profile.languages} interests={profile.interests} />
           </div>
 
-          {/* Right Column: Video Pitch & Timeline (8 cols) */}
           <div className="lg:col-span-8 space-y-8">
             <VideoPitchCard
               posterUrl={profile.video_pitch_poster}
@@ -173,18 +165,17 @@ export default function PublicCandidatePage() {
                   <h2 className="text-lg font-bold text-typography-main">Work Experience</h2>
                 </div>
                 {trajectory && (
-                  <span data-testid="career-trajectory-badge" className="px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[11px] font-bold text-teal-800">
+                  <span data-testid="career-trajectory-badge" className="px-2.5 py-1 rounded-full bg-brand-overlay border border-brand-primary/30 text-[11px] font-bold text-brand-dark">
                     {trajectory.current_inferred_level} → {trajectory.next_target_level} ({trajectory.promotion_readiness_pct}% Ready)
                   </span>
                 )}
               </div>
 
               {jobs.length === 0 ? (
-                <div className="p-8 text-center border border-dashed border-surface-border rounded-lg text-slate-400 text-sm">
+                <div className="p-8 text-center border border-dashed border-surface-border rounded-lg text-typography-muted text-sm">
                   Candidate has not listed any prior work experience yet.
                 </div>
               ) : (
-
                 <div className="space-y-4">
                   {jobs.map((job, idx) => (
                     <TimelineItemCard
@@ -211,25 +202,9 @@ export default function PublicCandidatePage() {
         </div>
       </div>
 
-      <VideoPitchModal
-        isOpen={videoModalOpen}
-        onClose={() => setVideoModalOpen(false)}
-        candidateName={profile.full_name}
-        videoUrl={profile.video_pitch_url}
-        posterUrl={profile.video_pitch_poster}
-      />
-      <PublicContactModal
-        isOpen={contactModalOpen}
-        onClose={() => setContactModalOpen(false)}
-        username={username}
-        fullName={profile.full_name}
-      />
-      <ReportProfileModal
-        isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
-        candidateId={String(profile.user_id || profile.id || username)}
-        username={username}
-      />
+      <VideoPitchModal isOpen={videoModalOpen} onClose={() => setVideoModalOpen(false)} candidateName={profile.full_name} videoUrl={profile.video_pitch_url} posterUrl={profile.video_pitch_poster} />
+      <PublicContactModal isOpen={contactModalOpen} onClose={() => setContactModalOpen(false)} username={username} fullName={profile.full_name} />
+      <ReportProfileModal isOpen={reportModalOpen} onClose={() => setReportModalOpen(false)} candidateId={String(profile.user_id || profile.id || username)} username={username} />
     </div>
   );
 }
