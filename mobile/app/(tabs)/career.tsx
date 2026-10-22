@@ -19,8 +19,10 @@ import {
   useTriggerMobileSalaryCrawlMutation,
 } from "@/hooks/use-mobile-parity-part2";
 import { getSemanticTokens } from "@/theme/tokens";
+import { RecruiterHubSection } from "@/components/recruiter-hub-section";
+import { ExpertLeaderboardSection } from "@/components/expert-leaderboard-section";
 
-type CareerSubTab = "expert" | "wallet" | "salary" | "community" | "bi";
+type CareerSubTab = "expert" | "wallet" | "salary" | "community" | "recruiter" | "bi";
 const TOPUP_AMOUNTS = [50000, 100000, 200000, 500000, 1000000] as const;
 const SALARY_YEARS = ["2024", "2025", "2026", "all"] as const;
 
@@ -81,9 +83,12 @@ export default function MobileCareerHubScreen() {
           <ActionButton testID="mobile-career-sub-wallet" label="Ví & Escrow" variant={subTab === "wallet" ? "primary" : "secondary"} onPress={() => setSubTab("wallet")} />
           <ActionButton testID="mobile-career-sub-salary" label="Salary Radar" variant={subTab === "salary" ? "primary" : "secondary"} onPress={() => setSubTab("salary")} />
           <ActionButton testID="mobile-career-sub-community" label="Social & Jobs" variant={subTab === "community" ? "primary" : "secondary"} onPress={() => setSubTab("community")} />
+          <ActionButton testID="mobile-career-sub-recruiter" label="Recruiter Hub" variant={subTab === "recruiter" ? "primary" : "secondary"} onPress={() => setSubTab("recruiter")} />
           <ActionButton testID="mobile-career-sub-bi" label="Executive BI" variant={subTab === "bi" ? "primary" : "secondary"} onPress={() => setSubTab("bi")} />
         </div>
       </SurfaceCard>
+
+      {subTab === "recruiter" ? <RecruiterHubSection /> : null}
 
       {(subTab === "expert" || subTab === "wallet") ? (
         <SurfaceCard testID="mobile-expert-review-card" mode="dark">
@@ -159,6 +164,7 @@ export default function MobileCareerHubScreen() {
               </p>
             ) : null}
           </div>
+          <ExpertLeaderboardSection />
         </SurfaceCard>
       ) : null}
 
