@@ -110,7 +110,13 @@ export function useExpertReview() {
 
   const myOrdersQuery = useQuery<ReviewOrder[]>({
     queryKey: ["expert-review-my-orders"],
-    queryFn: async () => (await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/my-orders/")).data,
+    queryFn: async () => {
+      try {
+        return (await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/me")).data;
+      } catch {
+        return (await apiClient.get<ReviewOrder[]>("/v1/expert-review/orders/my-orders/")).data;
+      }
+    },
     enabled: isAuthenticated,
   });
 
