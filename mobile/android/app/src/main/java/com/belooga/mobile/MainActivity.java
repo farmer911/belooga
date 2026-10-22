@@ -467,6 +467,71 @@ public class MainActivity extends Activity {
         sarahCard.addView(sarahHeader);
         addSkillChipsRow(sarahCard, new String[]{"Expo SDK 58", "TypeScript", "ConnectRPC", "Redis 7"});
         contentContainer.addView(sarahCard);
+
+        LinearLayout companiesCard = BeloogaUiKit.createSurfaceCard(this, "mobile-companies-section");
+        EditText companySearchInput = new EditText(this);
+        companySearchInput.setHint("Tìm công ty theo tên, Tech Stack, ngành nghề (/v1/companies/search)...");
+        companySearchInput.setHintTextColor(BeloogaUiKit.COLOR_TEXT_MUTED);
+        companySearchInput.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
+        companySearchInput.setTextSize(12f);
+        companySearchInput.setSingleLine(true);
+        companySearchInput.setContentDescription("mobile-company-search-input");
+        companiesCard.addView(companySearchInput);
+
+        LinearLayout dbCard = BeloogaUiKit.createSubtleBox(this);
+        dbCard.setContentDescription("mobile-company-card-databricks");
+        TextView dbTitle = new TextView(this);
+        dbTitle.setText("Databricks (AI / Cloud • Ho Chi Minh • ★ 4.9 • $3,200/mo • 6 Open Jobs)");
+        dbTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+        dbTitle.setTextSize(12f);
+        dbTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        dbCard.addView(dbTitle);
+        companiesCard.addView(dbCard);
+
+        LinearLayout compProfileCard = BeloogaUiKit.createSubtleBox(this);
+        compProfileCard.setContentDescription("mobile-company-profile-card");
+        compProfileCard.addView(BeloogaUiKit.createActionButton(
+                this,
+                "Viết Đánh Giá Công Ty (/v1/companies/databricks/reviews)",
+                "mobile-company-review-btn",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+        companiesCard.addView(compProfileCard);
+        contentContainer.addView(companiesCard);
+
+        LinearLayout topCandidatesCard = BeloogaUiKit.createSurfaceCard(this, "mobile-top-candidates-section");
+        LinearLayout topCatRow = BeloogaUiKit.createRow(this, 6);
+        topCatRow.addView(BeloogaUiKit.createBadgePill(
+                this,
+                "BACKEND",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_BRAND_MUTED,
+                BeloogaUiKit.COLOR_BORDER,
+                "mobile-top-candidates-category-backend"
+        ));
+        topCatRow.addView(BeloogaUiKit.createSpacer(this, 6));
+        topCatRow.addView(BeloogaUiKit.createBadgePill(
+                this,
+                "READY NOW",
+                BeloogaUiKit.COLOR_SUCCESS,
+                BeloogaUiKit.COLOR_SUCCESS_MUTED,
+                BeloogaUiKit.COLOR_BORDER,
+                "mobile-top-candidates-active-toggle"
+        ));
+        topCandidatesCard.addView(topCatRow);
+
+        LinearLayout topAlexBox = BeloogaUiKit.createSubtleBox(this);
+        topAlexBox.setContentDescription("mobile-top-candidate-card-alexnguyen");
+        TextView topAlexTxt = new TextView(this);
+        topAlexTxt.setText("#1 Alex Nguyen (@alexnguyen) • Top 1% Talent (98/100 pts) • 60s Video Pitch");
+        topAlexTxt.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+        topAlexTxt.setTextSize(12f);
+        topAlexTxt.setTypeface(Typeface.DEFAULT_BOLD);
+        topAlexBox.addView(topAlexTxt);
+        topCandidatesCard.addView(topAlexBox);
+        contentContainer.addView(topCandidatesCard);
     }
 
     private void renderCandidateDetailScreen() {
@@ -928,5 +993,57 @@ public class MainActivity extends Activity {
                 null
         ));
         contentContainer.addView(timelineCard);
+
+        LinearLayout postsCard = BeloogaUiKit.createSurfaceCard(this, "mobile-profile-posts-list");
+        postsCard.addView(BeloogaUiKit.createActionButton(
+                this,
+                "+ Đăng Bài Viết Mới (/v1/posts)",
+                "mobile-quick-post-open-btn",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+
+        LinearLayout postItem = BeloogaUiKit.createSubtleBox(this);
+        postItem.setContentDescription("mobile-user-post-card-post-1");
+        TextView pTitle = new TextView(this);
+        pTitle.setText("[Career Insight] Scaling PostgreSQL 16 GIN TSVECTOR to 500k Profiles");
+        pTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+        pTitle.setTextSize(12f);
+        pTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        postItem.addView(pTitle);
+
+        LinearLayout postActions = BeloogaUiKit.createRow(this, 6);
+        postActions.addView(BeloogaUiKit.createActionButton(
+                this,
+                "Edit Post",
+                "mobile-user-post-edit-btn-post-1",
+                BeloogaUiKit.COLOR_ELEVATED,
+                BeloogaUiKit.COLOR_TEXT_HEADING,
+                null
+        ));
+        postActions.addView(BeloogaUiKit.createSpacer(this, 6));
+        postActions.addView(BeloogaUiKit.createActionButton(
+                this,
+                "Delete Post",
+                "mobile-user-post-delete-btn-post-1",
+                BeloogaUiKit.COLOR_WARNING,
+                BeloogaUiKit.COLOR_TEXT_HEADING,
+                null
+        ));
+        postItem.addView(postActions);
+        postsCard.addView(postItem);
+        contentContainer.addView(postsCard);
+
+        LinearLayout postDrawer = BeloogaUiKit.createBottomSheetDrawer(this, "mobile-quick-post-drawer", "Đăng Bài Viết Mới (/v1/posts)");
+        postDrawer.addView(BeloogaUiKit.createActionButton(
+                this,
+                "Đăng Bài Viết (/v1/posts)",
+                "mobile-user-post-submit-btn",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+        contentContainer.addView(postDrawer);
     }
 }
