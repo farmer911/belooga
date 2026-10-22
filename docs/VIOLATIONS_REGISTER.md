@@ -143,6 +143,19 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 
 ---
 
+### [VIOLATION-012] Giao diện Mobile App sơ sài (Holo Android 1.0 góc vuông, 65% màn hình trống đen) & thiếu đồng bộ các API mới từ BEL-139
+* **Where (Sai ở đâu):** `mobile/android/app/src/main/java/com/belooga/mobile/MainActivity.java`, `mobile/src/lib/native-runtime.ts`, `mobile/src/hooks/*`, và `mobile/app/(tabs)/*`.
+* **How & Why (Sai như thế nào & Lỗi của ai):**
+  1. **Thiếu Design System trên Android Native View:** `MainActivity.java` chỉ dùng `LinearLayout.setBackgroundColor(...)`, `Button` và `EditText` mặc định của Android (0dp border-radius, gạch chân input thô, 4 nút tab xám góc vuông và 65% diện tích màn hình để trống đen).
+  2. **Đứt gãy đồng bộ tính năng Mobile sau BEL-139:** Khi nâng cấp Backend & Web ở BEL-139, các hook trong `mobile/src/hooks/` chưa được cập nhật thêm `/v1/profile/search/suggest/`, `/v1/match/ats-scan`, `/v1/match/history`, `/v1/tracker/jobs/analytics`, `PATCH /v1/tracker/jobs/{id}`, `PATCH /v1/profile/{username}`, và `/v1/notifications/`.
+* **Minimal Fix (Sửa làm sao):**
+  1. Xây dựng `BeloogaUiKit.java` chuẩn hóa `GradientDrawable` (`16dp` rounded card, `1dp` border, `999dp` pill badges, circular monogram avatars, 3-column KPI tiles, active teal tab dock) và re-skin toàn bộ 4 tab trên cả Android APK lẫn React Native (`native-runtime.ts` + `mobile/app/`).
+  2. Nâng cấp toàn bộ `mobile/src/hooks/` và `mobile/src/lib/schemas.ts` đồng bộ 100% với các API mới của Backend.
+* **Anti-Recurrence Guard (Chặn tái phạm):** Khóa kiểm tra `BeloogaUiKit.java` (`GradientDrawable` + `setCornerRadius` + `setStroke`) và các contract test Mobile mới vào `scripts/trust-benchmark.py` và `mobile/tests/`.
+* **Trạng thái:** ✅ Đã khóa tự động trong `scripts/trust-benchmark.py` và kiểm chứng visual qua `e2e-mobile-adb.sh`.
+
+---
+
 ## 🛡 Quy luật Harness Nâng Cao (Agent Strict Operational Rules)
 
 1. **Pre-flight Legacy Asset Check:**

@@ -39,4 +39,24 @@ describe("Belooga Mobile RN 0.88.0 APK Pipeline & E2E Automation Harness (BEL-13
       expect(maestroYaml).toContain(tabNode);
     }
   });
+
+  it("enforces executive GradientDrawable UI kit with rounded cards, pill badges, and active tab styling on Android (BEL-140)", () => {
+    const uiKitPath = join(
+      MOBILE_ROOT,
+      "android",
+      "app",
+      "src",
+      "main",
+      "java",
+      "com",
+      "belooga",
+      "mobile",
+      "BeloogaUiKit.java"
+    );
+    expect(existsSync(uiKitPath)).toBe(true);
+    const uiKitContent = readFileSync(uiKitPath, "utf-8");
+    expect(uiKitContent).toContain("GradientDrawable");
+    expect(uiKitContent).toContain("setCornerRadius");
+    expect(uiKitContent).toContain("setStroke");
+  });
 });

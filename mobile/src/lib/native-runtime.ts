@@ -96,21 +96,30 @@ export interface NativeContainerProps {
   testID?: string;
   mode?: ThemeMode;
   children?: React.ReactNode;
+  style?: React.CSSProperties;
 }
 
-export function ScreenShell({ testID, mode = "dark", children }: NativeContainerProps) {
+export function ScreenShell({ testID, mode = "dark", children, style }: NativeContainerProps) {
   const tokens = getSemanticTokens(mode);
   return React.createElement(
     "section",
     {
       "data-testid": testID,
-      style: { backgroundColor: tokens.surface.page, color: tokens.typography.main, minHeight: "100%" },
+      style: {
+        backgroundColor: tokens.surface.page,
+        color: tokens.typography.main,
+        minHeight: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        ...style,
+      },
     },
     children
   );
 }
 
-export function SurfaceCard({ testID, mode = "dark", children }: NativeContainerProps) {
+export function SurfaceCard({ testID, mode = "dark", children, style }: NativeContainerProps) {
   const tokens = getSemanticTokens(mode);
   return React.createElement(
     "div",
@@ -118,13 +127,63 @@ export function SurfaceCard({ testID, mode = "dark", children }: NativeContainer
       "data-testid": testID,
       style: {
         backgroundColor: tokens.surface.card,
-        borderColor: tokens.surface.border,
-        borderWidth: 1,
-        borderRadius: 16,
-        padding: 16,
+        border: `1px solid ${tokens.surface.border}`,
+        borderRadius: 18,
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        boxShadow: "0 10px 28px rgba(0, 0, 0, 0.28)",
+        ...style,
       },
     },
     children
+  );
+}
+
+export interface BadgePillProps {
+  testID?: string;
+  label: string;
+  tone?: "brand" | "success" | "warning" | "neutral";
+  mode?: ThemeMode;
+}
+
+export function BadgePill({ testID, label, tone = "brand", mode = "dark" }: BadgePillProps) {
+  const tokens = getSemanticTokens(mode);
+  const bg =
+    tone === "brand"
+      ? tokens.brand.primaryMuted
+      : tone === "success"
+        ? "rgba(16, 185, 129, 0.16)"
+        : tone === "warning"
+          ? "rgba(245, 158, 11, 0.16)"
+          : tokens.surface.elevated;
+  const fg =
+    tone === "brand"
+      ? tokens.brand.primary
+      : tone === "success"
+        ? tokens.status.success
+        : tone === "warning"
+          ? tokens.status.warning
+          : tokens.typography.body;
+  return React.createElement(
+    "span",
+    {
+      "data-testid": testID,
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "4px 10px",
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: 0.4,
+        backgroundColor: bg,
+        color: fg,
+        border: `1px solid ${tokens.surface.border}`,
+      },
+    },
+    label
   );
 }
 
@@ -132,7 +191,7 @@ export interface ActionButtonProps {
   testID?: string;
   label: string;
   disabled?: boolean;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "accent";
   mode?: ThemeMode;
   onPress?: () => void;
 }
@@ -149,9 +208,17 @@ export function ActionButton({
   const bg =
     variant === "primary"
       ? tokens.brand.primary
-      : variant === "danger"
-        ? tokens.status.danger
-        : tokens.surface.elevated;
+      : variant === "accent"
+        ? tokens.brand.accent
+        : variant === "danger"
+          ? tokens.status.danger
+          : tokens.surface.elevated;
+  const fg =
+    variant === "secondary"
+      ? tokens.typography.main
+      : variant === "accent" || variant === "danger"
+        ? "rgb(255, 255, 255)"
+        : tokens.typography.inverse;
   return React.createElement(
     "button",
     {
@@ -160,10 +227,15 @@ export function ActionButton({
       onClick: onPress,
       style: {
         backgroundColor: bg,
-        color: variant === "secondary" ? tokens.typography.main : tokens.typography.inverse,
+        color: fg,
+        border: `1px solid ${variant === "secondary" ? tokens.surface.border : "transparent"}`,
         borderRadius: 12,
-        padding: 12,
-        opacity: disabled ? 0.5 : 1,
+        padding: "11px 16px",
+        fontWeight: 700,
+        fontSize: 13,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        transition: "all 150ms ease",
       },
     },
     label

@@ -8,6 +8,7 @@ import {
   candidateTrajectorySchema,
   CandidateTrustScoreDTO,
   candidateTrustScoreSchema,
+  searchSuggestionsResponseSchema,
   TrendingInsightsDTO,
   trendingInsightsSchema,
 } from "@/lib/schemas";
@@ -43,6 +44,18 @@ export async function searchMobileCandidates(
 export async function fetchMobileTrendingInsights(): Promise<TrendingInsightsDTO> {
   const raw = await mobileApiClient.get<unknown>("/v1/profile/search/trending/");
   return trendingInsightsSchema.parse(raw);
+}
+
+export async function fetchMobileSearchSuggestions(q: string): Promise<string[]> {
+  const trimmed = q.trim();
+  if (!trimmed) return [];
+  const raw = await mobileApiClient.get<unknown>(
+    `/v1/profile/search/suggest/?q=${encodeURIComponent(trimmed)}`
+  );
+  if (Array.isArray(raw)) {
+    return raw.map((item) => String(item));
+  }
+  return searchSuggestionsResponseSchema.parse(raw).suggestions;
 }
 
 export async function fetchMobileCandidateProfileBatch(
@@ -95,5 +108,14 @@ export function useMobileCandidateProfileQuery(username: string) {
     queryFn: () => fetchMobileCandidateProfileBatch(username),
     enabled: Boolean(username.trim()),
     staleTime: 60_000,
+  });
+}
+
+export function useMobileSearchSuggestionsQuery(q: string) {
+  return useQuery({
+    queryKey: ["mobile", "discovery", "suggest", q] as const,
+    queryFn: () => fetchMobileSearchSuggestions(q),
+    enabled: q.trim().length >= 2,
+    staleTime: 30_000,
   });
 }
