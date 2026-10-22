@@ -1,13 +1,16 @@
-"""Public CMS, FAQs, and moderation reporting endpoints (Thin Controller)."""
+"""Public CMS, community social feed, FAQs, and moderation reporting endpoints (Thin Controller)."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import uuid
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.security import AuthenticatedUser, get_current_user_optional
 from app.modules.cms import CmsService
 from app.schemas.cms import (
+    BlogCommentCreateRequest,
+    BlogPostCreateRequest,
     BlogPostResponse,
     ContactInquiryRequest,
     ContactInquiryResponse,
@@ -33,13 +36,51 @@ async def get_faqs():
 
 
 @router.get("/blog/posts/", response_model=List[BlogPostResponse], tags=["Domain 8: Public CMS & Moderation"])
-async def list_blog_posts(db: AsyncSession = Depends(get_db)):
-    return await CmsService(db).list_blog_posts()
+async def list_blog_posts(
+    type: Optional[str] = Query(None, description="Filter by post type: all | user | editorial"),
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    viewer = current_user.username if current_user else None
+    return await CmsService(db).list_blog_posts(post_type=type, viewer_username=viewer)
+
+
+@router.post("/blog/posts/", response_model=BlogPostResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 8: Public CMS & Moderation"])
+async def create_blog_post(
+    payload: BlogPostCreateRequest,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    return await CmsService(db).create_blog_post(payload=payload, current_user=current_user)
 
 
 @router.get("/blog/posts/{slug}/", response_model=BlogPostResponse, tags=["Domain 8: Public CMS & Moderation"])
-async def get_blog_post_detail(slug: str, db: AsyncSession = Depends(get_db)):
-    return await CmsService(db).get_blog_post_by_slug(slug)
+async def get_blog_post_detail(
+    slug: str,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    viewer = current_user.username if current_user else None
+    return await CmsService(db).get_blog_post_by_slug(slug, viewer_username=viewer)
+
+
+@router.post("/blog/posts/{post_id}/like", response_model=BlogPostResponse, tags=["Domain 8: Public CMS & Moderation"])
+async def toggle_like_blog_post(
+    post_id: str,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    return await CmsService(db).toggle_like_blog_post(post_id=post_id, current_user=current_user)
+
+
+@router.post("/blog/posts/{post_id}/comments", response_model=BlogPostResponse, tags=["Domain 8: Public CMS & Moderation"])
+async def add_comment_blog_post(
+    post_id: str,
+    payload: BlogCommentCreateRequest,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    return await CmsService(db).add_comment_blog_post(post_id=post_id, payload=payload, current_user=current_user)
 
 
 @router.get("/seo/sitemap-data", response_model=Dict[str, Any], tags=["Domain 8: Public CMS & Moderation"])
@@ -59,7 +100,6 @@ async def apply_career_job(
     db: AsyncSession = Depends(get_db),
 ):
     return await CmsService(db).apply_career_job(job_id, payload)
-
 
 
 @router.post("/profile/{user_id}/report/", response_model=ReportProfileResponse, tags=["Domain 8: Public CMS & Moderation"])
