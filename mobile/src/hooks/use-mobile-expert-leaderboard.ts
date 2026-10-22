@@ -83,9 +83,39 @@ export const expertOrderFeedbackResponseSchema = z.object({
   new_ranking_score: z.number().nonnegative().default(98.7),
 });
 
+export const applyExpertInputSchema = z.object({
+  full_name: z.string().trim().min(2).max(120),
+  role_title: z.string().trim().min(2),
+  company_name: z.string().trim().min(1),
+  years_experience: z.number().int().min(1).max(40).default(5),
+  category: z.string().default('backend'),
+  specialties: z.array(z.string()).default([]),
+  turnaround_hours: z.number().int().positive().default(24),
+  hourly_rate_vnd: z.number().int().nonnegative().default(299000),
+  linkedin_url: z.string().default(''),
+  bio: z.string().default(''),
+});
+export type ApplyExpertInput = z.infer<typeof applyExpertInputSchema>;
+
+export const expertProfileMeSchema = z.object({
+  id: z.string().min(1),
+  full_name: z.string().min(1),
+  role_title: z.string().default('Senior Hiring Committee Reviewer'),
+  company_name: z.string().default('Belooga'),
+  years_experience: z.number().int().nonnegative().default(8),
+  category: z.string().default('backend'),
+  specialties: z.array(z.string()).default([]),
+  turnaround_hours: z.number().int().positive().default(24),
+  hourly_rate_vnd: z.number().int().nonnegative().default(299000),
+  status: z.string().default('ACTIVE'),
+  ranking_score: z.number().nonnegative().default(96.0),
+});
+export type ExpertProfileMe = z.infer<typeof expertProfileMeSchema>;
+
 export const expertLeaderboardKeys = {
   all: ['mobile-expert-leaderboard'] as const,
   list: (params: ExpertLeaderboardParams) => [...expertLeaderboardKeys.all, params] as const,
+  me: () => [...expertLeaderboardKeys.all, 'me'] as const,
 };
 
 export async function fetchMobileExpertLeaderboard(
@@ -157,6 +187,45 @@ export function useSubmitExpertOrderFeedbackMutation(client: MobileApiClient = m
       submitMobileExpertOrderFeedback(orderId, input, client),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: expertLeaderboardKeys.all });
+    },
+  });
+}
+
+export async function applyMobileExpertReviewer(
+  input: ApplyExpertInput,
+  client: MobileApiClient = mobileApiClient
+): Promise<ExpertProfileMe> {
+  const validated = applyExpertInputSchema.parse(input);
+  const raw = await client.post<unknown>('/v1/expert-review/apply', validated);
+  return expertProfileMeSchema.parse(raw);
+}
+
+export async function fetchMobileMyExpertProfile(
+  client: MobileApiClient = mobileApiClient
+): Promise<ExpertProfileMe | null> {
+  try {
+    const raw = await client.get<unknown>('/v1/expert-review/me');
+    if (!raw) return null;
+    return expertProfileMeSchema.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function useMyExpertProfileQuery(client: MobileApiClient = mobileApiClient) {
+  return useQuery({
+    queryKey: expertLeaderboardKeys.me(),
+    queryFn: () => fetchMobileMyExpertProfile(client),
+  });
+}
+
+export function useApplyExpertReviewerMutation(client: MobileApiClient = mobileApiClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ApplyExpertInput) => applyMobileExpertReviewer(input, client),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: expertLeaderboardKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['mobile-expert-packages'] });
     },
   });
 }

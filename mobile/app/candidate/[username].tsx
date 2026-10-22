@@ -16,6 +16,7 @@ import {
   useMobileCandidateProfileQuery,
 } from "@/hooks/use-mobile-discovery";
 import { getSemanticTokens } from "@/theme/tokens";
+import { UserPostsSection } from "@/components/user-posts-section";
 
 export interface MobileCandidateProfileScreenProps {
   username?: string;
@@ -135,6 +136,7 @@ export default function MobileCandidateProfileScreen({
           <div data-testid="mobile-profile-loading">Loading Candidate Profile...</div>
         )}
       </SurfaceCard>
+      <UserPostsSection username={resolvedUsername} isOwner={false} />
     </ScreenShell>
   );
 }
