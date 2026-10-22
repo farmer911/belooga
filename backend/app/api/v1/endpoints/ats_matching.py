@@ -1,7 +1,7 @@
 """ATS Diagnostics, Recruiter Talent Shortlist & Market Pulse Controller."""
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -11,6 +11,7 @@ from app.schemas.ats_matching import (
     ATSScanHistoryItem,
     ATSScanRequest,
     ATSScanResponse,
+    ATSTailorResponse,
     InterviewKitRequest,
     InterviewKitResponse,
     TalentMarketPulseResponse,
@@ -31,6 +32,18 @@ async def scan_and_match_cv_jd(
     candidate_id = current_user.id if current_user else None
     service = ATSMatchingService(db)
     return await service.scan_and_match(request=request, candidate_identity_id=candidate_id)
+
+
+@router.post("/tailor-cv", response_model=ATSTailorResponse, status_code=status.HTTP_200_OK)
+async def tailor_cv(
+    request: ATSScanRequest,
+    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rewrite weak CV bullets with quantified STAR metrics, inject missing JD skills, and persist re-scored match."""
+    candidate_id = current_user.id if current_user else None
+    service = ATSMatchingService(db)
+    return await service.tailor_cv(request=request, candidate_identity_id=candidate_id)
 
 
 @router.get("/history", response_model=List[ATSScanHistoryItem])

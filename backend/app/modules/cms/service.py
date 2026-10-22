@@ -4,6 +4,7 @@ Business domain service handling contact inquiries, FAQ knowledge retrieval,
 career listings, job applications, and trust & safety candidate profile moderation reports.
 """
 
+import re
 from typing import Any, Dict, List, Optional
 import uuid
 
@@ -12,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
 from app.modules.cms.repository import CmsRepository
+from app.modules.notifications import NotificationService
 from app.schemas.cms import ContactInquiryRequest, JobApplicantRequest, ReportProfileRequest
 
 STATIC_FAQS = [
@@ -140,6 +142,20 @@ class CmsService:
             email=payload.email,
             message=payload.message,
         )
+        m = re.search(r"\[Inquiry for @([a-zA-Z0-9_.-]+)\]", payload.message or "")
+        if m and self.db and self.cms_repo:
+            username = m.group(1)
+            candidate_identity_id = await self.cms_repo.get_candidate_identity_by_username(username)
+            if candidate_identity_id:
+                await NotificationService(self.db).dispatch_event(
+                    identity_id=candidate_identity_id,
+                    event_type="RECRUITER_INQUIRY",
+                    title=f"New Recruiter Inquiry from {payload.name}",
+                    message=payload.message[:200],
+                    deep_link=f"/user/{username}",
+                    send_email=True,
+                    category="system",
+                )
         await self.db.commit()
         return {
             "message": "Thank you! Your inquiry has been received.",

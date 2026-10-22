@@ -36,7 +36,7 @@ PUBLIC_MUTATIONS_WHITELIST = {
     "login", "logout", "refresh_tokens", "register_user",
     "request_password_reset", "reset_password", "oauth_callback", "verify_email_token",
     "submit_contact_inquiry", "report_candidate_profile", "apply_career_job",
-    "create_momo_payment_qr", "momo_ipn_webhook",
+    "create_momo_payment_qr", "momo_ipn_webhook", "tailor_cv",
 }
 
 violations: dict[str, list[str]] = {
@@ -231,6 +231,11 @@ if mobile_pkg_path.exists():
     if not mobile_e2e_adb.exists() or not (ROOT / "mobile" / "e2e" / "maestro-flow.yaml").exists():
         violations["1. Test Honesty (No Skips/Hollow)"].append(
             "mobile E2E automation scripts (e2e-mobile-adb.sh / maestro-flow.yaml) missing"
+        )
+    mobile_ui_kit = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "belooga" / "mobile" / "BeloogaUiKit.java"
+    if not mobile_ui_kit.exists() or "GradientDrawable" not in mobile_ui_kit.read_text(encoding="utf-8"):
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            "mobile BeloogaUiKit.java missing or lacks GradientDrawable rounded surface design system"
         )
 
 # --- 4. ASYNC EVENT-LOOP & IDOR SAFETY ACROSS ALL BACKEND ---

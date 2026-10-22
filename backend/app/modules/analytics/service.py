@@ -89,26 +89,29 @@ class AnalyticsService:
             ("TXN-2026-089", "Lê Hoàng Long", "Micro-Pass 59k (Full 3 Đợt Quét)", 59000.0, 59000.0, "SUCCESS", 180),
             ("TXN-2026-088", "Đặng Quốc Huy", "Expert Review Mid Golang (Escrow)", 250000.0, 20000.0, "RELEASED", 300),
         ]
-        recent_transactions = [
-            TransactionRecord(
-                id=f"ORD-{o['id'][:8].upper()}",
-                user_name=o["user_name"],
-                package_name=o["package_name"],
-                amount=round(float(o["amount_cents"]) * 250.0, 0),
-                platform_fee=round(float(o["amount_cents"]) * 250.0 * 0.08, 0),
-                payment_method="MoMo QR",
-                status="RELEASED" if o["status"] == "completed" else "HELD_IN_ESCROW",
-                created_at=o["created_at"],
-            )
-            for o in db_orders
-        ] + [
-            TransactionRecord(
-                id=tid, user_name=uname, package_name=pkg, amount=amt, platform_fee=fee,
-                payment_method="MoMo QR", status=st,
-                created_at=(today - timedelta(minutes=mins)).strftime("%H:%M %d/%m"),
-            )
-            for tid, uname, pkg, amt, fee, st, mins in tx_specs
-        ]
+        if len(db_orders) > 0:
+            recent_transactions = [
+                TransactionRecord(
+                    id=f"ORD-{o['id'][:8].upper()}",
+                    user_name=o["user_name"],
+                    package_name=o["package_name"],
+                    amount=round(float(o["amount_cents"]) * 250.0, 0),
+                    platform_fee=round(float(o["amount_cents"]) * 250.0 * 0.08, 0),
+                    payment_method="MoMo QR",
+                    status="RELEASED" if o["status"] == "completed" else "HELD_IN_ESCROW",
+                    created_at=o["created_at"],
+                )
+                for o in db_orders
+            ]
+        else:
+            recent_transactions = [
+                TransactionRecord(
+                    id=tid, user_name=uname, package_name=pkg, amount=amt, platform_fee=fee,
+                    payment_method="MoMo QR", status=st,
+                    created_at=(today - timedelta(minutes=mins)).strftime("%H:%M %d/%m"),
+                )
+                for tid, uname, pkg, amt, fee, st, mins in tx_specs
+            ]
 
         return AnalyticsDashboardResponse(
             overview=overview,

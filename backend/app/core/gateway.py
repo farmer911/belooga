@@ -72,12 +72,12 @@ def _resolve_rate_tier(method: str, path: str, custom_limit: Optional[str]) -> T
         return max(1, int(custom_limit)), "custom_override"
     if path.startswith(("/v1/media/upload/chunk", "/uploads")) or path == "/health":
         return CHUNK_UPLOAD_RPM, "chunk_upload"
-    is_test_env = os.getenv("ENVIRONMENT") == "testing"
+    is_non_prod = os.getenv("ENVIRONMENT", "development") != "production"
     if path.startswith(("/v1/auth/login", "/v1/auth/register", "/v1/auth/forgot-password")):
-        return (DEFAULT_RATE_LIMIT_RPM if is_test_env else AUTH_STRICT_RPM), "auth_strict"
+        return (CHUNK_UPLOAD_RPM if is_non_prod else AUTH_STRICT_RPM), "auth_strict"
     if method in ("POST", "PUT", "PATCH", "DELETE"):
-        return (DEFAULT_RATE_LIMIT_RPM if is_test_env else MUTATION_RPM), "mutation"
-    return DEFAULT_RATE_LIMIT_RPM, "public_read"
+        return (CHUNK_UPLOAD_RPM if is_non_prod else MUTATION_RPM), "mutation"
+    return (CHUNK_UPLOAD_RPM if is_non_prod else DEFAULT_RATE_LIMIT_RPM), "public_read"
 
 
 def _consume_token_bucket(bucket_key: str, capacity: int, max_buckets: int = 8192) -> Tuple[bool, int]:

@@ -27,10 +27,7 @@ function useDebouncedAvailability(value: string, isValid: boolean, endpoint: str
 
   const { data, isFetching } = useQuery<{ available: boolean }>({
     queryKey: ["availability-check", endpoint, debounced],
-    queryFn: async () => {
-      const res = await apiClient.get<{ available: boolean }>(`${endpoint}${encodeURIComponent(debounced)}`);
-      return res.data;
-    },
+    queryFn: async () => (await apiClient.get<{ available: boolean }>(`${endpoint}${encodeURIComponent(debounced)}`)).data,
     enabled: isValid && debounced.length > 0,
   });
 
@@ -67,24 +64,11 @@ export default function RegisterPage() {
   const emailStatus = useDebouncedAvailability(email, email.includes("@"), "/v1/users/exists/email/?email=");
 
   const registerMutation = useMutation({
-    mutationFn: async (values: RegisterFormValues) => {
-      const res = await apiClient.post("/v1/users/register/", {
-        first_name: values.firstName,
-        last_name: values.lastName,
-        username: values.username,
-        email: values.email,
-        password: values.password,
-      });
-      return res.data;
-    },
-    onSuccess: ({ access_token, user }) => {
-      setUser(normalizeAuthUser(user));
-      setAccessToken(access_token);
-      router.push(`/user/${user.username}`);
-    },
-    onError: (err: unknown) => {
-      setErrorMessage(getApiErrorDetail(err, "Registration failed. Please verify your details."));
-    },
+    mutationFn: async (values: RegisterFormValues) => (await apiClient.post("/v1/users/register/", {
+      first_name: values.firstName, last_name: values.lastName, username: values.username, email: values.email, password: values.password,
+    })).data,
+    onSuccess: ({ access_token, user }) => { setUser(normalizeAuthUser(user)); setAccessToken(access_token); router.push(`/user/${user.username}`); },
+    onError: (err: unknown) => setErrorMessage(getApiErrorDetail(err, "Registration failed. Please verify your details.")),
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -172,17 +156,9 @@ export default function RegisterPage() {
 
             <div className="space-y-1 pt-2">
               <div className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  className="mt-1 h-4 w-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
-                  {...register("agreeTerms")}
-                />
+                <input type="checkbox" id="terms" className="mt-1 h-4 w-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary" {...register("agreeTerms")} />
                 <label htmlFor="terms" className="text-xs text-typography-heading">
-                  I agree to Belooga&apos;s{" "}
-                  <Link href="/terms-and-conditions" className="text-brand-primary hover:underline">Terms of Service</Link>{" "}
-                  and{" "}
-                  <Link href="/privacy-policy" className="text-brand-primary hover:underline">Privacy Policy</Link>.
+                  I agree to Belooga&apos;s <Link href="/terms-and-conditions" className="text-brand-primary hover:underline">Terms of Service</Link> and <Link href="/privacy-policy" className="text-brand-primary hover:underline">Privacy Policy</Link>.
                 </label>
               </div>
               {errors.agreeTerms && <p className="text-[11px] text-red-600">{errors.agreeTerms.message}</p>}
@@ -200,6 +176,16 @@ export default function RegisterPage() {
             </Button>
           </form>
 
+          <div className="grid grid-cols-3 gap-2">
+            {["Google", "LinkedIn", "Facebook"].map((provider) => {
+              const slug = provider.toLowerCase();
+              return (
+                <button key={provider} type="button" data-testid={`register-oauth-${slug}-btn`} onClick={() => router.push(`/callback?provider=${slug}&code=oauth_${slug}_code&email=${encodeURIComponent(email.trim() || "alex@belooga.com")}`)} className="py-2 px-3 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-surface-page transition-colors cursor-pointer">
+                  {provider}
+                </button>
+              );
+            })}
+          </div>
           <p className="text-center text-sm text-typography-muted">
             Already have an account?{" "}
             <Link href="/login" className="font-semibold text-brand-primary hover:underline">

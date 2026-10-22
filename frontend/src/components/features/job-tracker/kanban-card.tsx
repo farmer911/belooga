@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Pencil } from "lucide-react";
 import { TrackedJob, KanbanStatus } from "@/hooks/use-job-tracker";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,6 +9,7 @@ interface KanbanCardProps {
   job: TrackedJob;
   onMove: (jobId: string, newStatus: KanbanStatus) => void;
   onDelete: (jobId: string) => void;
+  onEdit?: (job: TrackedJob) => void;
 }
 
 const NEXT_STATUS: Record<KanbanStatus, KanbanStatus | null> = {
@@ -27,7 +28,7 @@ const PREV_STATUS: Record<KanbanStatus, KanbanStatus | null> = {
   OFFER: "INTERVIEW",
 };
 
-export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
+export function KanbanCard({ job, onMove, onDelete, onEdit }: KanbanCardProps) {
   const next = NEXT_STATUS[job.status];
   const prev = PREV_STATUS[job.status];
 
@@ -67,13 +68,26 @@ export function KanbanCard({ job, onMove, onDelete }: KanbanCardProps) {
 
       {/* Action Footer */}
       <div className="pt-1.5 flex items-center justify-between border-t border-surface-divider text-[10px]">
-        <button
-          onClick={() => onDelete(job.id)}
-          className="text-typography-muted hover:text-rose-600 transition cursor-pointer"
-          title="Xóa công việc"
-        >
-          ✕
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onDelete(job.id)}
+            className="text-typography-muted hover:text-rose-600 transition cursor-pointer"
+            title="Xóa công việc"
+          >
+            ✕
+          </button>
+          {onEdit && (
+            <button
+              type="button"
+              data-testid="edit-kanban-card-btn"
+              onClick={() => onEdit(job)}
+              className="text-typography-muted hover:text-brand-primary transition cursor-pointer inline-flex items-center gap-0.5"
+              title="Chỉnh sửa thẻ công việc"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center gap-1">
           {prev && (

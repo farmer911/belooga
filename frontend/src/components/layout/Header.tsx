@@ -24,7 +24,12 @@ export function Header() {
       // Ignore network/cookie errors on logout
     }
     logout();
-    if (pathname?.startsWith("/user/")) {
+    if (
+      pathname?.startsWith("/user/") ||
+      pathname?.startsWith("/workspace/") ||
+      pathname?.startsWith("/admin/") ||
+      pathname?.startsWith("/cv-studio")
+    ) {
       router.push("/login");
     }
   };
@@ -80,7 +85,7 @@ export function Header() {
           <ThemeToggle />
 
           {isAuthenticated && user ? (
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <NotificationBell />
               <Link
                 href={`/user/${user.username}`}
@@ -98,7 +103,7 @@ export function Header() {
               </Button>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Link
                 href="/login"
                 className="text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors px-2.5 py-1.5"
@@ -110,6 +115,12 @@ export function Header() {
                   Register
                 </Button>
               </Link>
+            </div>
+          )}
+
+          {isAuthenticated && user && (
+            <div className="md:hidden flex items-center">
+              <NotificationBell />
             </div>
           )}
 
@@ -161,6 +172,36 @@ export function Header() {
               className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
             >
               Blog
+            </Link>
+            <Link
+              href="/ats-diagnostics"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              ATS Diagnostics
+            </Link>
+            <Link
+              href="/salary-benchmark"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Tra Cứu Lương IT
+            </Link>
+            <Link
+              href="/cv-studio"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Pro CV Studio
+            </Link>
+            <Link
+              href="/workspace/jobs"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Job Tracker
+            </Link>
+            <Link
+              href="/admin/analytics"
+              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+            >
+              Executive Analytics
             </Link>
           </div>
 

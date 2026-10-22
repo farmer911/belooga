@@ -181,20 +181,40 @@ class CatalogsService:
         stats = await self.catalogs_repo.get_market_sample_stats()
         sample_size = 342 + stats["jd_count"] + stats["profile_count"]
 
+        loc_lower = (location or "").strip().lower()
+        if "remote" in loc_lower or "worldwide" in loc_lower:
+            loc_mult = 1.12
+        elif "ha noi" in loc_lower or "hanoi" in loc_lower:
+            loc_mult = 0.92
+        elif "da nang" in loc_lower or "danang" in loc_lower:
+            loc_mult = 0.84
+        else:
+            loc_mult = 1.0
+
+        eff_mult = multiplier * loc_mult
+        if norm_role == "ai":
+            growth_yoy = "+24.5%"
+        elif "go" in stack_lower or norm_role == "devops":
+            growth_yoy = "+21.2%"
+        elif "remote" in loc_lower:
+            growth_yoy = "+19.4%"
+        else:
+            growth_yoy = "+18.5%"
+
         return {
             "role": norm_role,
             "tech_stack": tech_stack,
             "level": norm_level,
             "location": location,
-            "p25_salary_vnd": int(p25 * multiplier),
-            "p50_salary_vnd": int(base_median * multiplier),
-            "p75_salary_vnd": int(p75 * multiplier),
+            "p25_salary_vnd": int(p25 * eff_mult),
+            "p50_salary_vnd": int(base_median * eff_mult),
+            "p75_salary_vnd": int(p75 * eff_mult),
             "sample_size_jds": sample_size,
             "top_paid_skills": [
                 {"name": n, "salary_premium": p, "popularity_pct": pct} for n, p, pct in raw_skills
             ],
             "market_demand": "VERY_HIGH" if multiplier > 1.1 else "HIGH",
-            "growth_rate_yoy": "+18.5%",
+            "growth_rate_yoy": growth_yoy,
         }
 
     async def get_career_roi(

@@ -26,6 +26,7 @@ function OAuthCallbackHandler() {
   const provider = (searchParams.get("provider") || "google").toLowerCase();
   const code = searchParams.get("code") || `oauth_${provider}_code`;
   const email = searchParams.get("email") || "alex@belooga.com";
+  const nextParam = searchParams.get("next");
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -54,11 +55,18 @@ function OAuthCallbackHandler() {
         role: data.user.role,
         avatarUrl: data.user.avatar_url,
       });
-      router.push(`/user/${data.user.username}`);
+      const storedReturn = typeof window !== "undefined" ? sessionStorage.getItem("belooga_return_to") : null;
+      if (typeof window !== "undefined") sessionStorage.removeItem("belooga_return_to");
+      const target = nextParam || storedReturn;
+      router.push(
+        target && target.startsWith("/") && !target.startsWith("//")
+          ? target
+          : `/user/${data.user.username}`
+      );
     } else if (isError) {
       router.push("/login");
     }
-  }, [data, isError, router, setAccessToken, setUser]);
+  }, [data, isError, nextParam, router, setAccessToken, setUser]);
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4" data-testid="oauth-callback-status">

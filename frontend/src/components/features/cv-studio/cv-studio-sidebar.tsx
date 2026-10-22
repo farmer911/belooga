@@ -14,6 +14,7 @@ interface CVStudioSidebarProps {
   setSnapOnePage: (snap: boolean) => void;
   sections?: string[];
   onMoveSection?: (index: number, direction: -1 | 1) => void;
+  atsScore?: number;
 }
 
 export const DEFAULT_SECTIONS = [
@@ -36,6 +37,7 @@ export function CVStudioSidebar({
   setSnapOnePage,
   sections: controlledSections,
   onMoveSection,
+  atsScore,
 }: CVStudioSidebarProps) {
   const [localSections, setLocalSections] = useState<string[]>(DEFAULT_SECTIONS);
   const sections = controlledSections ?? localSections;
@@ -54,6 +56,12 @@ export function CVStudioSidebar({
 
   return (
     <aside className="lg:col-span-3 border-r border-surface-border bg-surface-card p-4 space-y-4 overflow-y-auto text-xs">
+      {typeof atsScore === "number" && (
+        <div className="p-2.5 rounded-xl bg-teal-50/50 border border-teal-200 flex items-center justify-between">
+          <span className="font-bold text-brand-dark text-[11px]">Live ATS Score:</span>
+          <span className="font-mono font-bold text-brand-primary">{atsScore}/100</span>
+        </div>
+      )}
       <div>
         <h4 className="font-bold text-typography-main uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
           <ListOrdered className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />

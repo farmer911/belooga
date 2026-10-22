@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Zap, Target, RotateCcw, Sparkles, CloudUpload, Check } from "lucide-react";
@@ -14,8 +14,7 @@ import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studi
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
 
 interface MarketPulseResponse {
-  total_active_candidates?: number;
-  video_pitch_adoption_rate?: number;
+  total_active_candidates?: number; video_pitch_adoption_rate?: number;
   skill_scarcity_index?: Array<{ skill: string; scarcity_score?: number; salary_premium_pct?: string }>;
   skills?: Array<{ skill: string; scarcity_index: number; median_salary_vnd: number }>;
 }
@@ -24,18 +23,14 @@ interface CVDraftResponse {
   full_name?: string; email?: string; phone?: string; location?: string; linkedin?: string;
   headline?: string; summary?: string; skills?: string; font_size?: number; line_height?: number;
   margin_size?: number; snap_one_page?: boolean; experience?: CVData["experience"];
-  education?: CVData["education"]; section_order?: string[];
+  projects?: CVData["projects"]; education?: CVData["education"]; section_order?: string[];
 }
 
 const SAMPLE_CV_DATA: CVData = {
-  fullName: "NGUYỄN VĂN AN",
-  email: "an.nguyen@belooga.vn",
-  phone: "+84 901 234 567",
-  location: "Hồ Chí Minh, Việt Nam",
-  linkedin: "linkedin.com/in/belooga-talent",
+  fullName: "NGUYỄN VĂN AN", email: "an.nguyen@belooga.vn", phone: "+84 901 234 567",
+  location: "Hồ Chí Minh, Việt Nam", linkedin: "linkedin.com/in/belooga-talent",
   headline: "Senior Backend Engineer | Golang, Distributed Systems & Kubernetes",
-  summary:
-    "Kỹ sư Backend với hơn 5 năm kinh nghiệm thiết kế kiến trúc microservices chịu tải cao, thông lượng 50k RPS, tối ưu hóa cơ sở dữ liệu PostgreSQL & Redis cho các nền tảng Fintech và E-commerce.",
+  summary: "Kỹ sư Backend với hơn 5 năm kinh nghiệm thiết kế kiến trúc microservices chịu tải cao, thông lượng 50k RPS, tối ưu hóa cơ sở dữ liệu PostgreSQL & Redis cho các nền tảng Fintech và E-commerce.",
   experience: [
     {
       company: "VNG Corporation", role: "Senior Backend Engineer", period: "2022 - Hiện tại",
@@ -53,6 +48,7 @@ const SAMPLE_CV_DATA: CVData = {
       ],
     },
   ],
+  projects: [{ name: "Belooga High-Scale Talent Engine", role: "Lead Backend Architect", tech: "Golang, FastAPI, PostgreSQL 16 GIN, Redis 7", impact: "Reduced p95 full-text search latency to 11ms across 500k+ candidate profiles." }],
   education: [{ school: "Đại Học Bách Khoa / ĐH Quốc Gia", degree: "Kỹ sư Khoa học Máy tính (GPA: 3.6/4.0)", period: "2017 - 2021" }],
   skills: "Golang, Python, PostgreSQL, Redis, Kafka, Docker, Kubernetes, gRPC, CI/CD, Microservices Architecture, Linux",
   sectionOrder: DEFAULT_SECTIONS,
@@ -66,7 +62,14 @@ export default function CVStudioPage() {
   const [lineHeight, setLineHeight] = useState<number>(1.3);
   const [marginSize, setMarginSize] = useState<number>(0.6);
   const [snapOnePage, setSnapOnePage] = useState<boolean>(true);
-  const [savedCloud, setSavedCloud] = useState(false);
+  const [savedLabel, setSavedLabel] = useState<string | null>(null);
+  const [autoSaveLabel, setAutoSaveLabel] = useState("Đã tự động lưu nháp");
+  const hasMountedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
+    try { localStorage.setItem("belooga_cv_draft_local", JSON.stringify(cvData)); setAutoSaveLabel("Đã tự động lưu nháp"); } catch { /* noop */ }
+  }, [cvData]);
 
   const { data: draftData } = useQuery<CVDraftResponse>({
     queryKey: ["cv-studio-draft", activeUsername],
@@ -77,16 +80,12 @@ export default function CVStudioPage() {
   useEffect(() => {
     if (!draftData?.full_name) return;
     setCvData((prev) => ({
-      ...prev,
-      fullName: draftData.full_name || prev.fullName,
-      email: draftData.email ?? prev.email,
-      phone: draftData.phone ?? prev.phone,
-      location: draftData.location ?? prev.location,
-      linkedin: draftData.linkedin ?? prev.linkedin,
-      headline: draftData.headline || prev.headline,
-      summary: draftData.summary ?? prev.summary,
-      skills: draftData.skills || prev.skills,
+      ...prev, fullName: draftData.full_name || prev.fullName, email: draftData.email ?? prev.email,
+      phone: draftData.phone ?? prev.phone, location: draftData.location ?? prev.location,
+      linkedin: draftData.linkedin ?? prev.linkedin, headline: draftData.headline || prev.headline,
+      summary: draftData.summary ?? prev.summary, skills: draftData.skills || prev.skills,
       experience: draftData.experience?.length ? draftData.experience : prev.experience,
+      projects: draftData.projects?.length ? draftData.projects : prev.projects,
       education: draftData.education?.length ? draftData.education : prev.education,
       sectionOrder: draftData.section_order ?? prev.sectionOrder,
     }));
@@ -101,24 +100,34 @@ export default function CVStudioPage() {
     queryFn: async () => (await apiClient.get<MarketPulseResponse>("/v1/match/market-pulse")).data,
   });
 
+  const auditAtsMutation = useMutation({
+    mutationFn: async () => (await apiClient.post<{ ats_score?: number }>("/v1/match/ats-scan", {
+      job_title: cvData.headline || "Backend Engineer",
+      jd_text: `${cvData.headline} ${cvData.skills} ${cvData.summary}`,
+      cv_text: `${cvData.fullName} ${cvData.headline} ${cvData.summary} ${cvData.skills} ${cvData.experience.flatMap((e) => e.bullets).join(" ")}`,
+    })).data,
+  });
+
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
+      try { localStorage.setItem("belooga_cv_draft_local", JSON.stringify(cvData)); } catch { /* noop */ }
+      if (!user?.username) return { mode: "local" as const };
       const payload = {
         full_name: cvData.fullName, email: cvData.email, phone: cvData.phone, location: cvData.location,
         linkedin: cvData.linkedin, headline: cvData.headline, summary: cvData.summary, skills: cvData.skills,
         font_size: fontSize, line_height: lineHeight, margin_size: marginSize, snap_one_page: snapOnePage,
-        experience: cvData.experience, education: cvData.education, section_order: cvData.sectionOrder ?? DEFAULT_SECTIONS,
+        experience: cvData.experience, projects: cvData.projects, education: cvData.education,
+        section_order: cvData.sectionOrder ?? DEFAULT_SECTIONS,
       };
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         queueOfflineMutation({ url: `/v1/profile/${activeUsername}/cv-draft/`, method: "PUT", body: payload });
-        return payload;
+        return { mode: "cloud" as const };
       }
-      return (await apiClient.put(`/v1/profile/${activeUsername}/cv-draft/`, payload)).data;
+      await apiClient.put(`/v1/profile/${activeUsername}/cv-draft/`, payload);
+      return { mode: "cloud" as const };
     },
-    onSuccess: () => {
-      setSavedCloud(true);
-      setTimeout(() => setSavedCloud(false), 2500);
-    },
+    onSuccess: (res) => { setSavedLabel(res.mode === "cloud" ? "Đã Lưu Cloud" : "Đã lưu nháp cục bộ"); setTimeout(() => setSavedLabel(null), 2500); },
+    onError: () => { setSavedLabel("Đã lưu nháp cục bộ"); setTimeout(() => setSavedLabel(null), 2500); },
   });
 
   const starAudit = useMemo(() => {
@@ -130,20 +139,13 @@ export default function CVStudioPage() {
     return { ratio, readability, skillCount };
   }, [cvData]);
 
-  const handleResetSample = () => {
-    setCvData(SAMPLE_CV_DATA); setFontSize(10.0); setLineHeight(1.3); setMarginSize(0.6);
-  };
+  const liveAtsScore = auditAtsMutation.data?.ats_score ?? starAudit.readability;
 
-  const handleAutoFit = () => {
-    setFontSize(9.6); setLineHeight(1.25); setMarginSize(0.5); setSnapOnePage(true);
-  };
-
+  const handleResetSample = () => { setCvData(SAMPLE_CV_DATA); setFontSize(10.0); setLineHeight(1.3); setMarginSize(0.6); };
+  const handleAutoFit = () => { setFontSize(9.6); setLineHeight(1.25); setMarginSize(0.5); setSnapOnePage(true); };
   const handleInjectSkill = (skill: string) => {
-    if (!cvData.skills.toLowerCase().includes(skill.toLowerCase())) {
-      setCvData({ ...cvData, skills: `${cvData.skills}, ${skill}` });
-    }
+    if (!cvData.skills.toLowerCase().includes(skill.toLowerCase())) setCvData({ ...cvData, skills: `${cvData.skills}, ${skill}` });
   };
-
   const handleMoveSection = (index: number, direction: -1 | 1) => {
     const current = cvData.sectionOrder ?? DEFAULT_SECTIONS;
     const target = index + direction;
@@ -180,8 +182,8 @@ export default function CVStudioPage() {
             onClick={() => saveDraftMutation.mutate()}
             className="px-2.5 py-1 bg-surface-card hover:bg-surface-page text-typography-heading rounded-md border border-surface-border transition-colors text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
           >
-            {savedCloud ? <Check className="w-3 h-3 text-emerald-600" /> : <CloudUpload className="w-3 h-3 text-brand-primary" />}
-            <span>{savedCloud ? "Đã Lưu Cloud" : "Lưu Bản Nháp Cloud"}</span>
+            {savedLabel ? <Check className="w-3 h-3 text-emerald-600" /> : <CloudUpload className="w-3 h-3 text-brand-primary" />}
+            <span>{savedLabel ?? "Lưu Bản Nháp Cloud"}</span>
           </button>
           <Link href="/ats-diagnostics">
             <Button className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs px-3 h-7 rounded-lg shadow-xs flex items-center gap-1">
@@ -198,8 +200,11 @@ export default function CVStudioPage() {
             <Sparkles className="w-3.5 h-3.5 text-teal-600" />
             Live ATS Auditor:
           </span>
-          <Badge className="bg-teal-600 text-white border-none text-[10px]">ATS Readability: {starAudit.readability}/100</Badge>
+          <Badge className="bg-teal-600 text-white border-none text-[10px]">ATS Readability: {liveAtsScore}/100</Badge>
           <Badge variant="outline" className="bg-surface-card border-teal-200 text-teal-800 text-[10px]">STAR Metric Density: {starAudit.ratio}%</Badge>
+          <button type="button" data-testid="btn-audit-ats-server" onClick={() => auditAtsMutation.mutate()} className="px-2 py-0.5 rounded bg-surface-card hover:bg-teal-50 border border-teal-200 text-teal-800 font-semibold transition-colors cursor-pointer">
+            {auditAtsMutation.isPending ? "Đang chấm..." : "Chấm Điểm ATS Server"}
+          </button>
         </div>
         {marketPulse && (
           <div className="flex flex-wrap items-center gap-1.5">
@@ -214,9 +219,9 @@ export default function CVStudioPage() {
       </div>
 
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
-        <CVStudioSidebar fontSize={fontSize} setFontSize={setFontSize} lineHeight={lineHeight} setLineHeight={setLineHeight} marginSize={marginSize} setMarginSize={setMarginSize} snapOnePage={snapOnePage} setSnapOnePage={setSnapOnePage} sections={cvData.sectionOrder ?? DEFAULT_SECTIONS} onMoveSection={handleMoveSection} />
-        <CVStudioEditor cvData={cvData} onChange={setCvData} />
-        <CVStudioPreview cvData={cvData} fontSize={fontSize} lineHeight={lineHeight} marginSize={marginSize} snapOnePage={snapOnePage} />
+        <CVStudioSidebar fontSize={fontSize} setFontSize={setFontSize} lineHeight={lineHeight} setLineHeight={setLineHeight} marginSize={marginSize} setMarginSize={setMarginSize} snapOnePage={snapOnePage} setSnapOnePage={setSnapOnePage} sections={cvData.sectionOrder ?? DEFAULT_SECTIONS} onMoveSection={handleMoveSection} atsScore={liveAtsScore} />
+        <CVStudioEditor cvData={cvData} onChange={setCvData} autoSaveLabel={autoSaveLabel} />
+        <CVStudioPreview cvData={cvData} fontSize={fontSize} lineHeight={lineHeight} marginSize={marginSize} snapOnePage={snapOnePage} username={activeUsername} />
       </main>
 
       <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">

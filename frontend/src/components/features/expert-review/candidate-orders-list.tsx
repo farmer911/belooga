@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 interface CandidateOrdersListProps {
   orders: ReviewOrder[];
+  highlightedOrderId?: string | null;
   onPayOrder: (orderId: string) => Promise<void>;
   onSubmitFeedback?: (
     orderId: string,
@@ -26,7 +27,7 @@ interface CandidateOrdersListProps {
   ) => Promise<ReviewFeedback>;
 }
 
-export function CandidateOrdersList({ orders, onPayOrder, onSubmitFeedback }: CandidateOrdersListProps) {
+export function CandidateOrdersList({ orders, highlightedOrderId, onPayOrder, onSubmitFeedback }: CandidateOrdersListProps) {
   const [selectedFeedback, setSelectedFeedback] = useState<ReviewFeedback | null>(null);
   const [feedbackOrderId, setFeedbackOrderId] = useState<string | null>(null);
   const [verdictInput, setVerdictInput] = useState("Strong technical depth with clear quantified system impact.");
@@ -72,7 +73,15 @@ export function CandidateOrdersList({ orders, onPayOrder, onSubmitFeedback }: Ca
 
         <div className="space-y-4">
           {orders.map((order) => (
-            <Card key={order.id} className="border border-surface-border p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <Card
+              key={order.id}
+              data-testid={`expert-order-card-${order.id}`}
+              className={`border p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
+                highlightedOrderId === order.id
+                  ? "border-brand-primary ring-2 ring-brand-primary/30 bg-teal-50/30"
+                  : "border-surface-border"
+              }`}
+            >
               <div className="flex items-start gap-3 min-w-0">
                 <div className="p-2.5 rounded-lg bg-brand-overlay text-brand-primary shrink-0">
                   <FileText className="h-5 w-5" />
@@ -110,10 +119,14 @@ export function CandidateOrdersList({ orders, onPayOrder, onSubmitFeedback }: Ca
                       <Button
                         size="sm"
                         variant="outline"
+                        data-testid={`toggle-submit-feedback-${order.id}`}
                         onClick={() => setFeedbackOrderId(order.id)}
-                        className="border-surface-border text-typography-heading hover:border-brand-primary"
+                        className="border-surface-border text-typography-heading hover:border-brand-primary gap-1.5"
                       >
-                        Submit Scorecard
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-brand-primary/40 text-brand-primary">
+                          Expert Reviewer Action
+                        </Badge>
+                        <span>Mentor Eval / Scorecard</span>
                       </Button>
                     )}
                     <Button

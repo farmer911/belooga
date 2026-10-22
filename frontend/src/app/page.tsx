@@ -21,9 +21,9 @@ const STEPS = [
 ];
 
 const SHOWCASE_CANDIDATES = [
-  { name: "Jazmin Cole", role: "Senior Product Designer", img: "/images/home/Jazmin-1.jpg", alt: "Jazmin", modalTitle: "Jazmin — Elevator Pitch", videoUrl: "/images/home/Jazmin-Pitch.mp4" },
-  { name: "Jeremy Tran", role: "Full-Stack Software Engineer", img: "/images/home/Jeremy-1.jpg", alt: "Jeremy", modalTitle: "Jeremy — Elevator Pitch", videoUrl: "/images/home/Jeremy-Pitch.mp4" },
-  { name: "Rileigh Brooks", role: "Growth Marketing Manager", img: "/images/home/Rileigh-1.jpg", alt: "Rileigh", modalTitle: "Rileigh — Elevator Pitch", videoUrl: "/images/home/Rileigh-Pitch.mp4" },
+  { username: "alexnguyen", name: "Jazmin Cole", role: "Senior Product Designer", img: "/images/home/Jazmin-1.jpg", alt: "Jazmin", modalTitle: "Jazmin — Elevator Pitch", videoUrl: "/images/home/Jazmin-Pitch.mp4" },
+  { username: "alexnguyen", name: "Jeremy Tran", role: "Full-Stack Software Engineer", img: "/images/home/Jeremy-1.jpg", alt: "Jeremy", modalTitle: "Jeremy — Elevator Pitch", videoUrl: "/images/home/Jeremy-Pitch.mp4" },
+  { username: "alexnguyen", name: "Rileigh Brooks", role: "Growth Marketing Manager", img: "/images/home/Rileigh-1.jpg", alt: "Rileigh", modalTitle: "Rileigh — Elevator Pitch", videoUrl: "/images/home/Rileigh-Pitch.mp4" },
 ];
 
 const WALKTHROUGHS = [
@@ -187,9 +187,14 @@ export default function HomePage() {
                   <img src={c.img} alt={c.alt} width={480} height={256} loading="lazy" className="w-full h-64 object-cover" />
                 </div>
                 <div className="p-6 text-center space-y-1">
-                  <h3 className="text-xl font-bold text-typography-main group-hover:text-brand-primary transition-colors">{c.name}</h3>
+                  <h3 data-testid="candidate-modal-link" className="text-xl font-bold text-typography-main group-hover:text-brand-primary transition-colors">{c.name}</h3>
                   <p className="text-sm text-typography-muted">{c.role}</p>
-                  <p className="text-xs text-brand-primary font-semibold pt-2">0:30 Video Pitch Ready</p>
+                  <div className="pt-2 flex items-center justify-center gap-3">
+                    <span className="text-xs text-brand-primary font-semibold">0:30 Video Pitch Ready</span>
+                    <Link href={`/public/${c.username}`} onClick={(e) => e.stopPropagation()} className="text-xs font-semibold text-brand-primary hover:underline">
+                      View Profile →
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

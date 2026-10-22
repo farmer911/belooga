@@ -205,11 +205,11 @@ export default function JobTrackerKanbanPage() {
           </div>
         ) : (
           <>
-            <KanbanColumn id="TARGETING" title="Nhắm Mục Tiêu" icon={<Target className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-brand-primary" jobs={getJobsByStatus("TARGETING")} onMove={moveStatus} onDelete={deleteJob} />
-            <KanbanColumn id="TAILORED" title="Đã Tối Ưu CV" icon={<Zap className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-brand-blue" jobs={getJobsByStatus("TAILORED")} onMove={moveStatus} onDelete={deleteJob} />
-            <KanbanColumn id="APPLIED" title="Đã Nộp Đơn" icon={<Send className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-purple-500" jobs={getJobsByStatus("APPLIED")} onMove={moveStatus} onDelete={deleteJob} />
-            <KanbanColumn id="INTERVIEW" title="Đang Phỏng Vấn" icon={<Briefcase className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-amber-500" jobs={getJobsByStatus("INTERVIEW")} onMove={moveStatus} onDelete={deleteJob} />
-            <KanbanColumn id="OFFER" title="Nhận Offer / Hired" icon={<Trophy className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-emerald-500" jobs={getJobsByStatus("OFFER")} onMove={moveStatus} onDelete={deleteJob} />
+            <KanbanColumn id="TARGETING" title="Nhắm Mục Tiêu" icon={<Target className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-brand-primary" jobs={getJobsByStatus("TARGETING")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
+            <KanbanColumn id="TAILORED" title="Đã Tối Ưu CV" icon={<Zap className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-brand-blue" jobs={getJobsByStatus("TAILORED")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
+            <KanbanColumn id="APPLIED" title="Đã Nộp Đơn" icon={<Send className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-purple-500" jobs={getJobsByStatus("APPLIED")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
+            <KanbanColumn id="INTERVIEW" title="Đang Phỏng Vấn" icon={<Briefcase className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-amber-500" jobs={getJobsByStatus("INTERVIEW")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
+            <KanbanColumn id="OFFER" title="Nhận Offer / Hired" icon={<Trophy className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-emerald-500" jobs={getJobsByStatus("OFFER")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
           </>
         )}
       </main>
