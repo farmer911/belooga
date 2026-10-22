@@ -392,21 +392,72 @@ public final class MobileCareerScreens {
             title.setTypeface(Typeface.DEFAULT_BOLD);
             card.addView(title);
 
-            String[] items = new String[]{
+            final LinearLayout spotlightDrawer = BeloogaUiKit.createSurfaceCard(ctx, "mobile-notification-spotlight-drawer");
+            LinearLayout spBadges = BeloogaUiKit.createRow(ctx, 4);
+            spBadges.addView(BeloogaUiKit.createBadgePill(
+                    ctx, "RICH NOTIFICATION SPOTLIGHT", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
+            ));
+            spBadges.addView(BeloogaUiKit.createSpacer(ctx, 6));
+            spBadges.addView(BeloogaUiKit.createBadgePill(
+                    ctx, "EMAIL DEEP-LINK SENT", BeloogaUiKit.COLOR_SUCCESS, BeloogaUiKit.COLOR_SUCCESS_MUTED, BeloogaUiKit.COLOR_BORDER, null
+            ));
+            spotlightDrawer.addView(spBadges);
+
+            final TextView spTitle = new TextView(ctx);
+            spTitle.setText("Sarah Jenkins completed your Expert CV Review ($59 Escrow)");
+            spTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+            spTitle.setTextSize(13.5f);
+            spTitle.setTypeface(Typeface.DEFAULT_BOLD);
+            spTitle.setContentDescription("mobile-notification-spotlight-title");
+            spotlightDrawer.addView(spTitle);
+
+            final TextView spMessage = new TextView(ctx);
+            spMessage.setText("Line-by-line STAR rewrite ready for review. Inspect detailed CV scorecard and release Escrow when satisfied.");
+            spMessage.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
+            spMessage.setTextSize(11.5f);
+            spMessage.setContentDescription("mobile-notification-spotlight-message");
+            spotlightDrawer.addView(spMessage);
+
+            spotlightDrawer.addView(BeloogaUiKit.createActionButton(
+                    ctx,
+                    "Xem Báo Cáo Chấm CV & Giải Ngân Escrow",
+                    "mobile-notification-spotlight-cta",
+                    BeloogaUiKit.COLOR_BRAND,
+                    BeloogaUiKit.COLOR_TEXT_INVERSE,
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            spMessage.setText("✓ Đã điều hướng tới đơn hàng #MOMO-8841 trong Career Pro!");
+                            spMessage.setTextColor(BeloogaUiKit.COLOR_SUCCESS);
+                        }
+                    }
+            ));
+
+            final String[] items = new String[]{
                     "● Stripe Hiring Manager viewed your 60s Video Pitch (2m ago)",
                     "● Sarah Jenkins completed your Expert CV Review ($59 Escrow Released)",
                     "● ATS Match Alert: 96% match for Anthropic Staff Distributed Role"
             };
-            for (String item : items) {
+            for (int i = 0; i < items.length; i++) {
+                final String item = items[i];
                 LinearLayout b = BeloogaUiKit.createSubtleBox(ctx);
+                b.setClickable(true);
+                b.setContentDescription("mobile-notification-item-" + (i + 1));
                 TextView t = new TextView(ctx);
                 t.setText(item);
                 t.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
                 t.setTextSize(11.5f);
                 b.addView(t);
+                b.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        spTitle.setText(item);
+                    }
+                });
                 card.addView(b);
             }
             container.addView(card);
+            container.addView(spotlightDrawer);
         } else if (subTab == 3) {
             LinearLayout card = BeloogaUiKit.createSurfaceCard(ctx, "mobile-workspace-vault-card");
             TextView title = new TextView(ctx);
