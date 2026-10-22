@@ -47,12 +47,32 @@ MOCK_FALLBACK_PAT = (
     r"|//\s*Fallback to local"
 )
 
+SILENT_CATCH_MUTATION_PAT = (
+    r"//\s*Optimistic social feed fallback"
+    r"|catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(?:setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)"
+)
+
+models_tables = {
+    m.group(1)
+    for p in files(BE / "models", {".py"})
+    for m in re.finditer(r'__tablename__\s*=\s*["\']([^"\']+)["\']', p.read_text(errors="ignore"))
+}
+alembic_blob = "\n".join(p.read_text(errors="ignore") for p in files(ROOT / "backend" / "alembic" / "versions", {".py"}))
+alembic_drift_count = sum(1 for t in models_tables if t not in alembic_blob)
+
 current = {
     "fe_arbitrary_hex": count(r"\[#[0-9a-fA-F]{3,8}\]", fe_src),
     "fe_structural_emoji": count(r"[\U0001F300-\U0001FAFF\u2600-\u26FF]", fe_src),
     "fe_any": count(r":\s*any\b|\bas any\b|<any>", fe_src),
     "fe_ts_ignore": count(r"@ts-ignore|@ts-expect-error", fe_src),
     "fe_mock_fallback_arrays": count(MOCK_FALLBACK_PAT, fe_src),
+    "fe_silent_catch_mutation": count(SILENT_CATCH_MUTATION_PAT, fe_src),
+    "be_anonymous_alexnguyen_fallback": count(
+        r"\balexnguyen\b",
+        [BE / "modules" / "cms" / "service.py", BE / "schemas" / "cms.py"],
+    ),
+    "mobile_android_http_calls": count(r"\bHttpURLConnection\b", files(ROOT / "mobile" / "android", {".java"})),
+    "alembic_schema_drift": alembic_drift_count,
     "fe_max_page_lines": max((len(p.read_text().splitlines()) for p in pages), default=0),
     "fe_files_over_300_lines": sum(1 for p in fe_src if len(p.read_text().splitlines()) > 300),
     "be_files_over_300_lines": sum(1 for p in be_src if len(p.read_text().splitlines()) > 300),
@@ -72,15 +92,22 @@ if "--update" in sys.argv or not BASELINE.exists():
     sys.exit(0)
 
 base = json.loads(BASELINE.read_text())
+MIN_METRICS = {"mobile_android_http_calls"}
 worse, better = [], []
 for k, v in current.items():
     b = base.get(k)
     if b is None:
         continue
-    if v > b:
-        worse.append(f"  WORSE  {k}: {b} -> {v}")
-    elif v < b:
-        better.append(f"  better {k}: {b} -> {v}  (run --update to lock in)")
+    if k in MIN_METRICS:
+        if v < b:
+            worse.append(f"  WORSE  {k}: {b} -> {v} (must be >= {b})")
+        elif v > b:
+            better.append(f"  better {k}: {b} -> {v}  (run --update to lock in)")
+    else:
+        if v > b:
+            worse.append(f"  WORSE  {k}: {b} -> {v}")
+        elif v < b:
+            better.append(f"  better {k}: {b} -> {v}  (run --update to lock in)")
 
 print("\n".join(worse + better) or "  no change")
 sys.exit(1 if worse else 0)

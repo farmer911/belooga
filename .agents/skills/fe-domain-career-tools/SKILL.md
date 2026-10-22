@@ -31,6 +31,7 @@ description: Frontend Career Acceleration, Monetization & Executive Analytics Pa
 
 ## Known Traps
 - **Auth Gate on Booking:** Anonymous users clicking Expert Review booking or adding Kanban jobs must be prompted to authenticate before mutating server state.
+- **Zero Mock/Fallback Arrays & Silent Catch Mutations (`BEL-228`):** Never define `FALLBACK_*` / `DEFAULT_*` / `INITIAL_*` arrays, module-level `let memory*` stores, or `catch` blocks that fake mutation success (`fe_mock_fallback_arrays == 0`, `fe_silent_catch_mutation == 0`).
 
 
 ## Self-Verification

@@ -94,7 +94,7 @@ class CmsService:
         if not body_text:
             raise HTTPException(status_code=400, detail="Post content cannot be empty")
         title_text = (payload.title or body_text[:72]).strip()
-        username = current_user.username if current_user else "alexnguyen"
+        username = current_user.username if current_user else "community_member"
         slug_base = re.sub(r"[^a-z0-9]+", "-", title_text.lower()).strip("-")[:36] or "status"
         slug = f"{slug_base}-{uuid.uuid4().hex[:6]}"
         post_data: Dict[str, Any] = {
@@ -132,7 +132,7 @@ class CmsService:
         return self._format_post(post, viewer)
 
     async def add_comment_blog_post(self, post_id: str, payload: BlogCommentCreateRequest, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
-        viewer = current_user.username if current_user else "alexnguyen"
+        viewer = current_user.username if current_user else "community_member"
         target = next((p for p in await self._load_all_posts() if p.get("slug") == post_id or p.get("id") == post_id), None)
         if not target:
             raise HTTPException(status_code=404, detail="Blog post not found")
@@ -157,7 +157,7 @@ class CmsService:
 
     async def get_seo_sitemap_data(self) -> Dict[str, Any]:
         async def _compute() -> Dict[str, Any]:
-            usernames = await self.cms_repo.list_public_usernames_for_seo() if self.cms_repo else ["alexnguyen"]
+            usernames = await self.cms_repo.list_public_usernames_for_seo() if self.cms_repo else []
             posts = await self.list_blog_posts()
             return {
                 "public_usernames": usernames, "blog_slugs": [p["slug"] for p in posts],
@@ -256,7 +256,7 @@ class CmsService:
             job_id=target_uuid, applicant_name=payload.applicant_name.strip(),
             applicant_email=payload.applicant_email.lower().strip(), resume_url=payload.resume_url.strip(),
         )
-        cand_id = current_user.id if current_user else await self.cms_repo.get_candidate_identity_by_username("alexnguyen")
+        cand_id = current_user.id if current_user else await self.cms_repo.get_candidate_identity_by_username(payload.applicant_name.lower().replace(" ", ""))
         comp_name = (matched_job or {}).get("company_name") or "Belooga"
         pos_title = (matched_job or {}).get("title") or "Software Engineer"
         sal_range = (matched_job or {}).get("salary_range") or "Negotiable"

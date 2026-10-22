@@ -1,11 +1,6 @@
-🎯 Đang làm ticket: [BEL-226] (#196) — [FE] Khắc Phục Triệt Để 7 Hành Vi Gian Lận Ở Frontend (#1, #2, #3, #4, #5, #8, #9 Từ Audit #179) | Role: FE | Cột: Testing
+🎯 Đang làm ticket: [BEL-225] (#195) — [BE] Khắc Phục Triệt Để 6 Hành Vi Gian Lận Ở Backend (#5, #6, #7, #8, #9, #14 Từ Audit #179) | Role: BE | Cột: In Progress
 
-- **Ticket:** `#196` (`[BEL-226]`, Kanban Item ID: `PVTI_lAHOAeXQP84BoMSnzhCxl5U`).
-- **Branch:** `feature/BEL-226-fe-remediate-deceptions`.
-- **Changes Delivered:**
-  - Removed fake `valid_sim_sig` IPN webhook call in `momo-checkout-dialog.tsx` and `/simulate-delivery` bypass in `use-wallet.ts`.
-  - Removed error-swallowing `catch` blocks fabricating report feedback, comparison boosts, and job edits in `candidate-orders-list.tsx`, `recruiter-comparison-matrix.tsx`, and `workspace/jobs/page.tsx`.
-  - Aligned all route calls in `cv-file-parser.ts`, `community-company-suite.tsx`, and `recruiter-tracker-wallet-suite.tsx` 1:1 with real FastAPI endpoints.
-  - Replaced hardcoded `"Alex Nguyen"` / `"alex@belooga.com"` / `"alexnguyen"` fallbacks in `careers/page.tsx`, `social-feed-card.tsx`, and `review-booking-dialog.tsx` with `useAuthStore` state.
-  - Added TDD unit tests in `frontend/src/__tests__/schemas-and-store.test.ts` (11/11 pass).
-- **Verification:** `bun x tsc --noEmit` 0 errors, `bun test` 11/11 pass, `trust-benchmark.py` 100% (0 violations).
+## Active Plan (BEL-225)
+1. TDD Red -> Green in `backend/tests/test_bel225_backend_integrity.py`.
+2. Remediate items #5 (all `/v1/*` routes live), #6 (PostgreSQL-backed catalogs/CMS), #7 (PostgreSQL aggregation + TF-IDF scoring), #8 (remove anonymous `"alexnguyen"` mutation fallbacks / enforce auth + RBAC where required), #9 (guard `valid_sim_sig` & `/simulate-delivery` behind test/dev env or HMAC), and #14 (Alembic migration `0006_full_platform_schema_sync.py` covering `notification_preferences` & new tables).
+3. Verify `pytest`, `render-skill-facts.py`, `trust-benchmark.py = 100%`, open PR, and move `#195` to `Testing`.

@@ -81,6 +81,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 ## Known Traps
 - **Hidden profile leakage (C-01/C-02):** Timeline list, trust-score, and video-status endpoints must respect `is_hidden` when tightening privacy rules.
 - **Argument order:** `verify_profile_owner` takes `(current_user, target_username)`. Swapping arguments raises `AttributeError`.
+- **Zero Alembic Drift (`BEL-228`):** Every SQLAlchemy `__tablename__` in `backend/app/models/` (including `notification_preferences`) must have a matching migration in `backend/alembic/versions/` (`alembic_schema_drift == 0`).
 
 ## Self-Verification
 ```bash

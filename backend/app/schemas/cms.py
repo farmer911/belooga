@@ -113,7 +113,7 @@ class BlogPostResponse(BaseModel):
     date: str
     image: str = "/images/blog/blog-1.jpg"
     author: str
-    author_username: str = "alexnguyen"
+    author_username: str = "belooga_editorial"
     author_headline: str = "Verified Member @ Belooga Talent Network"
     author_avatar: str = "/images/avatar.jpg"
     post_type: str = "EDITORIAL"

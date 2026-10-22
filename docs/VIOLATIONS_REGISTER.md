@@ -173,3 +173,30 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
 - **Where:** `mobile/android/app/src/main/java/com/belooga/mobile/{BeloogaUiKit.java,MainActivity.java,MobileCareerScreens.java}` and `mobile/src/hooks/use-mobile-career-tools.ts`.
 - **How / Why:** The initial mobile bottom bar rendered raw bordered `Button` boxes without vector iconography, and the mobile app lacked the Career Pro ecosystem (`Expert CV Review`, `MoMo QR Checkout`, `IT Salary Radar & Upskill ROI`, `Pro CV Studio Drafts`, `AI Shortlist`, `Executive BI`).
 - **Fix & Guard:** Built custom anti-aliased `Canvas` vector `NavIconView` + glowing indicator bar + translucent pill dock (`createModernNavTab`), segmented sub-navigation bars, `MobileCareerScreens.java`, and `use-mobile-career-tools.ts`, enforced by `scripts/trust-benchmark.py`.
+
+---
+
+### [VIOLATION-013] 14 Hành Vi Gian Lận Kỹ Thuật & Bypass Kiến Trúc Toàn Hệ Thống (BEL-220 / BEL-221 / BEL-228)
+* **Where (Sai ở đâu):** Toàn bộ 6 tầng `frontend/src/`, `backend/app/`, `mobile/android/`, `mobile/src/`, `qc/tests/`, và `backend/alembic/versions/`.
+* **How & Why (14 Hành Vi Gian Lận Cụ Thể, Nguyên Nhân & Tác Động):**
+  1. **Deception #1 — FE Silent `catch` + Hardcoded `FALLBACK_*` / `INITIAL_*` / `DEFAULT_*` Arrays:** 70 vị trí trên 22 files (`recruiter/hub/page.tsx`, `workspace/analytics/page.tsx`, `blog/page.tsx`, `careers/page.tsx`, `expert-leaderboard-section.tsx`, `top-candidates-leaderboard.tsx`, `job-search-market-panel.tsx`, `community-company-suite.tsx`, `career-acceleration-suite.tsx`) trả về mảng dữ liệu tĩnh trong khối `catch`, che giấu hoàn toàn lỗi API `404/500`.
+  2. **Deception #2 — Biến RAM Toàn Cục (`let memory*`) & `localStorage` Giả Danh Database:** `use-wallet.ts`, `use-job-tracker.ts`, `company-data.tsx`, `quick-post-modal.tsx`, `become-expert-modal.tsx`, và `cv-studio/page.tsx` dùng biến RAM cấp module (`let memory*`) hoặc `localStorage` để giả lập lưu trữ dữ liệu khi chuyển trang mà không qua PostgreSQL.
+  3. **Deception #3 — Optimistic-Only Mutations Nuốt Lỗi HTTP 404/500 & Báo Thành Công Giả:** 11 luồng mutation (`blog/page.tsx`, `careers/page.tsx`, `career-acceleration-suite.tsx`, `job-search-market-panel.tsx`, `community-company-suite.tsx`) bọc `apiClient.post` trong `catch` hoặc `Promise.allSettled` để tự sinh điểm STAR giả, chèn job giả vào Kanban và báo thành công ngay cả khi Backend trả về 404.
+  4. **Deception #4 — `placeholderData` & Default Parameter Destructuring Che Giấu API Chết:** 14 hook `useQuery` gán `placeholderData: FALLBACK_*` hoặc `data = DEFAULT_*` khiến UI luôn hiển thị dữ liệu mẫu dù DB rỗng hoặc API lỗi.
+  5. **Deception #5 — 85 Lời Gọi API Từ FE/Mobile Tới 35+ Route BE Không Tồn Tại Trên `main`:** Do `trust-benchmark.py` trước đây chỉ kiểm tra chiều `BE -> FE` mà thiếu chiều `FE/Mobile -> BE`, FE và Mobile đã gọi 35+ route chưa tồn tại trên `main` (`/v1/recruiter/*`, `/v1/companies/*`, `/v1/posts/*`, `/v1/growth/*`, v.v.).
+  6. **Deception #6 — BE Hardcoded In-Memory Catalogs & Seed Arrays Trộn Vào Kết Quả DB:** `catalogs/service.py` và `cms/repository.py` trộn danh sách Python tĩnh (`COMPANIES_CATALOG`, `DEFAULT_BLOG_POSTS`) vào kết quả truy vấn DB.
+  7. **Deception #7 — BE Fake "AI / Heuristic" & Static Multiplier Stubs:** `ats_matching/service.py` và `catalogs/service.py` dùng chuỗi mẫu tĩnh và phép nhân hệ số cố định thay vì truy vấn dữ liệu thực.
+  8. **Deception #8 — Fallback User Ẩn Danh `"alexnguyen"` Khi Chưa Đăng Nhập & Thiếu RBAC:** `backend/app/modules/cms/service.py` và `backend/app/schemas/cms.py` tự động gán `username = "alexnguyen"` khi `current_user is None`, làm sai lệch danh tính người tạo bài viết/bình luận.
+  9. **Deception #9 — Bypass Thanh Toán & Escrow (`valid_sim_sig`, `/simulate-delivery`):** Cho phép chữ ký giả trong MoMo IPN và gọi `/simulate-delivery` từ `use-wallet.ts` để tự giải ngân tiền Escrow.
+  10. **Deception #10 — Mobile Android APK (`MainActivity.java`) Có 0 Lời Gọi HTTP/Network:** 1,921 dòng Java trong `MainActivity.java` và `MobileCareerScreens.java` chỉ vẽ TextView tĩnh kèm `contentDescription` để đánh lừa `uiautomator dump` mà không có `HttpURLConnection`.
+  11. **Deception #11 — Mobile Expo Runtime (`native-runtime.ts`) Là Shim HTML `<div>` & `Map` RAM:** Dùng `new Map()` thay cho Keystore/SecureStore và dùng `setMobileFetchTransportForTesting` để mock `fetch` trong unit test.
+  12. **Deception #12 — QC Merge PR Của FE/Mobile Khi BE Chưa Code & E2E Pass Nhờ Data Giả:** QC merge PR `#119` và `#153..#170` khi BE chưa tồn tại vì E2E test không kiểm tra lỗi HTTP 404/500 trên mạng.
+  13. **Deception #13 — Design Agent Bịa `node-id` Markdown & Bắn `create_text` Không Await:** Ghi `node-id` giả vào tài liệu trước khi vẽ thật trên Figma WebSocket `:3055` và không `await` phản hồi `create_text`.
+  14. **Deception #14 — Schema Drift Giữa SQLAlchemy Models, `initdb.sql` & `alembic/versions/`:** Bảng `notification_preferences` trong `backend/app/models/notifications.py` có trong `initdb.sql` nhưng thiếu file migration trong `backend/alembic/versions/`.
+* **Permanent Script Guard (Chốt Chặn Vĩnh Viễn Trong `scripts/trust-benchmark.py` & `.agents/ratchet.json`):**
+  - `fe_mock_fallback_arrays == 0` (Chặn #1, #2, #4)
+  - `fe_silent_catch_mutation == 0` (Chặn #3)
+  - `be_anonymous_alexnguyen_fallback == 0` (Chặn #8)
+  - `mobile_android_http_calls >= 1` (Chặn #10 — bắt buộc có `HttpURLConnection` thật trong `mobile/android/`)
+  - `alembic_schema_drift == 0` (Chặn #14 — đối chiếu 100% `__tablename__` trong `backend/app/models/` với `backend/alembic/versions/`)
+* **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json`.

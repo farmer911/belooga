@@ -32,6 +32,7 @@ Section details for workspace organisms live in `references/` (`header-and-bio.m
 ## Known Traps
 - **WebRTC E2E Mocking:** Playwright E2E runs require `NEXT_PUBLIC_E2E=1` to inject deterministic fake media streams.
 - **Settings Persistence:** Password/delete forms in `settings/page.tsx` are client-state UI flows; verify backend route existence before asserting server mutations.
+- **Zero Mock/Fallback Arrays (`BEL-228`):** Never define `FALLBACK_*` / `DEFAULT_*` arrays or `let memory*` in-memory fake DB stores in workspace components (`fe_mock_fallback_arrays == 0`).
 
 ## Self-Verification
 ```bash
