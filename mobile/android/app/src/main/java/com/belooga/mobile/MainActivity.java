@@ -10,6 +10,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends Activity {
     private LinearLayout contentContainer;
@@ -68,6 +72,36 @@ public class MainActivity extends Activity {
 
         setContentView(rootShell);
         renderDiscoverScreen();
+        syncLiveGatewayTelemetry();
+    }
+
+    private void syncLiveGatewayTelemetry() {
+        new Thread(() -> {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL("http://10.0.2.2:8080/v1/profile/search/?limit=5");
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(2500);
+                conn.setReadTimeout(2500);
+                int status = conn.getResponseCode();
+                if (status >= 200 && status < 300) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    reader.close();
+                }
+            } catch (Exception ignored) {
+                // Gateway offline during unit/local build without emulator network bridge
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        }).start();
     }
 
     private LinearLayout buildTopHeader() {

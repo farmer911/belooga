@@ -50,6 +50,7 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 ## Known Traps
 - **Autocomplete vs. Search:** Prefix/substring `ILIKE` is permitted only inside `/v1/profile/search/suggest/` using the concatenated `gin_trgm_ops` expression index `idx_candidate_profiles_autocomplete_trgm`, never in main candidate search.
 - **Dependency Injection (C-06):** Always inject `AsyncSession` via FastAPI `Depends(get_db)` in `CmsService` and `CatalogsService`.
+- **No Anonymous `"alexnguyen"` Fallback (`BEL-228`):** Never hardcode `"alexnguyen"` as a default username in `backend/app/modules/cms/service.py` or `backend/app/schemas/cms.py` when `current_user` is `None` (`be_anonymous_alexnguyen_fallback == 0`).
 
 ## Self-Verification
 ```bash

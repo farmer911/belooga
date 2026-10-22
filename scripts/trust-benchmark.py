@@ -163,8 +163,14 @@ for p in ui_files:
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> raw fetch() inside route screen (must use hook/service)")
     if re.search(r"useEffect\s*\(\s*\(\)\s*=>\s*\{[^}]*?\b(?:apiClient|mobileApiClient)\.(get|post|put|patch|delete)\b", txt, re.DOTALL):
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> apiClient called inside useEffect (must use @tanstack/react-query)")
-    if re.search(r"catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)", txt, re.DOTALL):
-        violations["2. Error Transparency (No Pass)"].append(f"{rel} -> fake success state inside catch block")
+    if re.search(
+        r"//\s*Optimistic social feed fallback|catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)",
+        txt,
+        re.DOTALL,
+    ):
+        violations["2. Error Transparency (No Pass)"].append(
+            f"{rel} -> fake success state or optimistic fallback inside catch block (fe_silent_catch_mutation == 0)"
+        )
     mock_fallback_hits = re.findall(
         r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
         r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
@@ -402,6 +408,30 @@ if not career_java.exists():
     violations["3. Layer Purity (No Band-Aids)"].append(
         "mobile MobileCareerScreens.java missing full-platform Career Pro screens (ATS, Expert Review, Salary, Exec BI)"
     )
+
+# Enforce BEL-228 14-Deception Guards (be_anonymous_alexnguyen_fallback, mobile_android_http_calls, alembic_schema_drift)
+for cms_target in (BE_APP / "modules" / "cms" / "service.py", BE_APP / "schemas" / "cms.py"):
+    if cms_target.exists() and re.search(r"\balexnguyen\b", cms_target.read_text(encoding="utf-8")):
+        violations["4. Async & IDOR Safety (All BE)"].append(
+            f"{cms_target.relative_to(ROOT)} -> hardcoded anonymous 'alexnguyen' fallback prohibited (be_anonymous_alexnguyen_fallback == 0)"
+        )
+
+android_java_files = list((ROOT / "mobile" / "android").rglob("*.java")) if (ROOT / "mobile" / "android").exists() else []
+if sum(p.read_text(encoding="utf-8", errors="ignore").count("HttpURLConnection") for p in android_java_files) < 1:
+    violations["3. Layer Purity (No Band-Aids)"].append(
+        "mobile/android/ missing real HttpURLConnection network client (mobile_android_http_calls >= 1)"
+    )
+
+alembic_versions_dir = ROOT / "backend" / "alembic" / "versions"
+if alembic_versions_dir.exists():
+    alembic_all_txt = "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in alembic_versions_dir.glob("*.py"))
+    for model_file in sorted((BE_APP / "models").glob("*.py")):
+        for m_tbl in re.finditer(r'__tablename__\s*=\s*["\']([^"\']+)["\']', model_file.read_text(encoding="utf-8")):
+            tbl_name = m_tbl.group(1)
+            if tbl_name not in alembic_all_txt:
+                violations["3. Layer Purity (No Band-Aids)"].append(
+                    f"{model_file.relative_to(ROOT)} -> table '{tbl_name}' missing from backend/alembic/versions/ (alembic_schema_drift == 0)"
+                )
 
 # --- RENDER VISUAL BENCHMARK SCORECARD ---
 print("=" * 78)

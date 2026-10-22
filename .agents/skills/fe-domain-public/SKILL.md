@@ -36,6 +36,7 @@ description: Frontend Public Discovery, Recruiter Profile & CMS Pages in page.ts
 ## Known Traps
 - **Hidden Profile Timeline & Trust Leak (C-01):** Do not fetch timeline lists or trust scores on public views until the main profile query resolves (`enabled: Boolean(profile)`).
 - **Contact Endpoint:** Public contact forms post to `POST /v1/contact/`.
+- **Zero Mock/Fallback Arrays & Silent Catch (`BEL-228`):** Never return `FALLBACK_*` / `DEFAULT_*` arrays in `catch` blocks or fake optimistic social posts when HTTP requests fail (`fe_mock_fallback_arrays == 0`, `fe_silent_catch_mutation == 0`).
 
 ## Self-Verification
 ```bash
