@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { ActionButton, BadgePill, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
 import {
   saveMobileCvDraft,
-  useMobileExecutiveAnalyticsQuery,
   useMobileExpertPackagesQuery,
   useMobileMomoQrMutation,
   useMobileSalaryBenchmarkQuery,
@@ -21,8 +20,10 @@ import {
 import { getSemanticTokens } from "@/theme/tokens";
 import { RecruiterHubSection } from "@/components/recruiter-hub-section";
 import { ExpertLeaderboardSection } from "@/components/expert-leaderboard-section";
+import { Analytics360Section } from "@/components/analytics-360-section";
+import { Growth20Section } from "@/components/growth-20-section";
 
-type CareerSubTab = "expert" | "wallet" | "salary" | "community" | "recruiter" | "bi";
+type CareerSubTab = "expert" | "wallet" | "salary" | "community" | "recruiter" | "bi" | "growth";
 const TOPUP_AMOUNTS = [50000, 100000, 200000, 500000, 1000000] as const;
 const SALARY_YEARS = ["2024", "2025", "2026", "all"] as const;
 
@@ -47,7 +48,6 @@ export default function MobileCareerHubScreen() {
   const careerJobsQuery = useMobileCareerJobsQuery();
   const createCareerJobMutation = useCreateMobileCareerJobMutation();
   const applyCareerJobMutation = useApplyMobileCareerJobMutation();
-  const biQuery = useMobileExecutiveAnalyticsQuery();
 
   const availVnd = walletQuery.data?.available_balance_vnd ?? 1500000;
   const escrowVnd = walletQuery.data?.escrow_locked_vnd ?? 1475000;
@@ -85,10 +85,12 @@ export default function MobileCareerHubScreen() {
           <ActionButton testID="mobile-career-sub-community" label="Social & Jobs" variant={subTab === "community" ? "primary" : "secondary"} onPress={() => setSubTab("community")} />
           <ActionButton testID="mobile-career-sub-recruiter" label="Recruiter Hub" variant={subTab === "recruiter" ? "primary" : "secondary"} onPress={() => setSubTab("recruiter")} />
           <ActionButton testID="mobile-career-sub-bi" label="Executive BI" variant={subTab === "bi" ? "primary" : "secondary"} onPress={() => setSubTab("bi")} />
+          <ActionButton testID="mobile-career-sub-growth" label="20x Growth Hub" variant={subTab === "growth" ? "primary" : "secondary"} onPress={() => setSubTab("growth")} />
         </div>
       </SurfaceCard>
 
       {subTab === "recruiter" ? <RecruiterHubSection /> : null}
+      {subTab === "growth" ? <Growth20Section /> : null}
 
       {(subTab === "expert" || subTab === "wallet") ? (
         <SurfaceCard testID="mobile-expert-review-card" mode="dark">
@@ -269,20 +271,7 @@ export default function MobileCareerHubScreen() {
         </SurfaceCard>
       ) : null}
 
-      {subTab === "bi" ? (
-        <SurfaceCard testID="mobile-exec-bi-card" mode="dark">
-          <h2 style={{ margin: 0, fontSize: 17, color: tokens.typography.heading }}>
-            Executive Revenue &amp; Unit Economics BI
-          </h2>
-          {biQuery.data ? (
-            <div data-testid="mobile-exec-bi-metrics" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <BadgePill label={`GMV: $${biQuery.data.total_gmv_usd}`} tone="brand" />
-              <BadgePill label={`MoMo Conv: ${biQuery.data.momo_conversion_rate}%`} tone="success" />
-              <BadgePill label={`Search P95: ${biQuery.data.search_p95_ms}ms`} tone="neutral" />
-            </div>
-          ) : null}
-        </SurfaceCard>
-      ) : null}
+      {subTab === "bi" ? <Analytics360Section /> : null}
     </ScreenShell>
   );
 }

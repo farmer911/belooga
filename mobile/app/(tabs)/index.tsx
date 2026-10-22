@@ -16,11 +16,12 @@ import {
   computeCandidateSkillMatch,
   useCreateMobileCustomSkillMutation,
   useMobileCandidateSearchQuery,
-  useMobileSearchSuggestionsQuery,
   useMobileSkillCatalogQuery,
   useMobileTrendingInsightsQuery,
 } from "@/hooks/use-mobile-discovery";
 import { getSemanticTokens } from "@/theme/tokens";
+import { CompaniesDirectorySection } from "@/components/companies-directory-section";
+import { TopCandidatesSection } from "@/components/top-candidates-section";
 
 const DEFAULT_SKILL_CHIPS = ["Golang", "Python", "React", "TypeScript", "Kubernetes", "PostgreSQL", "AI/LLM"];
 
@@ -47,7 +48,6 @@ export default function MobileDiscoveryFeedScreen() {
     skills: selectedSkills,
     cursor,
   });
-  const suggestionsQuery = useMobileSearchSuggestionsQuery(queryText);
   const trendingQuery = useMobileTrendingInsightsQuery();
   const skillCatalogQuery = useMobileSkillCatalogQuery();
   const createCustomSkillMutation = useCreateMobileCustomSkillMutation();
@@ -57,7 +57,6 @@ export default function MobileDiscoveryFeedScreen() {
   const candidates = searchQuery.data?.items ?? [];
   const trendingSkills = trendingQuery.data?.trending_skills ?? [];
   const catalogSkills = (skillCatalogQuery.data ?? []).map((s) => s.name);
-  const suggestions = suggestionsQuery.data ?? [];
   const bookmarks = bookmarksQuery.data ?? [];
 
   const mergedSkillNames = Array.from(
@@ -279,6 +278,9 @@ export default function MobileDiscoveryFeedScreen() {
           onPress={() => setCursor(searchQuery.data?.next_cursor ?? undefined)}
         />
       ) : null}
+
+      <TopCandidatesSection />
+      <CompaniesDirectorySection />
     </ScreenShell>
   );
 }
