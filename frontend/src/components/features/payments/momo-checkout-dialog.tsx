@@ -149,7 +149,7 @@ export function MomoCheckoutDialog({
             <div className="text-sm font-bold text-typography-main">Biên Lai Thanh Toán Thành Công!</div>
             <div className="text-typography-muted text-[11px] space-y-0.5">
               <div>Mã giao dịch: <span className="font-mono text-brand-primary font-semibold">{orderId}</span></div>
-              <div>Phương thức: <strong className="text-typography-main">{paidMethodLabel}</strong> · Số tiền: <strong className="text-emerald-700">{formatVnd(amount)}</strong></div>
+              <div>Phương thức: <strong className="text-typography-main">{paidMethodLabel}</strong> · Trạng thái: <strong className="text-emerald-700">ĐÃ THANH TOÁN</strong></div>
             </div>
             <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
               Đã mở khóa tính năng tự động tối ưu form STAR và chèn từ khóa JD còn thiếu!
@@ -188,7 +188,7 @@ export function MomoCheckoutDialog({
                   className="w-full bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs h-8 rounded-lg gap-1.5"
                 >
                   <Wallet className="w-3.5 h-3.5" />
-                  <span>{isPayingWithWallet ? "Đang trừ ví & tối ưu CV..." : `Thanh Toán Ngay Bằng Ví (-${formatVnd(amount)})`}</span>
+                  <span>{isPayingWithWallet ? "Đang trừ ví & tối ưu CV..." : "Thanh Toán Tức Thì Bằng Số Dư Ví Belooga"}</span>
                 </Button>
               ) : (
                 <Button
