@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Target, MapPin } from "lucide-react";
@@ -10,20 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { SalaryPercentileCard } from "@/components/features/salary-benchmark/salary-percentile-card";
 import { SkillPremiumRadar, SalarySkill } from "@/components/features/salary-benchmark/skill-premium-radar";
 import { SalaryCrawlerPanel, CrawlerSourceMeta } from "@/components/features/salary-benchmark/salary-crawler-panel";
-import { SalaryHistoricalChart, HistoricalSalaryPoint, buildFallbackHistory } from "@/components/features/salary-benchmark/salary-historical-chart";
+import { SalaryHistoricalChart, HistoricalSalaryPoint } from "@/components/features/salary-benchmark/salary-historical-chart";
 import { SalaryNegotiationAndRoadmapSuite } from "@/components/features/growth/career-acceleration-suite";
 
 const STACKS = ["Golang", "Python / AI", "React / Frontend", "Java / Spring", "DevOps / K8s"];
 const LEVELS = ["Junior", "Mid-Level", "Senior", "Lead / Architect"];
 const LOCATIONS = ["Ho Chi Minh", "Ha Noi", "Da Nang", "Remote"];
-
-const DEFAULT_SKILLS: SalarySkill[] = [
-  { name: "Apache Kafka", salary_premium: "+25%", popularity_pct: 88 },
-  { name: "Kubernetes & Helm", salary_premium: "+22%", popularity_pct: 82 },
-  { name: "gRPC / Protobuf", salary_premium: "+18%", popularity_pct: 76 },
-  { name: "Redis Cluster", salary_premium: "+15%", popularity_pct: 91 },
-  { name: "Distributed Tracing", salary_premium: "+14%", popularity_pct: 65 },
-];
 
 interface SalaryBenchmarkData {
   p25_salary_vnd: number;
@@ -61,8 +53,6 @@ export default function SalaryBenchmarkPage() {
   const [level, setLevel] = useState<string>("Senior");
   const [location, setLocation] = useState<string>("Ho Chi Minh");
   const [selectedYear, setSelectedYear] = useState<string>("all");
-  const [crawlBonusSamples, setCrawlBonusSamples] = useState<number>(0);
-  const [lastCrawlTime, setLastCrawlTime] = useState<string>("2026-10-22 18:00 ICT");
 
   const queryStack = techStack.split(" ")[0];
   const role = techStack.toLowerCase().includes("react") ? "frontend" : techStack.toLowerCase().includes("devops") ? "devops" : techStack.toLowerCase().includes("ai") ? "ai" : "backend";
@@ -74,7 +64,6 @@ export default function SalaryBenchmarkPage() {
     queryFn: async () => {
       const res = await apiClient.get<SalaryBenchmarkData>("/v1/catalogs/salary-benchmark", {
         params: { role, tech_stack: queryStack, level: level.replace("-Level", ""), city, location, year: selectedYear },
-        timeout: 3000,
       });
       return res.data;
     },
@@ -82,22 +71,16 @@ export default function SalaryBenchmarkPage() {
 
   const crawlMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await apiClient.post<SalaryBenchmarkData>("/v1/catalogs/salary-benchmark/crawl", {
-          role,
-          tech_stack: queryStack,
-          level: level.replace("-Level", ""),
-          city,
-          location,
-        });
-        return res.data;
-      } catch {
-        return null;
-      }
+      const res = await apiClient.post<SalaryBenchmarkData>("/v1/catalogs/salary-benchmark/crawl", {
+        role,
+        tech_stack: queryStack,
+        level: level.replace("-Level", ""),
+        city,
+        location,
+      });
+      return res.data;
     },
-    onSuccess: (data) => {
-      setCrawlBonusSamples((prev) => prev + 28);
-      setLastCrawlTime(data?.last_crawled_at || new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC");
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary-benchmark"] });
     },
   });
@@ -107,32 +90,19 @@ export default function SalaryBenchmarkPage() {
     queryFn: async () => {
       const res = await apiClient.get<CareerRoiData>("/v1/catalogs/career-roi", {
         params: { tech_stack: queryStack, level: level.replace("-Level", ""), city, location },
-        timeout: 3000,
       });
       return res.data;
     },
   });
 
-  const isSenior = level.includes("Senior") || level.includes("Lead");
-  const fallbackBase = isSenior ? 48000000 : 25000000;
-  const p25 = benchmark?.p25_salary_vnd ?? Math.round(fallbackBase * 0.8);
-  const p50 = benchmark?.p50_salary_vnd ?? fallbackBase;
-  const p75 = benchmark?.p75_salary_vnd ?? Math.round(fallbackBase * 1.3);
-  const sampleSize = (benchmark?.sample_size_jds ?? 342) + crawlBonusSamples;
-  const skills = benchmark?.top_paid_skills ?? DEFAULT_SKILLS;
-  const growthSince2024 = benchmark?.growth_since_2024_pct ?? 28.4;
-
-  const crawlerSources: CrawlerSourceMeta[] = benchmark?.crawler_sources ?? [
-    { source_name: "ITviec", sample_count: Math.round(sampleSize * 0.38) },
-    { source_name: "TopDev", sample_count: Math.round(sampleSize * 0.27) },
-    { source_name: "Levels.fyi", sample_count: Math.round(sampleSize * 0.15) },
-    { source_name: "Belooga JDs", sample_count: Math.round(sampleSize * 0.20) },
-  ];
-
-  const historicalSeries = useMemo(
-    () => benchmark?.historical_series ?? buildFallbackHistory(p25, p50, p75, sampleSize),
-    [benchmark?.historical_series, p25, p50, p75, sampleSize]
-  );
+  const p25 = benchmark?.p25_salary_vnd ?? 0;
+  const p50 = benchmark?.p50_salary_vnd ?? 0;
+  const p75 = benchmark?.p75_salary_vnd ?? 0;
+  const sampleSize = benchmark?.sample_size_jds ?? 0;
+  const skills = benchmark?.top_paid_skills ?? [];
+  const growthSince2024 = benchmark?.growth_since_2024_pct ?? 0;
+  const crawlerSources: CrawlerSourceMeta[] = benchmark?.crawler_sources ?? [];
+  const historicalSeries: HistoricalSalaryPoint[] = benchmark?.historical_series ?? [];
 
   return (
     <div className="flex-1 bg-surface-page text-typography-main flex flex-col font-sans selection:bg-brand-primary/20 selection:text-brand-dark">
@@ -155,7 +125,7 @@ export default function SalaryBenchmarkPage() {
       <main className="flex-1 p-4 space-y-4 max-w-[1400px] w-full mx-auto overflow-y-auto">
         <SalaryCrawlerPanel
           sampleSize={sampleSize}
-          lastCrawledAt={benchmark?.last_crawled_at || lastCrawlTime}
+          lastCrawledAt={benchmark?.last_crawled_at || "Live PostgreSQL"}
           growthSince2024Pct={growthSince2024}
           sources={crawlerSources}
           isCrawling={crawlMutation.isPending}
@@ -195,7 +165,7 @@ export default function SalaryBenchmarkPage() {
         <SalaryHistoricalChart selectedYear={selectedYear} onSelectYear={setSelectedYear} series={historicalSeries} techStack={techStack} level={level} location={location} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-7"><SalaryPercentileCard techStack={techStack} level={level} location={location} p25={p25} p50={p50} p75={p75} sampleSize={sampleSize} growthRate={benchmark?.growth_rate_yoy || "+18.5%"} marketDemand={benchmark?.market_demand || "RẤT CAO"} /></div>
+          <div className="lg:col-span-7"><SalaryPercentileCard techStack={techStack} level={level} location={location} p25={p25} p50={p50} p75={p75} sampleSize={sampleSize} growthRate={benchmark?.growth_rate_yoy || "0%"} marketDemand={benchmark?.market_demand || ""} /></div>
           <div className="lg:col-span-5"><SkillPremiumRadar skills={skills} techStack={techStack} /></div>
         </div>
         <SalaryNegotiationAndRoadmapSuite techStack={techStack} level={level} />
@@ -210,7 +180,7 @@ export default function SalaryBenchmarkPage() {
                 {careerRoi.upskill_recommendations.map((rec) => (
                   <div key={rec.skill} className="p-2.5 rounded-lg bg-surface-page border border-surface-border text-xs space-y-1">
                     <div className="flex items-center justify-between font-bold text-typography-main">
-                      <span>{rec.skill}</span>
+                      <span>• {rec.skill}</span>
                       <span className="text-emerald-700">{rec.salary_boost_pct ?? rec.salary_premium_pct}</span>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-typography-muted">

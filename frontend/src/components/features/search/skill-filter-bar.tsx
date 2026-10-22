@@ -8,10 +8,6 @@ import { apiClient } from "@/services/api-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_SKILLS = [
-  "Golang", "Python", "FastAPI", "PostgreSQL", "React", "TypeScript", "Docker", "Kubernetes", "System Design",
-];
-
 export interface SearchCandidateItem {
   id: string;
   username: string;
@@ -25,12 +21,6 @@ export interface SearchCandidateItem {
   skills?: string[];
 }
 
-interface SkillCatalogItem {
-  id?: string;
-  name: string;
-  category?: string;
-}
-
 interface SkillFilterBarProps {
   selectedSkills: string[];
   onToggleSkill: (skill: string) => void;
@@ -40,32 +30,24 @@ interface SkillFilterBarProps {
 export function SkillFilterBar({ selectedSkills, onToggleSkill, onClearSkills }: SkillFilterBarProps) {
   const queryClient = useQueryClient();
   const [customSkill, setCustomSkill] = useState("");
-  const [localSkills, setLocalSkills] = useState<string[]>([]);
 
-  const { data: apiSkills = [] } = useQuery<SkillCatalogItem[]>({
+  const { data: apiSkills = [] } = useQuery<string[]>({
     queryKey: ["catalog-skills"],
     queryFn: async () => {
-      const res = await apiClient.get<SkillCatalogItem[]>("/v1/catalogs/skills/");
+      const res = await apiClient.get<string[]>("/v1/profile/skills/");
       return Array.isArray(res.data) ? res.data : [];
     },
     staleTime: 60_000,
   });
 
-  const allSkills = Array.from(
-    new Set([...DEFAULT_SKILLS, ...apiSkills.map((s) => s.name).filter(Boolean), ...localSkills, ...selectedSkills])
-  );
+  const allSkills = Array.from(new Set([...apiSkills.filter(Boolean), ...selectedSkills]));
 
   const addCustomSkillMutation = useMutation({
     mutationFn: async (skillName: string) => {
-      try {
-        await apiClient.post("/v1/catalogs/skills/", { name: skillName, category: "Engineering" });
-      } catch {
-        try { await apiClient.post("/v1/catalogs/skills", { name: skillName, category: "Engineering" }); } catch { /* fallback */ }
-      }
+      await apiClient.post("/v1/catalogs/skills", { name: skillName, category: "Engineering" });
       return skillName;
     },
     onSuccess: (skillName) => {
-      setLocalSkills((prev) => (prev.includes(skillName) ? prev : [...prev, skillName]));
       if (!selectedSkills.some((s) => s.toLowerCase() === skillName.toLowerCase())) onToggleSkill(skillName);
       setCustomSkill("");
       void queryClient.invalidateQueries({ queryKey: ["catalog-skills"] });
@@ -144,15 +126,7 @@ export function SkillFilterBar({ selectedSkills, onToggleSkill, onClearSkills }:
 }
 
 export function deriveCandidateSkills(candidate: { username: string; headline?: string; skills?: string[] }): string[] {
-  if (Array.isArray(candidate.skills) && candidate.skills.length > 0) return candidate.skills;
-  const h = (candidate.headline || "").toLowerCase();
-  const inferred = DEFAULT_SKILLS.filter((sk) => h.includes(sk.toLowerCase()));
-  if (inferred.length === 0) {
-    if (candidate.username.includes("alex")) return ["Golang", "Python", "FastAPI", "PostgreSQL", "React", "Docker"];
-    if (h.includes("design") || h.includes("product")) return ["Figma", "TypeScript", "React", "System Design"];
-    return ["Python", "TypeScript", "PostgreSQL", "Docker", "System Design"];
-  }
-  return Array.from(new Set([...inferred, "PostgreSQL", "Docker"])).slice(0, 6);
+  return Array.isArray(candidate.skills) ? candidate.skills : [];
 }
 
 interface SearchCandidateCardProps {
@@ -199,7 +173,7 @@ export function SearchCandidateCard({
             <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5 flex-shrink-0" />{candidate.location}</span>
             {selectedSkills.length > 0 && (
               <Badge data-testid="candidate-skill-match-badge" variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-300 font-bold gap-1">
-                <CheckCircle2 className="w-3 h-3" /> Khớp {Math.max(1, matchedCount)}/{selectedSkills.length} kỹ năng
+                <CheckCircle2 className="w-3 h-3" /> Khớp {matchedCount}/{selectedSkills.length} kỹ năng
               </Badge>
             )}
           </div>

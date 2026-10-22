@@ -6,12 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Search, Star, MapPin, ShieldCheck, Plus, Briefcase, Users } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
-import {
-  CompanyProfileItem,
-  DEFAULT_COMPANIES,
-  readCompanies,
-  CompanyCreateModal,
-} from "@/components/features/companies/company-data";
+import { CompanyProfileItem, CompanyCreateModal } from "@/components/features/companies/company-data";
 
 const TECH_CHIPS = ["All", "Golang", "Python", "FastAPI", "React", "Kubernetes", "PostgreSQL"];
 const INDUSTRIES = ["ALL", "AI / Cloud", "Fintech", "E-commerce", "SaaS"];
@@ -25,18 +20,18 @@ export default function CompaniesDirectoryPage() {
   const [sortBy, setSortBy] = useState<"rating" | "open_jobs" | "salary">("rating");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: companies = DEFAULT_COMPANIES } = useQuery<CompanyProfileItem[]>({
+  const { data: companies = [] } = useQuery<CompanyProfileItem[]>({
     queryKey: ["companies-directory", query, selectedTech, industry, hiringOnly],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<CompanyProfileItem[]>("/v1/companies/search", {
-          params: { q: query, tech_stack: selectedTech === "All" ? undefined : selectedTech, industry: industry === "ALL" ? undefined : industry, hiring_only: hiringOnly },
-        });
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
-      } catch {
-        return readCompanies();
-      }
-      return readCompanies();
+      const res = await apiClient.get<CompanyProfileItem[]>("/v1/companies/search", {
+        params: {
+          q: query,
+          tech_stack: selectedTech === "All" ? undefined : selectedTech,
+          industry: industry === "ALL" ? undefined : industry,
+          hiring_only: hiringOnly,
+        },
+      });
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 

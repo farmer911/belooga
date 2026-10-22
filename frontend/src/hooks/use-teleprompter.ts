@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const DEFAULT_SCRIPT =
+const STARTER_PITCH_SCRIPT =
   "Hello, I am a passionate Senior Software Engineer with deep expertise in full-stack architecture, high-performance distributed systems, and modern UI engineering.\n\nOver the past 6 years, I have spearheaded the architecture of resilient cloud-native platforms, designed scalable microservices handling millions of daily transactions, and crafted buttery-smooth user interfaces.\n\nI thrive in fast-paced environments where code quality, clean architecture, and rapid execution matter. Excited to connect and build impactful products together!";
 
 interface SpeechRecognitionResultEvent {
@@ -29,7 +29,7 @@ interface WindowWithSpeechRecognition extends Window {
 export function useTeleprompter(isRecording: boolean) {
   const [teleprompterEnabled, setTeleprompterEnabled] = useState(true);
   const [isPrompterCollapsed, setIsPrompterCollapsed] = useState(false);
-  const [scriptText, setScriptText] = useState<string>(DEFAULT_SCRIPT);
+  const [scriptText, setScriptText] = useState<string>(STARTER_PITCH_SCRIPT);
   const [scriptWords, setScriptWords] = useState<string[]>([]);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(0);
   const [teleprompterSpeed, setTeleprompterSpeed] = useState<number>(130);

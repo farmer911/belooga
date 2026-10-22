@@ -1,17 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PenSquare, Trash2, Edit3, ThumbsUp, MessageSquare, Send, ExternalLink, Plus } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
-import {
-  QuickPostModal,
-  UserPostItem,
-  UserPostComment,
-  readLocalPosts,
-  writeLocalPosts,
-} from "@/components/features/posts/quick-post-modal";
+import { QuickPostModal, UserPostItem } from "@/components/features/posts/quick-post-modal";
 
 interface UserProfilePostsSectionProps {
   username: string;
@@ -28,57 +22,45 @@ export function UserProfilePostsSection({ username, authorName = username, isOwn
   const { data: posts = [] } = useQuery<UserPostItem[]>({
     queryKey: ["user-profile-posts", username],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<UserPostItem[]>(`/v1/posts/user/${username}`);
-        if (Array.isArray(res.data) && res.data.length > 0) return res.data;
-      } catch {
-        return readLocalPosts();
-      }
-      return readLocalPosts();
+      const res = await apiClient.get<UserPostItem[]>(`/v1/posts/user/${username}`);
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 
-  const handleDelete = async (postId: string) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (postId: string) => {
       await apiClient.delete(`/v1/posts/${postId}`);
-    } catch {
-      // Fallback
-    }
-    const next = posts.filter((p) => p.id !== postId);
-    writeLocalPosts(next);
-    queryClient.setQueryData(["user-profile-posts", username], next);
-  };
+      return postId;
+    },
+    onSuccess: (postId) => {
+      queryClient.setQueryData<UserPostItem[]>(["user-profile-posts", username], (prev = []) =>
+        prev.filter((p) => p.id !== postId)
+      );
+    },
+  });
 
-  const handleLike = async (postId: string) => {
-    try {
+  const likeMutation = useMutation({
+    mutationFn: async (postId: string) => {
       await apiClient.post(`/v1/posts/${postId}/like`);
-    } catch {
-      // Fallback
-    }
-    const next = posts.map((p) => (p.id === postId ? { ...p, likes_count: p.likes_count + 1 } : p));
-    writeLocalPosts(next);
-    queryClient.setQueryData(["user-profile-posts", username], next);
-  };
+      return postId;
+    },
+    onSuccess: (postId) => {
+      queryClient.setQueryData<UserPostItem[]>(["user-profile-posts", username], (prev = []) =>
+        prev.map((p) => (p.id === postId ? { ...p, likes_count: p.likes_count + 1 } : p))
+      );
+    },
+  });
 
-  const handleAddComment = async (postId: string) => {
-    const text = (commentTexts[postId] || "").trim();
-    if (!text) return;
-    try {
-      await apiClient.post(`/v1/posts/${postId}/comments`, { content: text });
-    } catch {
-      // Fallback
-    }
-    const newComment: UserPostComment = {
-      id: `uc-${Date.now()}`,
-      author_name: "Nhà Tuyển Dụng / Thành Viên",
-      content: text,
-      created_at: "Vừa xong",
-    };
-    const next = posts.map((p) => (p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
-    writeLocalPosts(next);
-    queryClient.setQueryData(["user-profile-posts", username], next);
-    setCommentTexts((prev) => ({ ...prev, [postId]: "" }));
-  };
+  const commentMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      await apiClient.post(`/v1/posts/${postId}/comments`, { content });
+      return { postId, content };
+    },
+    onSuccess: ({ postId }) => {
+      setCommentTexts((prev) => ({ ...prev, [postId]: "" }));
+      queryClient.invalidateQueries({ queryKey: ["user-profile-posts", username] });
+    },
+  });
 
   return (
     <section
@@ -131,7 +113,7 @@ export function UserProfilePostsSection({ username, authorName = username, isOwn
                   <button
                     type="button"
                     data-testid={`user-post-delete-btn-${post.id}`}
-                    onClick={() => handleDelete(post.id)}
+                    onClick={() => deleteMutation.mutate(post.id)}
                     className="p-1.5 rounded hover:bg-surface-card text-typography-muted hover:text-red-600 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -155,7 +137,7 @@ export function UserProfilePostsSection({ username, authorName = username, isOwn
                 <button
                   type="button"
                   data-testid={`user-post-like-btn-${post.id}`}
-                  onClick={() => handleLike(post.id)}
+                  onClick={() => likeMutation.mutate(post.id)}
                   className="inline-flex items-center gap-1 font-semibold text-typography-heading hover:text-brand-primary cursor-pointer"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
@@ -163,7 +145,7 @@ export function UserProfilePostsSection({ username, authorName = username, isOwn
                 </button>
                 <span className="inline-flex items-center gap-1 text-typography-muted">
                   <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>{post.comments.length} Bình luận</span>
+                  <span>{post.comments?.length ?? 0} Bình luận</span>
                 </span>
               </div>
               <div className="flex items-center gap-1.5 flex-1 max-w-xs">
@@ -178,14 +160,17 @@ export function UserProfilePostsSection({ username, authorName = username, isOwn
                 <button
                   type="button"
                   data-testid={`user-post-comment-submit-${post.id}`}
-                  onClick={() => handleAddComment(post.id)}
+                  onClick={() => {
+                    const text = (commentTexts[post.id] || "").trim();
+                    if (text) commentMutation.mutate({ postId: post.id, content: text });
+                  }}
                   className="p-1.5 rounded-lg bg-brand-primary text-white cursor-pointer"
                 >
                   <Send className="w-3 h-3" aria-hidden="true" />
                 </button>
               </div>
             </div>
-            {post.comments.length > 0 && (
+            {post.comments && post.comments.length > 0 && (
               <div className="space-y-1 pt-1">
                 {post.comments.map((c) => (
                   <div key={c.id} className="text-[11px] bg-surface-card rounded px-2.5 py-1 border border-surface-border">

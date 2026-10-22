@@ -17,7 +17,7 @@ interface CVStudioSidebarProps {
   atsScore?: number;
 }
 
-export const DEFAULT_SECTIONS = [
+export const STANDARD_CV_SECTIONS = [
   "Thông tin liên hệ",
   "Tóm tắt sự nghiệp",
   "Kinh nghiệm làm việc",
@@ -39,7 +39,7 @@ export function CVStudioSidebar({
   onMoveSection,
   atsScore,
 }: CVStudioSidebarProps) {
-  const [localSections, setLocalSections] = useState<string[]>(DEFAULT_SECTIONS);
+  const [localSections, setLocalSections] = useState<string[]>(STANDARD_CV_SECTIONS);
   const sections = controlledSections ?? localSections;
 
   const moveSection = (index: number, direction: -1 | 1) => {

@@ -33,26 +33,6 @@ function formatMillions(vnd: number): string {
   return `${(vnd / 1_000_000).toFixed(1)}M`;
 }
 
-export function buildFallbackHistory(p25: number, p50: number, p75: number, baseSample: number): HistoricalSalaryPoint[] {
-  const factors = [
-    { period: "2024 Q1", year: "2024", mult: 0.78, yoy: "+8.2%", samples: Math.max(48, Math.round(baseSample * 0.14)) },
-    { period: "2024 Q3", year: "2024", mult: 0.83, yoy: "+11.4%", samples: Math.max(54, Math.round(baseSample * 0.16)) },
-    { period: "2025 Q1", year: "2025", mult: 0.89, yoy: "+14.1%", samples: Math.max(62, Math.round(baseSample * 0.18)) },
-    { period: "2025 Q3", year: "2025", mult: 0.94, yoy: "+16.8%", samples: Math.max(70, Math.round(baseSample * 0.20)) },
-    { period: "2026 Q1", year: "2026", mult: 0.98, yoy: "+17.9%", samples: Math.max(76, Math.round(baseSample * 0.22)) },
-    { period: "2026 Hiện tại", year: "2026", mult: 1.0, yoy: "+18.5%", samples: baseSample },
-  ];
-  return factors.map((f) => ({
-    period: f.period,
-    year: f.year,
-    p25_salary_vnd: Math.round(p25 * f.mult),
-    p50_salary_vnd: Math.round(p50 * f.mult),
-    p75_salary_vnd: Math.round(p75 * f.mult),
-    yoy_change_pct: f.yoy,
-    sample_count: f.samples,
-  }));
-}
-
 export function SalaryHistoricalChart({
   selectedYear,
   onSelectYear,

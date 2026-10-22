@@ -31,22 +31,9 @@ interface CVStudioEditorProps {
   autoSaveLabel?: string;
 }
 
-const DEFAULT_EDUCATION = [
-  { school: "Đại Học Bách Khoa / ĐH Quốc Gia", degree: "Kỹ sư Khoa học Máy tính (GPA: 3.6/4.0)", period: "2017 - 2021" },
-];
-
-const DEFAULT_PROJECTS: CVProjectItem[] = [
-  {
-    name: "Belooga High-Scale Talent Engine",
-    role: "Lead Backend Architect",
-    tech: "Golang, FastAPI, PostgreSQL 16 GIN, Redis 7",
-    impact: "Reduced p95 full-text search latency to 11ms across 500k+ candidate profiles.",
-  },
-];
-
 export function CVStudioEditor({ cvData, onChange, autoSaveLabel }: CVStudioEditorProps) {
-  const educationList = cvData.education ?? DEFAULT_EDUCATION;
-  const projectList = cvData.projects ?? DEFAULT_PROJECTS;
+  const educationList = cvData.education ?? [];
+  const projectList = cvData.projects ?? [];
   const inputCls = "w-full bg-surface-page border border-surface-border rounded-lg p-2 text-typography-main text-xs focus:outline-none focus:border-brand-primary focus:bg-surface-card";
 
   const handleBulletChange = (expIndex: number, bulletIndex: number, val: string) => {

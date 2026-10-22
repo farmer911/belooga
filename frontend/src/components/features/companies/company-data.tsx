@@ -50,98 +50,6 @@ export interface CompanyProfileItem {
   alumni: CompanyAlumniItem[];
 }
 
-const LOCAL_COMPANIES_KEY = "belooga_companies_v1";
-
-export const DEFAULT_COMPANIES: CompanyProfileItem[] = [
-  {
-    slug: "vng-cloud",
-    name: "VNG Cloud & AI Platform",
-    industry: "AI / Cloud",
-    company_size: "500-1000 nhân sự",
-    location: "Ho Chi Minh",
-    website: "https://vngcloud.vn",
-    avg_rating: 4.8,
-    review_count: 42,
-    avg_salary_usd: 2800,
-    open_jobs_count: 6,
-    hiring_now: true,
-    description: "Hạ tầng đám mây và nền tảng AI/GPU quy mô lớn phục vụ hàng chục triệu người dùng Đông Nam Á.",
-    tech_stack: ["Golang", "Kubernetes", "Python", "PostgreSQL", "React"],
-    benefits: ["Lương tháng 13 + Thưởng hiệu suất 3–6 tháng", "Bảo hiểm sức khỏe cao cấp PVI", "Ngân sách đào tạo Cloud/K8s $2,000/năm"],
-    open_jobs: [
-      { id: "vng-job-1", title: "Principal Golang & Distributed Systems Engineer", salary_range: "$2,800 - $3,800", work_mode: "Hybrid (HCMC)", skills: ["Golang", "Kubernetes", "PostgreSQL"] },
-      { id: "vng-job-2", title: "Senior AI Infrastructure Engineer", salary_range: "$2,500 - $3,500", work_mode: "On-site (HCMC)", skills: ["Python", "PyTorch", "Kubernetes"] },
-    ],
-    reviews: [
-      { id: "rev-1", author_role: "Senior Backend Engineer", rating: 5, title: "Môi trường kỹ thuật chiều sâu, bài toán tải lớn", comment: "Hệ thống microservices Golang chuẩn mực, đồng nghiệp rất giỏi.", created_at: "2026-10-15" },
-    ],
-    alumni: [
-      { username: "phucnguyen", full_name: "Nguyễn Minh Phúc", role: "Principal Architect", verified_expert: true },
-      { username: "huypham", full_name: "Phạm Gia Huy", role: "Senior Cloud Engineer" },
-    ],
-  },
-  {
-    slug: "momo-fintech",
-    name: "M_Service (MoMo Fintech SuperApp)",
-    industry: "Fintech",
-    company_size: "1000+ nhân sự",
-    location: "Ho Chi Minh / Hybrid",
-    avg_rating: 4.7,
-    review_count: 68,
-    avg_salary_usd: 3100,
-    open_jobs_count: 9,
-    hiring_now: true,
-    website: "https://momo.vn",
-    description: "Siêu ứng dụng tài chính số hàng đầu Việt Nam xử lý hàng chục triệu giao dịch thời gian thực mỗi ngày.",
-    tech_stack: ["Golang", "Python", "FastAPI", "React", "Kafka"],
-    benefits: ["ESOP cho vị trí Senior/Lead", "Hybrid làm việc linh hoạt", "Khám sức khỏe toàn diện hàng năm"],
-    open_jobs: [
-      { id: "momo-job-1", title: "Staff Payment Core & Ledger Architect", salary_range: "$3,000 - $4,200", work_mode: "Hybrid", skills: ["Golang", "PostgreSQL", "Kafka"] },
-    ],
-    reviews: [
-      { id: "rev-2", author_role: "Tech Lead Payment", rating: 5, title: "Bài toán Fintech chuẩn ACID & High Availability", comment: "Lương thưởng cạnh tranh top thị trường.", created_at: "2026-10-18" },
-    ],
-    alumni: [
-      { username: "maivo", full_name: "Võ Thị Mai", role: "Staff Full-Stack Lead", verified_expert: true },
-    ],
-  },
-  {
-    slug: "shopee-vn",
-    name: "Shopee & SeaMoney Engineering VN",
-    industry: "E-commerce",
-    company_size: "1000+ nhân sự",
-    location: "Ho Chi Minh / Ha Noi",
-    avg_rating: 4.6,
-    review_count: 54,
-    avg_salary_usd: 2950,
-    open_jobs_count: 5,
-    hiring_now: true,
-    website: "https://careers.shopee.vn",
-    description: "Trung tâm R&D thương mại điện tử và thanh toán số quy mô khu vực châu Á.",
-    tech_stack: ["Golang", "React", "TypeScript", "Kubernetes", "PostgreSQL"],
-    benefits: ["15 ngày phép năm", "Phụ cấp ăn trưa & thiết bị MacBook Pro M4", "Thưởng RSU theo kỳ"],
-    open_jobs: [
-      { id: "shopee-job-1", title: "Senior High-Concurrency Backend Engineer", salary_range: "$2,600 - $3,600", work_mode: "Hybrid", skills: ["Golang", "Redis", "PostgreSQL"] },
-    ],
-    reviews: [
-      { id: "rev-3", author_role: "Senior Software Engineer", rating: 5, title: "Quy trình code review & kiến trúc rất bài bản", comment: "Học được rất nhiều về distributed caching.", created_at: "2026-10-12" },
-    ],
-    alumni: [
-      { username: "phucnguyen", full_name: "Nguyễn Minh Phúc", role: "Ex-Staff Engineer", verified_expert: true },
-    ],
-  },
-];
-
-let memoryCompanies: CompanyProfileItem[] = DEFAULT_COMPANIES;
-
-export function readCompanies(): CompanyProfileItem[] {
-  return memoryCompanies;
-}
-
-export function writeCompanies(list: CompanyProfileItem[]): void {
-  memoryCompanies = list;
-}
-
 interface CompanyCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -158,35 +66,17 @@ export function CompanyCreateModal({ isOpen, onClose }: CompanyCreateModalProps)
   const createMutation = useMutation({
     mutationFn: async () => {
       const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `company-${Date.now()}`;
-      const newCompany: CompanyProfileItem = {
+      const res = await apiClient.post<CompanyProfileItem>("/v1/companies/", {
         slug,
         name: name.trim(),
         industry,
         company_size: "100-500 nhân sự",
         location,
         website: `https://${slug}.vn`,
-        avg_rating: 4.9,
-        review_count: 1,
-        avg_salary_usd: 2700,
-        open_jobs_count: 3,
-        hiring_now: true,
         description: description.trim() || "Doanh nghiệp công nghệ xác thực trên hệ sinh thái Belooga.",
         tech_stack: techText.split(",").map((s) => s.trim()).filter(Boolean),
-        benefits: ["Lương thưởng hấp dẫn theo năng lực", "Làm việc Hybrid / Remote linh hoạt"],
-        open_jobs: [
-          { id: `${slug}-job-1`, title: `Senior Engineer @ ${name.trim()}`, salary_range: "$2,500 - $3,400", work_mode: "Hybrid", skills: ["Golang", "React"] },
-        ],
-        reviews: [],
-        alumni: [],
-      };
-      try {
-        await apiClient.post("/v1/companies/", newCompany);
-      } catch {
-        // Fallback local save
-      }
-      const next = [newCompany, ...readCompanies()];
-      writeCompanies(next);
-      return next;
+      });
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies-directory"] });
@@ -263,7 +153,12 @@ export function CompanyCreateModal({ isOpen, onClose }: CompanyCreateModalProps)
           />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-3 py-1.5 text-typography-muted cursor-pointer">Hủy</button>
-            <Button type="submit" data-testid="company-create-submit-btn" className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-8 px-4 rounded-lg">
+            <Button
+              type="submit"
+              data-testid="company-create-submit-btn"
+              disabled={createMutation.isPending}
+              className="bg-brand-primary hover:bg-brand-hover text-white text-xs h-8 px-4 rounded-lg"
+            >
               Tạo Hồ Sơ Công Ty
             </Button>
           </div>

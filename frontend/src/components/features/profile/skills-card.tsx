@@ -22,8 +22,6 @@ export interface SkillsCardProps {
   isEditable?: boolean;
 }
 
-const DEFAULT_SUGGESTIONS = ["Next.js", "Python", "Docker", "Figma", "Tailwind CSS"];
-
 export function SkillsCard({
   skills,
   onAddSkill,
@@ -33,11 +31,11 @@ export function SkillsCard({
   const [modalOpen, setModalOpen] = React.useState(false);
   const [newSkillText, setNewSkillText] = React.useState("");
 
-  const { data: catalogSkills = DEFAULT_SUGGESTIONS } = useQuery<string[]>({
+  const { data: catalogSkills = [] } = useQuery<string[]>({
     queryKey: ["catalog-skills"],
     queryFn: async () => {
       const res = await apiClient.get<string[]>("/v1/profile/skills/");
-      return res.data?.length ? res.data : DEFAULT_SUGGESTIONS;
+      return res.data ?? [];
     },
     staleTime: 60_000,
   });
