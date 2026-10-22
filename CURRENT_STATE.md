@@ -50,7 +50,7 @@
 
 ## 2. Backend API Inventory (`backend/app/api/v1/endpoints/`)
 
-- **Total Endpoints:** 105 (103 domain endpoints + 2 root health probes)
+- **Total Endpoints:** 110 (108 domain endpoints + 2 root health probes)
 - **Root Probes:** `/health, /v1`
 
 | Method | Path | Function | Auth Guard | Source File | Tags |
@@ -86,8 +86,10 @@
 | `GET` | `/v1/expert-review/orders/me` | `list_candidate_orders_me` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/orders/my-orders/` | `list_candidate_orders` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `POST` | `/v1/expert-review/orders/{order_id}/checkout/` | `checkout_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `POST` | `/v1/expert-review/orders/{order_id}/complete` | `complete_expert_review_order` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `POST` | `/v1/expert-review/orders/{order_id}/feedback/` | `submit_order_feedback` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
+| `POST` | `/v1/expert-review/orders/{order_id}/simulate-delivery` | `simulate_expert_review_delivery` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/packages/` | `list_packages` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/expert-review/recommend` | `recommend_expert_reviewer` | Public | `backend/app/api/v1/endpoints/expert_review.py` | Domain 9: Expert CV Review & Monetization |
 | `GET` | `/v1/faqs` | `get_faqs` | Public | `backend/app/api/v1/endpoints/cms.py` | Domain 8: Public CMS & Moderation |
@@ -160,6 +162,9 @@
 | `POST` | `/v1/users/register/` | `register_user` | Public | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `DELETE` | `/v1/users/{username}/` | `delete_user_account` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
 | `POST` | `/v1/users/{username}/password/` | `change_user_password` | 🔒 `get_current_user` (Required) | `backend/app/api/v1/endpoints/auth.py` | Domain 1: Identity & Sessions |
+| `GET` | `/v1/wallet/` | `get_user_wallet_state` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
+| `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
+| `POST` | `/v1/wallet/topup` | `topup_user_wallet` | 🔓 `get_current_user_optional` (Optional) | `backend/app/api/v1/endpoints/payments.py` | Domain 13: MoMo Payments & Escrow |
 
 ---
 
