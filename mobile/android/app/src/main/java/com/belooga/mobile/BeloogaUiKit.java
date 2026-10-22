@@ -181,13 +181,14 @@ public final class BeloogaUiKit {
 
         LinearLayout iconPill = new LinearLayout(ctx);
         iconPill.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams pillLp = new LinearLayout.LayoutParams(dp(ctx, 46f), dp(ctx, 26f));
+        LinearLayout.LayoutParams pillLp = new LinearLayout.LayoutParams(dp(ctx, 52f), dp(ctx, 30f));
         iconPill.setLayoutParams(pillLp);
 
         NavIconView iconView = new NavIconView(ctx, iconType, COLOR_TEXT_MUTED);
-        iconView.setLayoutParams(new LinearLayout.LayoutParams(dp(ctx, 20f), dp(ctx, 20f)));
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(dp(ctx, 22f), dp(ctx, 22f)));
         iconPill.addView(iconView);
         tab.addView(iconPill);
+        tab.setMinimumHeight(dp(ctx, 48f));
 
         TextView lbl = new TextView(ctx);
         lbl.setText(label);
@@ -311,8 +312,9 @@ public final class BeloogaUiKit {
     public static LinearLayout createSurfaceCard(Context ctx, String testId) {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1f, 16f));
-        int pad = dp(ctx, 14f);
+        card.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1f, 20f));
+        card.setElevation(dp(ctx, 4f));
+        int pad = dp(ctx, 16f);
         card.setPadding(pad, pad, pad, pad);
         if (testId != null && !testId.isEmpty()) {
             card.setContentDescription(testId);
@@ -321,9 +323,44 @@ public final class BeloogaUiKit {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        lp.setMargins(0, 0, 0, dp(ctx, 10f));
+        lp.setMargins(0, 0, 0, dp(ctx, 12f));
         card.setLayoutParams(lp);
         return card;
+    }
+
+    public static LinearLayout createBottomSheetDrawer(Context ctx, String title, String testId) {
+        LinearLayout sheet = new LinearLayout(ctx);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setBackground(roundedDrawable(ctx, COLOR_CARD, COLOR_BORDER, 1.2f, 24f));
+        sheet.setElevation(dp(ctx, 6f));
+        int pad = dp(ctx, 16f);
+        sheet.setPadding(pad, dp(ctx, 10f), pad, pad);
+        sheet.setContentDescription((testId != null && !testId.isEmpty()) ? testId : "mobile-bottom-sheet-drawer");
+
+        View handle = new View(ctx);
+        handle.setBackground(roundedDrawable(ctx, COLOR_BORDER, COLOR_BORDER, 0f, 999f));
+        LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(dp(ctx, 40f), dp(ctx, 4f));
+        hLp.gravity = Gravity.CENTER_HORIZONTAL;
+        hLp.setMargins(0, 0, 0, dp(ctx, 8f));
+        handle.setLayoutParams(hLp);
+        sheet.addView(handle);
+
+        if (title != null && !title.isEmpty()) {
+            TextView tv = new TextView(ctx);
+            tv.setText(title);
+            tv.setTextColor(COLOR_TEXT_HEADING);
+            tv.setTextSize(13.5f);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+            sheet.addView(tv);
+        }
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        lp.setMargins(0, 0, 0, dp(ctx, 12f));
+        sheet.setLayoutParams(lp);
+        return sheet;
     }
 
     public static LinearLayout createSubtleBox(Context ctx) {
@@ -391,10 +428,10 @@ public final class BeloogaUiKit {
         btn.setTextSize(12.5f);
         btn.setTypeface(Typeface.DEFAULT_BOLD);
         btn.setTextColor(textColor);
-        btn.setBackground(roundedDrawable(ctx, bgColor, COLOR_BORDER, 0f, 11f));
-        btn.setPadding(dp(ctx, 11f), dp(ctx, 8f), dp(ctx, 11f), dp(ctx, 8f));
-        btn.setMinimumHeight(dp(ctx, 38f));
-        btn.setMinHeight(dp(ctx, 38f));
+        btn.setBackground(roundedDrawable(ctx, bgColor, COLOR_BORDER, 0f, 14f));
+        btn.setPadding(dp(ctx, 12f), dp(ctx, 10f), dp(ctx, 12f), dp(ctx, 10f));
+        btn.setMinimumHeight(dp(ctx, 48f));
+        btn.setMinHeight(dp(ctx, 48f));
         if (testId != null && !testId.isEmpty()) {
             btn.setContentDescription(testId);
         }

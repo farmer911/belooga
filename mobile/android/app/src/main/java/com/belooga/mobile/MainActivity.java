@@ -74,26 +74,30 @@ public class MainActivity extends Activity {
         LinearLayout wrapper = new LinearLayout(this);
         wrapper.setOrientation(LinearLayout.VERTICAL);
         wrapper.setBackgroundColor(BeloogaUiKit.COLOR_NAVDOCK);
+        wrapper.setElevation(BeloogaUiKit.dp(this, 6f));
+        wrapper.setContentDescription("mobile-top-app-header");
 
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        int pH = BeloogaUiKit.dp(this, 14f);
-        int pV = BeloogaUiKit.dp(this, 10f);
+        int pH = BeloogaUiKit.dp(this, 16f);
+        int pV = BeloogaUiKit.dp(this, 11f);
         topBar.setPadding(pH, pV, pH, pV);
 
-        topBar.addView(BeloogaUiKit.createAvatarCircle(
+        TextView avatarCircle = BeloogaUiKit.createAvatarCircle(
                 this, "B", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_TEXT_INVERSE
-        ));
+        );
+        avatarCircle.setContentDescription("mobile-header-avatar-btn");
+        topBar.addView(avatarCircle);
 
         LinearLayout titleCol = new LinearLayout(this);
         titleCol.setOrientation(LinearLayout.VERTICAL);
         titleCol.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView brandTitle = new TextView(this);
-        brandTitle.setText("BELOOGA MOBILE (RN 0.88.0)");
+        brandTitle.setText("BELOOGA MOBILE");
         brandTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
-        brandTitle.setTextSize(14f);
+        brandTitle.setTextSize(15f);
         brandTitle.setTypeface(Typeface.DEFAULT_BOLD);
         brandTitle.setContentDescription("mobile-brand-header");
         titleCol.addView(brandTitle);
@@ -107,13 +111,32 @@ public class MainActivity extends Activity {
 
         topBar.addView(titleCol);
 
+        TextView walletPill = BeloogaUiKit.createBadgePill(
+                this,
+                "450,000đ +",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_BRAND_MUTED,
+                BeloogaUiKit.COLOR_BRAND,
+                "mobile-wallet-balance-pill"
+        );
+        walletPill.setTag("mobile-header-wallet-pill");
+        walletPill.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                careerSubTab = 1;
+                renderCareerScreen();
+            }
+        });
+        topBar.addView(walletPill);
+        topBar.addView(BeloogaUiKit.createSpacer(this, 6));
+
         TextView alertsPill = BeloogaUiKit.createBadgePill(
                 this,
                 "3 ALERTS",
-                BeloogaUiKit.COLOR_BRAND,
-                BeloogaUiKit.COLOR_BRAND_MUTED,
+                BeloogaUiKit.COLOR_SUCCESS,
+                BeloogaUiKit.COLOR_SUCCESS_MUTED,
                 BeloogaUiKit.COLOR_BORDER,
-                "mobile-header-alerts-btn"
+                "mobile-header-notifications-btn"
         );
         alertsPill.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,23 +146,6 @@ public class MainActivity extends Activity {
             }
         });
         topBar.addView(alertsPill);
-        topBar.addView(BeloogaUiKit.createSpacer(this, 6));
-        TextView walletPill = BeloogaUiKit.createBadgePill(
-                this,
-                "VÍ 1.5M • ESCROW",
-                BeloogaUiKit.COLOR_SUCCESS,
-                BeloogaUiKit.COLOR_SUCCESS_MUTED,
-                BeloogaUiKit.COLOR_BORDER,
-                "mobile-wallet-balance-pill"
-        );
-        walletPill.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                careerSubTab = 1;
-                renderCareerScreen();
-            }
-        });
-        topBar.addView(walletPill);
         wrapper.addView(topBar);
 
         View divider = new View(this);
@@ -152,21 +158,28 @@ public class MainActivity extends Activity {
     private LinearLayout buildBottomNav() {
         LinearLayout dockWrapper = new LinearLayout(this);
         dockWrapper.setOrientation(LinearLayout.VERTICAL);
-        dockWrapper.setBackgroundColor(BeloogaUiKit.COLOR_NAVDOCK);
-
-        View topDivider = new View(this);
-        topDivider.setBackgroundColor(BeloogaUiKit.COLOR_BORDER);
-        topDivider.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                BeloogaUiKit.dp(this, 1f)
-        ));
-        dockWrapper.addView(topDivider);
+        dockWrapper.setBackgroundColor(BeloogaUiKit.COLOR_PAGE);
+        dockWrapper.setPadding(
+                BeloogaUiKit.dp(this, 10f),
+                BeloogaUiKit.dp(this, 4f),
+                BeloogaUiKit.dp(this, 10f),
+                BeloogaUiKit.dp(this, 8f)
+        );
+        dockWrapper.setContentDescription("mobile-bottom-nav-bar");
 
         LinearLayout bottomNav = new LinearLayout(this);
         bottomNav.setOrientation(LinearLayout.HORIZONTAL);
         bottomNav.setGravity(Gravity.CENTER_VERTICAL);
+        bottomNav.setBackground(BeloogaUiKit.roundedDrawable(
+                this,
+                BeloogaUiKit.COLOR_NAVDOCK,
+                BeloogaUiKit.COLOR_BORDER,
+                1f,
+                24f
+        ));
+        bottomNav.setElevation(BeloogaUiKit.dp(this, 8f));
         int pH = BeloogaUiKit.dp(this, 6f);
-        bottomNav.setPadding(pH, BeloogaUiKit.dp(this, 4f), pH, BeloogaUiKit.dp(this, 10f));
+        bottomNav.setPadding(pH, BeloogaUiKit.dp(this, 6f), pH, BeloogaUiKit.dp(this, 8f));
         bottomNav.setContentDescription("mobile-bottom-tab-bar");
 
         tabDiscover = BeloogaUiKit.createModernNavTab(this, "Discover", "mobile-tab-discover", BeloogaUiKit.ICON_DISCOVER, new Runnable() {
@@ -708,8 +721,13 @@ public class MainActivity extends Activity {
         ));
         contentContainer.addView(trackerCard);
 
-        LinearLayout goalCard = BeloogaUiKit.createSurfaceCard(this, "mobile-career-goal-card");
+        LinearLayout goalCard = BeloogaUiKit.createBottomSheetDrawer(
+                this,
+                "Mục Tiêu Săn Việc & AI Job Matcher",
+                "mobile-bottom-sheet-drawer"
+        );
         LinearLayout goalBadges = BeloogaUiKit.createRow(this, 4);
+        goalBadges.setContentDescription("mobile-career-goal-card");
         goalBadges.addView(BeloogaUiKit.createBadgePill(
                 this, "PERSISTED CAREER GOAL (/v1/tracker/goals)", BeloogaUiKit.COLOR_BRAND, BeloogaUiKit.COLOR_BRAND_MUTED, BeloogaUiKit.COLOR_BORDER, null
         ));

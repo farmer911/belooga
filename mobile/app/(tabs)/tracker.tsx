@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ActionButton, BadgePill, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
+import { ActionButton, BadgePill, BottomSheetDrawer, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
 import { MobileJobStatus } from "@/lib/schemas";
 import {
   filterMobileTrackedJobs,
@@ -171,14 +171,11 @@ export default function MobileJobTrackerScreen() {
         />
       </SurfaceCard>
 
-      <SurfaceCard testID="mobile-career-goal-card" mode="dark">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Mục Tiêu Săn Việc & AI Job Matcher">
+        <div data-testid="mobile-career-goal-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <BadgePill label="PERSISTED CAREER GOAL • /V1/TRACKER/GOALS" tone="brand" />
           <BadgePill label={activeGoal ? `Synced (#${activeGoal.id})` : "Vault Ready"} tone="success" />
         </div>
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: tokens.typography.heading }}>
-          Mục Tiêu Săn Việc & AI Job Matcher
-        </h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <input
             data-testid="mobile-career-goal-role-input"
@@ -232,7 +229,7 @@ export default function MobileJobTrackerScreen() {
             />
           </div>
         ) : null}
-      </SurfaceCard>
+      </BottomSheetDrawer>
 
       <div data-testid="mobile-tracker-kanban-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {visibleJobs.map((job) => (

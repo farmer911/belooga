@@ -285,6 +285,17 @@ public final class MobileCareerScreens {
 
     private static void renderSalaryRadarSubScreen(Context ctx, LinearLayout container) {
         LinearLayout card = BeloogaUiKit.createSurfaceCard(ctx, "mobile-salary-radar-card");
+        LinearLayout badgeRow = BeloogaUiKit.createRow(ctx, 5);
+        badgeRow.addView(BeloogaUiKit.createBadgePill(
+                ctx,
+                "+14.2% YoY • LIVE CRAWLER",
+                BeloogaUiKit.COLOR_SUCCESS,
+                BeloogaUiKit.COLOR_SUCCESS_MUTED,
+                BeloogaUiKit.COLOR_BORDER,
+                "mobile-crawler-status-badge"
+        ));
+        card.addView(badgeRow);
+
         TextView title = new TextView(ctx);
         title.setText("IT Compensation Benchmark (2024 -> 2026) & Live Crawler");
         title.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
@@ -299,6 +310,7 @@ public final class MobileCareerScreens {
         card.addView(sub);
 
         LinearLayout yearRow = BeloogaUiKit.createRow(ctx, 6);
+        yearRow.setContentDescription("mobile-salary-history-chart");
         String[] years = new String[]{"2024", "2025", "2026", "all"};
         for (int i = 0; i < years.length; i++) {
             String yr = years[i];
