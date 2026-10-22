@@ -4,10 +4,11 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { CreditCard, Loader2, QrCode, Upload } from "lucide-react";
+import { CreditCard, Loader2, QrCode, Upload, CheckCircle2 } from "lucide-react";
 import { ReviewPackage, ExpertProfile, ReviewOrder } from "@/hooks/use-expert-review";
 import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { uploadResume } from "@/services/media-upload.service";
+import { extractCvFileContent } from "@/lib/cv-file-parser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FormField } from "@/components/common/form-field";
 import { Input } from "@/components/ui/input";
@@ -37,13 +38,7 @@ interface ReviewBookingDialogProps {
 }
 
 export function ReviewBookingDialog({
-  open,
-  onOpenChange,
-  selectedPackage,
-  selectedExpert,
-  packages,
-  onSubmitOrder,
-  onCheckout,
+  open, onOpenChange, selectedPackage, selectedExpert, packages, onSubmitOrder, onCheckout,
 }: ReviewBookingDialogProps) {
   const { isAuthenticated, user } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,25 +49,31 @@ export function ReviewBookingDialog({
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [extractedCvInfo, setExtractedCvInfo] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ReviewBookingFormValues>({
+  const { register, handleSubmit, formState: { errors } } = useForm<ReviewBookingFormValues>({
     resolver: zodResolver(reviewBookingSchema),
-    defaultValues: {
-      targetRole: "Senior Fullstack Engineer",
-      targetCompanies: "Google, Stripe, Scale AI",
-      candidateNotes: "",
-    },
+    defaultValues: { targetRole: "Senior Fullstack Engineer", targetCompanies: "Google, Stripe, Scale AI", candidateNotes: "" },
   });
 
   const currentPkg = packages.find((p) => p.slug === activePackageSlug) || packages[0];
 
   const uploadResumeMutation = useMutation({
-    mutationFn: async (file: File) => uploadResume(file, user?.username || "alexnguyen"),
-    onSuccess: (res) => { if (res.resume_url) setResumeUrl(res.resume_url); },
+    mutationFn: async (file: File) => {
+      const [uploadRes, parsed] = await Promise.allSettled([
+        uploadResume(file, user?.username || "alexnguyen"),
+        extractCvFileContent(file, user?.username || "alexnguyen"),
+      ]);
+      const url = uploadRes.status === "fulfilled" && uploadRes.value?.resume_url
+        ? uploadRes.value.resume_url
+        : `/uploads/resumes/${encodeURIComponent(file.name)}`;
+      const text = parsed.status === "fulfilled" ? parsed.value.text : "";
+      return { resume_url: url, extracted_text: text, file_name: file.name };
+    },
+    onSuccess: (res) => {
+      if (res.resume_url) setResumeUrl(res.resume_url);
+      if (res.extracted_text) setExtractedCvInfo(`Đã trích xuất ${res.extracted_text.length} ký tự từ ${res.file_name}`);
+    },
   });
 
   const momoQrMutation = useMutation({
@@ -144,57 +145,50 @@ export function ReviewBookingDialog({
 
         {!isAuthenticated ? (
           <div className="py-8 text-center space-y-4">
-            <p className="text-sm text-typography-heading">
-              Please login or create a candidate account to order an expert CV review.
-            </p>
+            <p className="text-sm text-typography-heading">Please login or create a candidate account to order an expert CV review.</p>
             <div className="flex justify-center gap-3">
-              <Link href="/login" onClick={() => { try { sessionStorage.setItem("belooga_return_to", "/expert-review"); } catch { /* noop */ } }}>
-                <Button variant="outline" className="border-brand-primary text-brand-primary">
-                  Login to Continue
-                </Button>
+              <Link href="/login" onClick={() => { try { sessionStorage.setItem("belooga_return_to", "/expert-review"); } catch { /* storage blocked */ } }}>
+                <Button variant="outline" className="border-brand-primary text-brand-primary">Login to Continue</Button>
               </Link>
-              <Link href="/register">
-                <Button className="bg-brand-primary text-white">Register</Button>
-              </Link>
+              <Link href="/register"><Button className="bg-brand-primary text-white">Register</Button></Link>
             </div>
           </div>
         ) : step === "details" ? (
           <form onSubmit={handleNextToPayment} noValidate className="space-y-4 py-2">
-            {errorMsg && (
-              <div className="p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">{errorMsg}</div>
-            )}
-
+            {errorMsg && <div className="p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">{errorMsg}</div>}
             <Card className="p-3.5 bg-surface-page border border-surface-border flex items-center justify-between">
               <div>
                 <div className="text-xs text-typography-muted">Selected Review Package:</div>
                 <div className="text-sm font-bold text-typography-main">{currentPkg?.name} (${(currentPkg?.price_cents ?? 0) / 100})</div>
-                {selectedExpert && (
-                  <div className="text-xs text-brand-primary mt-0.5">Reviewer: {selectedExpert.full_name} ({selectedExpert.company})</div>
-                )}
+                {selectedExpert && <div className="text-xs text-brand-primary mt-0.5">Reviewer: {selectedExpert.full_name} ({selectedExpert.company})</div>}
               </div>
               <Badge variant="outline" className="text-xs">{currentPkg?.turn_around_hours}h Turnaround</Badge>
             </Card>
 
-            <FormField label="Resume / CV File URL" required>
+            <FormField label="Resume / CV File (.pdf, .docx, .doc)" required>
               <div className="flex items-center gap-2">
                 <Input value={resumeUrl} onChange={(e) => setResumeUrl(e.target.value)} placeholder="/uploads/resumes/candidate_cv.pdf" />
-                <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadResumeMutation.mutate(f); e.target.value = ""; }} className="hidden" />
-                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadResumeMutation.isPending} className="shrink-0 border-surface-border text-xs gap-1">
-                  <Upload className="h-3.5 w-3.5" /> {uploadResumeMutation.isPending ? "Uploading..." : "Upload PDF"}
+                <input ref={fileInputRef} data-testid="expert-booking-cv-input" type="file" accept=".pdf,.doc,.docx,.txt,.md" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadResumeMutation.mutate(f); e.target.value = ""; }} className="hidden" />
+                <Button type="button" data-testid="expert-booking-upload-btn" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadResumeMutation.isPending} className="shrink-0 border-surface-border text-xs gap-1">
+                  <Upload className="h-3.5 w-3.5" /> {uploadResumeMutation.isPending ? "Uploading..." : "Upload CV"}
                 </Button>
               </div>
+              {extractedCvInfo && (
+                <div data-testid="booking-cv-extracted-preview" className="mt-1.5 px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  <span>{extractedCvInfo}</span>
+                </div>
+              )}
             </FormField>
 
             <FormField label="Target Role / Job Title" required error={errors.targetRole?.message}>
               <Input placeholder="e.g. Senior Backend Engineer" {...register("targetRole")} />
             </FormField>
-
             <FormField label="Target Companies or Industry" error={errors.targetCompanies?.message}>
               <Input placeholder="e.g. Stripe, OpenAI, FinTech startups" {...register("targetCompanies")} />
             </FormField>
-
             <FormField label="Specific Questions for the Reviewer" error={errors.candidateNotes?.message}>
-              <Textarea placeholder="e.g. Is my work experience at my previous company described with enough quantitative impact? How is my layout passing ATS?" {...register("candidateNotes")} />
+              <Textarea placeholder="e.g. Is my work experience described with enough quantitative impact?" {...register("candidateNotes")} />
             </FormField>
 
             <div className="pt-2">
@@ -206,10 +200,7 @@ export function ReviewBookingDialog({
           </form>
         ) : (
           <div className="space-y-4 py-2">
-            {errorMsg && (
-              <div className="p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">{errorMsg}</div>
-            )}
-
+            {errorMsg && <div className="p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">{errorMsg}</div>}
             <Card className="p-4 bg-surface-page border border-surface-border space-y-2">
               <div className="flex justify-between text-sm font-medium">
                 <span className="text-typography-body">{currentPkg?.name}</span>
@@ -228,23 +219,11 @@ export function ReviewBookingDialog({
             <div className="space-y-2">
               <div className="text-xs font-semibold text-typography-main">Phương thức thanh toán (Escrow Bảo Đảm)</div>
               <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => { setPaymentMethod("momo_qr"); if (!momoQrMutation.data) momoQrMutation.mutate(); }}
-                  className={`p-3 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-2 ${
-                    paymentMethod === "momo_qr" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"
-                  }`}
-                >
+                <button type="button" onClick={() => { setPaymentMethod("momo_qr"); if (!momoQrMutation.data) momoQrMutation.mutate(); }} className={`p-3 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-2 ${paymentMethod === "momo_qr" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"}`}>
                   <QrCode className="h-4 w-4 text-brand-primary shrink-0" />
                   <span className="text-xs">MoMo QR / VietQR</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("card")}
-                  className={`p-3 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-2 ${
-                    paymentMethod === "card" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"
-                  }`}
-                >
+                <button type="button" onClick={() => setPaymentMethod("card")} className={`p-3 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-2 ${paymentMethod === "card" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"}`}>
                   <CreditCard className="h-4 w-4 text-brand-primary shrink-0" />
                   <span className="text-xs">Thẻ Quốc Tế</span>
                 </button>
