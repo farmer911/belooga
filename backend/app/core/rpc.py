@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import AuthenticatedUser, get_current_user_optional
+from app.modules.bookmarks import BookmarkService
 from app.modules.catalogs import CatalogsService
 from app.modules.cms import CmsService
 from app.modules.profile import ProfileService
@@ -33,8 +34,10 @@ SUPPORTED_RPC_METHODS: Dict[str, str] = {
     "profile.get": "Fetch public candidate profile bundle by username",
     "profile.trustScore": "Compute 4-pillar candidate trust score & readiness tier",
     "profile.trajectory": "Compute AI career trajectory & promotion readiness",
+    "bookmarks.list": "List authenticated recruiter's shortlisted candidate bookmarks",
     "catalogs.skills": "List canonical platform technical skills taxonomy",
     "catalogs.companies": "Suggest verified companies catalog",
+    "catalogs.locations": "Suggest verified locations catalog",
     "search.trending": "Fetch live talent search demand & trending keywords",
     "cms.blogPosts": "List published engineering & career blog posts",
     "cms.faqs": "List platform FAQ items",
@@ -118,11 +121,20 @@ async def _dispatch_single_rpc(
             username = str(params.get("username") or "").strip()
             res = await TimelineService(db).get_career_trajectory(username)
             data = res.model_dump() if hasattr(res, "model_dump") else res
+        elif method == "bookmarks.list":
+            if current_user is not None:
+                items = await BookmarkService(db).list_bookmarks(current_user.id)
+                data = {"total": len(items), "items": items}
+            else:
+                data = {"total": 0, "items": []}
         elif method == "catalogs.skills":
             data = await CatalogsService(db).list_skills()
         elif method == "catalogs.companies":
             q = str(params.get("name") or "")
             data = await CatalogsService(db).suggest_companies(q)
+        elif method == "catalogs.locations":
+            q = str(params.get("name") or "")
+            data = await CatalogsService(db).suggest_locations(q)
         elif method == "search.trending":
             data = await SearchService(db).get_trending_search_insights()
         elif method == "cms.blogPosts":

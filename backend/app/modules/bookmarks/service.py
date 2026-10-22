@@ -50,6 +50,7 @@ class BookmarkService:
             )
         await self.db.commit()
         await platform_cache.invalidate_prefix(self._cache_key(recruiter_identity_id))
+        await platform_cache.invalidate_prefix("analytics:")
         return item
 
     async def remove_bookmark(
@@ -68,4 +69,5 @@ class BookmarkService:
             )
         await self.db.commit()
         await platform_cache.invalidate_prefix(self._cache_key(recruiter_identity_id))
+        await platform_cache.invalidate_prefix("analytics:")
         return {"status": "deleted", "username": username.strip()}
