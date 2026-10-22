@@ -1,4 +1,4 @@
-"""Candidate Shortlist Bookmarks service (Vertical Module: bookmarks).
+"""Candidate Shortlist Bookmarks service (Vertical Module: bookmarks — BEL-145 / BEL-149).
 
 Coordinates recruiter shortlist business rules, privacy guards, and SWR cache invalidation.
 """
@@ -24,6 +24,10 @@ class BookmarkService:
     def _cache_key(recruiter_identity_id: uuid.UUID) -> str:
         return f"bookmarks:recruiter:{recruiter_identity_id}"
 
+    async def _invalidate_caches(self, recruiter_identity_id: uuid.UUID) -> None:
+        await platform_cache.invalidate_prefix(self._cache_key(recruiter_identity_id))
+        await platform_cache.invalidate_prefix("analytics:")
+
     async def list_bookmarks(self, recruiter_identity_id: uuid.UUID) -> list[dict[str, Any]]:
         return await platform_cache.get_or_set(
             self._cache_key(recruiter_identity_id),
@@ -33,41 +37,23 @@ class BookmarkService:
         )
 
     async def add_bookmark(
-        self,
-        recruiter_identity_id: uuid.UUID,
-        username: str,
-        note: Optional[str] = None,
+        self, recruiter_identity_id: uuid.UUID, username: str, note: Optional[str] = None
     ) -> dict[str, Any]:
         item = await self.repo.upsert_bookmark(
-            recruiter_identity_id=recruiter_identity_id,
-            username=username,
-            note=note,
+            recruiter_identity_id=recruiter_identity_id, username=username, note=note
         )
         if not item:
-            raise HTTPException(
-                status_code=404,
-                detail="Candidate profile not found or hidden",
-            )
+            raise HTTPException(status_code=404, detail="Candidate profile not found or hidden")
         await self.db.commit()
-        await platform_cache.invalidate_prefix(self._cache_key(recruiter_identity_id))
-        await platform_cache.invalidate_prefix("analytics:")
+        await self._invalidate_caches(recruiter_identity_id)
         return item
 
-    async def remove_bookmark(
-        self,
-        recruiter_identity_id: uuid.UUID,
-        username: str,
-    ) -> dict[str, str]:
+    async def remove_bookmark(self, recruiter_identity_id: uuid.UUID, username: str) -> dict[str, str]:
         deleted = await self.repo.delete_bookmark(
-            recruiter_identity_id=recruiter_identity_id,
-            username=username,
+            recruiter_identity_id=recruiter_identity_id, username=username
         )
         if not deleted:
-            raise HTTPException(
-                status_code=404,
-                detail="Bookmark not found",
-            )
+            raise HTTPException(status_code=404, detail="Bookmark not found")
         await self.db.commit()
-        await platform_cache.invalidate_prefix(self._cache_key(recruiter_identity_id))
-        await platform_cache.invalidate_prefix("analytics:")
+        await self._invalidate_caches(recruiter_identity_id)
         return {"status": "deleted", "username": username.strip()}

@@ -6,7 +6,7 @@
 
 ## 1. Core Value Proposition & Human Psychology
 - **Candidate Pain:** Static PDF resumes fail to convey communication clarity, personality, and real project ownership. Candidates abandon profile builders when forced through >3 minutes of form-filling before seeing visual payoff.
-- **Recruiter Pain:** Recruiters spend <30 seconds scanning a candidate. They want immediate signal: (1) 60-second video pitch, (2) verified skill/company tags, (3) clean chronological timeline, and (4) 1-click PDF export for internal ATS sharing.
+- **Recruiter Pain:** Recruiters spend <30 seconds scanning a candidate. They want immediate signal: (1) 60-second video pitch, (2) verified skill/company tags, (3) clean chronological timeline, (4) 1-click Shortlist Bookmark (`GET/POST/DELETE /v1/bookmarks/` with `375px` Slide-Over Drawer & Mobile Filter Chip), and (5) 1-click PDF export for internal ATS sharing.
 - **Expert Reviewer Dynamics:** Candidates pay for Expert CV Review ($29-$99) only when trust signals are concrete (verified senior engineers, sample interactive report preview, guaranteed turnaround window).
 
 ---
