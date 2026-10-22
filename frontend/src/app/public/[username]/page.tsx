@@ -19,6 +19,7 @@ import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { TimelineItemCard } from "@/components/features/timeline/timeline-item-card";
 import { EducationTimeline } from "@/components/features/timeline/education-timeline";
 import { AwardsTimeline } from "@/components/features/timeline/awards-timeline";
+import { UserProfilePostsSection } from "@/components/features/posts/user-posts-section";
 
 interface TrustScoreResponse {
   username: string; trust_score: number; readiness_tier: string; recruiter_conversion_multiplier: number;
@@ -198,6 +199,7 @@ export default function PublicCandidatePage() {
 
             <EducationTimeline education={education} isEditable={false} />
             <AwardsTimeline username={username} isEditable={false} />
+            <UserProfilePostsSection username={username} authorName={profile.full_name} isOwner={false} />
           </div>
         </div>
       </div>

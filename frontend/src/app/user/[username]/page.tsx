@@ -20,6 +20,7 @@ import { AwardsTimeline } from "@/components/features/timeline/awards-timeline";
 import { VideoPitchCard } from "@/components/features/media/video-pitch-card";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { ResumeAttachmentCard } from "@/components/features/media/resume-attachment-card";
+import { UserProfilePostsSection } from "@/components/features/posts/user-posts-section";
 
 interface WorkspaceTrustScore {
   trust_score: number;
@@ -182,6 +183,7 @@ export default function WorkspacePage() {
               onDeleteResume={handleDeleteResume}
               onDownloadPdf={handleDownloadPdf}
             />
+            <UserProfilePostsSection username={username} authorName={profile.full_name} isOwner={true} />
           </main>
         </div>
       </div>
