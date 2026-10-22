@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
   CreateTrackedJobInput,
   createTrackedJobSchema,
+  JobPipelineAnalyticsDTO,
+  jobPipelineAnalyticsSchema,
   jobStatusEnum,
   MobileJobStatus,
   TrackedJobItemDTO,
@@ -71,6 +73,22 @@ export async function deleteMobileTrackedJob(jobId: string): Promise<void> {
   await mobileApiClient.delete<Record<string, unknown>>(
     `/v1/tracker/jobs/${encodeURIComponent(jobId)}`
   );
+}
+
+export async function updateMobileTrackedJob(
+  jobId: string,
+  input: Partial<CreateTrackedJobInput>
+): Promise<TrackedJobItemDTO> {
+  const raw = await mobileApiClient.patch<unknown>(
+    `/v1/tracker/jobs/${encodeURIComponent(jobId)}`,
+    input
+  );
+  return trackedJobItemSchema.parse(raw);
+}
+
+export async function fetchMobileJobPipelineAnalytics(): Promise<JobPipelineAnalyticsDTO> {
+  const raw = await mobileApiClient.get<unknown>("/v1/tracker/jobs/analytics");
+  return jobPipelineAnalyticsSchema.parse(raw);
 }
 
 export async function queueOrSyncMobileJobStatus(
@@ -143,5 +161,39 @@ export function useUpdateMobileJobStatusMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MOBILE_TRACKED_JOBS_QUERY_KEY });
     },
+  });
+}
+
+export function useUpdateMobileJobMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      jobId,
+      input,
+    }: {
+      jobId: string;
+      input: Partial<CreateTrackedJobInput>;
+    }) => updateMobileTrackedJob(jobId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MOBILE_TRACKED_JOBS_QUERY_KEY });
+    },
+  });
+}
+
+export function useDeleteMobileJobMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteMobileTrackedJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MOBILE_TRACKED_JOBS_QUERY_KEY });
+    },
+  });
+}
+
+export function useMobileJobPipelineAnalyticsQuery() {
+  return useQuery({
+    queryKey: ["mobile", "tracker", "analytics"] as const,
+    queryFn: fetchMobileJobPipelineAnalytics,
+    staleTime: 30_000,
   });
 }

@@ -3,15 +3,19 @@ import { clearSecureVaultForTesting } from "@/lib/native-runtime";
 import { setMobileFetchTransportForTesting } from "@/services/api-client";
 import {
   createValidMobileUploadId,
+  fetchMobileAtsScanHistory,
   generateMobileTeleprompterScript,
+  scanMobileCvAgainstJd,
   uploadMobilePitchVideoInChunks,
 } from "@/hooks/use-mobile-studio";
 import {
   createMobileTrackedJob,
+  fetchMobileJobPipelineAnalytics,
   fetchMobileTrackedJobs,
   flushMobileJobOfflineOutbox,
   getQueuedMobileJobMutationsCount,
   queueOrSyncMobileJobStatus,
+  updateMobileTrackedJob,
 } from "@/hooks/use-mobile-tracker";
 
 describe("Belooga Mobile Native Video Pitch Studio & Job Kanban Tracker (BEL-134)", () => {
@@ -162,5 +166,89 @@ describe("Belooga Mobile Native Video Pitch Studio & Job Kanban Tracker (BEL-134
     expect(flushedCount).toBe(1);
     expect(await getQueuedMobileJobMutationsCount()).toBe(0);
     expect(syncedStatuses).toEqual([{ jobId: "job_101", status: "INTERVIEW" }]);
+  });
+
+  it("supports ATS CV-to-JD scanning, scan history, full job PATCH updates, and pipeline analytics (BEL-140)", async () => {
+    setMobileFetchTransportForTesting((async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/v1/match/ats-scan") && init?.method === "POST") {
+        return new Response(
+          JSON.stringify({
+            match_score: 94,
+            matched_keywords: ["FastAPI", "PostgreSQL 16", "React Native"],
+            missing_keywords: ["GraphQL"],
+            summary: "Strong distributed systems and mobile architecture alignment.",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/match/history")) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: "scan_01",
+              job_title: "Staff Mobile Engineer",
+              company: "Stripe",
+              match_score: 94,
+              created_at: "2026-10-22T10:00:00Z",
+            },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/tracker/jobs/analytics")) {
+        return new Response(
+          JSON.stringify({
+            total_applications: 12,
+            interview_rate: 33.3,
+            average_ats_score: 92,
+            by_status: { TARGETING: 3, TAILORED: 2, APPLIED: 3, INTERVIEW: 3, OFFER: 1 },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (url.endsWith("/v1/tracker/jobs/job_101") && init?.method === "PATCH") {
+        const body = JSON.parse(String(init.body ?? "{}")) as Record<string, unknown>;
+        return new Response(
+          JSON.stringify({
+            id: "job_101",
+            company: body.company ?? "Stripe",
+            position: body.position ?? "Staff Mobile Engineer",
+            status: body.status ?? "INTERVIEW",
+            salary: body.salary ?? "$225k",
+            score: 95,
+            notes: body.notes ?? "Updated notes",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(JSON.stringify({}), { status: 404 });
+    }) as typeof fetch);
+
+    const scan = await scanMobileCvAgainstJd({
+      cvText: "Principal Engineer with FastAPI, PostgreSQL 16, React Native",
+      jdText: "Looking for Staff Engineer with FastAPI, PostgreSQL 16, React Native, GraphQL",
+    });
+    expect(scan.match_score).toBe(94);
+    expect(scan.matched_keywords).toContain("PostgreSQL 16");
+
+    const history = await fetchMobileAtsScanHistory();
+    expect(history.length).toBe(1);
+    expect(history[0]?.company).toBe("Stripe");
+
+    const analytics = await fetchMobileJobPipelineAnalytics();
+    expect(analytics.total_applications).toBe(12);
+    expect(analytics.average_ats_score).toBe(92);
+
+    const updatedJob = await updateMobileTrackedJob("job_101", {
+      company: "Stripe",
+      position: "Principal Mobile Architect",
+      status: "INTERVIEW",
+      salary: "$225k",
+      score: 95,
+      notes: "Final round scheduled",
+    });
+    expect(updatedJob.position).toBe("Principal Mobile Architect");
+    expect(updatedJob.salary).toBe("$225k");
   });
 });

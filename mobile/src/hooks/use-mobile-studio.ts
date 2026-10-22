@@ -1,5 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import {
+  AtsScanHistoryItemDTO,
+  atsScanHistoryItemSchema,
+  AtsScanResultDTO,
+  atsScanResultSchema,
   InterviewKitResponseDTO,
   interviewKitResponseSchema,
   VideoUploadCompleteDTO,
@@ -98,5 +103,39 @@ export function useMobileVideoStatusQuery(username: string) {
     queryFn: () => fetchMobileVideoTranscodingStatus(username),
     enabled: Boolean(username.trim()),
     refetchInterval: 5_000,
+  });
+}
+
+export async function scanMobileCvAgainstJd(input: {
+  cvText: string;
+  jdText: string;
+}): Promise<AtsScanResultDTO> {
+  const raw = await mobileApiClient.post<unknown>("/v1/match/ats-scan", {
+    cv_text: input.cvText.trim(),
+    job_description: input.jdText.trim(),
+  });
+  return atsScanResultSchema.parse(raw);
+}
+
+export async function fetchMobileAtsScanHistory(): Promise<AtsScanHistoryItemDTO[]> {
+  const raw = await mobileApiClient.get<unknown>("/v1/match/history");
+  if (Array.isArray(raw)) {
+    return z.array(atsScanHistoryItemSchema).parse(raw);
+  }
+  const wrapped = raw as { items?: unknown };
+  return z.array(atsScanHistoryItemSchema).parse(wrapped.items ?? []);
+}
+
+export function useMobileAtsScanMutation() {
+  return useMutation({
+    mutationFn: scanMobileCvAgainstJd,
+  });
+}
+
+export function useMobileAtsHistoryQuery() {
+  return useQuery({
+    queryKey: ["mobile", "studio", "ats-history"] as const,
+    queryFn: fetchMobileAtsScanHistory,
+    staleTime: 60_000,
   });
 }

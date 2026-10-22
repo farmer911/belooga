@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import {
   LoginFormValues,
   loginSchema,
+  MobileNotificationItemDTO,
+  mobileNotificationItemSchema,
   RegisterFormValues,
   registerSchema,
   tokenResponseSchema,
@@ -120,6 +123,55 @@ export function useMobileLogoutMutation() {
     mutationFn: logoutMobileUser,
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: MOBILE_AUTH_QUERY_KEY });
+    },
+  });
+}
+
+export async function updateMobileCandidateProfile(
+  username: string,
+  payload: { first_name?: string; last_name?: string; headline?: string; location?: string; bio?: string }
+): Promise<Record<string, unknown>> {
+  return mobileApiClient.patch<Record<string, unknown>>(
+    `/v1/profile/${encodeURIComponent(username.trim())}`,
+    payload
+  );
+}
+
+export async function fetchMobileNotifications(): Promise<MobileNotificationItemDTO[]> {
+  const raw = await mobileApiClient.get<unknown>("/v1/notifications/");
+  if (Array.isArray(raw)) {
+    return z.array(mobileNotificationItemSchema).parse(raw);
+  }
+  const wrapped = raw as { items?: unknown };
+  return z.array(mobileNotificationItemSchema).parse(wrapped.items ?? []);
+}
+
+export async function markAllMobileNotificationsRead(): Promise<void> {
+  await mobileApiClient.post<unknown>("/v1/notifications/read-all/", {});
+}
+
+export function useMobileNotificationsQuery() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  return useQuery({
+    queryKey: ["mobile", "notifications"] as const,
+    queryFn: fetchMobileNotifications,
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateMobileProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      username,
+      payload,
+    }: {
+      username: string;
+      payload: { first_name?: string; last_name?: string; headline?: string; location?: string; bio?: string };
+    }) => updateMobileCandidateProfile(username, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MOBILE_AUTH_QUERY_KEY });
     },
   });
 }
