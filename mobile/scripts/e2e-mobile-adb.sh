@@ -98,7 +98,9 @@ echo "[Mobile E2E 5/6] Executing UIAutomator2 E2E assertions across all 4 tabs..
 
 # Tab 1: Discover Feed
 dump_and_assert "mobile-discovery-heading"
+dump_and_assert "filter-saved-shortlist-chip"
 dump_and_assert "mobile-candidate-card-alexnguyen"
+dump_and_assert "bookmark-candidate-alexnguyen"
 adb exec-out screencap -p > "$ARTIFACTS_DIR/e2e-01-discover.png"
 
 # Tab 2: Pitch Studio & Chunk Upload

@@ -7,6 +7,11 @@ import {
   SurfaceCard,
 } from "@/lib/native-runtime";
 import {
+  isCandidateBookmarked,
+  useMobileBookmarksQuery,
+  useToggleMobileBookmarkMutation,
+} from "@/hooks/use-mobile-bookmarks";
+import {
   buildCandidatePdfExportUrl,
   useMobileCandidateProfileQuery,
 } from "@/hooks/use-mobile-discovery";
@@ -23,21 +28,37 @@ export default function MobileCandidateProfileScreen({
   const resolvedUsername =
     username ?? mobileRouter.getState().params.username ?? "alexnguyen";
   const profileBundleQuery = useMobileCandidateProfileQuery(resolvedUsername);
+  const bookmarksQuery = useMobileBookmarksQuery();
+  const toggleBookmarkMutation = useToggleMobileBookmarkMutation();
   const bundle = profileBundleQuery.data;
+  const bookmarked = isCandidateBookmarked(bookmarksQuery.data, resolvedUsername);
 
   const pdfExportUrl = buildCandidatePdfExportUrl(resolvedUsername);
 
   return (
     <ScreenShell testID="mobile-candidate-profile-screen" mode="dark">
       <SurfaceCard testID="mobile-candidate-header-card" mode="dark">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
           <ActionButton
             testID="mobile-candidate-back"
-            label="← Back to Feed"
+            label="Back to Feed"
             variant="secondary"
             onPress={() => mobileRouter.back()}
           />
-          <BadgePill label="CONNECTRPC BATCH" tone="brand" />
+          <ActionButton
+            testID="public-profile-bookmark-btn"
+            accessibilityLabel={`bookmark-candidate-${resolvedUsername}`}
+            label={bookmarked ? "Saved in Shortlist" : "Save to Shortlist"}
+            variant={bookmarked ? "primary" : "secondary"}
+            disabled={toggleBookmarkMutation.isPending}
+            style={{ minHeight: 44 }}
+            onPress={() =>
+              toggleBookmarkMutation.mutate({
+                username: resolvedUsername,
+                currentlyBookmarked: bookmarked,
+              })
+            }
+          />
         </div>
         {bundle ? (
           <>
