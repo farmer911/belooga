@@ -97,3 +97,61 @@ class BIStarSchemaExportResponse(BaseModel):
     fact_review_orders: List[FactReviewOrderRow]
     fact_job_pipeline: List[FactJobPipelineRow]
     dim_skills_demand: List[DimSkillDemandRow]
+
+
+class ATSScoreHistoryPoint(BaseModel):
+    date: str
+    score: int
+    target_role: str
+
+
+class CandidateApplicationFunnel(BaseModel):
+    saved_count: int
+    applied_count: int
+    interviewing_count: int
+    offer_count: int
+    rejected_count: int
+    conversion_to_interview_pct: float
+    conversion_to_offer_pct: float
+
+
+class SkillGapRadarPoint(BaseModel):
+    skill_name: str
+    candidate_proficiency_pct: int
+    market_demand_pct: int
+    salary_premium_usd: int
+
+
+class CandidateAnalyticsResponse(BaseModel):
+    profile_views_count: int
+    search_appearances_count: int
+    recruiter_shortlist_count: int
+    interview_invites_count: int
+    ats_score_history: List[ATSScoreHistoryPoint]
+    application_funnel: CandidateApplicationFunnel
+    skill_gap_radar: List[SkillGapRadarPoint]
+
+
+class RecruiterStageFunnelPoint(BaseModel):
+    stage: str
+    count: int
+    conversion_pct: float
+
+
+class RecruiterAnalyticsResponse(BaseModel):
+    open_roles_count: int
+    active_pipeline_candidates: int
+    avg_time_to_shortlist_hours: float
+    interview_acceptance_rate_pct: float
+    stage_funnel: List[RecruiterStageFunnelPoint]
+
+
+class ExpertAnalyticsResponse(BaseModel):
+    completed_reviews_count: int
+    avg_rating: float
+    avg_ats_score_lift: int
+    avg_turnaround_hours: float
+    repeat_client_rate_pct: float
+    gross_earnings_vnd: int
+    net_payout_vnd: int
+

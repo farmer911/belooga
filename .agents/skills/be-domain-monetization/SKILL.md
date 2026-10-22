@@ -11,6 +11,9 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | Method | Path | Handler | Auth |
 |---|---|---|---|
 | `GET` | `/v1/expert-review/experts/` | `list_experts` | public |
+| `GET` | `/v1/expert-review/leaderboard` | `get_expert_leaderboard` | public |
+| `POST` | `/v1/expert-review/apply` | `apply_become_expert_reviewer` | optional |
+| `GET` | `/v1/expert-review/me` | `get_my_expert_reviewer_profile` | optional |
 | `GET` | `/v1/expert-review/packages/` | `list_packages` | public |
 | `GET` | `/v1/expert-review/recommend` | `recommend_expert_reviewer` | public |
 | `POST` | `/v1/expert-review/orders/` | `create_review_order` | required |
@@ -29,12 +32,19 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | optional |
 | `POST` | `/v1/match/extract-cv-file` | `extract_cv_file_text` | optional |
 | `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
+| `GET` | `/v1/tracker/search-market-jobs` | `search_market_jobs` | public |
+| `GET` | `/v1/tracker/goals` | `get_career_goal` | optional |
+| `POST` | `/v1/tracker/goals` | `save_career_goal` | optional |
+| `POST` | `/v1/tracker/goals/{goal_id}/ai-match` | `ai_match_career_goal` | optional |
 | `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | optional |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}` | `update_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
 | `DELETE` | `/v1/tracker/jobs/{job_id}` | `delete_tracked_job` | required |
 | `GET` | `/v1/analytics/dashboard` | `get_executive_analytics_dashboard` | public |
+| `GET` | `/v1/analytics/candidate` | `get_candidate_analytics` | public |
+| `GET` | `/v1/analytics/recruiter` | `get_recruiter_analytics` | public |
+| `GET` | `/v1/analytics/expert` | `get_expert_analytics` | public |
 | `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | public |
 | `GET` | `/v1/analytics/bi-export` | `export_bi_star_schema` | public |
 | `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | public |

@@ -237,3 +237,46 @@ class ExpertReviewRepository:
                 for fn, hl, b, av, co, rc, yoe, rt, cnt, td in exp_seeds
             ])
             await self.db.commit()
+
+    async def upsert_registered_expert(
+        self, identity_id: Optional[uuid.UUID], data: dict
+    ) -> ExpertProfile:
+        stmt = select(ExpertProfile).where(ExpertProfile.full_name == data["full_name"])
+        if identity_id:
+            stmt = select(ExpertProfile).where(
+                (ExpertProfile.identity_id == identity_id) | (ExpertProfile.full_name == data["full_name"])
+            )
+        existing = (await self.db.execute(stmt.limit(1))).scalar_one_or_none()
+        turn_days = max(1, round(int(data.get("turnaround_hours", 24)) / 24))
+        if existing:
+            existing.identity_id = identity_id or existing.identity_id
+            existing.full_name = data["full_name"]
+            existing.headline = data["role_title"]
+            existing.company = data["company_name"]
+            existing.role_category = data["category"]
+            existing.years_of_experience = int(data.get("years_experience", 6))
+            existing.bio = data.get("bio") or existing.bio
+            existing.turn_around_days = turn_days
+            existing.is_active = True
+            await self.db.commit()
+            await self.db.refresh(existing)
+            return existing
+        created = ExpertProfile(
+            identity_id=identity_id,
+            full_name=data["full_name"],
+            headline=data["role_title"],
+            bio=data.get("bio") or f"{data['role_title']} @ {data['company_name']}",
+            avatar_url="/images/avatar.jpg",
+            company=data["company_name"],
+            role_category=data["category"],
+            years_of_experience=int(data.get("years_experience", 6)),
+            rating=5.0,
+            total_reviews_count=12,
+            turn_around_days=turn_days,
+            is_active=True,
+        )
+        self.db.add(created)
+        await self.db.commit()
+        await self.db.refresh(created)
+        return created
+

@@ -29,27 +29,6 @@ class AnalyticsRepository:
         res = await self.db.execute(text("SELECT COUNT(*) FROM candidate_bookmarks"))
         return int(res.scalar() or 0)
 
-    async def get_dashboard_counts(self) -> tuple[int, int, int, int]:
-        """Single-roundtrip scalar subquery counting identities, ATS scans, job trackers, and bookmarks in 1 DB hop."""
-        res = await self.db.execute(
-            text("""
-                SELECT
-                    (SELECT COUNT(*) FROM identities) AS total_users,
-                    (SELECT COUNT(*) FROM resume_jd_matches) AS total_scans,
-                    (SELECT COUNT(*) FROM candidate_job_applications_tracker) AS active_jobs,
-                    (SELECT COUNT(*) FROM candidate_bookmarks) AS bookmarks_count
-            """)
-        )
-        row = res.mappings().first()
-        if not row:
-            return 0, 0, 0, 0
-        return (
-            int(row["total_users"] or 0),
-            int(row["total_scans"] or 0),
-            int(row["active_jobs"] or 0),
-            int(row["bookmarks_count"] or 0),
-        )
-
     async def get_paid_orders_ledger(self) -> tuple[float, List[Dict[str, Any]]]:
         """Aggregate paid CV review GMV (cents -> VND equivalent) and fetch latest settled DB orders."""
         res = await self.db.execute(
