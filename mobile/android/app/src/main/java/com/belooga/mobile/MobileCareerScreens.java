@@ -281,6 +281,46 @@ public final class MobileCareerScreens {
                 }
         ));
         container.addView(card);
+
+        LinearLayout leaderboardCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-expert-leaderboard-section");
+        LinearLayout filterRow = BeloogaUiKit.createRow(ctx, 6);
+        filterRow.addView(BeloogaUiKit.createBadgePill(
+                ctx,
+                "BACKEND",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_BRAND_MUTED,
+                BeloogaUiKit.COLOR_BORDER,
+                "mobile-expert-category-backend"
+        ));
+        filterRow.addView(BeloogaUiKit.createSpacer(ctx, 6));
+        filterRow.addView(BeloogaUiKit.createBadgePill(
+                ctx,
+                "SORT: ATS_LIFT",
+                BeloogaUiKit.COLOR_SUCCESS,
+                BeloogaUiKit.COLOR_SUCCESS_MUTED,
+                BeloogaUiKit.COLOR_BORDER,
+                "mobile-expert-sort-ats_lift"
+        ));
+        leaderboardCard.addView(filterRow);
+
+        LinearLayout rank1Box = BeloogaUiKit.createSubtleBox(ctx);
+        rank1Box.setContentDescription("mobile-expert-leaderboard-card-exp-1");
+        TextView r1Txt = new TextView(ctx);
+        r1Txt.setText("#1 Sarah Jenkins — Grandmaster Mentor (98.4 pts • +28 ATS pts • 11h SLA)");
+        r1Txt.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+        r1Txt.setTextSize(12f);
+        r1Txt.setTypeface(Typeface.DEFAULT_BOLD);
+        rank1Box.addView(r1Txt);
+        rank1Box.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "1-Click Book Expert (299k VND)",
+                "mobile-expert-book-btn-exp-1",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+        leaderboardCard.addView(rank1Box);
+        container.addView(leaderboardCard);
     }
 
     private static void renderSalaryRadarSubScreen(Context ctx, LinearLayout container) {
@@ -442,6 +482,62 @@ public final class MobileCareerScreens {
                 null
         ));
         container.addView(card);
+
+        LinearLayout recruiterCard = BeloogaUiKit.createSurfaceCard(ctx, "mobile-recruiter-hub-section");
+        TextView rTitle = new TextView(ctx);
+        rTitle.setText("B2B Recruiter Hiring Command Center (/recruiter/hub)");
+        rTitle.setTextColor(BeloogaUiKit.COLOR_TEXT_HEADING);
+        rTitle.setTextSize(15f);
+        rTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        recruiterCard.addView(rTitle);
+
+        recruiterCard.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "+ Shortlist Candidate (/v1/recruiter/pipeline)",
+                "mobile-recruiter-add-btn",
+                BeloogaUiKit.COLOR_BRAND,
+                BeloogaUiKit.COLOR_TEXT_INVERSE,
+                null
+        ));
+
+        LinearLayout pipelineList = BeloogaUiKit.createSubtleBox(ctx);
+        pipelineList.setContentDescription("mobile-recruiter-pipeline-list");
+        TextView pipeRow = new TextView(ctx);
+        pipeRow.setText("Nguyen Minh Phuc (@phucnguyen) • 94% ATS • Stage: SHORTLISTED • ★ 5/5");
+        pipeRow.setTextColor(BeloogaUiKit.COLOR_TEXT_MAIN);
+        pipeRow.setTextSize(12f);
+        pipelineList.addView(pipeRow);
+        pipelineList.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "Advance Stage -> PITCH_REVIEWED",
+                "mobile-recruiter-stage-btn-pipe-1",
+                BeloogaUiKit.COLOR_ELEVATED,
+                BeloogaUiKit.COLOR_TEXT_HEADING,
+                null
+        ));
+        recruiterCard.addView(pipelineList);
+
+        LinearLayout compCard = BeloogaUiKit.createSubtleBox(ctx);
+        compCard.setContentDescription("mobile-recruiter-comparison-card");
+        compCard.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "Compare (2/3) Candidates Side-by-Side (/v1/recruiter/compare)",
+                "mobile-recruiter-compare-btn",
+                BeloogaUiKit.COLOR_ELEVATED,
+                BeloogaUiKit.COLOR_TEXT_HEADING,
+                null
+        ));
+        recruiterCard.addView(compCard);
+
+        recruiterCard.addView(BeloogaUiKit.createActionButton(
+                ctx,
+                "Send 1-Click Interview Invite & Unlock Contact (49k VND)",
+                "mobile-recruiter-invite-btn",
+                BeloogaUiKit.COLOR_ACCENT_BLUE,
+                BeloogaUiKit.COLOR_TEXT_HEADING,
+                null
+        ));
+        container.addView(recruiterCard);
     }
 
     public static void renderCvStudioSubScreen(Context ctx, LinearLayout container) {

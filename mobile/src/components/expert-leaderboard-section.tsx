@@ -1,0 +1,187 @@
+import React, { useState } from 'react';
+import {
+  EXPERT_LEADERBOARD_CATEGORIES,
+  EXPERT_LEADERBOARD_SORT_MODES,
+  type ExpertLeaderboardCategory,
+  type ExpertLeaderboardSortMode,
+  useBookMobileExpertOrderMutation,
+  useMobileExpertLeaderboardQuery,
+  useSubmitExpertOrderFeedbackMutation,
+} from '@/hooks/use-mobile-expert-leaderboard';
+import { ActionButton, BadgePill, BottomSheetDrawer, SurfaceCard } from '@/lib/native-runtime';
+import { getSemanticTokens } from '@/theme/tokens';
+
+const DEFAULT_EXPERTS = [
+  {
+    id: 'exp-1',
+    rank_position: 1,
+    name: 'Sarah Jenkins',
+    title: 'Ex-Google Staff Hiring Committee',
+    category: 'backend',
+    badge_title: 'Grandmaster Mentor',
+    ranking_score: 98.4,
+    avg_ats_lift_points: 28,
+    rating: 4.98,
+    completed_reviews_count: 310,
+    avg_turnaround_hours: 11,
+    interview_callback_rate: 91,
+    price_vnd: 299000,
+  },
+  {
+    id: 'exp-2',
+    rank_position: 2,
+    name: 'David Tran',
+    title: 'Principal AI & Distributed Systems Lead',
+    category: 'ai',
+    badge_title: 'Top ATS Lifter',
+    ranking_score: 96.2,
+    avg_ats_lift_points: 26,
+    rating: 4.95,
+    completed_reviews_count: 215,
+    avg_turnaround_hours: 14,
+    interview_callback_rate: 89,
+    price_vnd: 299000,
+  },
+];
+
+export function ExpertLeaderboardSection() {
+  const tokens = getSemanticTokens('dark');
+  const [category, setCategory] = useState<ExpertLeaderboardCategory>('all');
+  const [sortBy, setSortBy] = useState<ExpertLeaderboardSortMode>('rank');
+  const [feedbackComment, setFeedbackComment] = useState('STAR bullets boosted my ATS score by +28 pts.');
+
+  const leaderboardQuery = useMobileExpertLeaderboardQuery({ category, sort_by: sortBy });
+  const bookMutation = useBookMobileExpertOrderMutation();
+  const feedbackMutation = useSubmitExpertOrderFeedbackMutation();
+
+  const items =
+    leaderboardQuery.data && leaderboardQuery.data.items.length > 0
+      ? leaderboardQuery.data.items
+      : DEFAULT_EXPERTS;
+
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: tokens.surface.elevated,
+    color: tokens.typography.main,
+    border: `1px solid ${tokens.surface.border}`,
+    borderRadius: 12,
+    padding: '10px 12px',
+  };
+
+  return (
+    <div
+      data-testid="mobile-expert-leaderboard-section"
+      aria-label="mobile-expert-leaderboard-section"
+      style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+    >
+      <SurfaceCard testID="expert-leaderboard-controls" mode="dark">
+        <strong style={{ fontSize: 15, color: tokens.typography.heading }}>
+          Expert Reviewer Ranking &amp; Leaderboard (/v1/expert-review/leaderboard)
+        </strong>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {EXPERT_LEADERBOARD_CATEGORIES.map((cat) => (
+            <ActionButton
+              key={cat}
+              testID={`mobile-expert-category-${cat}`}
+              accessibilityLabel={`mobile-expert-category-${cat}`}
+              label={cat.toUpperCase()}
+              variant={category === cat ? 'primary' : 'secondary'}
+              onPress={() => setCategory(cat)}
+            />
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {EXPERT_LEADERBOARD_SORT_MODES.map((mode) => (
+            <ActionButton
+              key={mode}
+              testID={`mobile-expert-sort-${mode}`}
+              accessibilityLabel={`mobile-expert-sort-${mode}`}
+              label={`Sort: ${mode}`}
+              variant={sortBy === mode ? 'accent' : 'secondary'}
+              onPress={() => setSortBy(mode)}
+            />
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {items.map((exp) => (
+            <div
+              key={exp.id}
+              data-testid={`mobile-expert-leaderboard-card-${exp.id}`}
+              aria-label={`mobile-expert-leaderboard-card-${exp.id}`}
+              style={{
+                padding: 12,
+                borderRadius: 12,
+                backgroundColor: tokens.surface.elevated,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ color: tokens.typography.heading }}>
+                  #{exp.rank_position} {exp.name} — {exp.badge_title}
+                </strong>
+                <BadgePill label={`${exp.ranking_score} pts`} tone="brand" />
+              </div>
+              <span style={{ fontSize: 12, color: tokens.typography.body }}>{exp.title}</span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <BadgePill
+                  testID={`expert-ats-lift-${exp.id}`}
+                  label={`+${exp.avg_ats_lift_points} ATS pts`}
+                  tone="success"
+                />
+                <BadgePill
+                  testID={`expert-rating-${exp.id}`}
+                  label={`Rating ${exp.rating} (${exp.completed_reviews_count} CVs)`}
+                  tone="brand"
+                />
+                <BadgePill
+                  testID={`expert-sla-${exp.id}`}
+                  label={`${exp.avg_turnaround_hours}h avg SLA`}
+                  tone="neutral"
+                />
+                <BadgePill
+                  testID={`expert-callback-rate-${exp.id}`}
+                  label={`${exp.interview_callback_rate}% Interview Rate`}
+                  tone="warning"
+                />
+              </div>
+              <ActionButton
+                testID={`mobile-expert-book-btn-${exp.id}`}
+                accessibilityLabel={`mobile-expert-book-btn-${exp.id}`}
+                label={`1-Click Book Expert (${exp.price_vnd / 1000}k VND)`}
+                onPress={() =>
+                  bookMutation.mutate({
+                    expert_id: exp.id,
+                    package_id: 'pkg_senior',
+                    target_role: 'Staff Backend Engineer',
+                  })
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </SurfaceCard>
+
+      <BottomSheetDrawer testID="expert-order-feedback-form" title="Rate Completed Expert Review (#ord_8841)">
+        <input
+          aria-label="expert-feedback-comment-input"
+          value={feedbackComment}
+          onChange={(e) => setFeedbackComment(e.target.value)}
+          style={inputStyle}
+        />
+        <ActionButton
+          testID="expert-order-feedback-submit-btn"
+          accessibilityLabel="expert-order-feedback-submit-btn"
+          label="Submit Rating & Recalculate Leaderboard"
+          onPress={() =>
+            feedbackMutation.mutate({
+              orderId: 'ord_8841',
+              input: { rating: 5, ats_lift_achieved: 28, comment: feedbackComment },
+            })
+          }
+        />
+      </BottomSheetDrawer>
+    </div>
+  );
+}
