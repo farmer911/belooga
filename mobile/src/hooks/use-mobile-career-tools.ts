@@ -21,6 +21,7 @@ export type MomoQrResponseDTO = z.infer<typeof momoQrResponseSchema>;
 export const salaryBenchmarkSchema = z.object({
   role: z.string().default(""),
   location: z.string().default(""),
+  year: z.string().default("2026"),
   p25: z.number().default(0),
   p50: z.number().default(0),
   p75: z.number().default(0),
@@ -78,9 +79,14 @@ export async function createMobileMomoPaymentQr(input: {
 
 export async function fetchMobileSalaryBenchmark(
   role: string,
-  location = "Ho Chi Minh City"
+  location = "Ho Chi Minh City",
+  year = "2026"
 ): Promise<SalaryBenchmarkDTO> {
-  const qs = new URLSearchParams({ role: role.trim(), location: location.trim() }).toString();
+  const qs = new URLSearchParams({
+    role: role.trim(),
+    location: location.trim(),
+    year: year.trim(),
+  }).toString();
   const raw = await mobileApiClient.get<unknown>(`/v1/catalogs/salary-benchmark?${qs}`);
   return salaryBenchmarkSchema.parse(raw);
 }
@@ -128,10 +134,14 @@ export function useMobileMomoQrMutation() {
   });
 }
 
-export function useMobileSalaryBenchmarkQuery(role: string, location = "Ho Chi Minh City") {
+export function useMobileSalaryBenchmarkQuery(
+  role: string,
+  location = "Ho Chi Minh City",
+  year = "2026"
+) {
   return useQuery({
-    queryKey: ["mobile", "career", "salary", role, location] as const,
-    queryFn: () => fetchMobileSalaryBenchmark(role, location),
+    queryKey: ["mobile", "career", "salary", role, location, year] as const,
+    queryFn: () => fetchMobileSalaryBenchmark(role, location, year),
     enabled: Boolean(role.trim()),
     staleTime: 120_000,
   });
