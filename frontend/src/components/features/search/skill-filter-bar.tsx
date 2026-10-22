@@ -81,6 +81,27 @@ export function SkillFilterBar({ selectedSkills, onToggleSkill, onClearSkills }:
 
   return (
     <div data-testid="search-skill-filter-bar" className="pt-2 border-t border-surface-divider space-y-2.5 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+        <div className="inline-flex items-center gap-1.5">
+          <span data-testid="search-mode-candidates" className="px-2.5 py-1 rounded-md bg-brand-primary text-white font-bold">
+            Tìm Ứng Viên (Candidates)
+          </span>
+          <Link
+            href="/companies"
+            data-testid="search-mode-companies"
+            className="px-2.5 py-1 rounded-md bg-surface-page border border-surface-border text-typography-heading hover:border-brand-primary font-semibold"
+          >
+            Tìm Công Ty (Companies)
+          </Link>
+          <Link
+            href="/recruiter/hub"
+            data-testid="search-mode-recruiter-hub"
+            className="px-2.5 py-1 rounded-md bg-teal-50 border border-teal-200 text-brand-dark font-semibold"
+          >
+            Recruiter Hiring Hub
+          </Link>
+        </div>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 font-bold text-typography-main">
           <Sparkles className="w-3.5 h-3.5 text-brand-primary" aria-hidden="true" />

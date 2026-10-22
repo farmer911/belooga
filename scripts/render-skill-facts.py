@@ -75,6 +75,8 @@ FRONTEND = {
     "fe-domain-public": [
         "page.tsx",
         "search/page.tsx",
+        "companies/page.tsx",
+        "companies/[slug]/page.tsx",
         "public/[username]/page.tsx",
         "(public)/blog/page.tsx",
         "(public)/blog/[slug]/page.tsx",
