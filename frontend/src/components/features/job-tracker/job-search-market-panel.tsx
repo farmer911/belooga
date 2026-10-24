@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Sparkles, Target, CheckCircle2, Plus, Filter, RotateCcw, Building2, MapPin } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 import { useWallet, formatVnd } from "@/hooks/use-wallet";
@@ -36,7 +36,8 @@ export function JobSearchAndGoalPanel({
   careerGoal, onSaveGoal, isSavingGoal, onAddJobToKanban, statusFilter, onStatusFilterChange,
   minScoreFilter, onMinScoreFilterChange, sortBy, onSortByChange, onResetFilters,
 }: JobSearchAndGoalPanelProps) {
-  const { availableBalanceVnd, payWithWallet } = useWallet();
+  const queryClient = useQueryClient();
+  const { availableBalanceVnd } = useWallet();
   const [roleInput, setRoleInput] = useState(careerGoal?.target_role ?? "Senior Backend / Golang Engineer");
   const [salaryInput, setSalaryInput] = useState(careerGoal?.target_salary ?? "55.000.000 VNĐ");
   const [skillsInput, setSkillsInput] = useState(careerGoal?.preferred_skills ?? "Golang, PostgreSQL, Kubernetes");
@@ -58,58 +59,26 @@ export function JobSearchAndGoalPanel({
   const { data: marketJobs = [] } = useQuery<MarketJobItem[]>({
     queryKey: ["market-jobs-search", marketQuery],
     queryFn: async () => {
-      const res = await apiClient.get<
-        Array<{
-          id: string;
-          title: string;
-          company_name?: string;
-          location: string;
-          salary_range?: string;
-          skills?: string[];
-        }>
-      >("/v1/career/jobs/");
-      const raw = Array.isArray(res.data) ? res.data : [];
-      const mapped: MarketJobItem[] = raw.map((j, idx) => ({
-        id: j.id,
-        company_name: j.company_name || "Belooga",
-        position_title: j.title,
-        location: j.location,
-        salary_range: j.salary_range || "Negotiable",
-        match_score: Math.max(85, 95 - idx * 3),
-        skills: Array.isArray(j.skills) ? j.skills : [],
-      }));
-      const q = marketQuery.trim().toLowerCase();
-      if (!q) return mapped;
-      return mapped.filter(
-        (j) =>
-          j.company_name.toLowerCase().includes(q) ||
-          j.position_title.toLowerCase().includes(q) ||
-          j.location.toLowerCase().includes(q) ||
-          j.skills.some((s) => s.toLowerCase().includes(q))
-      );
+      const res = await apiClient.get<MarketJobItem[]>("/v1/tracker/search-market-jobs", {
+        params: marketQuery.trim() ? { q: marketQuery.trim() } : undefined,
+      });
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 
   const aiMatchMutation = useMutation({
     mutationFn: async () => {
-      const fee = 19000;
-      if (availableBalanceVnd >= fee) {
-        await payWithWallet({
-          amount_vnd: fee,
-          target_type: "SYSTEM_PURCHASE",
-          order_id: `AI-JOB-${Date.now()}`,
-          description: `AI Săn Job Phù Hợp: ${roleInput}`,
-        });
-      }
-      await onAddJobToKanban({
-        company_name: "Grab Financial Group",
-        position_title: `${roleInput} (AI Matched)`,
-        status: "TARGETING",
-        expected_salary: salaryInput,
-        match_score: 95,
-        notes: `AI Job Radar khớp tự động theo kỹ năng: ${skillsInput}`,
-      });
-      return 1;
+      const goalId = careerGoal?.id || "default";
+      const res = await apiClient.post<{ matched_count?: number }>(
+        `/v1/tracker/goals/${encodeURIComponent(goalId)}/ai-match`,
+        { target_role: roleInput, preferred_skills: skillsInput, expected_salary: salaryInput }
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tracked-jobs"] }),
+        queryClient.invalidateQueries({ queryKey: ["tracked-jobs-analytics"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-wallet"] }),
+      ]);
+      return res.data?.matched_count || 2;
     },
     onSuccess: (count) => setAiMatchedCount(count),
   });

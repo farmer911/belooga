@@ -52,25 +52,13 @@ export function ExpertLeaderboardSection({ customExperts = [], onBookExpert }: E
   const { data: apiExperts = [] } = useQuery<RankedExpertItem[]>({
     queryKey: ["expert-leaderboard", category, sortBy],
     queryFn: async () => {
-      const res = await apiClient.get<ExpertProfile[]>("/v1/expert-review/experts/", {
-        params: category === "all" ? undefined : { category },
+      const res = await apiClient.get<RankedExpertItem[]>("/v1/expert-review/leaderboard", {
+        params: {
+          category: category === "all" ? undefined : category,
+          sort_by: sortBy,
+        },
       });
-      if (!Array.isArray(res.data)) return [];
-      return res.data.map((exp, idx) => ({
-        id: exp.id,
-        full_name: exp.full_name,
-        role_title: exp.headline,
-        company_name: exp.company,
-        category: (exp.role_category as RankedExpertItem["category"]) || "backend",
-        badge_title: idx === 0 ? "Grandmaster Mentor" : "Verified Mentor",
-        ranking_score: Number((exp.rating * 19.5).toFixed(1)),
-        rating: exp.rating,
-        completed_reviews_count: exp.total_reviews_count,
-        avg_ats_lift_points: 24 + (idx % 5) * 2,
-        avg_turnaround_hours: Math.max(8, exp.turn_around_days * 12),
-        interview_callback_rate_pct: 90,
-        specialties: [exp.role_category.toUpperCase(), "ATS Optimization", "System Design"],
-      }));
+      return Array.isArray(res.data) ? res.data : [];
     },
   });
 

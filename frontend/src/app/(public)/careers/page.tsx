@@ -64,7 +64,10 @@ export default function CareersPage() {
         applicant_email: applicantEmail.trim() || user?.email || "candidate@belooga.com",
         resume_url: pitchNote.trim() || "/uploads/resumes/belooga_pitch_profile.pdf",
       };
-      await apiClient.post(`/v1/career/jobs/${job.id}/apply/`, applyPayload);
+      const endpoint = job.is_partner
+        ? `/v1/careers/${job.id}/apply`
+        : `/v1/career/jobs/${job.id}/apply/`;
+      await apiClient.post(endpoint, applyPayload);
       return job.id;
     },
     onSuccess: (jobId) => {

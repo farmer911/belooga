@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
-  BOOKMARKS_API_ENDPOINT,
   CandidateBookmarkItemDTO,
   candidateBookmarkItemSchema,
 } from "@/lib/schemas";
@@ -14,7 +13,7 @@ export const BOOKMARKS_QUERY_KEY = ["candidate-bookmarks"] as const;
 const bookmarkListSchema = z.array(candidateBookmarkItemSchema);
 
 export async function fetchCandidateBookmarks(): Promise<CandidateBookmarkItemDTO[]> {
-  const res = await apiClient.get<unknown>(BOOKMARKS_API_ENDPOINT);
+  const res = await apiClient.get<unknown>("/v1/bookmarks/");
   if (Array.isArray(res.data)) return bookmarkListSchema.parse(res.data);
   const items = (res.data as { items?: unknown } | undefined)?.items;
   return Array.isArray(items) ? bookmarkListSchema.parse(items) : [];

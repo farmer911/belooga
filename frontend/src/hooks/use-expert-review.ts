@@ -180,6 +180,12 @@ export function useExpertReview() {
     return res.data;
   };
 
+  const simulateOrderDelivery = async (orderId: string): Promise<ReviewOrder> => {
+    const res = await apiClient.post<ReviewOrder>(`/v1/expert-review/orders/${orderId}/simulate-delivery`, {});
+    await queryClient.invalidateQueries({ queryKey: ["expert-review-my-orders"] });
+    return res.data;
+  };
+
   const openBookingForPackage = (pkg: ReviewPackage) => {
     setSelectedPackage(pkg);
     setBookingModalOpen(true);
@@ -199,7 +205,7 @@ export function useExpertReview() {
     isLoading, error, bookingModalOpen, selectedPackage, selectedExpert,
     setBookingModalOpen, setSelectedPackage, setSelectedExpert,
     handleCategoryFilter, createOrder, checkoutOrder, fetchOrderFeedback,
-    submitOrderFeedback, openBookingForPackage, openBookingForExpert,
+    submitOrderFeedback, simulateOrderDelivery, openBookingForPackage, openBookingForExpert,
     refreshOrders: fetchMyOrders,
   };
 }
