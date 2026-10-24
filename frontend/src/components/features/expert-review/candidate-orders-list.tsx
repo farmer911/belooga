@@ -15,6 +15,7 @@ interface CandidateOrdersListProps {
   orders: ReviewOrder[];
   highlightedOrderId?: string | null;
   onPayOrder: (orderId: string) => Promise<void>;
+  onSimulateDelivery?: (orderId: string) => Promise<ReviewOrder>;
   onSubmitFeedback?: (
     orderId: string,
     payload: {
@@ -29,7 +30,7 @@ interface CandidateOrdersListProps {
   ) => Promise<ReviewFeedback>;
 }
 
-export function CandidateOrdersList({ orders, highlightedOrderId, onPayOrder, onSubmitFeedback }: CandidateOrdersListProps) {
+export function CandidateOrdersList({ orders, highlightedOrderId, onPayOrder, onSimulateDelivery, onSubmitFeedback }: CandidateOrdersListProps) {
   const { releaseEscrow, isReleasingEscrow } = useWallet();
   const [selectedFeedback, setSelectedFeedback] = useState<ReviewFeedback | null>(null);
   const [activeOrder, setActiveOrder] = useState<ReviewOrder | null>(null);
@@ -99,6 +100,11 @@ export function CandidateOrdersList({ orders, highlightedOrderId, onPayOrder, on
                     )}
                     {(order.feedback || order.order_status !== "pending_payment") && (
                       <>
+                        {onSimulateDelivery && order.order_status !== "completed" && (
+                          <Button size="sm" variant="outline" data-testid={`btn-simulate-delivery-${order.id}`} onClick={() => void onSimulateDelivery(order.id)} className="border-surface-border text-typography-heading hover:border-brand-primary gap-1 text-xs">
+                            <span>Sandbox Delivery</span>
+                          </Button>
+                        )}
                         {onSubmitFeedback && (
                           <Button size="sm" variant="outline" data-testid={`toggle-submit-feedback-${order.id}`} onClick={() => setFeedbackOrderId(order.id)} className="border-surface-border text-typography-heading hover:border-brand-primary gap-1.5 text-xs">
                             <span>Mentor Eval</span>

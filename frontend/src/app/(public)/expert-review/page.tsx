@@ -45,6 +45,7 @@ export default function ExpertReviewPage() {
     createOrder,
     checkoutOrder,
     submitOrderFeedback,
+    simulateOrderDelivery,
     openBookingForPackage,
     openBookingForExpert,
   } = useExpertReview();
@@ -98,6 +99,7 @@ export default function ExpertReviewPage() {
           await checkoutOrder(id);
         }}
         onSubmitFeedback={submitOrderFeedback}
+        onSimulateDelivery={simulateOrderDelivery}
       />
 
       <ExpertLeaderboardSection

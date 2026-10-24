@@ -8,7 +8,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
 import { EcosystemMenu } from "@/components/layout/ecosystem-menu";
-import { NotificationBell } from "@/components/layout/notification-bell";
+import { NotificationBell, NotificationSpotlightBanner } from "@/components/layout/notification-bell";
+import { invalidateServiceWorkerApiCache } from "@/components/providers/service-worker-provider";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 
 export function Header() {
@@ -23,6 +24,7 @@ export function Header() {
     } catch {
       setMobileMenuOpen(false);
     }
+    invalidateServiceWorkerApiCache();
     logout();
     if (
       pathname?.startsWith("/user/") ||
@@ -240,6 +242,7 @@ export function Header() {
           </div>
         </div>
       )}
+      <NotificationSpotlightBanner />
     </header>
   );
 }

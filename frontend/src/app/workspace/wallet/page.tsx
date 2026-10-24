@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Wallet, ShieldCheck, ArrowUpRight, ArrowDownLeft, PlusCircle, CheckCircle2, Lock, Sparkles } from "lucide-react";
-import { useWallet, formatVnd, WalletTxType } from "@/hooks/use-wallet";
+import { apiClient } from "@/services/api-client";
+import { useWallet, formatVnd, WalletTxType, UserWalletStateDTO } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,6 +15,13 @@ const TOPUP_PRESETS = [100000, 250000, 500000, 1000000, 2000000];
 
 export default function UserWalletPage() {
   const { availableBalanceVnd, escrowLockedVnd, transactions, topupWallet, isToppingUp } = useWallet();
+  const { data: balanceSummary } = useQuery<UserWalletStateDTO>({
+    queryKey: ["wallet-balance-summary"],
+    queryFn: async () => (await apiClient.get<UserWalletStateDTO>("/v1/wallet/balance")).data,
+    staleTime: 15_000,
+  });
+  const liveAvailableVnd = balanceSummary?.available_balance_vnd ?? availableBalanceVnd;
+  const liveEscrowVnd = balanceSummary?.escrow_locked_vnd ?? escrowLockedVnd;
   const [selectedAmount, setSelectedAmount] = useState<number>(500000);
   const [txFilter, setTxFilter] = useState<"ALL" | WalletTxType>("ALL");
   const [receiptMsg, setReceiptMsg] = useState<string | null>(null);
@@ -75,7 +84,7 @@ export default function UserWalletPage() {
               <Wallet className="w-4 h-4 text-brand-primary" />
             </div>
             <div data-testid="wallet-available-balance" className="text-2xl font-extrabold text-brand-primary font-mono">
-              {formatVnd(availableBalanceVnd)}
+              {formatVnd(liveAvailableVnd)}
             </div>
             <p className="text-[11px] text-typography-muted">Sẵn sàng thanh toán 1-Click không cần chờ quét QR</p>
           </Card>
@@ -86,7 +95,7 @@ export default function UserWalletPage() {
               <Lock className="w-4 h-4 text-amber-600" />
             </div>
             <div data-testid="wallet-escrow-balance" className="text-2xl font-extrabold text-amber-700 font-mono">
-              {formatVnd(escrowLockedVnd)}
+              {formatVnd(liveEscrowVnd)}
             </div>
             <p className="text-[11px] text-typography-muted">Chỉ giải ngân cho Expert sau khi bạn nghiệm thu báo cáo CV</p>
           </Card>
@@ -97,7 +106,7 @@ export default function UserWalletPage() {
               <ShieldCheck className="w-4 h-4 text-brand-primary" />
             </div>
             <div className="text-2xl font-extrabold text-typography-main font-mono">
-              {formatVnd(availableBalanceVnd + escrowLockedVnd)}
+              {formatVnd(liveAvailableVnd + liveEscrowVnd)}
             </div>
             <p className="text-[11px] text-brand-dark">Cam kết hoàn tiền 100% nếu quá hạn SLA 48 giờ</p>
           </Card>

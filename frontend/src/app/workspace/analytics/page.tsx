@@ -2,14 +2,21 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Eye, Search, BookmarkCheck, CalendarCheck2, Sparkles, Target, Briefcase } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 import { Button } from "@/components/ui/button";
 import { CandidateAnalyticsPayload } from "@/components/features/analytics/multi-persona-analytics";
 
 export default function CandidateCareerAnalyticsPage() {
+  const queryClient = useQueryClient();
   const [range, setRange] = useState<"7D" | "30D" | "ALL">("30D");
+
+  const roastVoteMutation = useMutation({
+    mutationFn: async (roastId: string) =>
+      (await apiClient.post(`/v1/growth/cv-roasts/${encodeURIComponent(roastId)}/vote`, {})).data,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["community-cv-roasts"] }),
+  });
 
   const { data } = useQuery<CandidateAnalyticsPayload>({
     queryKey: ["candidate-analytics", range],
@@ -78,6 +85,16 @@ export default function CandidateCareerAnalyticsPage() {
                 <span>Job Tracker</span>
               </Button>
             </Link>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="analytics-upvote-roast-btn"
+              disabled={roastVoteMutation.isPending}
+              onClick={() => roastVoteMutation.mutate("roast-1")}
+              className="text-xs h-8 px-3 rounded-lg gap-1"
+            >
+              <span>Upvote CV Benchmark</span>
+            </Button>
           </div>
         </div>
 
