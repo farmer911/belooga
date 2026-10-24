@@ -154,6 +154,45 @@ if MOBILE_SRC.exists():
 if MOBILE_APP.exists():
     ui_files.extend(MOBILE_APP.rglob("*"))
 
+def has_empty_catch_block(txt: str) -> bool:
+    if ".catch(()=>{})" in txt.replace(" ", "").replace("\n", ""):
+        return True
+    idx = 0
+    n = len(txt)
+    while True:
+        pos = txt.find("catch", idx)
+        if pos == -1:
+            return False
+        idx = pos + 5
+        if pos > 0 and (txt[pos - 1].isalnum() or txt[pos - 1] == "_"):
+            continue
+        if idx < n and (txt[idx].isalnum() or txt[idx] == "_"):
+            continue
+        cur = idx
+        while cur < n and txt[cur].isspace():
+            cur += 1
+        if cur < n and txt[cur] == "(":
+            close_p = txt.find(")", cur + 1)
+            if close_p == -1:
+                continue
+            cur = close_p + 1
+        while cur < n and txt[cur].isspace():
+            cur += 1
+        if cur >= n or txt[cur] != "{":
+            continue
+        close_b = txt.find("}", cur + 1)
+        if close_b == -1 or "{" in txt[cur + 1 : close_b]:
+            continue
+        inner = txt[cur + 1 : close_b]
+        cleaned = [
+            s
+            for line in inner.splitlines()
+            if (s := line.split("//", 1)[0].strip()) and not (s.startswith("/*") and s.endswith("*/"))
+        ]
+        if not cleaned:
+            return True
+
+
 for p in ui_files:
     if p.suffix not in (".ts", ".tsx"):
         continue
@@ -172,11 +211,7 @@ for p in ui_files:
             f"{rel} -> fake success state or optimistic fallback inside catch block (fe_silent_catch_mutation == 0)"
         )
     if "__tests__" not in p.parts:
-        if re.search(
-            r"catch\s*(?:\([^)]*\))?\s*\{\s*(?://[^\n]*\s*|/\*.*?\*/\s*)*\}|\.catch\(\s*\(\)\s*=>\s*\{\s*\}\s*\)",
-            txt,
-            re.DOTALL,
-        ):
+        if has_empty_catch_block(txt):
             violations["2. Error Transparency (No Pass)"].append(
                 f"{rel} -> silent empty catch block prohibited (NTA-S004 / fe_empty_catch_blocks == 0)"
             )
