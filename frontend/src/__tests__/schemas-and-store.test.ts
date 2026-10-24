@@ -184,5 +184,30 @@ describe("BEL-226 Frontend Anti-Deception Invariants (#1, #2, #3, #4, #5, #8, #9
     expect(socialSrc.includes("alexnguyen")).toBe(false);
     expect(bookingSrc.includes("alexnguyen")).toBe(false);
   });
+
+  test("BEL-230 (NTA-S004): AudioContext, MediaRecorder, and SpeechRecognition lifecycle hooks do not use blind catch blocks", () => {
+    const visualizerSrc = readSrc("components/common/audio-visualizer-meter.tsx");
+    const audioMeterSrc = readSrc("hooks/use-audio-meter.ts");
+    const previewSrc = readSrc("lib/studio-preview.ts");
+    const webrtcSrc = readSrc("hooks/use-webrtc-studio.ts");
+    const teleprompterSrc = readSrc("hooks/use-teleprompter.ts");
+
+    expect(visualizerSrc.includes(".catch(() => {})")).toBe(false);
+    expect(visualizerSrc.includes('state !== "closed"')).toBe(true);
+
+    expect(audioMeterSrc.includes(".catch(() => {})")).toBe(false);
+    expect(audioMeterSrc.includes("catch (err) {}")).toBe(false);
+    expect(audioMeterSrc.includes("catch (e) {}")).toBe(false);
+    expect(audioMeterSrc.includes('state !== "closed"')).toBe(true);
+
+    expect(previewSrc.includes(".catch(() => {})")).toBe(false);
+    expect(previewSrc.includes('state !== "closed"')).toBe(true);
+
+    expect(webrtcSrc.includes(".catch(() => {})")).toBe(false);
+    expect(webrtcSrc.includes("catch (e) {}")).toBe(false);
+
+    expect(teleprompterSrc.includes("catch (e) {}")).toBe(false);
+    expect(teleprompterSrc.includes("isRecognitionActiveRef")).toBe(true);
+  });
 });
 

@@ -166,7 +166,9 @@ export function AudioVisualizerMeter({
         internalSourceRef.current = null;
       }
       if (internalAudioCtxRef.current) {
-        internalAudioCtxRef.current.close().catch(() => {});
+        if (internalAudioCtxRef.current.state !== "closed") {
+          void internalAudioCtxRef.current.close();
+        }
         internalAudioCtxRef.current = null;
       }
     };

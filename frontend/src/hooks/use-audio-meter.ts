@@ -27,11 +27,14 @@ export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean
           analyser.fftSize = 64;
           analyser.smoothingTimeConstant = 0.4;
           const tracks = mediaStream?.getAudioTracks() || [];
-          if (tracks.length > 0 && !(mediaStream as SyntheticMediaStream | null)?.isSynthetic) {
+          if (tracks.length > 0 && !(mediaStream as SyntheticMediaStream | null)?.isSynthetic && ctx.state !== "closed") {
             try {
               const src = ctx.createMediaStreamSource(mediaStream!);
               src.connect(analyser);
-            } catch (err) {}
+            } catch (err: unknown) {
+              console.warn("AudioMeter stream source notice:", err);
+              setAudioMeterLevel(0);
+            }
           }
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
           const loop = () => {
@@ -47,10 +50,15 @@ export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean
           return () => {
             active = false;
             if (audioAnimFrameRef.current) cancelAnimationFrame(audioAnimFrameRef.current);
-            ctx.close().catch(() => {});
+            if (ctx.state !== "closed") {
+              void ctx.close();
+            }
           };
         }
-      } catch (e) {}
+      } catch (err: unknown) {
+        console.warn("AudioMeter initialization notice:", err);
+        setAudioMeterLevel(0);
+      }
     } else {
       setAudioMeterLevel(0);
     }
