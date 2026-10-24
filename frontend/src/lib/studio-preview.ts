@@ -178,8 +178,10 @@ export function createStudioPreviewStream(
         stream.addTrack(track);
       }
     }
-  } catch (e) {
-    // AudioContext optional
+  } catch (err) {
+    if (err instanceof Error && err.name === "NotSupportedError") {
+      return stream;
+    }
   }
 
   return stream;

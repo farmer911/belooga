@@ -84,7 +84,7 @@ export function AudioVisualizerMeter({
           activeAnalyser = analyserNode;
         }
       } catch {
-        // Fallback gracefully if audio context cannot be initialized
+        activeAnalyser = null;
       }
     }
 

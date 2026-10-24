@@ -21,7 +21,7 @@ export function Header() {
     try {
       await apiClient.post("/v1/auth/logout/");
     } catch {
-      // Ignore network/cookie errors on logout
+      setMobileMenuOpen(false);
     }
     logout();
     if (

@@ -35,8 +35,21 @@ def count(pattern, paths):
 
 
 fe_src = files(FE, {".ts", ".tsx"}) + files(MOBILE_SRC, {".ts", ".tsx"}) + files(MOBILE_APP, {".ts", ".tsx"})
+fe_prod_src = [p for p in fe_src if "__tests__" not in p.parts]
 be_src = files(BE, {".py"})
 pages = [p for p in fe_src if p.name == "page.tsx"]
+
+EMPTY_CATCH_PAT = (
+    r"catch\s*(?:\([^)]*\))?\s*\{\s*(?://[^\n]*\s*|/\*.*?\*/\s*)*\}"
+    r"|\.catch\(\s*\(\)\s*=>\s*\{\s*\}\s*\)"
+)
+fe_comp_files = [p for p in (FE / "components").rglob("*") if p.suffix in (".ts", ".tsx")] if (FE / "components").exists() else []
+fe_non_test_files = [p for p in files(FE, {".ts", ".tsx"}) if "__tests__" not in p.parts]
+orphan_comp_count = 0
+for cf in fe_comp_files:
+    other_blob = "\n".join(p.read_text(errors="ignore") for p in fe_non_test_files if p != cf)
+    if cf.stem not in other_blob:
+        orphan_comp_count += 1
 
 MOCK_FALLBACK_PAT = (
     r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
@@ -67,6 +80,12 @@ current = {
     "fe_ts_ignore": count(r"@ts-ignore|@ts-expect-error", fe_src),
     "fe_mock_fallback_arrays": count(MOCK_FALLBACK_PAT, fe_src),
     "fe_silent_catch_mutation": count(SILENT_CATCH_MUTATION_PAT, fe_src),
+    "fe_empty_catch_blocks": sum(
+        len(re.findall(EMPTY_CATCH_PAT, p.read_text(errors="ignore"), re.DOTALL)) for p in fe_prod_src
+    ),
+    "fe_blind_unknown_casts": count(r"\bas\s+unknown\s+as\b", fe_prod_src),
+    "fe_eslint_disable": count(r"eslint-disable", fe_prod_src),
+    "fe_orphan_components": orphan_comp_count,
     "be_anonymous_alexnguyen_fallback": count(
         r"\balexnguyen\b",
         [BE / "modules" / "cms" / "service.py", BE / "schemas" / "cms.py"],

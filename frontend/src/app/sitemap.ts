@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       publicUsernames = data.public_usernames || [];
     }
   } catch {
-    // Fallback to static paths when backend is unreachable during static build
+    publicUsernames = [];
   }
 
   const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({

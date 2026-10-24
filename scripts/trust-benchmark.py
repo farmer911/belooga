@@ -171,6 +171,23 @@ for p in ui_files:
         violations["2. Error Transparency (No Pass)"].append(
             f"{rel} -> fake success state or optimistic fallback inside catch block (fe_silent_catch_mutation == 0)"
         )
+    if "__tests__" not in p.parts:
+        if re.search(
+            r"catch\s*(?:\([^)]*\))?\s*\{\s*(?://[^\n]*\s*|/\*.*?\*/\s*)*\}|\.catch\(\s*\(\)\s*=>\s*\{\s*\}\s*\)",
+            txt,
+            re.DOTALL,
+        ):
+            violations["2. Error Transparency (No Pass)"].append(
+                f"{rel} -> silent empty catch block prohibited (NTA-S004 / fe_empty_catch_blocks == 0)"
+            )
+        if re.search(r"\bas\s+unknown\s+as\b", txt):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> blind 'as unknown as' cast prohibited (NTA-S001 / fe_blind_unknown_casts == 0)"
+            )
+        if "eslint-disable" in txt:
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> eslint-disable suppression prohibited (NTA-S003 / fe_eslint_disable == 0)"
+            )
     mock_fallback_hits = re.findall(
         r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
         r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
@@ -198,6 +215,16 @@ if root_layout.exists() and "<AuthSessionBootstrap" not in root_layout.read_text
     violations["3. Layer Purity (No Band-Aids)"].append(
         "frontend/src/app/layout.tsx missing global <AuthSessionBootstrap /> mount"
     )
+
+fe_prod_ts = [p for p in FE_SRC.rglob("*") if p.suffix in (".ts", ".tsx") and "__tests__" not in p.parts]
+for comp_p in sorted((FE_SRC / "components").rglob("*")) if (FE_SRC / "components").exists() else []:
+    if comp_p.suffix not in (".ts", ".tsx"):
+        continue
+    other_txt = "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in fe_prod_ts if p != comp_p)
+    if comp_p.stem not in other_txt:
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            f"{comp_p.relative_to(ROOT)} -> orphan component not imported anywhere in frontend/src/ (NTA-P003 / fe_orphan_components == 0)"
+        )
 
 # Enforce 100% FE-to-BE Endpoint Wiring (Zero Dead/Unintegrated Backend Endpoints)
 fe_all_blob = "\n".join(

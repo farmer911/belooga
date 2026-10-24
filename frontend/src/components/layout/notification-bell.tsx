@@ -51,7 +51,8 @@ export function NotificationSpotlightBanner() {
     try {
       sessionStorage.removeItem(SPOTLIGHT_STORAGE_KEY);
     } catch {
-      // storage unavailable
+      setSpotlight(null);
+      return;
     }
     setSpotlight(null);
   };
@@ -182,7 +183,7 @@ export function NotificationBell() {
       sessionStorage.setItem(SPOTLIGHT_STORAGE_KEY, JSON.stringify(item));
       window.dispatchEvent(new Event(SPOTLIGHT_EVENT));
     } catch {
-      // ignore storage quota errors
+      window.dispatchEvent(new Event(SPOTLIGHT_EVENT));
     }
     setOpen(false);
     if (item.deep_link && item.deep_link.startsWith("/")) {

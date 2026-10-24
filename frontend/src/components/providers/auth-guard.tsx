@@ -38,7 +38,8 @@ export function useAuthSessionBootstrap() {
           return true;
         }
       } catch {
-        // Unauthenticated visitor or expired refresh cookie
+        setHydrated(true);
+        return false;
       }
       setHydrated(true);
       return false;
