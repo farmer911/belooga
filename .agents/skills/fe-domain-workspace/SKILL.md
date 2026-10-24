@@ -25,7 +25,7 @@ Section details for workspace organisms live in `references/` (`header-and-bio.m
 ## Rules
 1. **Thin Page Orchestrators & Leaf State Isolation:** Keep `page.tsx` thin; isolate high-frequency audio meter, video player, and teleprompter state inside `use-audio-meter`, `use-video-player`, and `use-teleprompter`.
 2. **In-Memory Auth Tokens:** Store access tokens strictly in Zustand memory (`auth-store.ts`), never in `localStorage` or `sessionStorage`.
-3. **Hardware Cleanup:** Closing WebRTC studio must stop every `MediaStreamTrack` and close `AudioContext`.
+3. **Hardware Cleanup & Zero Blind Catch (`BEL-230` / `BEL-234`):** Closing WebRTC studio must stop every `MediaStreamTrack` and check `if (audioCtx.state !== "closed") { void audioCtx.close(); }` without `.catch(() => {})`. Check `MediaRecorder.isTypeSupported(mimeType)` before instantiation, guard `if (mediaRecorderRef.current.state !== "inactive") { mediaRecorderRef.current.stop(); }`, track `isRecognitionActiveRef.current` in `use-teleprompter.ts`, and render `<SkillBadge />` with a stable `key` in `skills-card.tsx`.
 4. **Workspace Trust & Readiness Copilot (`user/[username]/page.tsx`):** Render `data-testid="workspace-trust-copilot-card"` via `@tanstack/react-query` (`queryKey` bound to `skills.length` and `experiences.length`, `enabled: Boolean(profile)`) so candidate edits immediately refresh their recruiter readiness tier and next boost action.
 
 

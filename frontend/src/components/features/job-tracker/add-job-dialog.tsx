@@ -49,8 +49,10 @@ export function AddJobDialog({ isOpen, onClose, onAdd }: AddJobDialogProps) {
       });
       reset();
       onClose();
-    } catch {
-      // Handled in parent
+    } catch (err) {
+      if (err instanceof Error && !err.message) {
+        onClose();
+      }
     }
   });
 

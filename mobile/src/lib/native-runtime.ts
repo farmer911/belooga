@@ -12,7 +12,6 @@ export interface SecureVaultAdapter {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var ExpoSecureStore: SecureVaultAdapter | undefined;
 }
 

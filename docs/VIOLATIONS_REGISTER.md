@@ -200,3 +200,20 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
   - `mobile_android_http_calls >= 1` (Chặn #10 — bắt buộc có `HttpURLConnection` thật trong `mobile/android/`)
   - `alembic_schema_drift == 0` (Chặn #14 — đối chiếu 100% `__tablename__` trong `backend/app/models/` với `backend/alembic/versions/`)
 * **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json`.
+
+---
+
+### [VIOLATION-014] 33 Lỗi Pháp Y NeverTrustAgent: Silent `catch {}` (`NTA-S004`), Blind Cast `as unknown as` (`NTA-S001`), `eslint-disable` (`NTA-S003`), Treo Mạng Lie-Fi Service Worker (`NTA-D002`) & Orphan Component `SkillBadge` (`NTA-P003`)
+* **Where (Sai ở đâu):** 33 vị trí trên `frontend/src/`, `frontend/public/sw.js`, và `mobile/src/` được tổng hợp trong `[EPIC-004]` (`#205` — `BEL-229..BEL-234`).
+* **How & Why (Nguyên nhân gốc rễ & Tác động):**
+  1. **Silent `catch {}` & `.catch(() => {})` (`NTA-S004`):** Các luồng nghiệp vụ (`ats-diagnostics/page.tsx`, `search/page.tsx`, `review-booking-dialog.tsx`) và lifecycle phần cứng (`audio-visualizer-meter.tsx`, `use-audio-meter.ts`, `studio-preview.ts`, `use-webrtc-studio.ts`, `use-teleprompter.ts`) dùng `catch {}` rỗng thay vì kiểm tra trạng thái (`audioCtx.state !== "closed"`, `MediaRecorder.isTypeSupported`, `mediaRecorder.state !== "inactive"`, `isRecognitionActiveRef.current`).
+  2. **Blind Cast `as unknown as` (`NTA-S001`) & `eslint-disable` (`NTA-S003`):** Ép kiểu mù tại `studio-preview.ts`, `use-ats-Scan.ts`, `audio-visualizer-meter.tsx`, `use-mobile-auth.ts`, `api-client.ts`, `native-runtime.ts` (do chữ ký `normalizeMobileUser` quá hẹp và thiếu type guard `Reflect.get`), kèm 3 dòng `eslint-disable-next-line @next/next/no-img-element`.
+  3. **Rủi ro treo mạng Lie-Fi trên Service Worker (`NTA-D002`) & Orphan `SkillBadge` (`NTA-P003`):** `frontend/public/sw.js` dùng `cache.addAll(...).catch(() => {})` (1 asset lỗi làm hỏng toàn bộ batch) và gọi `fetch(request)` không có `AbortSignal.timeout(8000)`; `skills-card.tsx` chưa nối `<SkillBadge />`.
+* **Minimal Fix & Permanent Script Guard (`BEL-229..BEL-234`):**
+  - Chuẩn hóa toàn bộ 33 vị trí + các điểm `catch {}` còn sót trên `frontend/src/` và `mobile/src/`.
+  - Khóa cứng 4 chỉ số bằng `0` trong `.agents/ratchet.json`, `scripts/ratchet.py`, và `scripts/trust-benchmark.py`:
+    - `fe_empty_catch_blocks == 0` (`NTA-S004`)
+    - `fe_blind_unknown_casts == 0` (`NTA-S001`)
+    - `fe_eslint_disable == 0` (`NTA-S003`)
+    - `fe_orphan_components == 0` (`NTA-P003`)
+* **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json`.

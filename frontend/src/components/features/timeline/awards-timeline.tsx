@@ -99,7 +99,7 @@ export function AwardsTimeline({
       try {
         await apiClient.post(`/v1/profile/${username}/awards/order/`, { orders });
       } catch {
-        // Optimistic order kept if endpoint not active
+        void queryClient.invalidateQueries({ queryKey });
       }
     }
   };

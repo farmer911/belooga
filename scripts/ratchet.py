@@ -35,8 +35,59 @@ def count(pattern, paths):
 
 
 fe_src = files(FE, {".ts", ".tsx"}) + files(MOBILE_SRC, {".ts", ".tsx"}) + files(MOBILE_APP, {".ts", ".tsx"})
+fe_prod_src = [p for p in fe_src if "__tests__" not in p.parts]
 be_src = files(BE, {".py"})
 pages = [p for p in fe_src if p.name == "page.tsx"]
+
+
+def count_empty_catches(txt: str) -> int:
+    hits = txt.replace(" ", "").replace("\n", "").count(".catch(()=>{})")
+    idx = 0
+    n = len(txt)
+    while True:
+        pos = txt.find("catch", idx)
+        if pos == -1:
+            break
+        idx = pos + 5
+        if pos > 0 and (txt[pos - 1].isalnum() or txt[pos - 1] == "_"):
+            continue
+        if idx < n and (txt[idx].isalnum() or txt[idx] == "_"):
+            continue
+        cur = idx
+        while cur < n and txt[cur].isspace():
+            cur += 1
+        if cur < n and txt[cur] == "(":
+            close_p = txt.find(")", cur + 1)
+            if close_p == -1:
+                continue
+            cur = close_p + 1
+        while cur < n and txt[cur].isspace():
+            cur += 1
+        if cur >= n or txt[cur] != "{":
+            continue
+        close_b = txt.find("}", cur + 1)
+        if close_b == -1 or "{" in txt[cur + 1 : close_b]:
+            continue
+        inner = txt[cur + 1 : close_b]
+        cleaned_lines = []
+        for line in inner.splitlines():
+            s = line.split("//", 1)[0].strip()
+            if s.startswith("/*") and s.endswith("*/"):
+                s = ""
+            if s:
+                cleaned_lines.append(s)
+        if not cleaned_lines:
+            hits += 1
+    return hits
+
+
+fe_comp_files = [p for p in (FE / "components").rglob("*") if p.suffix in (".ts", ".tsx")] if (FE / "components").exists() else []
+fe_non_test_files = [p for p in files(FE, {".ts", ".tsx"}) if "__tests__" not in p.parts]
+orphan_comp_count = 0
+for cf in fe_comp_files:
+    other_blob = "\n".join(p.read_text(errors="ignore") for p in fe_non_test_files if p != cf)
+    if cf.stem not in other_blob:
+        orphan_comp_count += 1
 
 MOCK_FALLBACK_PAT = (
     r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
@@ -67,6 +118,10 @@ current = {
     "fe_ts_ignore": count(r"@ts-ignore|@ts-expect-error", fe_src),
     "fe_mock_fallback_arrays": count(MOCK_FALLBACK_PAT, fe_src),
     "fe_silent_catch_mutation": count(SILENT_CATCH_MUTATION_PAT, fe_src),
+    "fe_empty_catch_blocks": sum(count_empty_catches(p.read_text(errors="ignore")) for p in fe_prod_src),
+    "fe_blind_unknown_casts": count(r"\bas\s+unknown\s+as\b", fe_prod_src),
+    "fe_eslint_disable": count(r"eslint-disable", fe_prod_src),
+    "fe_orphan_components": orphan_comp_count,
     "be_anonymous_alexnguyen_fallback": count(
         r"\balexnguyen\b",
         [BE / "modules" / "cms" / "service.py", BE / "schemas" / "cms.py"],

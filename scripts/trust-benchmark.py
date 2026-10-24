@@ -154,6 +154,45 @@ if MOBILE_SRC.exists():
 if MOBILE_APP.exists():
     ui_files.extend(MOBILE_APP.rglob("*"))
 
+def has_empty_catch_block(txt: str) -> bool:
+    if ".catch(()=>{})" in txt.replace(" ", "").replace("\n", ""):
+        return True
+    idx = 0
+    n = len(txt)
+    while True:
+        pos = txt.find("catch", idx)
+        if pos == -1:
+            return False
+        idx = pos + 5
+        if pos > 0 and (txt[pos - 1].isalnum() or txt[pos - 1] == "_"):
+            continue
+        if idx < n and (txt[idx].isalnum() or txt[idx] == "_"):
+            continue
+        cur = idx
+        while cur < n and txt[cur].isspace():
+            cur += 1
+        if cur < n and txt[cur] == "(":
+            close_p = txt.find(")", cur + 1)
+            if close_p == -1:
+                continue
+            cur = close_p + 1
+        while cur < n and txt[cur].isspace():
+            cur += 1
+        if cur >= n or txt[cur] != "{":
+            continue
+        close_b = txt.find("}", cur + 1)
+        if close_b == -1 or "{" in txt[cur + 1 : close_b]:
+            continue
+        inner = txt[cur + 1 : close_b]
+        cleaned = [
+            s
+            for line in inner.splitlines()
+            if (s := line.split("//", 1)[0].strip()) and not (s.startswith("/*") and s.endswith("*/"))
+        ]
+        if not cleaned:
+            return True
+
+
 for p in ui_files:
     if p.suffix not in (".ts", ".tsx"):
         continue
@@ -171,6 +210,19 @@ for p in ui_files:
         violations["2. Error Transparency (No Pass)"].append(
             f"{rel} -> fake success state or optimistic fallback inside catch block (fe_silent_catch_mutation == 0)"
         )
+    if "__tests__" not in p.parts:
+        if has_empty_catch_block(txt):
+            violations["2. Error Transparency (No Pass)"].append(
+                f"{rel} -> silent empty catch block prohibited (NTA-S004 / fe_empty_catch_blocks == 0)"
+            )
+        if re.search(r"\bas\s+unknown\s+as\b", txt):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> blind 'as unknown as' cast prohibited (NTA-S001 / fe_blind_unknown_casts == 0)"
+            )
+        if "eslint-disable" in txt:
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> eslint-disable suppression prohibited (NTA-S003 / fe_eslint_disable == 0)"
+            )
     mock_fallback_hits = re.findall(
         r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
         r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
@@ -198,6 +250,16 @@ if root_layout.exists() and "<AuthSessionBootstrap" not in root_layout.read_text
     violations["3. Layer Purity (No Band-Aids)"].append(
         "frontend/src/app/layout.tsx missing global <AuthSessionBootstrap /> mount"
     )
+
+fe_prod_ts = [p for p in FE_SRC.rglob("*") if p.suffix in (".ts", ".tsx") and "__tests__" not in p.parts]
+for comp_p in sorted((FE_SRC / "components").rglob("*")) if (FE_SRC / "components").exists() else []:
+    if comp_p.suffix not in (".ts", ".tsx"):
+        continue
+    other_txt = "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in fe_prod_ts if p != comp_p)
+    if comp_p.stem not in other_txt:
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            f"{comp_p.relative_to(ROOT)} -> orphan component not imported anywhere in frontend/src/ (NTA-P003 / fe_orphan_components == 0)"
+        )
 
 # Enforce 100% FE-to-BE Endpoint Wiring (Zero Dead/Unintegrated Backend Endpoints)
 fe_all_blob = "\n".join(
