@@ -32,6 +32,7 @@ export function SkillBadge({
 
   return (
     <Badge
+      data-testid="skill-badge"
       variant={variant}
       size={size}
       className={cn(
@@ -44,7 +45,9 @@ export function SkillBadge({
       {isRemovable && (
         <button
           type="button"
+          data-testid="remove-skill-btn"
           aria-label={`Remove ${skill}`}
+          title="Remove skill"
           onClick={(e) => {
             e.stopPropagation();
             onRemove?.(skill);
