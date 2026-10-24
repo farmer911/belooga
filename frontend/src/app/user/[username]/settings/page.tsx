@@ -1,25 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Lock, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Lock, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationPreferencesCard } from "@/components/features/profile/notification-preferences-card";
 import { passwordChangeSchema, PasswordFormValues } from "@/lib/schemas";
 import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
-
-const INPUT_CLS =
-  "w-full px-3 py-2 border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
+import {
+  PROFILE_INPUT_CLS as INPUT_CLS,
+  useProfileOwnerGuard,
+  WorkspaceSubpageShell,
+} from "@/components/features/profile/workspace-subpage-shell";
 
 export default function AccountSettingsPage() {
-  const params = useParams();
-  const username = params.username as string;
-  const router = useRouter();
+  const { username, router } = useProfileOwnerGuard();
   const logout = useAuthStore((s) => s.logout);
   const [passwordChanged, setPasswordChanged] = useState(false);
 
@@ -64,27 +62,13 @@ export default function AccountSettingsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-surface-page py-10">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <Link
-            href={`/user/${username}`}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-brand-primary hover:underline"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Workspace
-          </Link>
-          <span className="text-xs text-typography-muted">Account Security @{username}</span>
-        </div>
-
-        <div className="bg-surface-card rounded-xl border border-surface-border p-8 shadow-sm space-y-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-typography-main">Account Settings</h1>
-            <p className="text-sm text-typography-muted">
-              Manage your credentials, password security, and account preferences.
-            </p>
-          </div>
-
-          {passwordChanged && (
+    <WorkspaceSubpageShell
+      username={username}
+      badgeText={`Account Security @${username}`}
+      title="Account Settings"
+      subtitle="Manage your credentials, password security, and account preferences."
+    >
+      {passwordChanged && (
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3 text-emerald-800 text-sm">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               <span>Password updated successfully!</span>
@@ -158,8 +142,6 @@ export default function AccountSettingsPage() {
               {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
             </Button>
           </div>
-        </div>
-      </div>
-    </div>
+    </WorkspaceSubpageShell>
   );
 }
