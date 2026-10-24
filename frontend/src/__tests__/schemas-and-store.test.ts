@@ -209,5 +209,17 @@ describe("BEL-226 Frontend Anti-Deception Invariants (#1, #2, #3, #4, #5, #8, #9
     expect(teleprompterSrc.includes("catch (e) {}")).toBe(false);
     expect(teleprompterSrc.includes("isRecognitionActiveRef")).toBe(true);
   });
+
+  test("BEL-229 (NTA-S004): ats-diagnostics, search, and review-booking-dialog handle errors explicitly with zero empty catch blocks", () => {
+    const atsSrc = readSrc("app/ats-diagnostics/page.tsx");
+    const searchSrc = readSrc("app/search/page.tsx");
+    const bookingSrc = readSrc("components/features/expert-review/review-booking-dialog.tsx");
+
+    expect(atsSrc.includes("catch {")).toBe(false);
+    expect(searchSrc.includes("catch {")).toBe(false);
+    expect(bookingSrc.includes("catch {")).toBe(false);
+    expect(bookingSrc.includes('href="/login"')).toBe(true);
+    expect(bookingSrc.includes('"/login?return_to=%2Fexpert-review"')).toBe(true);
+  });
 });
 
