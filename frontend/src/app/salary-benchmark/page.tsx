@@ -122,7 +122,7 @@ export default function SalaryBenchmarkPage() {
         </Link>
       </div>
 
-      <main className="flex-1 p-4 space-y-4 max-w-[1400px] w-full mx-auto overflow-y-auto">
+      <div className="flex-1 p-4 space-y-4 max-w-7xl w-full mx-auto overflow-y-auto">
         <SalaryCrawlerPanel
           sampleSize={sampleSize}
           lastCrawledAt={benchmark?.last_crawled_at || "Live PostgreSQL"}
@@ -194,7 +194,7 @@ export default function SalaryBenchmarkPage() {
             <p className="text-xs text-typography-heading bg-teal-50/50 border border-teal-200 rounded-lg p-2.5">{careerRoi.negotiation_leverage_script}</p>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

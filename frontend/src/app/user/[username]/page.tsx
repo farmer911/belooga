@@ -151,7 +151,7 @@ export default function WorkspacePage() {
             />
           </aside>
 
-          <main className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-8">
             <CandidateAnalyticsWidget />
             <WorkspaceGrowthSuite username={username} fullName={profile.full_name} />
             <VideoPitchCard
@@ -188,7 +188,7 @@ export default function WorkspacePage() {
               onDownloadPdf={handleDownloadPdf}
             />
             <UserProfilePostsSection username={username} authorName={profile.full_name} isOwner={true} />
-          </main>
+          </div>
         </div>
       </div>
 

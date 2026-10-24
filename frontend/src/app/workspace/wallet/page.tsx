@@ -50,8 +50,8 @@ export default function UserWalletPage() {
   };
 
   return (
-    <div data-testid="user-wallet-page" className="min-h-screen bg-surface-page py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div data-testid="user-wallet-page" className="min-h-screen bg-surface-page py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-surface-border pb-4">
           <div>
             <div className="flex items-center gap-2">

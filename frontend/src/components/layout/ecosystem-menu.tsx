@@ -9,6 +9,10 @@ import {
   FileText,
   Briefcase,
   BarChart3,
+  Building2,
+  Users,
+  Sparkles,
+  Wallet,
   ChevronDown,
   LucideIcon,
 } from "lucide-react";
@@ -47,6 +51,30 @@ const TOOLS: ToolItem[] = [
     desc: "Bảng Kanban theo dõi ứng tuyển việc làm",
     href: "/workspace/jobs",
     Icon: Briefcase,
+  },
+  {
+    name: "Growth & Analytics",
+    desc: "Phễu ứng tuyển, CV Roast & Referral Hub",
+    href: "/workspace/analytics",
+    Icon: Sparkles,
+  },
+  {
+    name: "Wallet & Escrow",
+    desc: "Ví Belooga Credits & bảo vệ ký quỹ Escrow",
+    href: "/workspace/wallet",
+    Icon: Wallet,
+  },
+  {
+    name: "Recruiter Talent Hub",
+    desc: "Sàng lọc ứng viên, Shortlist & Interview",
+    href: "/recruiter/hub",
+    Icon: Users,
+  },
+  {
+    name: "Companies Directory",
+    desc: "Khám phá hồ sơ doanh nghiệp & đánh giá",
+    href: "/companies",
+    Icon: Building2,
   },
   {
     name: "Executive Analytics",

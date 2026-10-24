@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { CheckCircle2, ExternalLink, Edit3, Download, Lock, Globe, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WorkspaceNavStrip } from "@/components/layout/workspace-nav-strip";
 
 export interface WorkspaceToolbarProps {
   username: string;
@@ -19,7 +20,11 @@ export function WorkspaceToolbar({
   onDownloadPdf,
 }: WorkspaceToolbarProps) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 bg-surface-card p-4 rounded-xl border border-surface-border shadow-sm">
+    <div className="mb-6 space-y-3">
+      <div className="rounded-xl overflow-hidden border border-surface-border shadow-xs">
+        <WorkspaceNavStrip username={username} />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-card p-4 rounded-xl border border-surface-border shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Workspace Live & Interactive
@@ -71,6 +76,7 @@ export function WorkspaceToolbar({
         >
           <Download className="w-4 h-4" aria-hidden="true" /> Download Official PDF
         </Button>
+      </div>
       </div>
     </div>
   );
