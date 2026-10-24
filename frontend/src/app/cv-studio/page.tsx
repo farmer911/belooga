@@ -209,11 +209,11 @@ export default function CVStudioPage() {
         )}
       </div>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
         <CVStudioSidebar fontSize={fontSize} setFontSize={setFontSize} lineHeight={lineHeight} setLineHeight={setLineHeight} marginSize={marginSize} setMarginSize={setMarginSize} snapOnePage={snapOnePage} setSnapOnePage={setSnapOnePage} sections={cvData.sectionOrder ?? STANDARD_CV_SECTIONS} onMoveSection={handleMoveSection} atsScore={liveAtsScore} />
         <CVStudioEditor cvData={cvData} onChange={setCvData} autoSaveLabel={autoSaveLabel} />
         <CVStudioPreview cvData={cvData} fontSize={fontSize} lineHeight={lineHeight} marginSize={marginSize} snapOnePage={snapOnePage} username={activeUsername} />
-      </main>
+      </div>
 
       <footer className="border-t border-surface-border bg-surface-card px-4 py-2 text-[11px] text-typography-muted flex justify-between items-center shadow-xs">
         <div>Hệ điều hành soạn thảo CV: <strong className="text-typography-main">Belooga Pro CV Engine</strong> (Chuẩn Vector A4)</div>

@@ -29,6 +29,7 @@ export function Header() {
     if (
       pathname?.startsWith("/user/") ||
       pathname?.startsWith("/workspace/") ||
+      pathname?.startsWith("/recruiter/") ||
       pathname?.startsWith("/admin/") ||
       pathname?.startsWith("/cv-studio")
     ) {
@@ -59,6 +60,18 @@ export function Header() {
             className="text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors"
           >
             Find Talent
+          </Link>
+          <Link
+            href="/companies"
+            className="hidden lg:block text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors"
+          >
+            Companies
+          </Link>
+          <Link
+            href="/recruiter/hub"
+            className="hidden xl:block text-sm font-medium text-typography-heading hover:text-brand-primary transition-colors"
+          >
+            Recruiter Hub
           </Link>
 
           {/* Tools & Ecosystem Dropdown Menu */}
@@ -151,60 +164,29 @@ export function Header() {
           className="md:hidden border-t border-surface-border bg-surface-card px-4 py-4 space-y-3 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150"
         >
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <Link
-              href="/search"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Find Talent
-            </Link>
-            <Link
-              href="/expert-review"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Expert Review
-            </Link>
-            <Link
-              href="/careers"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Careers
-            </Link>
-            <Link
-              href="/blog"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Blog
-            </Link>
-            <Link
-              href="/ats-diagnostics"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              ATS Diagnostics
-            </Link>
-            <Link
-              href="/salary-benchmark"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Tra Cứu Lương IT
-            </Link>
-            <Link
-              href="/cv-studio"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Pro CV Studio
-            </Link>
-            <Link
-              href="/workspace/jobs"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Job Tracker
-            </Link>
-            <Link
-              href="/admin/analytics"
-              className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
-            >
-              Executive Analytics
-            </Link>
+            {[
+              { href: "/search", label: "Find Talent" },
+              { href: "/companies", label: "Companies" },
+              { href: "/recruiter/hub", label: "Recruiter Hub" },
+              { href: "/expert-review", label: "Expert Review" },
+              { href: "/careers", label: "Careers" },
+              { href: "/blog", label: "Blog" },
+              { href: "/ats-diagnostics", label: "ATS Diagnostics" },
+              { href: "/salary-benchmark", label: "Tra Cứu Lương IT" },
+              { href: "/cv-studio", label: "Pro CV Studio" },
+              { href: "/workspace/jobs", label: "Job Tracker" },
+              { href: "/workspace/analytics", label: "Growth Hub" },
+              { href: "/workspace/wallet", label: "Wallet & Escrow" },
+              { href: "/admin/analytics", label: "Executive Analytics" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="px-3 py-2 rounded-lg text-typography-heading hover:bg-surface-page hover:text-brand-primary font-medium"
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
 
           <div className="pt-2 border-t border-surface-divider flex items-center justify-between gap-2">

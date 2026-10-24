@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { WorkspaceNavStrip } from "@/components/layout/workspace-nav-strip";
 
 export const PROFILE_INPUT_CLS =
   "w-full px-3 py-2 border border-surface-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary";
@@ -31,8 +32,9 @@ export function WorkspaceSubpageShell({
   children,
 }: WorkspaceSubpageShellProps) {
   return (
-    <div className="min-h-screen bg-surface-page py-10">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="min-h-screen bg-surface-page pb-10">
+      <WorkspaceNavStrip username={username} />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         <div className="flex items-center justify-between">
           <Link
             href={`/user/${username}`}

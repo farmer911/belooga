@@ -128,7 +128,7 @@ export default function ATSDiagnosticsPage() {
         </div>
       </div>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-[calc(100vh-140px)]">
         <section className="lg:col-span-5 border-r border-surface-border flex flex-col bg-surface-card overflow-y-auto p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <div>
@@ -209,7 +209,7 @@ export default function ATSDiagnosticsPage() {
         </section>
 
         <ATSPreviewCanvas cvText={cvText} previewMode={previewMode} setPreviewMode={setPreviewMode} />
-      </main>
+      </div>
 
       <ATSShareCardModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} jobTitle={jobTitle} score={result?.ats_score ?? 88} />
       <MomoCheckoutDialog isOpen={isMomoOpen} onClose={() => setIsMomoOpen(false)} packageType="MICRO_PASS_29K" amount={29000} orderInfo="Gói 1-Click Tối Ưu Lề CV Chuẩn ATS" onPaymentSuccess={handlePaymentSuccess} />

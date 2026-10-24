@@ -59,7 +59,7 @@ export default function ExpertReviewPage() {
   };
 
   return (
-    <main className="min-h-screen bg-surface-card">
+    <div className="min-h-screen bg-surface-card">
       <ExpertHero
         onBrowseExperts={scrollToExperts}
         onViewPricing={scrollToPricing}
@@ -136,6 +136,6 @@ export default function ExpertReviewPage() {
         onSubmitOrder={createOrder}
         onCheckout={checkoutOrder}
       />
-    </main>
+    </div>
   );
 }

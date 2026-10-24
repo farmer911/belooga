@@ -200,7 +200,7 @@ export default function JobTrackerKanbanPage() {
         </div>
       )}
 
-      <main className="flex-1 p-4 overflow-x-auto flex gap-3.5 min-h-[calc(100vh-140px)]">
+      <div className="flex-1 p-4 overflow-x-auto flex gap-3.5 min-h-[calc(100vh-140px)]">
         {isLoading && jobs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center"><Spinner className="w-8 h-8 text-brand-primary" /></div>
         ) : (
@@ -212,7 +212,7 @@ export default function JobTrackerKanbanPage() {
             <KanbanColumn id="OFFER" title="Nhận Offer / Hired" icon={<Trophy className="w-3.5 h-3.5" aria-hidden="true" />} badgeColor="border-t-2 border-t-emerald-500" jobs={getJobsByStatus("OFFER")} onMove={moveStatus} onDelete={deleteJob} onEdit={startEditingJob} />
           </>
         )}
-      </main>
+      </div>
 
       <AddJobDialog isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={addJob} />
     </div>

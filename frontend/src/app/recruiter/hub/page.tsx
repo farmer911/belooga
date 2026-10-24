@@ -159,7 +159,7 @@ export default function RecruiterHiringHubPage() {
         </form>
       )}
 
-      <main className="flex-1 p-4 space-y-5 max-w-[1440px] w-full mx-auto">
+      <div className="flex-1 p-4 space-y-5 max-w-7xl w-full mx-auto">
         <RecruiterAnalyticsPanel />
         <RecruiterReverseBidAndRoiSuite />
         <TopCandidatesLeaderboard variant="spotlight" />
@@ -177,7 +177,7 @@ export default function RecruiterHiringHubPage() {
           showDossier={showDossier}
           onCloseDossier={() => setShowDossier(false)}
         />
-      </main>
+      </div>
 
       <RecruiterInviteModal
         candidate={inviteTarget}
