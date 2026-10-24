@@ -1,6 +1,9 @@
-🎯 Đang làm ticket: [BEL-225] (#195) — [BE] Khắc Phục Triệt Để 6 Hành Vi Gian Lận Ở Backend (#5, #6, #7, #8, #9, #14 Từ Audit #179) | Role: BE | Cột: In Progress
+🎯 Đang làm ticket: [BEL-230] (#207) — [TICKET-02] [P0 - FE] Chuẩn hóa 11 vị trí đóng/mở AudioContext, MediaRecorder, SpeechRecognition không dùng catch {} mù | Role: FE | Cột: Testing
 
-## Active Plan (BEL-225)
-1. TDD Red -> Green in `backend/tests/test_bel225_backend_integrity.py`.
-2. Remediate items #5 (all `/v1/*` routes live), #6 (PostgreSQL-backed catalogs/CMS), #7 (PostgreSQL aggregation + TF-IDF scoring), #8 (remove anonymous `"alexnguyen"` mutation fallbacks / enforce auth + RBAC where required), #9 (guard `valid_sim_sig` & `/simulate-delivery` behind test/dev env or HMAC), and #14 (Alembic migration `0006_full_platform_schema_sync.py` covering `notification_preferences` & new tables).
-3. Verify `pytest`, `render-skill-facts.py`, `trust-benchmark.py = 100%`, open PR, and move `#195` to `Testing`.
+- **Ticket:** `#207` (`[BEL-230]`, Kanban Item ID: `PVTI_lAHOAeXQP84BoMSnzhDLjKQ`).
+- **Branch:** `feature/BEL-230-fe-webrtc-audio-lifecycle`.
+- **Changes Delivered (`NTA-S004`):**
+  1. [x] `audio-visualizer-meter.tsx`, `use-audio-meter.ts`, `studio-preview.ts`: checked `state !== "closed"` before `.close()`, removed `.catch(() => {})` and empty `catch (e) {}`.
+  2. [x] `use-webrtc-studio.ts`: handled `video.play()` promise via `safePlayVideo`, checked `MediaRecorder.isTypeSupported(options.mimeType)`, and checked `mediaRecorderRef.current.state !== "inactive"` before `.stop()`.
+  3. [x] `use-teleprompter.ts`: guarded `recognizer.start()` and `.stop()` with `isRecognitionActiveRef.current` instead of empty `catch (e) {}`.
+- **Verification:** `bun test` (12/12 pass), `bun x tsc --noEmit` (0 errors), `trust-benchmark.py` (100%, 0 violations).

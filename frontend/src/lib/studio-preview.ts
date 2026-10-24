@@ -30,7 +30,9 @@ export function createStudioPreviewStream(
   const draw = (now: number) => {
     if ((onStopRef && !onStopRef.current) || !ctx || (videoTrack && videoTrack.readyState === "ended")) {
       if (audioCtxInstance) {
-        audioCtxInstance.close().catch(() => {});
+        if (audioCtxInstance.state !== "closed") {
+          void audioCtxInstance.close();
+        }
         audioCtxInstance = null;
       }
       return;

@@ -44,6 +44,7 @@ export function useTeleprompter(isRecording: boolean) {
   const scriptFileInputRef = useRef<HTMLInputElement>(null);
   const teleprompterContainerRef = useRef<HTMLDivElement>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const isRecognitionActiveRef = useRef<boolean>(false);
 
   // Parse words
   useEffect(() => {
@@ -117,35 +118,41 @@ export function useTeleprompter(isRecording: boolean) {
             }
           };
 
-          recognizer.onerror = () => {};
+          recognizer.onerror = () => {
+            isRecognitionActiveRef.current = false;
+          };
           recognizer.onend = () => {
-            if (isRecording && teleprompterEnabled && speechRecognitionRef.current) {
-              try {
-                recognizer.start();
-              } catch (e) {}
+            isRecognitionActiveRef.current = false;
+            if (isRecording && teleprompterEnabled && speechRecognitionRef.current && !isRecognitionActiveRef.current) {
+              isRecognitionActiveRef.current = true;
+              recognizer.start();
             }
           };
 
-          recognizer.start();
+          if (!isRecognitionActiveRef.current) {
+            isRecognitionActiveRef.current = true;
+            recognizer.start();
+          }
           speechRecognitionRef.current = recognizer;
         } catch (e) {
+          isRecognitionActiveRef.current = false;
           console.warn("Speech recognition error:", e);
         }
       }
     } else {
       if (speechRecognitionRef.current) {
-        try {
+        if (isRecognitionActiveRef.current) {
+          isRecognitionActiveRef.current = false;
           speechRecognitionRef.current.stop();
-        } catch (e) {}
+        }
         speechRecognitionRef.current = null;
       }
     }
 
     return () => {
-      if (speechRecognitionRef.current) {
-        try {
-          speechRecognitionRef.current.stop();
-        } catch (e) {}
+      if (speechRecognitionRef.current && isRecognitionActiveRef.current) {
+        isRecognitionActiveRef.current = false;
+        speechRecognitionRef.current.stop();
       }
     };
   }, [isRecording, teleprompterEnabled, scriptWords, activeWordIndex]);

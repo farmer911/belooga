@@ -57,15 +57,23 @@ export function useWebRTCStudio(
     if (audioInputs.length > 0 && !selectedAudioDeviceId) setSelectedAudioDeviceId(audioInputs[0].deviceId);
   }, [selectedDeviceId, selectedAudioDeviceId]);
 
+  const safePlayVideo = useCallback((el: HTMLVideoElement | null) => {
+    if (!el) return;
+    void el.play().catch((err: unknown) => {
+      if (err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "AbortError")) return;
+      console.warn("Video preview playback notice:", err);
+    });
+  }, []);
+
   const attachWebcamRef = useCallback(
     (node: HTMLVideoElement | null) => {
       webcamVideoRef.current = node;
       if (node && mediaStream && node.srcObject !== mediaStream) {
         node.srcObject = mediaStream;
-        node.play().catch(() => {});
+        safePlayVideo(node);
       }
     },
-    [mediaStream]
+    [mediaStream, safePlayVideo]
   );
 
   useEffect(() => {
@@ -73,9 +81,9 @@ export function useWebRTCStudio(
       if (webcamVideoRef.current.srcObject !== mediaStream) {
         webcamVideoRef.current.srcObject = mediaStream;
       }
-      webcamVideoRef.current.play().catch(() => {});
+      safePlayVideo(webcamVideoRef.current);
     }
-  }, [mediaStream, recordedVideoUrl, isOpen]);
+  }, [mediaStream, recordedVideoUrl, isOpen, safePlayVideo]);
 
   const reacquireStream = async (
     devId: string,
@@ -140,7 +148,9 @@ export function useWebRTCStudio(
         setMediaStream(real);
         refreshDeviceList();
       }
-    } catch (e) {}
+    } catch (err: unknown) {
+      console.warn("Using synthetic studio preview stream:", err);
+    }
   }, [candidateName, selectedResolution, selectedRatio, selectedDeviceId, selectedAudioDeviceId, refreshDeviceList, prompter]);
 
   const startRecording = useCallback(() => {
@@ -159,7 +169,11 @@ export function useWebRTCStudio(
 
     const options = getOptimalRecorderOptions(selectedResolution, selectedRatio);
     try {
-      const recorder = new MediaRecorder(stream, options);
+      const supportedOptions =
+        options.mimeType && typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(options.mimeType)
+          ? options
+          : undefined;
+      const recorder = new MediaRecorder(stream, supportedOptions);
       mediaRecorderRef.current = recorder;
       recorder.ondataavailable = (e) => {
         if (e.data?.size > 0) recordedChunksRef.current.push(e.data);
@@ -196,9 +210,7 @@ export function useWebRTCStudio(
       recordingTimerRef.current = null;
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {}
+      mediaRecorderRef.current.stop();
     }
     setIsRecording(false);
     const fb = new Blob(
