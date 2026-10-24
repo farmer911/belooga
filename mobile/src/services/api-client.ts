@@ -75,7 +75,7 @@ async function rotateMobileSessionSingleflight(): Promise<string | null> {
 
       const rawData = await response.json();
       const parsed = tokenResponseSchema.parse(rawData);
-      const userSummary = normalizeMobileUser(parsed.user as unknown as Record<string, unknown>);
+      const userSummary = normalizeMobileUser(parsed.user);
       await setSessionTokens(parsed.access_token, parsed.refresh_token ?? refreshToken, userSummary);
       return parsed.access_token;
     } catch {

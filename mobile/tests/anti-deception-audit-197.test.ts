@@ -80,14 +80,7 @@ describe("[BEL-227] (#197) Anti-Deception Audit Fixes (#1, #5, #10, #11 from Aud
 
     // Verify native ExpoSecureStore hardware bridge delegation when globalThis.ExpoSecureStore is present
     const bridgeCalls: string[] = [];
-    const g = globalThis as unknown as {
-      ExpoSecureStore?: {
-        getItemAsync(k: string): Promise<string | null>;
-        setItemAsync(k: string, v: string): Promise<void>;
-        deleteItemAsync(k: string): Promise<void>;
-      };
-    };
-    g.ExpoSecureStore = {
+    globalThis.ExpoSecureStore = {
       async getItemAsync(k: string) {
         bridgeCalls.push(`get:${k}`);
         return "hardware_keystore_jwt";
@@ -111,7 +104,7 @@ describe("[BEL-227] (#197) Anti-Deception Audit Fixes (#1, #5, #10, #11 from Aud
         "del:belooga.hw.key",
       ]);
     } finally {
-      delete g.ExpoSecureStore;
+      globalThis.ExpoSecureStore = undefined;
       await clearSecureVaultForTesting();
     }
   });
