@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { Lock, Printer, Mail, Phone, MapPin, Link2 } from "lucide-react";
 import { CVData } from "./cv-studio-editor";
+import { STANDARD_CV_SECTIONS } from "./cv-studio-sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { downloadCandidatePdf } from "@/services/media-upload.service";
@@ -123,14 +124,7 @@ export function CVStudioPreview({
             </div>
           </div>
 
-          {(cvData.sectionOrder ?? [
-            "Thông tin liên hệ",
-            "Tóm tắt sự nghiệp",
-            "Kinh nghiệm làm việc",
-            "Dự án tiêu biểu",
-            "Kỹ năng chuyên môn",
-            "Học vấn & Bằng cấp",
-          ]).map((sectionName) => {
+          {(cvData.sectionOrder ?? STANDARD_CV_SECTIONS).map((sectionName) => {
             if (sectionName === "Thông tin liên hệ") {
               return (
                 <div key={sectionName} data-testid="cv-preview-contact" className="mb-3 pb-1.5 border-b border-surface-border text-typography-body flex flex-wrap gap-x-3 gap-y-0.5 font-normal text-[0.9em]">

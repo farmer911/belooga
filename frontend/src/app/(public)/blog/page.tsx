@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SocialFeedCard, BlogPostDTO } from "@/components/features/blog/social-feed-card";
 import { CommunityCvRoastSection } from "@/components/features/growth/community-company-suite";
+import { prependAndInvalidateList, replaceAndInvalidateByKey } from "@/lib/query-cache-utils";
 
 export type { BlogPostDTO };
 
@@ -55,12 +56,9 @@ export default function BlogListPage() {
       return res.data;
     },
     onSuccess: (created) => {
-      if (created) {
-        queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = []) => [created, ...old]);
-      }
       setStatusTitle("");
       setStatusContent("");
-      void queryClient.invalidateQueries({ queryKey: ["cms-blog-posts"] });
+      prependAndInvalidateList(queryClient, ["cms-blog-posts"], created);
     },
   });
 
@@ -70,10 +68,7 @@ export default function BlogListPage() {
       return res.data;
     },
     onSuccess: (updated) => {
-      queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = []) =>
-        old.map((p) => (p.slug === updated.slug ? updated : p))
-      );
-      void queryClient.invalidateQueries({ queryKey: ["cms-blog-posts"] });
+      replaceAndInvalidateByKey(queryClient, ["cms-blog-posts"], updated, (p, next) => p.slug === next.slug);
     },
   });
 
@@ -85,10 +80,7 @@ export default function BlogListPage() {
       return res.data;
     },
     onSuccess: (updated) => {
-      queryClient.setQueryData<BlogPostDTO[]>(["cms-blog-posts"], (old = []) =>
-        old.map((p) => (p.slug === updated.slug ? updated : p))
-      );
-      void queryClient.invalidateQueries({ queryKey: ["cms-blog-posts"] });
+      replaceAndInvalidateByKey(queryClient, ["cms-blog-posts"], updated, (p, next) => p.slug === next.slug);
     },
   });
 

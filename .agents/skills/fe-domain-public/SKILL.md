@@ -13,7 +13,7 @@ description: Frontend Public Discovery, Recruiter Profile & CMS Pages in page.ts
 - Page: `frontend/src/app/companies/page.tsx` (232 lines, client component)
 - Page: `frontend/src/app/companies/[slug]/page.tsx` (186 lines, client component)
 - Page: `frontend/src/app/public/[username]/page.tsx` (212 lines, client component)
-- Page: `frontend/src/app/(public)/blog/page.tsx` (167 lines, client component)
+- Page: `frontend/src/app/(public)/blog/page.tsx` (159 lines, client component)
 - Page: `frontend/src/app/(public)/blog/[slug]/page.tsx` (130 lines, client component)
 - Page: `frontend/src/app/(public)/careers/page.tsx` (177 lines, client component)
 - Page: `frontend/src/app/(public)/contact-us/page.tsx` (152 lines, client component)

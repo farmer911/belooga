@@ -11,6 +11,11 @@ import { Button } from "@/components/ui/button";
 import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { useAuthStore, normalizeAuthUser } from "@/store/auth-store";
 import { registerSchema, RegisterFormValues } from "@/lib/schemas";
+import {
+  AuthSplitShell,
+  buildOAuthCallbackUrl,
+  OAUTH_PROVIDERS,
+} from "@/components/features/auth/auth-split-shell";
 
 type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
 
@@ -81,141 +86,109 @@ export default function RegisterPage() {
   });
 
   return (
-    <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2 bg-surface-page">
-      <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
-        <div className="max-w-md w-full mx-auto space-y-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold text-typography-main tracking-tight">Create Candidate Profile</h1>
-            <p className="text-sm text-typography-muted">
-              Showcase your talent with a 0:30 video pitch and a verified career timeline.
-            </p>
+    <AuthSplitShell
+      title="Create Candidate Profile"
+      subtitle="Showcase your talent with a 0:30 video pitch and a verified career timeline."
+      errorMessage={errorMessage}
+      heroAlt="Belooga Talent Community"
+      heroBadge="Candidate First"
+      heroTitle="Your skills speak louder when you tell your own story."
+      heroDescription="Record a personalized video elevator pitch, organize your career history, and let top companies discover the real professional behind the resume."
+    >
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">First Name</label>
+            <input type="text" placeholder="Jane" className={INPUT_CLS} {...register("firstName")} />
+            {errors.firstName && <p className="text-[11px] text-red-600">{errors.firstName.message}</p>}
           </div>
-
-          {errorMessage && (
-            <div data-testid="auth-error-banner" className="flex items-center gap-3 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          <form onSubmit={onSubmit} noValidate className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">First Name</label>
-                <input type="text" placeholder="Jane" className={INPUT_CLS} {...register("firstName")} />
-                {errors.firstName && <p className="text-[11px] text-red-600">{errors.firstName.message}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Last Name</label>
-                <input type="text" placeholder="Doe" className={INPUT_CLS} {...register("lastName")} />
-                {errors.lastName && <p className="text-[11px] text-red-600">{errors.lastName.message}</p>}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Username (CV URL Slug)</label>
-                <StatusBadge status={usernameStatus} okLabel="Available" takenLabel="Already taken" />
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><User className="w-4 h-4" /></div>
-                <input
-                  type="text"
-                  data-testid="register-username-input"
-                  placeholder="janedoe"
-                  className={ICON_INPUT_CLS}
-                  {...register("username", {
-                    onChange: (e) => setValue("username", e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "")),
-                  })}
-                />
-              </div>
-              {errors.username && <p className="text-[11px] text-red-600">{errors.username.message}</p>}
-              <p className="text-[11px] text-typography-muted">Your public CV will be at: belooga.com/public/{username || "username"}</p>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Email Address</label>
-                <StatusBadge status={emailStatus} okLabel="Valid" takenLabel="Registered" />
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Mail className="w-4 h-4" /></div>
-                <input type="email" data-testid="register-email-input" placeholder="jane@example.com" className={ICON_INPUT_CLS} {...register("email")} />
-              </div>
-              {errors.email && <p className="text-[11px] text-red-600">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Password (min 8 characters)</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Lock className="w-4 h-4" /></div>
-                <input type="password" data-testid="register-password-input" placeholder="••••••••" className={ICON_INPUT_CLS} {...register("password")} />
-              </div>
-              {errors.password && <p className="text-[11px] text-red-600">{errors.password.message}</p>}
-            </div>
-
-            <div className="space-y-1 pt-2">
-              <div className="flex items-start gap-2">
-                <input type="checkbox" id="terms" className="mt-1 h-4 w-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary" {...register("agreeTerms")} />
-                <label htmlFor="terms" className="text-xs text-typography-heading">
-                  I agree to Belooga&apos;s <Link href="/terms-and-conditions" className="text-brand-primary hover:underline">Terms of Service</Link> and <Link href="/privacy-policy" className="text-brand-primary hover:underline">Privacy Policy</Link>.
-                </label>
-              </div>
-              {errors.agreeTerms && <p className="text-[11px] text-red-600">{errors.agreeTerms.message}</p>}
-            </div>
-
-            <Button
-              type="submit"
-              size="lg"
-              data-testid="register-submit-btn"
-              disabled={registerMutation.isPending}
-              className="w-full bg-brand-primary hover:bg-brand-hover text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 mt-4"
-            >
-              {registerMutation.isPending ? "Creating Profile..." : "Complete Registration"}
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </form>
-
-          <div className="grid grid-cols-3 gap-2">
-            {["Google", "LinkedIn", "Facebook"].map((provider) => {
-              const slug = provider.toLowerCase();
-              return (
-                <button key={provider} type="button" data-testid={`register-oauth-${slug}-btn`} onClick={() => router.push(`/callback?provider=${slug}&code=oauth_${slug}_code&email=${encodeURIComponent(email.trim() || "alex@belooga.com")}`)} className="py-2 px-3 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-surface-page transition-colors cursor-pointer">
-                  {provider}
-                </button>
-              );
-            })}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Last Name</label>
+            <input type="text" placeholder="Doe" className={INPUT_CLS} {...register("lastName")} />
+            {errors.lastName && <p className="text-[11px] text-red-600">{errors.lastName.message}</p>}
           </div>
-          <p className="text-center text-sm text-typography-muted">
-            Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-brand-primary hover:underline">
-              Sign In
-            </Link>
-          </p>
         </div>
-      </div>
 
-      <div className="hidden lg:relative lg:flex flex-col justify-end p-12 bg-slate-900 overflow-hidden">
-        <img
-          src="/images/home/matt-poster.png"
-          alt="Belooga Talent Community"
-          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity"
-        />
-        <div className="absolute inset-0 bg-brand-overlay opacity-25 mix-blend-color" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-
-        <div className="relative z-10 max-w-lg text-white space-y-4">
-          <div className="inline-block px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/40 text-brand-accent text-xs font-semibold uppercase tracking-wider">
-            Candidate First
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Username (CV URL Slug)</label>
+            <StatusBadge status={usernameStatus} okLabel="Available" takenLabel="Already taken" />
           </div>
-          <h2 className="text-3xl font-extrabold leading-snug">
-            Your skills speak louder when you tell your own story.
-          </h2>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            Record a personalized video elevator pitch, organize your career history, and let top companies discover the real professional behind the resume.
-          </p>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><User className="w-4 h-4" /></div>
+            <input
+              type="text"
+              data-testid="register-username-input"
+              placeholder="janedoe"
+              className={ICON_INPUT_CLS}
+              {...register("username", {
+                onChange: (e) => setValue("username", e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "")),
+              })}
+            />
+          </div>
+          {errors.username && <p className="text-[11px] text-red-600">{errors.username.message}</p>}
+          <p className="text-[11px] text-typography-muted">Your public CV will be at: belooga.com/public/{username || "username"}</p>
         </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Email Address</label>
+            <StatusBadge status={emailStatus} okLabel="Valid" takenLabel="Registered" />
+          </div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Mail className="w-4 h-4" /></div>
+            <input type="email" data-testid="register-email-input" placeholder="jane@example.com" className={ICON_INPUT_CLS} {...register("email")} />
+          </div>
+          {errors.email && <p className="text-[11px] text-red-600">{errors.email.message}</p>}
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-semibold uppercase tracking-wider text-typography-heading">Password (min 8 characters)</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Lock className="w-4 h-4" /></div>
+            <input type="password" data-testid="register-password-input" placeholder="••••••••" className={ICON_INPUT_CLS} {...register("password")} />
+          </div>
+          {errors.password && <p className="text-[11px] text-red-600">{errors.password.message}</p>}
+        </div>
+
+        <div className="space-y-1 pt-2">
+          <div className="flex items-start gap-2">
+            <input type="checkbox" id="terms" className="mt-1 h-4 w-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary" {...register("agreeTerms")} />
+            <label htmlFor="terms" className="text-xs text-typography-heading">
+              I agree to Belooga&apos;s <Link href="/terms-and-conditions" className="text-brand-primary hover:underline">Terms of Service</Link> and <Link href="/privacy-policy" className="text-brand-primary hover:underline">Privacy Policy</Link>.
+            </label>
+          </div>
+          {errors.agreeTerms && <p className="text-[11px] text-red-600">{errors.agreeTerms.message}</p>}
+        </div>
+
+        <Button
+          type="submit"
+          size="lg"
+          data-testid="register-submit-btn"
+          disabled={registerMutation.isPending}
+          className="w-full bg-brand-primary hover:bg-brand-hover text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 mt-4"
+        >
+          {registerMutation.isPending ? "Creating Profile..." : "Complete Registration"}
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </form>
+
+      <div className="grid grid-cols-3 gap-2">
+        {OAUTH_PROVIDERS.map((provider) => {
+          const slug = provider.toLowerCase();
+          return (
+            <button key={provider} type="button" data-testid={`register-oauth-${slug}-btn`} onClick={() => router.push(buildOAuthCallbackUrl(provider, email, false))} className="py-2 px-3 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-surface-page transition-colors cursor-pointer">
+              {provider}
+            </button>
+          );
+        })}
       </div>
-    </div>
+      <p className="text-center text-sm text-typography-muted">
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-brand-primary hover:underline">
+          Sign In
+        </Link>
+      </p>
+    </AuthSplitShell>
   );
 }

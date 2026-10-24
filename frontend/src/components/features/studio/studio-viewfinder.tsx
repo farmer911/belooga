@@ -46,13 +46,7 @@ export function StudioViewfinder({
             autoPlay
             playsInline
             muted
-            style={{
-              transform: "scaleX(-1) translateZ(0)",
-              WebkitTransform: "scaleX(-1) translateZ(0)",
-              willChange: "transform",
-              backfaceVisibility: "hidden",
-            }}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover -scale-x-100 transform-gpu will-change-transform backface-hidden"
           />
 
           {/* Viewfinder HUD */}

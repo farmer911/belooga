@@ -16,6 +16,7 @@ import { RecruiterPipelineBoard } from "@/components/features/recruiter/recruite
 import { TopCandidatesLeaderboard } from "@/components/features/search/top-candidates-leaderboard";
 import { RecruiterAnalyticsPanel } from "@/components/features/analytics/multi-persona-analytics";
 import { RecruiterReverseBidAndRoiSuite } from "@/components/features/growth/recruiter-tracker-wallet-suite";
+import { prependAndInvalidateList } from "@/lib/query-cache-utils";
 
 export default function RecruiterHiringHubPage() {
   const queryClient = useQueryClient();
@@ -58,10 +59,7 @@ export default function RecruiterHiringHubPage() {
       return res.data;
     },
     onSuccess: (created) => {
-      if (created) {
-        queryClient.setQueryData<RecruiterPipelineItem[]>(["recruiter-pipeline"], (prev = []) => [created, ...prev]);
-      }
-      queryClient.invalidateQueries({ queryKey: ["recruiter-pipeline"] });
+      prependAndInvalidateList(queryClient, ["recruiter-pipeline"], created);
       setNewUsername("");
       setShowAddForm(false);
     },
