@@ -17,11 +17,14 @@ import {
   useMobileAtsScanMutation,
   useMobileChunkUploadMutation,
   useMobileTeleprompterMutation,
+  useMobileVideoStatusQuery,
 } from "@/hooks/use-mobile-studio";
+import { useMobileAuthStore } from "@/store/auth-store";
 import { getSemanticTokens, NEUMORPHIC_TOKENS } from "@/theme/tokens";
 
 export default function MobilePitchStudioScreen() {
   const tokens = getSemanticTokens("neumorphic");
+  const currentUsername = useMobileAuthStore((s) => s.user?.username) || "alexnguyen";
   const [targetRole, setTargetRole] = useState("Staff Backend Engineer");
   const [jobDescription, setJobDescription] = useState("");
   const [cvText, setCvText] = useState("Python • FastAPI • PostgreSQL 16 • React Native");
@@ -32,6 +35,7 @@ export default function MobilePitchStudioScreen() {
   const chunkUploadMutation = useMobileChunkUploadMutation();
   const atsScanMutation = useMobileAtsScanMutation();
   const atsHistoryQuery = useMobileAtsHistoryQuery();
+  const videoStatusQuery = useMobileVideoStatusQuery(currentUsername);
 
   const handleGenerateScript = async () => {
     await teleprompterMutation.mutateAsync({ targetRole, jobDescription });
@@ -153,14 +157,23 @@ export default function MobilePitchStudioScreen() {
       </NeumorphicCard>
 
       <NeumorphicCard testID="mobile-camera-upload-card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <div data-testid="mobile-studio-upload-progress" style={{ fontWeight: 700, color: tokens.brand.primary }}>
             Upload Progress: {uploadPercent}% {uploadPercent === 100 ? "(3/3 Chunks Assembled)" : ""}
           </div>
-          <BadgePill label={`${(atsHistoryQuery.data ?? []).length} Scans`} tone="neutral" />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <BadgePill
+              testID="mobile-studio-video-transcode-status"
+              label={`Transcode: ${videoStatusQuery.data?.status ?? "READY"}`}
+              tone="brand"
+            />
+            <BadgePill label={`${(atsHistoryQuery.data ?? []).length} Scans`} tone="neutral" />
+          </div>
         </div>
-        {uploadedUrl ? (
-          <div data-testid="mobile-studio-uploaded-url">Published Pitch: {uploadedUrl}</div>
+        {uploadedUrl || videoStatusQuery.data?.video_url ? (
+          <div data-testid="mobile-studio-uploaded-url">
+            Published Pitch: {uploadedUrl ?? videoStatusQuery.data?.video_url}
+          </div>
         ) : null}
         <NeumorphicButton
           testID="mobile-studio-upload-chunks"

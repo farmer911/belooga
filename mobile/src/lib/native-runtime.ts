@@ -11,15 +11,29 @@ export interface SecureVaultAdapter {
   deleteItemAsync(key: string): Promise<void>;
 }
 
-declare global {
-  var ExpoSecureStore: SecureVaultAdapter | undefined;
+export interface GlobalWithSecureStore {
+  ExpoSecureStore?: SecureVaultAdapter;
 }
 
 const memoryVault = new Map<string, string>();
 const persistentKeystore = new Map<string, string>();
 
+export function isSecureVaultAdapter(
+  candidate: Partial<SecureVaultAdapter> | null | undefined
+): candidate is SecureVaultAdapter {
+  return (
+    candidate !== null &&
+    candidate !== undefined &&
+    typeof candidate === "object" &&
+    typeof candidate.getItemAsync === "function" &&
+    typeof candidate.setItemAsync === "function" &&
+    typeof candidate.deleteItemAsync === "function"
+  );
+}
+
 function getNativeExpoSecureStore(): SecureVaultAdapter | undefined {
-  return globalThis.ExpoSecureStore;
+  const candidate: Partial<SecureVaultAdapter> | null | undefined = Reflect.get(globalThis, "ExpoSecureStore");
+  return isSecureVaultAdapter(candidate) ? candidate : undefined;
 }
 
 export function reloadSecureVaultFromDiskForTesting(): void {

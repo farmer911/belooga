@@ -18,6 +18,7 @@ import {
   computeCandidateSkillMatch,
   useCreateMobileCustomSkillMutation,
   useMobileCandidateSearchQuery,
+  useMobileSearchSuggestionsQuery,
   useMobileSkillCatalogQuery,
   useMobileTrendingInsightsQuery,
 } from "@/hooks/use-mobile-discovery";
@@ -41,12 +42,14 @@ export default function MobileDiscoveryFeedScreen() {
     cursor,
   });
   const trendingQuery = useMobileTrendingInsightsQuery();
+  const suggestionsQuery = useMobileSearchSuggestionsQuery(queryText);
   const skillCatalogQuery = useMobileSkillCatalogQuery();
   const createCustomSkillMutation = useCreateMobileCustomSkillMutation();
   const bookmarksQuery = useMobileBookmarksQuery();
   const toggleBookmarkMutation = useToggleMobileBookmarkMutation();
 
   const candidates = searchQuery.data?.items ?? [];
+  const searchSuggestions = suggestionsQuery.data ?? [];
   const trendingSkills = trendingQuery.data?.trending_skills ?? [];
   const catalogSkills = (skillCatalogQuery.data ?? []).map((s) => s.name);
   const bookmarks = bookmarksQuery.data ?? [];
@@ -110,6 +113,22 @@ export default function MobileDiscoveryFeedScreen() {
             setCursor(undefined);
           }}
         />
+        {searchSuggestions.length > 0 ? (
+          <div data-testid="mobile-search-suggestions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {searchSuggestions.map((suggestion) => (
+              <NeumorphicButton
+                key={suggestion}
+                testID={`mobile-search-suggestion-${suggestion}`}
+                label={suggestion}
+                variant="inset"
+                onPress={() => {
+                  setQueryText(suggestion);
+                  setCursor(undefined);
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
         <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Multi-Skill Filter & Custom Skill Drawer">
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
             <NeumorphicInput

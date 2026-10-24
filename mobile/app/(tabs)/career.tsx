@@ -9,6 +9,7 @@ import {
 } from "@/lib/native-runtime";
 import {
   saveMobileCvDraft,
+  useMobileExecutiveAnalyticsQuery,
   useMobileExpertPackagesQuery,
   useMobileMomoQrMutation,
   useMobileSalaryBenchmarkQuery,
@@ -55,6 +56,7 @@ export default function MobileCareerHubScreen() {
   const careerJobsQuery = useMobileCareerJobsQuery();
   const createCareerJobMutation = useCreateMobileCareerJobMutation();
   const applyCareerJobMutation = useApplyMobileCareerJobMutation();
+  const execBiQuery = useMobileExecutiveAnalyticsQuery();
 
   const availVnd = walletQuery.data?.available_balance_vnd ?? 0;
   const escrowVnd = walletQuery.data?.escrow_locked_vnd ?? 0;
@@ -271,7 +273,19 @@ export default function MobileCareerHubScreen() {
         </NeumorphicCard>
       ) : null}
 
-      {subTab === "bi" ? <Analytics360Section /> : null}
+      {subTab === "bi" ? (
+        <>
+          <NeumorphicCard testID="mobile-career-exec-bi-summary">
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <BadgePill testID="mobile-exec-gmv-pill" label={`GMV: $${execBiQuery.data?.total_gmv_usd ?? 0}`} tone="brand" />
+              <BadgePill testID="mobile-exec-conv-pill" label={`MoMo Conv: ${execBiQuery.data?.momo_conversion_rate ?? 0}%`} tone="success" />
+              <BadgePill testID="mobile-exec-p95-pill" label={`Search P95: ${execBiQuery.data?.search_p95_ms ?? 0}ms`} tone="neutral" />
+              <BadgePill testID="mobile-exec-active-pill" label={`Active: ${execBiQuery.data?.active_candidates ?? 0}`} tone="warning" />
+            </div>
+          </NeumorphicCard>
+          <Analytics360Section />
+        </>
+      ) : null}
     </ScreenShell>
   );
 }
