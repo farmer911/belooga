@@ -35,7 +35,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS).catch(() => {}))
+      .then((cache) => Promise.allSettled(PRECACHE_ASSETS.map((url) => cache.add(url))))
       .then(() => self.skipWaiting())
   );
 });
@@ -100,7 +100,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       caches.open(API_SWR_CACHE).then(async (cache) => {
         const cachedResponse = await cache.match(request);
-        const networkPromise = fetch(request)
+        const networkPromise = fetch(request, { signal: AbortSignal.timeout(8000) })
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
               cache.put(request, networkResponse.clone());
@@ -122,7 +122,7 @@ self.addEventListener("fetch", (event) => {
         const cached = await cache.match(request);
         if (cached) return cached;
         try {
-          const response = await fetch(request);
+          const response = await fetch(request, { signal: AbortSignal.timeout(8000) });
           if (response && response.status === 200 && response.type === "basic") {
             cache.put(request, response.clone());
           }

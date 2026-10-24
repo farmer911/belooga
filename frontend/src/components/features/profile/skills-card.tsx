@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SkillBadge } from "@/components/common/skill-badge";
 import { apiClient } from "@/services/api-client";
 import {
   Dialog,
@@ -69,25 +70,16 @@ export function SkillsCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {skills.map((skill, idx) => (
-          <span
-            key={idx}
-            data-testid="skill-badge"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading hover:border-brand-primary transition-colors"
-          >
-            <span>{skill}</span>
-            {isEditable && onRemoveSkill && (
-              <button
-                type="button"
-                data-testid="remove-skill-btn"
-                onClick={() => onRemoveSkill(skill)}
-                className="text-slate-400 hover:text-red-500 rounded p-0.5 cursor-pointer"
-                title="Remove skill"
-              >
-                <span className="text-xs font-bold leading-none select-none">×</span>
-              </button>
-            )}
-          </span>
+        {skills.map((skill) => (
+          <SkillBadge
+            key={skill}
+            skill={skill}
+            removable={isEditable && Boolean(onRemoveSkill)}
+            onRemove={onRemoveSkill}
+            variant="default"
+            size="md"
+            className="px-2.5 py-1 bg-surface-page border border-surface-border rounded-md text-xs font-medium text-typography-heading hover:border-brand-primary transition-colors"
+          />
         ))}
       </div>
 

@@ -74,6 +74,7 @@ export function ServiceWorkerProvider() {
   const [isOnline, setIsOnline] = useState(true);
   const [queuedCount, setQueuedCount] = useState(0);
   const [syncBanner, setSyncBanner] = useState<string | null>(null);
+  const [swStatus, setSwStatus] = useState<"idle" | "registered" | "error">("idle");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -82,7 +83,14 @@ export function ServiceWorkerProvider() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
-        .catch(() => {});
+        .then(() => {
+          setSwStatus("registered");
+          document.documentElement.setAttribute("data-sw-status", "registered");
+        })
+        .catch(() => {
+          setSwStatus("error");
+          document.documentElement.setAttribute("data-sw-status", "error");
+        });
 
       const handleSwMessage = (event: MessageEvent) => {
         const data = event.data || {};
@@ -127,6 +135,7 @@ export function ServiceWorkerProvider() {
   return (
     <div
       data-testid="sw-network-status-banner"
+      data-sw-status={swStatus}
       aria-live="polite"
       className="fixed bottom-4 left-4 z-50 flex items-center gap-2.5 rounded-xl border border-surface-border bg-surface-card px-4 py-2.5 text-xs font-semibold text-typography-main shadow-lg"
     >
