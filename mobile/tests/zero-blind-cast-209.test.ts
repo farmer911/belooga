@@ -84,12 +84,12 @@ describe("[BEL-232] (#209) Zero Blind Double-Cast & MobileUserInput Type Safety"
       async deleteItemAsync() {},
     };
 
-    globalThis.ExpoSecureStore = adapter;
+    Reflect.set(globalThis, "ExpoSecureStore", adapter);
     try {
       const value = await SecureStore.getItemAsync("jwt");
       expect(value).toBe("typed-vault:jwt");
     } finally {
-      globalThis.ExpoSecureStore = undefined;
+      Reflect.set(globalThis, "ExpoSecureStore", undefined);
       await clearSecureVaultForTesting();
     }
   });
