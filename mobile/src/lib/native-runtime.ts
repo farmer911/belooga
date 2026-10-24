@@ -11,11 +11,16 @@ export interface SecureVaultAdapter {
   deleteItemAsync(key: string): Promise<void>;
 }
 
+declare global {
+  // eslint-disable-next-line no-var
+  var ExpoSecureStore: SecureVaultAdapter | undefined;
+}
+
 const memoryVault = new Map<string, string>();
 const persistentKeystore = new Map<string, string>();
 
 function getNativeExpoSecureStore(): SecureVaultAdapter | undefined {
-  return (globalThis as unknown as { ExpoSecureStore?: SecureVaultAdapter }).ExpoSecureStore;
+  return globalThis.ExpoSecureStore;
 }
 
 export function reloadSecureVaultFromDiskForTesting(): void {

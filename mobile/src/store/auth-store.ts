@@ -15,6 +15,19 @@ export interface MobileUserSummary {
   role: "candidate" | "employer" | "admin";
 }
 
+export interface MobileUserInput {
+  id?: unknown;
+  email?: unknown;
+  username?: unknown;
+  firstName?: unknown;
+  first_name?: unknown;
+  lastName?: unknown;
+  last_name?: unknown;
+  avatarUrl?: unknown;
+  avatar_url?: unknown;
+  role?: unknown;
+}
+
 export interface MobileAuthState {
   accessToken: string | null;
   refreshToken: string | null;
@@ -32,7 +45,7 @@ export interface MobileAuthState {
 }
 
 export function normalizeMobileUser(
-  raw: Record<string, unknown> | null | undefined
+  raw: MobileUserInput | Record<string, unknown> | null | undefined
 ): MobileUserSummary | null {
   if (!raw || typeof raw.username !== "string") return null;
   const roleVal = raw.role;

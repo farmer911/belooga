@@ -24,7 +24,7 @@ export async function loginMobileUser(input: LoginFormValues): Promise<MobileUse
   const validated = loginSchema.parse(input);
   const raw = await mobileApiClient.post<unknown>("/v1/auth/login/", validated, true);
   const parsed = tokenResponseSchema.parse(raw);
-  const userSummary = normalizeMobileUser(parsed.user as unknown as Record<string, unknown>);
+  const userSummary = normalizeMobileUser(parsed.user);
   if (!userSummary) {
     throw new Error("Invalid user profile payload returned from login");
   }
@@ -49,7 +49,7 @@ export async function registerMobileUser(input: RegisterFormValues): Promise<Mob
     true
   );
   const parsed = tokenResponseSchema.parse(raw);
-  const userSummary = normalizeMobileUser(parsed.user as unknown as Record<string, unknown>);
+  const userSummary = normalizeMobileUser(parsed.user);
   if (!userSummary) {
     throw new Error("Invalid user profile payload returned from registration");
   }
@@ -79,7 +79,7 @@ export async function logoutMobileUser(): Promise<void> {
 export async function fetchCurrentMobileSession(): Promise<MobileUserSummary> {
   const raw = await mobileApiClient.get<unknown>("/v1/auth/me/");
   const parsed = userProfileDtoSchema.parse(raw);
-  const summary = normalizeMobileUser(parsed as unknown as Record<string, unknown>);
+  const summary = normalizeMobileUser(parsed);
   if (!summary) {
     throw new Error("Unable to normalize session user profile");
   }
