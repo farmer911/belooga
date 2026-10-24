@@ -76,9 +76,10 @@ export function useATSScan() {
   const tailorMutation = useMutation({
     mutationFn: async (payload: ATSScanPayload): Promise<TailorCVResponse> => {
       try {
-        const res = await apiClient.post<TailorCVResponse & Partial<ATSScanResult>>("/v1/match/tailor-cv", payload);
+        type TailorApiPayload = TailorCVResponse | (ATSScanResult & { tailored_cv_text?: string });
+        const res = await apiClient.post<TailorApiPayload>("/v1/match/tailor-cv", payload);
         const tailoredText = res.data.tailored_cv_text || payload.cv_text;
-        const scanResult = res.data.scan_result ?? (res.data as unknown as ATSScanResult);
+        const scanResult: ATSScanResult = "scan_result" in res.data ? res.data.scan_result : res.data;
         if (scanResult && typeof scanResult.ats_score === "number") {
           diagnostics.setResult(scanResult);
         }

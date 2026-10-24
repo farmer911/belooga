@@ -221,5 +221,22 @@ describe("BEL-226 Frontend Anti-Deception Invariants (#1, #2, #3, #4, #5, #8, #9
     expect(bookingSrc.includes('href="/login"')).toBe(true);
     expect(bookingSrc.includes('"/login?return_to=%2Fexpert-review"')).toBe(true);
   });
+
+  test("BEL-231 (NTA-S001 & NTA-S003): zero blind 'as unknown as' casts and zero eslint-disable comments in 6 target files", () => {
+    const previewSrc = readSrc("lib/studio-preview.ts");
+    const atsScanSrc = readSrc("hooks/use-ats-Scan.ts");
+    const visualizerSrc = readSrc("components/common/audio-visualizer-meter.tsx");
+    const avatarSrc = readSrc("components/ui/avatar.tsx");
+    const bookingSrc = readSrc("components/features/expert-review/review-booking-dialog.tsx");
+    const momoSrc = readSrc("components/features/payments/momo-checkout-dialog.tsx");
+
+    expect(previewSrc.includes("as unknown as")).toBe(false);
+    expect(atsScanSrc.includes("as unknown as")).toBe(false);
+    expect(visualizerSrc.includes("as unknown as")).toBe(false);
+
+    expect(avatarSrc.includes("eslint-disable")).toBe(false);
+    expect(bookingSrc.includes("eslint-disable")).toBe(false);
+    expect(momoSrc.includes("eslint-disable")).toBe(false);
+  });
 });
 

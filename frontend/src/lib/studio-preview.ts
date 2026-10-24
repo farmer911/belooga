@@ -9,7 +9,7 @@ export function createStudioPreviewStream(
   onStopRef?: { current: boolean }
 ): MediaStream {
   if (typeof document === "undefined") {
-    return null as unknown as MediaStream;
+    throw new Error("MediaDevices API is not available in this environment");
   }
 
   const canvas = document.createElement("canvas");
