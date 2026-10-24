@@ -4,6 +4,10 @@ import * as React from "react";
 import { Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface WindowWithWebkitAudio extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
 export interface AudioVisualizerMeterProps {
   /** Real audio stream to visualize */
   stream?: MediaStream | null;
@@ -64,7 +68,7 @@ export function AudioVisualizerMeter({
       try {
         const AudioContextClass =
           window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          (window as WindowWithWebkitAudio).webkitAudioContext;
         if (AudioContextClass) {
           const audioCtx = new AudioContextClass();
           internalAudioCtxRef.current = audioCtx;

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,8 +62,10 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         {...props}
       >
         {showImage ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
+          <Image
+            unoptimized
+            width={96}
+            height={96}
             src={src!}
             alt={alt || name || "Avatar"}
             onError={() => setHasError(true)}

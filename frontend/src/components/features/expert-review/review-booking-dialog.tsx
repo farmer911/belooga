@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth-store";
 import { reviewBookingSchema, ReviewBookingFormValues } from "@/lib/schemas";
+import Image from "next/image";
 import Link from "next/link";
 
 interface ReviewBookingDialogProps {
@@ -273,8 +274,7 @@ export function ReviewBookingDialog({
             {paymentMethod === "momo_qr" && (
               <div className="p-3 rounded-xl bg-surface-page border border-surface-border text-center space-y-1.5">
                 {momoQrMutation.data?.qr_code_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={momoQrMutation.data.qr_code_url} alt="MoMo QR" className="w-32 h-32 object-contain mx-auto rounded bg-surface-card p-1 border border-surface-border" />
+                  <Image unoptimized width={128} height={128} src={momoQrMutation.data.qr_code_url} alt="MoMo QR" className="w-32 h-32 object-contain mx-auto rounded bg-surface-card p-1 border border-surface-border" />
                 ) : (
                   <div className="text-xs text-typography-muted py-4">Đang tạo mã QR MoMo Escrow...</div>
                 )}

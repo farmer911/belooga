@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { Zap, Wallet, PlusCircle, CheckCircle2, X } from "lucide-react";
 import { apiClient } from "@/services/api-client";
@@ -205,8 +206,7 @@ export function MomoCheckoutDialog({
 
             <div className="p-3 bg-surface-card rounded-xl inline-block mx-auto shadow-sm border border-surface-border">
               {qrUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={qrUrl} alt="MoMo Payment QR" className="w-36 h-36 object-contain" data-testid="momo-qr-image" />
+                <Image unoptimized width={144} height={144} src={qrUrl} alt="MoMo Payment QR" className="w-36 h-36 object-contain" data-testid="momo-qr-image" />
               ) : (
                 <div className="w-36 h-36 flex items-center justify-center text-typography-muted">Đang sinh mã QR...</div>
               )}
