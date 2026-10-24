@@ -6,6 +6,7 @@ import { Share2, Zap, AlertTriangle, History, Upload, UserCheck, CheckCircle2 } 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { getApiErrorDetail } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
 import { useATSScan, ATSScanPayload, ATSScanHistoryItem } from "@/hooks/use-ats-Scan";
 import { PRESET_VNG, PRESET_SHOPEE } from "@/components/features/ats-diagnostics/ats-presets";
@@ -16,14 +17,9 @@ import { MomoCheckoutDialog } from "@/components/features/payments/momo-checkout
 import { MockInterviewAndOutreachSuite } from "@/components/features/growth/career-acceleration-suite";
 
 function SharedScoreBadge() {
-  const searchParams = useSearchParams();
-  const sharedScore = searchParams.get("score");
+  const sharedScore = useSearchParams().get("score");
   if (!sharedScore) return null;
-  return (
-    <Badge data-testid="shared-ats-score-banner" variant="outline" className="text-[10px] font-bold text-emerald-700 border-emerald-300 bg-emerald-50">
-      Điểm ATS được chia sẻ: {sharedScore}/100
-    </Badge>
-  );
+  return <Badge data-testid="shared-ats-score-banner" variant="outline" className="text-[10px] font-bold text-emerald-700 border-emerald-300 bg-emerald-50">Điểm ATS được chia sẻ: {sharedScore}/100</Badge>;
 }
 
 export default function ATSDiagnosticsPage() {
@@ -36,6 +32,7 @@ export default function ATSDiagnosticsPage() {
   const [cvText, setCvText] = useState(PRESET_VNG.cv_text);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isMomoOpen, setIsMomoOpen] = useState(false);
+  const [uiError, setUiError] = useState<string | null>(null);
 
   const {
     result, shortlist, interviewKit, isLoading, error,
@@ -48,10 +45,13 @@ export default function ATSDiagnosticsPage() {
   const handleScan = async (overrideCvText?: string) => {
     const targetCv = (overrideCvText ?? cvText).trim();
     if (!targetCv) return;
+    setUiError(null);
     try {
       await scanCV({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: targetCv });
       void refetchHistory();
-    } catch { /* error managed in hook */ }
+    } catch (err: unknown) {
+      setUiError(getApiErrorDetail(err, "Không thể thực hiện quét điểm ATS."));
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,27 +59,24 @@ export default function ATSDiagnosticsPage() {
     e.target.value = "";
     if (!file) return;
     const extracted = await extractCvFile({ file, candidateName: activeUsername });
-    if (extracted.text) {
-      setCvText(extracted.text);
-      await handleScan(extracted.text);
-    }
+    if (extracted.text) { setCvText(extracted.text); await handleScan(extracted.text); }
   };
 
   const handleLoadProfileCv = async () => {
     const hydratedText = await loadProfileCv(activeUsername);
-    if (hydratedText) {
-      setCvText(hydratedText);
-      await handleScan(hydratedText);
-    }
+    if (hydratedText) { setCvText(hydratedText); await handleScan(hydratedText); }
   };
 
   const handlePaymentSuccess = async () => {
+    setUiError(null);
     try {
       const res = await tailorCv({ job_title: jobTitle, company_name: companyName, jd_text: jdText, cv_text: cvText });
       if (res.tailored_cv_text) setCvText(res.tailored_cv_text);
       if (res.scan_result) setResult(res.scan_result);
       void refetchHistory();
-    } catch { /* error managed in hook */ }
+    } catch (err: unknown) {
+      setUiError(getApiErrorDetail(err, "Không thể tối ưu CV sau thanh toán."));
+    }
   };
 
   const handleSelectHistory = (item: ATSScanHistoryItem) => {
@@ -177,10 +174,10 @@ export default function ATSDiagnosticsPage() {
             </div>
           </div>
 
-          {error && (
+          {(error || uiError) && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>{error}</span>
+              <span>{error || uiError}</span>
             </div>
           )}
 

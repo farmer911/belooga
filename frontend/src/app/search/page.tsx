@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Loader2, User, BookmarkCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/services/api-client";
+import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { VideoPitchModal } from "@/components/features/media/video-pitch-modal";
 import { SavedShortlistDrawer } from "@/components/features/search/saved-shortlist-drawer";
 import { SkillFilterBar, SearchCandidateCard, SearchCandidateItem, deriveCandidateSkills } from "@/components/features/search/skill-filter-bar";
@@ -37,6 +37,7 @@ function SearchContent() {
   const [videoOnly, setVideoOnly] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeVideoCandidate, setActiveVideoCandidate] = useState<SearchCandidateItem | null>(null);
+  const [searchFallbackNotice, setSearchFallbackNotice] = useState<string | null>(null);
   const { bookmarks, isBookmarked, isPendingFor, toggleBookmark, removeBookmark } = useBookmarks();
 
   useEffect(() => { setQuery(initialKey); }, [initialKey]);
@@ -55,9 +56,7 @@ function SearchContent() {
 
   const handleToggleSkill = (skill: string) => {
     const exists = selectedSkills.some((s) => s.toLowerCase() === skill.toLowerCase());
-    const next = exists
-      ? selectedSkills.filter((s) => s.toLowerCase() !== skill.toLowerCase())
-      : [...selectedSkills, skill];
+    const next = exists ? selectedSkills.filter((s) => s.toLowerCase() !== skill.toLowerCase()) : [...selectedSkills, skill];
     setSelectedSkills(next);
     syncUrlParams(query, next, 1);
   };
@@ -66,17 +65,15 @@ function SearchContent() {
     queryKey: ["candidate-search", initialKey, selectedSkills.join(","), initialPage],
     queryFn: async () => {
       const skillsParam = selectedSkills.join(",");
-      try {
-        if (skillsParam) {
-          const res = await apiClient.get<SearchResponseData>("/v1/search/candidates", {
-            params: { key: initialKey.trim(), skills: skillsParam, page: initialPage, limit: 9 },
-          });
-          if (Array.isArray(res.data?.results)) return res.data;
+      if (skillsParam) {
+        try {
+          const res = await apiClient.get<SearchResponseData>("/v1/search/candidates", { params: { key: initialKey.trim(), skills: skillsParam, page: initialPage, limit: 9 } });
+          if (Array.isArray(res.data?.results)) { setSearchFallbackNotice(null); return res.data; }
+        } catch (err: unknown) {
+          setSearchFallbackNotice(getApiErrorDetail(err, "Đang dùng bộ lọc kỹ năng dự phòng (/v1/profile/search/)."));
         }
-      } catch { /* fallback to /v1/profile/search/ */ }
-      return (await apiClient.get<SearchResponseData>("/v1/profile/search/", {
-        params: { key: initialKey.trim(), skills: skillsParam || undefined, page: initialPage, limit: 9 },
-      })).data;
+      }
+      return (await apiClient.get<SearchResponseData>("/v1/profile/search/", { params: { key: initialKey.trim(), skills: skillsParam || undefined, page: initialPage, limit: 9 } })).data;
     },
   });
   const { data: suggestions = [] } = useQuery<SearchSuggestionItem[]>({
@@ -185,7 +182,7 @@ function SearchContent() {
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs text-typography-muted">
             <span>Showing {candidates.length} of {data.total} candidate results</span>
-            <span>Sorted by relevance & skill match</span>
+            <span title={searchFallbackNotice || undefined}>Sorted by relevance & skill match</span>
           </div>
 
           {isLoading ? (
