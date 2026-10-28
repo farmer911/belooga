@@ -9,6 +9,7 @@ import json
 import re
 import subprocess
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -36,7 +37,7 @@ def main():
         raw = subprocess.check_output(
             ["gh", "issue", "view", str(issue_num), "--json", "number,title,body,labels"],
             cwd=str(ROOT_DIR),
-            text=True
+            text=True, encoding="utf-8"
         )
         issue = json.loads(raw)
     except Exception as e:

@@ -41,11 +41,11 @@ def get_git_diff() -> str:
             print(f"[!] Warning: Could not parse PR base ref: {e}")
 
     try:
-        diff_output = subprocess.check_output(diff_cmd, cwd=str(ROOT_DIR), text=True)
+        diff_output = subprocess.check_output(diff_cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8")
     except subprocess.CalledProcessError:
         # Fallback to single commit diff
         try:
-            diff_output = subprocess.check_output(["git", "show", "HEAD", "--stat", "--patch"], cwd=str(ROOT_DIR), text=True)
+            diff_output = subprocess.check_output(["git", "show", "HEAD", "--stat", "--patch"], cwd=str(ROOT_DIR), text=True, encoding="utf-8")
         except Exception as e:
             print(f"[!] Could not obtain git diff: {e}")
             diff_output = ""

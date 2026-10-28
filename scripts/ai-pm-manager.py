@@ -110,7 +110,7 @@ def get_issue_details(issue_number: int) -> dict:
     """Fetch issue details from GitHub via gh CLI."""
     try:
         cmd = ["gh", "issue", "view", str(issue_number), "--json", "number,title,body,labels"]
-        res = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True)
+        res = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8")
         return json.loads(res)
     except Exception as e:
         print(f"[!] Error fetching issue #{issue_number}: {e}")
@@ -123,7 +123,7 @@ def create_github_task_issue(title: str, body: str, labels: list[str]) -> int:
     for lbl in labels:
         cmd.extend(["--label", lbl])
     try:
-        out = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True).strip()
+        out = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8").strip()
         # Output is issue URL e.g. https://github.com/farmer911/belooga/issues/12
         match = re.search(r"/issues/(\d+)", out)
         if match:

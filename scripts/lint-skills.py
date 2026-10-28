@@ -19,6 +19,7 @@ import ast
 import json
 import re
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 try:

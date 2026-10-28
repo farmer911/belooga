@@ -45,8 +45,8 @@ from app.main import app
 def get_macos_limits() -> Dict[str, int]:
     soft_fd, hard_fd = resource.getrlimit(resource.RLIMIT_NOFILE)
     try:
-        first_p = int(subprocess.check_output(["sysctl", "-n", "net.inet.ip.portrange.first"], text=True).strip())
-        last_p = int(subprocess.check_output(["sysctl", "-n", "net.inet.ip.portrange.last"], text=True).strip())
+        first_p = int(subprocess.check_output(["sysctl", "-n", "net.inet.ip.portrange.first"], text=True, encoding="utf-8").strip())
+        last_p = int(subprocess.check_output(["sysctl", "-n", "net.inet.ip.portrange.last"], text=True, encoding="utf-8").strip())
         ephemeral_total = last_p - first_p + 1
     except Exception:
         ephemeral_total = 16384
