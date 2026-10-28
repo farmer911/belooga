@@ -149,7 +149,7 @@ export default function RecruiterHiringHubPage() {
             data-testid="recruiter-add-username-input"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            placeholder="Nhập username ứng viên (VD: phucnguyen)..."
+            placeholder="Nhập username ứng viên (VD: nguyen-van-a)..."
             className="bg-surface-page border border-surface-border rounded-lg px-3 py-1.5 text-xs text-typography-main w-64"
             required
           />
