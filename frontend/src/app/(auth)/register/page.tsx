@@ -21,10 +21,7 @@ type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
 function useDebouncedAvailability(value: string, isValid: boolean, endpoint: string): AvailabilityStatus {
   const [debounced, setDebounced] = useState("");
   useEffect(() => {
-    if (!isValid) {
-      setDebounced("");
-      return;
-    }
+    if (!isValid) return; // stale `debounced` is ignored below while the input is invalid
     const timer = setTimeout(() => setDebounced(value.trim()), 300);
     return () => clearTimeout(timer);
   }, [value, isValid]);

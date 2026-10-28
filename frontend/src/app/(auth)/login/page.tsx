@@ -139,7 +139,7 @@ export default function LoginPage() {
       )}
 
       <p className="text-center text-sm text-typography-muted">
-        Don't have a candidate account yet?{" "}
+        Don&apos;t have a candidate account yet?{" "}
         <Link href="/register" className="font-semibold text-brand-primary hover:underline">
           Create Profile
         </Link>

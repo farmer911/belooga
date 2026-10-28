@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Wallet, CheckCircle2, X, ExternalLink } from "lucide-react";
@@ -26,7 +26,7 @@ export function MomoCheckoutDialog({
   orderInfo,
   onPaymentSuccess,
 }: MomoCheckoutDialogProps) {
-  const [paidMethodLabel, setPaidMethodLabel] = useState<string | null>(null);
+  const [paidByWallet, setPaidByWallet] = useState(false);
   const { availableBalanceVnd, payWithWallet, isPayingWithWallet } = useWallet();
 
   // MoMo payment page opens in a new tab; this dialog polls until the IPN marks the order PAID.
@@ -44,31 +44,28 @@ export function MomoCheckoutDialog({
 
   const { data: orderStatus } = useQuery<{ order_id: string; status: "PENDING" | "PAID" | "FAILED" }>({
     queryKey: ["momo-order-status", momoOrderId],
-    queryFn: async () => (await apiClient.get(`/v1/payments/momo/order-status/${momoOrderId}`)).data,
-    enabled: isOpen && Boolean(momoOrderId) && !paidMethodLabel,
+    queryFn: async () => {
+      const order = (await apiClient.get(`/v1/payments/momo/order-status/${momoOrderId}`)).data;
+      if (order.status === "PAID") onPaymentSuccess?.();
+      return order;
+    },
+    enabled: isOpen && Boolean(momoOrderId),
+    refetchOnWindowFocus: false, // onPaymentSuccess must fire once per PAID order
     refetchInterval: (q) => (q.state.data?.status === "PENDING" || !q.state.data ? 3000 : false),
   });
-
-  useEffect(() => {
-    if (orderStatus?.status === "PAID" && !paidMethodLabel) {
-      setPaidMethodLabel("MoMo");
-      onPaymentSuccess?.();
-    }
-  }, [orderStatus?.status, paidMethodLabel, onPaymentSuccess]);
-
-  const resetMomo = momoMutation.reset;
-  useEffect(() => {
-    if (!isOpen) {
-      setPaidMethodLabel(null);
-      resetMomo();
-    }
-  }, [isOpen, resetMomo]);
+  const paidMethodLabel = paidByWallet ? "Số Dư Ví Belooga" : orderStatus?.status === "PAID" ? "MoMo" : null;
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    setPaidByWallet(false);
+    momoMutation.reset();
+    onClose();
+  };
+
   const handleWalletPay = async () => {
     await payWithWallet({ amount_vnd: amount, target_type: "SYSTEM_PURCHASE", description: orderInfo });
-    setPaidMethodLabel("Số Dư Ví Belooga");
+    setPaidByWallet(true);
     onPaymentSuccess?.();
   };
 
@@ -90,7 +87,7 @@ export function MomoCheckoutDialog({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close payment modal"
             className="text-typography-muted hover:text-typography-main cursor-pointer"
           >
@@ -108,7 +105,7 @@ export function MomoCheckoutDialog({
               Phương thức: <strong className="text-typography-main">{paidMethodLabel}</strong>
             </div>
             <Button
-              onClick={onClose}
+              onClick={handleClose}
               className="bg-brand-primary hover:bg-brand-hover text-white font-medium text-xs w-full h-8 rounded-lg shadow-xs"
             >
               Tiếp Tục Sử Dụng
@@ -169,7 +166,7 @@ export function MomoCheckoutDialog({
             {error && <p role="alert" className="text-[11px] text-red-700">{error}</p>}
 
             <Button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full bg-surface-card hover:bg-surface-page text-typography-heading border border-surface-border text-xs h-8 rounded-lg shadow-xs"
             >
               Hủy Giao Dịch
