@@ -1,26 +1,22 @@
-import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://belooga:belooga_secret_password@postgres:5432/belooga_db"
-)
+from app.core.config import get_settings
 
-DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "40"))
-DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "60"))
-DB_POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+_settings = get_settings()
+DATABASE_URL = _settings.DATABASE_URL
 
+# Per-pod pool; keep pool_size + max_overflow x max replicas below Postgres max_connections.
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     future=True,
-    pool_size=DB_POOL_SIZE,
-    max_overflow=DB_MAX_OVERFLOW,
-    pool_timeout=DB_POOL_TIMEOUT,
+    pool_size=_settings.DB_POOL_SIZE,
+    max_overflow=_settings.DB_MAX_OVERFLOW,
+    pool_timeout=_settings.DB_POOL_TIMEOUT,
     pool_pre_ping=True,
-    pool_recycle=1800,
+    pool_recycle=_settings.DB_POOL_RECYCLE,
 )
 
 async_session_maker = async_sessionmaker(

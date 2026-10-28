@@ -4,11 +4,12 @@ import asyncio
 from collections import OrderedDict
 import json
 import logging
-import os
 import time
 from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
 
 import redis.asyncio as aioredis
+
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +61,13 @@ class AsyncTieredCache:
         }
 
     async def _get_redis(self) -> Optional[aioredis.Redis]:
-        if os.getenv("ENVIRONMENT") == "testing":
+        if get_settings().ENVIRONMENT == "testing":
             return None
         now = time.monotonic()
         if now < self._redis_disabled_until:
             return None
         if self._redis is None:
-            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            redis_url = get_settings().REDIS_URL
             try:
                 self._redis = aioredis.from_url(
                     redis_url,
@@ -78,7 +79,7 @@ class AsyncTieredCache:
                 )
             except Exception as exc:
                 self._redis_disabled_until = now + 15.0
-                logger.debug("Redis init skipped, using L1 cache: %s", exc)
+                logger.warning("Redis init failed, using L1-only cache for 15s: %s", type(exc).__name__)
                 return None
         return self._redis
 
@@ -148,7 +149,7 @@ class AsyncTieredCache:
                         return loaded
                 except Exception as exc:
                     self._redis_disabled_until = time.monotonic() + 10.0
-                    logger.debug("Redis read fallback to DB loader: %s", exc)
+                    logger.warning("Redis read failed, falling back to loader (L2 off 10s): %s", type(exc).__name__)
 
             result = await loader()
             effective_l1 = min(ttl_seconds, l1_ttl_seconds or ttl_seconds)
@@ -159,7 +160,7 @@ class AsyncTieredCache:
                     await r_client.setex(full_key, ttl_seconds, json.dumps(result, default=str))
                 except Exception as exc:
                     self._redis_disabled_until = time.monotonic() + 10.0
-                    logger.debug("Redis write skipped: %s", exc)
+                    logger.warning("Redis write failed (L2 off 10s): %s", type(exc).__name__)
 
             if not fut.done():
                 fut.set_result(result)
@@ -235,7 +236,7 @@ class AsyncTieredCache:
                     if cursor == 0:
                         break
             except Exception as exc:
-                logger.debug("Redis prefix invalidation fallback: %s", exc)
+                logger.warning("Redis prefix invalidation failed; other pods may serve stale L2 entries until TTL: %s", type(exc).__name__)
 
 
 platform_cache = AsyncTieredCache(namespace="belooga_v1", l1_max_size=4096)
