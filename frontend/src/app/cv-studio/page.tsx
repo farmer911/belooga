@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Zap, Target, RotateCcw, Sparkles, CloudUpload, Check } from "lucide-react";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
 import { queueOfflineMutation } from "@/components/providers/service-worker-provider";
+import { SignInPrompt } from "@/components/common/sign-in-prompt";
 import { CVStudioSidebar, STANDARD_CV_SECTIONS } from "@/components/features/cv-studio/cv-studio-sidebar";
 import { CVStudioEditor, CVData } from "@/components/features/cv-studio/cv-studio-editor";
 import { CVStudioPreview } from "@/components/features/cv-studio/cv-studio-preview";
@@ -55,8 +56,12 @@ const SAMPLE_CV_DATA: CVData = {
 };
 
 export default function CVStudioPage() {
-  const user = useAuthStore((s) => s.user);
-  const activeUsername = user?.username || "alexnguyen";
+  const username = useAuthStore((s) => s.user?.username);
+  if (!username) return <SignInPrompt next="/cv-studio" description="Sign in to edit, save and export your CV." />;
+  return <CVStudioWorkspace activeUsername={username} />;
+}
+
+function CVStudioWorkspace({ activeUsername }: { activeUsername: string }) {
   const [cvData, setCvData] = useState<CVData>(SAMPLE_CV_DATA);
   const [fontSize, setFontSize] = useState<number>(10.0);
   const [lineHeight, setLineHeight] = useState<number>(1.3);
@@ -68,11 +73,12 @@ export default function CVStudioPage() {
   const { data: draftData } = useQuery<CVDraftResponse>({
     queryKey: ["cv-studio-draft", activeUsername],
     queryFn: async () => (await apiClient.get<CVDraftResponse>(`/v1/profile/${activeUsername}/cv-draft/`)).data,
-    enabled: Boolean(user?.username),
   });
 
-  useEffect(() => {
-    if (!draftData?.full_name) return;
+  // Apply a newly fetched draft once, during render (no setState-in-effect cascade).
+  const [appliedDraft, setAppliedDraft] = useState<CVDraftResponse>();
+  if (draftData?.full_name && draftData !== appliedDraft) {
+    setAppliedDraft(draftData);
     setCvData((prev) => ({
       ...prev, fullName: draftData.full_name || prev.fullName, email: draftData.email ?? prev.email,
       phone: draftData.phone ?? prev.phone, location: draftData.location ?? prev.location,
@@ -87,7 +93,7 @@ export default function CVStudioPage() {
     if (draftData.line_height) setLineHeight(draftData.line_height);
     if (draftData.margin_size) setMarginSize(draftData.margin_size);
     if (typeof draftData.snap_one_page === "boolean") setSnapOnePage(draftData.snap_one_page);
-  }, [draftData]);
+  }
 
   const { data: marketPulse = null } = useQuery<MarketPulseResponse | null>({
     queryKey: ["cv-studio-market-pulse"],

@@ -22,9 +22,9 @@ const STEPS = [
 ];
 
 const SHOWCASE_CANDIDATES = [
-  { username: "alexnguyen", name: "Jazmin Cole", role: "Senior Product Designer", img: "/images/home/Jazmin-1.jpg", alt: "Jazmin", modalTitle: "Jazmin — Elevator Pitch", videoUrl: "/images/home/Jazmin-Pitch.mp4" },
-  { username: "alexnguyen", name: "Jeremy Tran", role: "Full-Stack Software Engineer", img: "/images/home/Jeremy-1.jpg", alt: "Jeremy", modalTitle: "Jeremy — Elevator Pitch", videoUrl: "/images/home/Jeremy-Pitch.mp4" },
-  { username: "alexnguyen", name: "Rileigh Brooks", role: "Growth Marketing Manager", img: "/images/home/Rileigh-1.jpg", alt: "Rileigh", modalTitle: "Rileigh — Elevator Pitch", videoUrl: "/images/home/Rileigh-Pitch.mp4" },
+  { name: "Jazmin Cole", role: "Senior Product Designer", img: "/images/home/Jazmin-1.jpg", alt: "Jazmin", modalTitle: "Jazmin — Elevator Pitch", videoUrl: "/images/home/Jazmin-Pitch.mp4" },
+  { name: "Jeremy Tran", role: "Full-Stack Software Engineer", img: "/images/home/Jeremy-1.jpg", alt: "Jeremy", modalTitle: "Jeremy — Elevator Pitch", videoUrl: "/images/home/Jeremy-Pitch.mp4" },
+  { name: "Rileigh Brooks", role: "Growth Marketing Manager", img: "/images/home/Rileigh-1.jpg", alt: "Rileigh", modalTitle: "Rileigh — Elevator Pitch", videoUrl: "/images/home/Rileigh-Pitch.mp4" },
 ];
 
 const WALKTHROUGHS = [
@@ -196,9 +196,6 @@ export default function HomePage() {
                   <p className="text-sm text-typography-muted">{c.role}</p>
                   <div className="pt-2 flex items-center justify-center gap-3">
                     <span className="text-xs text-brand-primary font-semibold">0:30 Video Pitch Ready</span>
-                    <Link href={`/public/${c.username}`} onClick={(e) => e.stopPropagation()} className="text-xs font-semibold text-brand-primary hover:underline">
-                      View Profile →
-                    </Link>
                   </div>
                 </div>
               </div>

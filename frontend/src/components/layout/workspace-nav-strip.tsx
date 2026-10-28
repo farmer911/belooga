@@ -21,10 +21,11 @@ export interface WorkspaceNavStripProps {
 export function WorkspaceNavStrip({ username }: WorkspaceNavStripProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const resolvedUsername = username || user?.username || "alexrivera";
+  const resolvedUsername = username || user?.username;
   const baseUserPath = `/user/${resolvedUsername}`;
 
-  const navItems = [
+  // Profile-bound links only exist for a known user; never fall back to a demo identity.
+  const profileItems = resolvedUsername ? [
     {
       href: baseUserPath,
       label: "Workspace Hub",
@@ -41,6 +42,10 @@ export function WorkspaceNavStrip({ username }: WorkspaceNavStripProps) {
       label: "Settings",
       icon: Settings,
     },
+  ] : [];
+
+  const navItems = [
+    ...profileItems,
     {
       href: "/workspace/jobs",
       label: "Job Tracker",
