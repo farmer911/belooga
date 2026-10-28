@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { WifiOff, RefreshCw, CheckCircle2 } from "lucide-react";
 
@@ -69,16 +69,24 @@ export async function triggerDesktopNotification(
   return sentViaSw;
 }
 
+function subscribeOnlineStatus(onChange: () => void) {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
+
 export function ServiceWorkerProvider() {
   const router = useRouter();
-  const [isOnline, setIsOnline] = useState(true);
+  const isOnline = useSyncExternalStore(subscribeOnlineStatus, () => navigator.onLine, () => true);
   const [queuedCount, setQueuedCount] = useState(0);
   const [syncBanner, setSyncBanner] = useState<string | null>(null);
   const [swStatus, setSwStatus] = useState<"idle" | "registered" | "error">("idle");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setIsOnline(navigator.onLine);
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -111,19 +119,13 @@ export function ServiceWorkerProvider() {
 
       navigator.serviceWorker.addEventListener("message", handleSwMessage);
 
-      const handleOnline = () => {
-        setIsOnline(true);
-        postToServiceWorker({ type: "FLUSH_OUTBOX" });
-      };
-      const handleOffline = () => setIsOnline(false);
+      const handleOnline = () => postToServiceWorker({ type: "FLUSH_OUTBOX" });
 
       window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
 
       return () => {
         navigator.serviceWorker.removeEventListener("message", handleSwMessage);
         window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
       };
     }
   }, [router]);

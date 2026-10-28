@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 const STARTER_PITCH_SCRIPT =
   "Hello, I am a passionate Senior Software Engineer with deep expertise in full-stack architecture, high-performance distributed systems, and modern UI engineering.\n\nOver the past 6 years, I have spearheaded the architecture of resilient cloud-native platforms, designed scalable microservices handling millions of daily transactions, and crafted buttery-smooth user interfaces.\n\nI thrive in fast-paced environments where code quality, clean architecture, and rapid execution matter. Excited to connect and build impactful products together!";
@@ -30,7 +30,6 @@ export function useTeleprompter(isRecording: boolean) {
   const [teleprompterEnabled, setTeleprompterEnabled] = useState(true);
   const [isPrompterCollapsed, setIsPrompterCollapsed] = useState(false);
   const [scriptText, setScriptText] = useState<string>(STARTER_PITCH_SCRIPT);
-  const [scriptWords, setScriptWords] = useState<string[]>([]);
   const [activeWordIndex, setActiveWordIndex] = useState<number>(0);
   const [teleprompterSpeed, setTeleprompterSpeed] = useState<number>(130);
   const [teleprompterFontSize, setTeleprompterFontSize] = useState<"sm" | "md" | "lg">("md");
@@ -46,12 +45,13 @@ export function useTeleprompter(isRecording: boolean) {
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isRecognitionActiveRef = useRef<boolean>(false);
 
-  // Parse words
-  useEffect(() => {
-    const words = scriptText.trim().split(/\s+/).filter(Boolean);
-    setScriptWords(words);
+  // Words derive from the script; a new script restarts at word 0 (adjusted during render, not in an effect).
+  const scriptWords = useMemo(() => scriptText.trim().split(/\s+/).filter(Boolean), [scriptText]);
+  const [wordsForScript, setWordsForScript] = useState(scriptText);
+  if (wordsForScript !== scriptText) {
+    setWordsForScript(scriptText);
     setActiveWordIndex(0);
-  }, [scriptText]);
+  }
 
   // Import script file
   const handleImportScriptFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

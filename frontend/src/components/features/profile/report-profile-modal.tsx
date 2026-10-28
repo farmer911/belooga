@@ -56,10 +56,11 @@ export function ReportProfileModal({
 
   if (!isOpen) return null;
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = handleSubmit((values) => {
     if (!targetId) return;
     setErrorMsg(null);
-    await reportMutation.mutateAsync(values);
+    // mutate (not mutateAsync): failures are rendered via onError instead of escaping as unhandled rejections.
+    reportMutation.mutate(values);
   });
 
   return (

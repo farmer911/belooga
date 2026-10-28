@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Sparkles, Target, CheckCircle2, Plus, Filter, RotateCcw, Building2, MapPin } from "lucide-react";
 import { apiClient } from "@/services/api-client";
@@ -48,13 +48,13 @@ export function JobSearchAndGoalPanel({
   const [addedMarketIds, setAddedMarketIds] = useState<string[]>([]);
   const [aiMatchedCount, setAiMatchedCount] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (careerGoal) {
-      setRoleInput(careerGoal.target_role);
-      setSalaryInput(careerGoal.target_salary);
-      setSkillsInput(careerGoal.preferred_skills);
-    }
-  }, [careerGoal]);
+  const [syncedGoal, setSyncedGoal] = useState(careerGoal);
+  if (careerGoal && careerGoal !== syncedGoal) {
+    setSyncedGoal(careerGoal);
+    setRoleInput(careerGoal.target_role);
+    setSalaryInput(careerGoal.target_salary);
+    setSkillsInput(careerGoal.preferred_skills);
+  }
 
   const { data: marketJobs = [] } = useQuery<MarketJobItem[]>({
     queryKey: ["market-jobs-search", marketQuery],

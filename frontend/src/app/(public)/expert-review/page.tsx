@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useExpertReview } from "@/hooks/use-expert-review";
 import { ExpertHero } from "@/components/features/expert-review/expert-hero";
 import { PricingTiers } from "@/components/features/expert-review/pricing-tiers";
@@ -19,16 +19,12 @@ import {
 } from "@/components/features/expert-review/become-expert-modal";
 import { Spinner } from "@/components/ui/spinner";
 
-export default function ExpertReviewPage() {
-  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
-  const [registeredApp, setRegisteredApp] = useState<RegisteredExpertApplication | null>(null);
+const noopSubscribe = () => () => {};
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const oid = new URLSearchParams(window.location.search).get("order_id");
-      if (oid) setHighlightedOrderId(oid);
-    }
-  }, []);
+export default function ExpertReviewPage() {
+  // Read ?order_id= on the client only (null during SSR/hydration) without a setState-in-effect.
+  const highlightedOrderId = useSyncExternalStore(noopSubscribe, () => new URLSearchParams(window.location.search).get("order_id"), () => null);
+  const [registeredApp, setRegisteredApp] = useState<RegisteredExpertApplication | null>(null);
 
   const {
     experts,

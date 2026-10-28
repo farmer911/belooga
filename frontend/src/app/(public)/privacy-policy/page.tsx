@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <h2 className="text-lg font-bold text-typography-main">2. Profile Visibility Controls</h2>
           <p>
-            You retain absolute ownership of your profile. Setting your candidate workspace to "Hidden" immediately restricts public visibility and prevents search indexing across our discovery engine.
+            You retain absolute ownership of your profile. Setting your candidate workspace to &ldquo;Hidden&rdquo; immediately restricts public visibility and prevents search indexing across our discovery engine.
           </p>
           <h2 className="text-lg font-bold text-typography-main">3. GDPR & Right to Erasure</h2>
           <p>
