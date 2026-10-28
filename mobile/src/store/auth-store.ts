@@ -1,9 +1,8 @@
+import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
-import { SecureStore } from "@/lib/native-runtime";
 
-export const SECURE_ACCESS_TOKEN_KEY = "belooga.mobile.access_token";
+/** Only the refresh token is persisted (Keychain / Android Keystore). The access token lives in memory. */
 export const SECURE_REFRESH_TOKEN_KEY = "belooga.mobile.refresh_token";
-export const SECURE_USER_PROFILE_KEY = "belooga.mobile.user_profile";
 
 export interface MobileUserSummary {
   id: string;
@@ -33,14 +32,15 @@ export interface MobileAuthState {
   refreshToken: string | null;
   user: MobileUserSummary | null;
   isAuthenticated: boolean;
+  /** True once the stored refresh token (if any) has been exchanged or discarded at startup. */
   isHydrated: boolean;
-  hydrateFromSecureVault: () => Promise<void>;
-  setSessionTokens: (
+  setSession: (
     accessToken: string,
     refreshToken: string | null | undefined,
     user?: MobileUserSummary | null
   ) => Promise<void>;
-  setUser: (user: MobileUserSummary | null) => Promise<void>;
+  setUser: (user: MobileUserSummary | null) => void;
+  markHydrated: () => void;
   clearSession: () => Promise<void>;
 }
 
@@ -63,6 +63,10 @@ export function normalizeMobileUser(
   };
 }
 
+export function readStoredRefreshToken(): Promise<string | null> {
+  return SecureStore.getItemAsync(SECURE_REFRESH_TOKEN_KEY);
+}
+
 export const useMobileAuthStore = create<MobileAuthState>((set, get) => ({
   accessToken: null,
   refreshToken: null,
@@ -70,63 +74,26 @@ export const useMobileAuthStore = create<MobileAuthState>((set, get) => ({
   isAuthenticated: false,
   isHydrated: false,
 
-  hydrateFromSecureVault: async () => {
-    const [storedAccess, storedRefresh, storedUserJson] = await Promise.all([
-      SecureStore.getItemAsync(SECURE_ACCESS_TOKEN_KEY),
-      SecureStore.getItemAsync(SECURE_REFRESH_TOKEN_KEY),
-      SecureStore.getItemAsync(SECURE_USER_PROFILE_KEY),
-    ]);
-    let parsedUser: MobileUserSummary | null = null;
-    if (storedUserJson) {
-      try {
-        parsedUser = normalizeMobileUser(JSON.parse(storedUserJson) as Record<string, unknown>);
-      } catch {
-        parsedUser = null;
-      }
-    }
-    set({
-      accessToken: storedAccess,
-      refreshToken: storedRefresh,
-      user: parsedUser,
-      isAuthenticated: Boolean(storedAccess),
-      isHydrated: true,
-    });
-  },
-
-  setSessionTokens: async (accessToken, refreshToken, nextUser) => {
+  setSession: async (accessToken, refreshToken, nextUser) => {
     const resolvedRefresh = refreshToken ?? get().refreshToken;
-    const resolvedUser = nextUser !== undefined ? nextUser : get().user;
-    await SecureStore.setItemAsync(SECURE_ACCESS_TOKEN_KEY, accessToken);
-    if (resolvedRefresh) {
-      await SecureStore.setItemAsync(SECURE_REFRESH_TOKEN_KEY, resolvedRefresh);
-    }
-    if (resolvedUser) {
-      await SecureStore.setItemAsync(SECURE_USER_PROFILE_KEY, JSON.stringify(resolvedUser));
+    if (refreshToken) {
+      await SecureStore.setItemAsync(SECURE_REFRESH_TOKEN_KEY, refreshToken);
     }
     set({
       accessToken,
-      refreshToken: resolvedRefresh ?? null,
-      user: resolvedUser ?? null,
+      refreshToken: resolvedRefresh,
+      user: nextUser !== undefined ? nextUser : get().user,
       isAuthenticated: true,
       isHydrated: true,
     });
   },
 
-  setUser: async (user) => {
-    if (user) {
-      await SecureStore.setItemAsync(SECURE_USER_PROFILE_KEY, JSON.stringify(user));
-    } else {
-      await SecureStore.deleteItemAsync(SECURE_USER_PROFILE_KEY);
-    }
-    set({ user });
-  },
+  setUser: (user) => set({ user }),
+
+  markHydrated: () => set({ isHydrated: true }),
 
   clearSession: async () => {
-    await Promise.all([
-      SecureStore.deleteItemAsync(SECURE_ACCESS_TOKEN_KEY),
-      SecureStore.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY),
-      SecureStore.deleteItemAsync(SECURE_USER_PROFILE_KEY),
-    ]);
+    await SecureStore.deleteItemAsync(SECURE_REFRESH_TOKEN_KEY);
     set({
       accessToken: null,
       refreshToken: null,

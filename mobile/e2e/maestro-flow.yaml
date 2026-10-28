@@ -1,29 +1,63 @@
+# Run: maestro test -e E2E_EMAIL=... -e E2E_PASSWORD=... e2e/maestro-flow.yaml
 appId: com.belooga.mobile
 ---
-- launchApp
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "mobile-discovery-heading"
+    timeout: 20000
 - assertVisible:
-    id: "mobile-discovery-heading"
+    id: "mobile-search-filter-bar"
+
+# Login form validation, then a real sign-in (credentials come from the environment).
+- tapOn:
+    id: "mobile-header-signin-btn"
+- tapOn:
+    id: "mobile-login-email"
+- inputText: "not-an-email"
+- tapOn:
+    id: "mobile-login-submit"
 - assertVisible:
-    id: "filter-saved-shortlist-chip"
-- assertVisible:
-    id: "mobile-candidate-card-alexnguyen"
-- assertVisible:
-    id: "bookmark-candidate-alexnguyen"
+    id: "mobile-login-validation-error"
+- tapOn:
+    id: "mobile-login-email"
+- eraseText
+- inputText: ${E2E_EMAIL}
+- tapOn:
+    id: "mobile-login-password"
+- inputText: ${E2E_PASSWORD}
+- tapOn:
+    id: "mobile-login-submit"
+- extendedWaitUntil:
+    visible:
+      id: "mobile-header-wallet-pill"
+    timeout: 15000
+
 - tapOn:
     id: "mobile-tab-studio"
 - assertVisible:
     id: "mobile-studio-title"
-- tapOn:
-    id: "mobile-studio-upload-chunks"
-- assertVisible: "Upload Progress: 100% (3/3 Chunks Assembled)"
+- assertVisible:
+    id: "mobile-studio-open-camera"
+
 - tapOn:
     id: "mobile-tab-tracker"
 - assertVisible:
     id: "mobile-tracker-title"
+- assertVisible:
+    id: "mobile-tracker-add-job"
+
 - tapOn:
-    id: "mobile-tracker-move-job_101-INTERVIEW"
-- assertVisible: "Stripe — Staff Mobile Engineer [INTERVIEW] (Synced)"
+    id: "mobile-tab-career"
+- assertVisible:
+    id: "mobile-wallet-balance-pill"
+- assertVisible:
+    id: "mobile-wallet-topup-submit-btn"
+
 - tapOn:
     id: "mobile-tab-profile"
 - assertVisible:
     id: "mobile-workspace-heading"
+- assertVisible:
+    id: "mobile-workspace-logout"

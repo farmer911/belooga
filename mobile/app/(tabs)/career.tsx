@@ -1,14 +1,10 @@
 import React, { useState } from "react";
+import { router } from "expo-router";
+import { Analytics360Section } from "@/components/analytics-360-section";
+import { ExpertLeaderboardSection } from "@/components/expert-leaderboard-section";
+import { Growth20Section } from "@/components/growth-20-section";
+import { RecruiterHubSection } from "@/components/recruiter-hub-section";
 import {
-  BadgePill,
-  NeumorphicButton,
-  NeumorphicCard,
-  NeumorphicInput,
-  NeumorphicInsetWell,
-  ScreenShell,
-} from "@/lib/native-runtime";
-import {
-  saveMobileCvDraft,
   useMobileExecutiveAnalyticsQuery,
   useMobileExpertPackagesQuery,
   useMobileMomoQrMutation,
@@ -16,8 +12,6 @@ import {
 } from "@/hooks/use-mobile-career-tools";
 import {
   useApplyMobileCareerJobMutation,
-  useCompleteMobileEscrowMutation,
-  useCreateMobileCareerJobMutation,
   useCreateMobileSocialBlogPostMutation,
   useMobileCareerJobsQuery,
   useMobileSocialBlogPostsQuery,
@@ -25,267 +19,241 @@ import {
   useTopUpMobileWalletMutation,
   useTriggerMobileSalaryCrawlMutation,
 } from "@/hooks/use-mobile-parity-part2";
-import { getSemanticTokens } from "@/theme/tokens";
-import { RecruiterHubSection } from "@/components/recruiter-hub-section";
-import { ExpertLeaderboardSection } from "@/components/expert-leaderboard-section";
-import { Analytics360Section } from "@/components/analytics-360-section";
-import { Growth20Section } from "@/components/growth-20-section";
+import { Body, Button, Card, ErrorText, Field, H1, H2, Pill, Row, Screen, Well } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
 
-type CareerSubTab = "expert" | "wallet" | "salary" | "community" | "recruiter" | "bi" | "growth";
+type CareerSubTab = "wallet" | "expert" | "salary" | "community" | "recruiter" | "bi" | "growth";
+const SUB_TABS: { key: CareerSubTab; label: string }[] = [
+  { key: "wallet", label: "Ví" },
+  { key: "expert", label: "Expert Review" },
+  { key: "salary", label: "Salary Radar" },
+  { key: "community", label: "Social & Jobs" },
+  { key: "recruiter", label: "Recruiter Hub" },
+  { key: "bi", label: "Executive BI" },
+  { key: "growth", label: "Growth Hub" },
+];
 const TOPUP_AMOUNTS = [50000, 100000, 200000, 500000, 1000000] as const;
 const SALARY_YEARS = ["2024", "2025", "2026", "all"] as const;
+const formatVnd = (vnd: number) => `${vnd.toLocaleString("vi-VN")} VND`;
 
-export default function MobileCareerHubScreen() {
-  const tokens = getSemanticTokens("neumorphic");
-  const [subTab, setSubTab] = useState<CareerSubTab>("expert");
-  const [roleQuery, setRoleQuery] = useState("Staff Backend Engineer");
-  const [selectedYear, setSelectedYear] = useState<string>("2026");
-  const [topUpAmount, setTopUpAmount] = useState<number>(500000);
-  const [showExpertReport, setShowExpertReport] = useState(false);
-  const [socialPostText, setSocialPostText] = useState("");
-
-  const packagesQuery = useMobileExpertPackagesQuery();
-  const momoMutation = useMobileMomoQrMutation();
+function WalletSection() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  const [topUpAmount, setTopUpAmount] = useState<number>(100000);
   const walletQuery = useMobileWalletSummaryQuery();
   const topUpMutation = useTopUpMobileWalletMutation();
-  const completeEscrowMutation = useCompleteMobileEscrowMutation();
+
+  if (!isAuthenticated) {
+    return (
+      <Card testID="mobile-wallet-card">
+        <Body>Sign in to see and top up your wallet.</Body>
+        <Button testID="mobile-wallet-signin" label="Sign In" onPress={() => router.push("/login")} />
+      </Card>
+    );
+  }
+
+  const wallet = walletQuery.data;
+  return (
+    <Card testID="mobile-wallet-card">
+      <H2>Ví Điện Tử & Escrow</H2>
+      <Row>
+        <Pill testID="mobile-wallet-balance-pill" label={`Khả dụng: ${wallet ? formatVnd(wallet.available_balance_vnd) : "…"}`} />
+        <Pill testID="mobile-wallet-escrow-pill" label={`Escrow: ${wallet ? formatVnd(wallet.escrow_locked_vnd) : "…"}`} tone="warning" />
+      </Row>
+      <ErrorText error={walletQuery.error} />
+      <Row>
+        {TOPUP_AMOUNTS.map((amt) => (
+          <Button
+            key={amt}
+            testID={`mobile-wallet-topup-chip-${amt}`}
+            label={`+${amt / 1000}k`}
+            variant={topUpAmount === amt ? "primary" : "inset"}
+            onPress={() => setTopUpAmount(amt)}
+          />
+        ))}
+      </Row>
+      <Button
+        testID="mobile-wallet-topup-submit-btn"
+        label={topUpMutation.isPending ? "Đang mở MoMo..." : `Nạp ${topUpAmount / 1000}k VND qua MoMo`}
+        disabled={topUpMutation.isPending}
+        onPress={() => topUpMutation.mutate(topUpAmount)}
+      />
+      {topUpMutation.isSuccess ? (
+        <Body testID="mobile-wallet-topup-pending" tone="warning">
+          Payment order {topUpMutation.data.order_id ?? ""} created. Your balance updates once MoMo confirms the payment.
+        </Body>
+      ) : null}
+      <ErrorText testID="mobile-wallet-topup-error" error={topUpMutation.error} />
+      <Row>
+        <Button testID="mobile-wallet-refresh-btn" label="Refresh Balance" variant="secondary" onPress={() => void walletQuery.refetch()} />
+      </Row>
+    </Card>
+  );
+}
+
+function ExpertSection() {
+  const packagesQuery = useMobileExpertPackagesQuery();
+  const momoMutation = useMobileMomoQrMutation();
+  return (
+    <Card testID="mobile-expert-review-card">
+      <H2>Expert CV Review Packages</H2>
+      {(packagesQuery.data ?? []).map((pkg) => (
+        <Well key={pkg.id}>
+          <Body>
+            {pkg.name} (${pkg.price_usd} • {pkg.turnaround_hours}h SLA)
+          </Body>
+          <Button
+            testID={`mobile-book-pkg-${pkg.id}`}
+            label="MoMo Checkout"
+            disabled={momoMutation.isPending}
+            onPress={() => momoMutation.mutate({ packageName: pkg.name, amountVnd: pkg.price_usd * 25000 })}
+          />
+        </Well>
+      ))}
+      <ErrorText error={packagesQuery.error ?? momoMutation.error} />
+      {momoMutation.data ? (
+        <Body testID="mobile-momo-qr-status">MoMo order {momoMutation.data.order_id} is awaiting payment.</Body>
+      ) : null}
+      <ExpertLeaderboardSection />
+    </Card>
+  );
+}
+
+function SalarySection() {
+  const [roleQuery, setRoleQuery] = useState("Backend Engineer");
+  const [selectedYear, setSelectedYear] = useState<string>("2026");
   const salaryQuery = useMobileSalaryBenchmarkQuery(roleQuery, "Ho Chi Minh City", selectedYear);
   const crawlMutation = useTriggerMobileSalaryCrawlMutation();
+  return (
+    <Card testID="mobile-salary-benchmark-card">
+      <H2>IT Compensation Radar</H2>
+      <Field testID="mobile-salary-role-input" value={roleQuery} placeholder="Role" onChangeText={setRoleQuery} />
+      <Row testID="mobile-salary-history-chart">
+        {SALARY_YEARS.map((yr) => (
+          <Button
+            key={yr}
+            testID={`mobile-salary-year-${yr}`}
+            label={`Năm ${yr.toUpperCase()}`}
+            variant={selectedYear === yr ? "primary" : "inset"}
+            onPress={() => setSelectedYear(yr)}
+          />
+        ))}
+      </Row>
+      <Button
+        testID="mobile-trigger-salary-crawl-btn"
+        label={crawlMutation.isPending ? "Crawling..." : "Refresh Salary Data"}
+        disabled={crawlMutation.isPending}
+        onPress={() => crawlMutation.mutate(roleQuery)}
+      />
+      <ErrorText error={salaryQuery.error ?? crawlMutation.error} />
+      {salaryQuery.data ? (
+        <Row testID="mobile-salary-percentiles">
+          <Pill label={`P25: $${salaryQuery.data.p25}`} tone="neutral" />
+          <Pill label={`P50: $${salaryQuery.data.p50}`} />
+          <Pill label={`P75: $${salaryQuery.data.p75}`} tone="success" />
+          <Pill label={`P90: $${salaryQuery.data.p90}`} tone="warning" />
+        </Row>
+      ) : null}
+    </Card>
+  );
+}
+
+function CommunitySection() {
+  const [socialPostText, setSocialPostText] = useState("");
   const socialPostsQuery = useMobileSocialBlogPostsQuery();
   const createPostMutation = useCreateMobileSocialBlogPostMutation();
   const careerJobsQuery = useMobileCareerJobsQuery();
-  const createCareerJobMutation = useCreateMobileCareerJobMutation();
   const applyCareerJobMutation = useApplyMobileCareerJobMutation();
-  const execBiQuery = useMobileExecutiveAnalyticsQuery();
-
-  const availVnd = walletQuery.data?.available_balance_vnd ?? 0;
-  const escrowVnd = walletQuery.data?.escrow_locked_vnd ?? 0;
-
   return (
-    <ScreenShell testID="mobile-career-hub-screen" mode="neumorphic">
-      <NeumorphicCard testID="mobile-career-segmented-bar">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <BadgePill label="CAREER INTELLIGENCE & MONETIZATION" tone="brand" />
-          <NeumorphicButton
-            testID="mobile-wallet-balance-pill"
-            accessibilityLabel="mobile-wallet-balance-pill"
-            label={`Ví: ${(availVnd / 1000).toFixed(0)}k • Escrow: ${(escrowVnd / 1000).toFixed(0)}k VND`}
-            variant="inset"
-            onPress={() => setSubTab("wallet")}
+    <Card testID="mobile-community-careers-card">
+      <H2>Community Feed & Careers</H2>
+      <Field
+        testID="mobile-social-post-input"
+        value={socialPostText}
+        placeholder="Chia sẻ kinh nghiệm phỏng vấn / điểm ATS..."
+        onChangeText={setSocialPostText}
+        multiline
+      />
+      <Button
+        testID="mobile-social-post-submit-btn"
+        label="Đăng Chia Sẻ"
+        disabled={!socialPostText.trim() || createPostMutation.isPending}
+        onPress={() =>
+          createPostMutation.mutate(
+            { title: socialPostText.trim().slice(0, 120), content: socialPostText.trim() },
+            { onSuccess: () => setSocialPostText("") }
+          )
+        }
+      />
+      <ErrorText error={createPostMutation.error ?? socialPostsQuery.error ?? applyCareerJobMutation.error} />
+      {(socialPostsQuery.data ?? []).map((post) => (
+        <Well key={post.id}>
+          <Body>
+            @{post.author_username}: {post.title} ({post.likes_count} likes)
+          </Body>
+        </Well>
+      ))}
+      {(careerJobsQuery.data ?? []).map((job) => (
+        <Well key={job.id}>
+          <Body>
+            {job.title} @ {job.company_name} ({job.salary_range})
+          </Body>
+          <Button
+            testID={`mobile-careers-apply-btn-${job.id}`}
+            label={applyCareerJobMutation.isSuccess && applyCareerJobMutation.variables === job.id ? "Applied" : "1-Click Apply"}
+            onPress={() => applyCareerJobMutation.mutate(job.id)}
           />
-        </div>
-        <h1
-          data-testid="mobile-career-heading"
-          style={{ margin: 0, fontSize: 20, fontWeight: 800, color: tokens.typography.heading }}
-        >
-          Career Acceleration & Monetization Hub
-        </h1>
-        <NeumorphicInsetWell>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <NeumorphicButton testID="mobile-career-sub-expert" label="Expert Review" variant={subTab === "expert" ? "primary" : "secondary"} onPress={() => setSubTab("expert")} />
-            <NeumorphicButton testID="mobile-career-sub-wallet" label="Ví & Escrow" variant={subTab === "wallet" ? "primary" : "secondary"} onPress={() => setSubTab("wallet")} />
-            <NeumorphicButton testID="mobile-career-sub-salary" label="Salary Radar" variant={subTab === "salary" ? "primary" : "secondary"} onPress={() => setSubTab("salary")} />
-            <NeumorphicButton testID="mobile-career-sub-community" label="Social & Jobs" variant={subTab === "community" ? "primary" : "secondary"} onPress={() => setSubTab("community")} />
-            <NeumorphicButton testID="mobile-career-sub-recruiter" label="Recruiter Hub" variant={subTab === "recruiter" ? "primary" : "secondary"} onPress={() => setSubTab("recruiter")} />
-            <NeumorphicButton testID="mobile-career-sub-bi" label="Executive BI" variant={subTab === "bi" ? "primary" : "secondary"} onPress={() => setSubTab("bi")} />
-            <NeumorphicButton testID="mobile-career-sub-growth" label="20x Growth Hub" variant={subTab === "growth" ? "primary" : "secondary"} onPress={() => setSubTab("growth")} />
-          </div>
-        </NeumorphicInsetWell>
-      </NeumorphicCard>
+        </Well>
+      ))}
+    </Card>
+  );
+}
 
+function ExecutiveBiSection() {
+  const execBiQuery = useMobileExecutiveAnalyticsQuery();
+  const bi = execBiQuery.data;
+  return (
+    <>
+      <Card testID="mobile-career-exec-bi-summary">
+        <ErrorText error={execBiQuery.error} />
+        {bi ? (
+          <Row>
+            <Pill testID="mobile-exec-gmv-pill" label={`GMV: $${bi.total_gmv_usd}`} />
+            <Pill testID="mobile-exec-conv-pill" label={`MoMo Conv: ${bi.momo_conversion_rate}%`} tone="success" />
+            <Pill testID="mobile-exec-p95-pill" label={`Search P95: ${bi.search_p95_ms}ms`} tone="neutral" />
+            <Pill testID="mobile-exec-active-pill" label={`Active: ${bi.active_candidates}`} tone="warning" />
+          </Row>
+        ) : null}
+      </Card>
+      <Analytics360Section />
+    </>
+  );
+}
+
+export default function CareerScreen() {
+  const [subTab, setSubTab] = useState<CareerSubTab>("wallet");
+  return (
+    <Screen testID="mobile-career-hub-screen">
+      <Card testID="mobile-career-segmented-bar">
+        <H1 testID="mobile-career-heading">Career Acceleration Hub</H1>
+        <Row>
+          {SUB_TABS.map((t) => (
+            <Button
+              key={t.key}
+              testID={`mobile-career-sub-${t.key}`}
+              label={t.label}
+              variant={subTab === t.key ? "primary" : "secondary"}
+              onPress={() => setSubTab(t.key)}
+            />
+          ))}
+        </Row>
+      </Card>
+      {subTab === "wallet" ? <WalletSection /> : null}
+      {subTab === "expert" ? <ExpertSection /> : null}
+      {subTab === "salary" ? <SalarySection /> : null}
+      {subTab === "community" ? <CommunitySection /> : null}
       {subTab === "recruiter" ? <RecruiterHubSection /> : null}
+      {subTab === "bi" ? <ExecutiveBiSection /> : null}
       {subTab === "growth" ? <Growth20Section /> : null}
-
-      {(subTab === "expert" || subTab === "wallet") ? (
-        <NeumorphicCard testID="mobile-expert-review-card">
-          <h2 style={{ margin: 0, fontSize: 17, color: tokens.typography.heading }}>
-            Ví Điện Tử (/v1/wallet/*) & 4-Step Expert Review Escrow
-          </h2>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {TOPUP_AMOUNTS.map((amt) => (
-              <NeumorphicButton
-                key={amt}
-                testID={`mobile-wallet-topup-chip-${amt}`}
-                accessibilityLabel={`mobile-wallet-topup-chip-${amt}`}
-                label={`+${amt / 1000}k`}
-                variant={topUpAmount === amt ? "primary" : "inset"}
-                onPress={() => setTopUpAmount(amt)}
-              />
-            ))}
-            <NeumorphicButton
-              testID="mobile-wallet-topup-submit-btn"
-              accessibilityLabel="mobile-wallet-topup-submit-btn"
-              label={`Nạp Tiền Vào Ví (${topUpAmount / 1000}k VND)`}
-              onPress={() => topUpMutation.mutate(topUpAmount)}
-            />
-          </div>
-          {(packagesQuery.data ?? []).map((pkg) => (
-            <NeumorphicInsetWell key={pkg.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <span>{pkg.name} (${pkg.price_usd} • {pkg.turnaround_hours}h SLA)</span>
-              <NeumorphicButton
-                testID={`mobile-book-pkg-${pkg.id}`}
-                label="MoMo QR Checkout"
-                onPress={() => momoMutation.mutate({ packageId: pkg.id, amountVnd: pkg.price_usd * 25000 })}
-              />
-            </NeumorphicInsetWell>
-          ))}
-          {momoMutation.data ? (
-            <div data-testid="mobile-momo-qr-status">
-              MoMo Order Ready: {momoMutation.data.order_id} ({momoMutation.data.status})
-            </div>
-          ) : null}
-          <div data-testid="mobile-escrow-sla-steps" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <BadgePill label="1. Đã giữ tiền Escrow -> 2. Expert đang chấm CV (SLA) -> 3. Đã có Báo cáo -> 4. Nghiệm thu & Giải ngân" tone="brand" />
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <NeumorphicButton
-                testID="mobile-view-expert-report-btn"
-                accessibilityLabel="mobile-view-expert-report-btn"
-                label="Xem Báo Cáo Chấm CV Chi Tiết"
-                variant="secondary"
-                onPress={() => setShowExpertReport((p) => !p)}
-              />
-              <NeumorphicButton
-                testID="mobile-apply-expert-fixes-btn"
-                accessibilityLabel="mobile-apply-expert-fixes-btn"
-                label="1-Click Áp Dụng Vào CV Studio"
-                variant="secondary"
-                onPress={() =>
-                  void saveMobileCvDraft("alexnguyen", {
-                    template_id: "executive-dark",
-                    summary: "Expert STAR Rewrite Applied: Architected sub-15ms PG16 GIN & RN 0.88 platform.",
-                    skills: ["Golang", "Python", "PostgreSQL 16", "React Native 0.88"],
-                  })
-                }
-              />
-              <NeumorphicButton
-                testID="mobile-release-escrow-btn"
-                accessibilityLabel="mobile-release-escrow-btn"
-                label="Nghiệm Thu & Giải Ngân Escrow"
-                onPress={() => completeEscrowMutation.mutate("ord_8841")}
-              />
-            </div>
-            {showExpertReport ? (
-              <p data-testid="mobile-expert-report-detail" style={{ margin: 0, fontSize: 13, color: tokens.typography.body }}>
-                Expert Scorecard (98/100): Quantified RPS metrics & STAR impact bullets added across 3 roles.
-              </p>
-            ) : null}
-          </div>
-          <ExpertLeaderboardSection />
-        </NeumorphicCard>
-      ) : null}
-
-      {subTab === "salary" ? (
-        <NeumorphicCard testID="mobile-salary-benchmark-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: 17, color: tokens.typography.heading }}>
-              IT Compensation Radar (2024 -&gt; Hiện Tại 2026)
-            </h2>
-            <BadgePill testID="mobile-crawler-status-badge" label="+14.2% YoY • Live Crawler" tone="success" />
-          </div>
-          <NeumorphicInput
-            testID="mobile-salary-role-input"
-            value={roleQuery}
-            onChange={(e) => setRoleQuery(e.target.value)}
-          />
-          <div data-testid="mobile-salary-history-chart" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {SALARY_YEARS.map((yr) => (
-              <NeumorphicButton
-                key={yr}
-                testID={`mobile-salary-year-${yr}`}
-                accessibilityLabel={`mobile-salary-year-${yr}`}
-                label={`Năm ${yr.toUpperCase()}`}
-                variant={selectedYear === yr ? "primary" : "inset"}
-                onPress={() => setSelectedYear(yr)}
-              />
-            ))}
-            <NeumorphicButton
-              testID="mobile-trigger-salary-crawl-btn"
-              accessibilityLabel="mobile-trigger-salary-crawl-btn"
-              label="Trigger Live Salary Crawl (2024-2026)"
-              onPress={() => crawlMutation.mutate(roleQuery)}
-            />
-          </div>
-          {salaryQuery.data ? (
-            <div data-testid="mobile-salary-percentiles" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <BadgePill label={`P25: $${salaryQuery.data.p25}`} tone="neutral" />
-              <BadgePill label={`Median P50: $${salaryQuery.data.p50}`} tone="brand" />
-              <BadgePill label={`P75: $${salaryQuery.data.p75}`} tone="success" />
-              <BadgePill label={`P90: $${salaryQuery.data.p90}`} tone="warning" />
-            </div>
-          ) : null}
-        </NeumorphicCard>
-      ) : null}
-
-      {subTab === "community" ? (
-        <NeumorphicCard testID="mobile-community-careers-card">
-          <h2 style={{ margin: 0, fontSize: 17, color: tokens.typography.heading }}>
-            Community Social Feed (/v1/blog/posts) &amp; Multi-Company Careers
-          </h2>
-          <NeumorphicInput
-            testID="mobile-social-post-input"
-            accessibilityLabel="mobile-social-post-input"
-            value={socialPostText}
-            placeholder="Chia sẻ kinh nghiệm phỏng vấn / điểm ATS..."
-            onChange={(e) => setSocialPostText(e.target.value)}
-          />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <NeumorphicButton
-              testID="mobile-social-post-submit-btn"
-              accessibilityLabel="mobile-social-post-submit-btn"
-              label="Đăng Chia Sẻ (/v1/blog/posts)"
-              onPress={() => {
-                if (!socialPostText.trim()) return;
-                createPostMutation.mutate({ title: socialPostText.trim(), content: socialPostText.trim() });
-                setSocialPostText("");
-              }}
-            />
-            <NeumorphicButton
-              testID="mobile-careers-post-job-btn"
-              accessibilityLabel="mobile-careers-post-job-btn"
-              label="Đăng Tin Tuyển Dụng (Post a Job)"
-              variant="secondary"
-              onPress={() =>
-                createCareerJobMutation.mutate({
-                  company_name: "Databricks",
-                  title: "Staff Distributed Engineer",
-                  location: "Remote APAC",
-                  salary_range: "$200k - $240k",
-                })
-              }
-            />
-          </div>
-          {(socialPostsQuery.data ?? []).map((post) => (
-            <NeumorphicInsetWell key={post.id}>
-              <span><strong>@{post.author_username}:</strong> {post.title} ({post.likes_count} Likes)</span>
-            </NeumorphicInsetWell>
-          ))}
-          {(careerJobsQuery.data ?? []).map((job) => (
-            <div key={job.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-              <span>{job.title} @ {job.company_name} ({job.salary_range})</span>
-              <NeumorphicButton
-                testID={`mobile-careers-apply-btn-${job.id}`}
-                accessibilityLabel={`mobile-careers-apply-btn-${job.id}`}
-                label="1-Click Apply"
-                onPress={() => applyCareerJobMutation.mutate(job.id)}
-              />
-            </div>
-          ))}
-        </NeumorphicCard>
-      ) : null}
-
-      {subTab === "bi" ? (
-        <>
-          <NeumorphicCard testID="mobile-career-exec-bi-summary">
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <BadgePill testID="mobile-exec-gmv-pill" label={`GMV: $${execBiQuery.data?.total_gmv_usd ?? 0}`} tone="brand" />
-              <BadgePill testID="mobile-exec-conv-pill" label={`MoMo Conv: ${execBiQuery.data?.momo_conversion_rate ?? 0}%`} tone="success" />
-              <BadgePill testID="mobile-exec-p95-pill" label={`Search P95: ${execBiQuery.data?.search_p95_ms ?? 0}ms`} tone="neutral" />
-              <BadgePill testID="mobile-exec-active-pill" label={`Active: ${execBiQuery.data?.active_candidates ?? 0}`} tone="warning" />
-            </div>
-          </NeumorphicCard>
-          <Analytics360Section />
-        </>
-      ) : null}
-    </ScreenShell>
+    </Screen>
   );
 }

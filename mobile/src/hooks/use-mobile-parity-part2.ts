@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as WebBrowser from "expo-web-browser";
 import { z } from "zod";
 import { fetchMobileCvDraft } from "@/hooks/use-mobile-career-tools";
 import { mobileApiClient } from "@/services/api-client";
+import { useMobileAuthStore } from "@/store/auth-store";
 
 export const walletTransactionSchema = z.object({
   id: z.union([z.string(), z.number()]).transform((val) => String(val)),
@@ -28,13 +30,6 @@ export const escrowCompletionSchema = z.object({
   sla_step: z.number().default(4),
 });
 export type EscrowCompletionDTO = z.infer<typeof escrowCompletionSchema>;
-
-export const extractedCvFileSchema = z.object({
-  filename: z.string().default("cv.pdf"),
-  extracted_text: z.string().default(""),
-  char_count: z.number().default(0),
-});
-export type ExtractedCvFileDTO = z.infer<typeof extractedCvFileSchema>;
 
 export const salaryCrawlResultSchema = z.object({
   status: z.string().default("CRAWLED"),
@@ -72,13 +67,23 @@ export async function fetchMobileWalletSummary(): Promise<WalletSummaryDTO> {
   return walletSummarySchema.parse(raw);
 }
 
-export async function topUpMobileWallet(amountVnd: number): Promise<WalletSummaryDTO> {
-  if (amountVnd <= 0) throw new Error("Top-up amount must be positive");
+/**
+ * Top-up creates a pending MoMo order; the balance is credited server-side only by the MoMo IPN.
+ * The client must open `pay_url` and then refetch the wallet — never credit the balance locally.
+ */
+export const walletTopUpOrderSchema = z.object({
+  order_id: z.union([z.string(), z.number()]).transform((val) => String(val)).optional(),
+  pay_url: z.string().url(),
+});
+export type WalletTopUpOrderDTO = z.infer<typeof walletTopUpOrderSchema>;
+
+export async function createMobileWalletTopUpOrder(amountVnd: number): Promise<WalletTopUpOrderDTO> {
+  if (!Number.isInteger(amountVnd) || amountVnd <= 0) throw new Error("Top-up amount must be a positive integer");
   const raw = await mobileApiClient.post<unknown>("/v1/wallet/topup", {
     amount_vnd: amountVnd,
     payment_method: "MOMO_QR",
   });
-  return walletSummarySchema.parse(raw);
+  return walletTopUpOrderSchema.parse(raw);
 }
 
 export async function completeMobileExpertReviewEscrow(
@@ -89,17 +94,6 @@ export async function completeMobileExpertReviewEscrow(
     {}
   );
   return escrowCompletionSchema.parse(raw);
-}
-
-export async function extractMobileCvFile(input: {
-  filename: string;
-  contentBase64: string;
-}): Promise<ExtractedCvFileDTO> {
-  const raw = await mobileApiClient.post<unknown>("/v1/match/extract-cv-file", {
-    filename: input.filename.trim(),
-    content_base64: input.contentBase64.trim(),
-  });
-  return extractedCvFileSchema.parse(raw);
 }
 
 export async function loadMobileProfileCvText(username: string): Promise<string> {
@@ -167,14 +161,26 @@ export async function applyMobileCareerJob(
 }
 
 export function useMobileWalletSummaryQuery() {
-  return useQuery({ queryKey: MOBILE_WALLET_QUERY_KEY, queryFn: fetchMobileWalletSummary, staleTime: 30_000 });
+  // The wallet endpoints accept anonymous callers (demo wallet), so only ask once signed in.
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  return useQuery({
+    queryKey: MOBILE_WALLET_QUERY_KEY,
+    queryFn: fetchMobileWalletSummary,
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  });
 }
 
 export function useTopUpMobileWalletMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: topUpMobileWallet,
-    onSuccess: () => qc.invalidateQueries({ queryKey: MOBILE_WALLET_QUERY_KEY }),
+    mutationFn: async (amountVnd: number) => {
+      const order = await createMobileWalletTopUpOrder(amountVnd);
+      await WebBrowser.openBrowserAsync(order.pay_url);
+      return order;
+    },
+    // Balance changes only after the MoMo IPN lands, so re-read it once the browser closes.
+    onSettled: () => qc.invalidateQueries({ queryKey: MOBILE_WALLET_QUERY_KEY }),
   });
 }
 

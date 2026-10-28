@@ -1,66 +1,74 @@
 import React, { useState } from "react";
-import { ActionButton, mobileRouter, ScreenShell, SurfaceCard } from "@/lib/native-runtime";
-import { loginSchema } from "@/lib/schemas";
+import { router } from "expo-router";
 import { useMobileLoginMutation } from "@/hooks/use-mobile-auth";
+import { loginSchema } from "@/lib/schemas";
+import { Body, Button, Card, ErrorText, Field, H1, Screen } from "@/lib/ui";
 
-export default function MobileLoginScreen() {
+// Google sign-in is intentionally absent: the backend OAuth callback now requires a real
+// authorization code + PKCE verifier, which needs expo-auth-session wiring. Email/password only.
+export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const loginMutation = useMobileLoginMutation();
 
-  const handleSignIn = async () => {
+  const handleSignIn = () => {
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {
       setValidationError(parsed.error.issues[0]?.message ?? "Invalid credentials");
       return;
     }
     setValidationError(null);
-    await loginMutation.mutateAsync(parsed.data);
+    loginMutation.mutate(parsed.data, {
+      onSuccess: () => (router.canGoBack() ? router.back() : router.replace("/")),
+    });
   };
 
   return (
-    <ScreenShell testID="mobile-login-screen" mode="dark">
-      <SurfaceCard testID="mobile-login-card" mode="dark">
-        <h1 data-testid="mobile-login-title">Sign In to Belooga Mobile</h1>
-        <p data-testid="mobile-login-subtitle">
-          Access your 60s video elevator pitch studio and job application pipeline.
-        </p>
+    <Screen testID="mobile-login-screen">
+      <Card testID="mobile-login-card">
+        <H1 testID="mobile-login-title">Sign In to Belooga</H1>
+        <Body testID="mobile-login-subtitle">
+          Access your 60s video pitch studio and job application pipeline.
+        </Body>
         {validationError ? (
-          <div data-testid="mobile-login-validation-error">{validationError}</div>
+          <Body testID="mobile-login-validation-error" tone="danger">
+            {validationError}
+          </Body>
         ) : null}
-        {loginMutation.isError ? (
-          <div data-testid="mobile-login-api-error">
-            {loginMutation.error instanceof Error ? loginMutation.error.message : "Login failed"}
-          </div>
-        ) : null}
-        <input
-          data-testid="mobile-login-email"
-          type="email"
+        <ErrorText testID="mobile-login-api-error" error={loginMutation.error} />
+        <Field
+          testID="mobile-login-email"
           value={email}
           placeholder="you@company.com"
-          onChange={(e) => setEmail(e.target.value)}
+          keyboardType="email-address"
+          autoComplete="email"
+          textContentType="emailAddress"
+          onChangeText={setEmail}
         />
-        <input
-          data-testid="mobile-login-password"
-          type="password"
+        <Field
+          testID="mobile-login-password"
           value={password}
           placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
+          secureTextEntry
+          autoComplete="current-password"
+          textContentType="password"
+          onChangeText={setPassword}
+          onSubmitEditing={handleSignIn}
         />
-        <ActionButton
+        <Button
           testID="mobile-login-submit"
           label={loginMutation.isPending ? "Signing In..." : "Sign In"}
           disabled={loginMutation.isPending}
           onPress={handleSignIn}
         />
-        <ActionButton
+        <Button
           testID="mobile-go-register"
           label="Create Candidate Account"
           variant="secondary"
-          onPress={() => mobileRouter.push("/(auth)/register")}
+          onPress={() => router.replace("/register")}
         />
-      </SurfaceCard>
-    </ScreenShell>
+      </Card>
+    </Screen>
   );
 }

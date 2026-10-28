@@ -12,11 +12,16 @@ import {
 } from "@/lib/schemas";
 import { mobileApiClient } from "@/services/api-client";
 
+const extractedCvFileSchema = z.object({
+  extracted_text: z.string().default(""),
+  extracted_skills: z.array(z.string()).default([]),
+});
+
 const UPLOAD_ID_PATTERN = /^upload_\d+_[a-zA-Z0-9]+$/;
 
 export function createValidMobileUploadId(
   timestampSec = Math.floor(Date.now() / 1000),
-  suffix = "m0b1le"
+  suffix = Math.random().toString(36).slice(2, 10)
 ): string {
   const cleanSuffix = suffix.replace(/[^a-zA-Z0-9]/g, "") || "pitch";
   const uploadId = `upload_${Math.abs(Math.trunc(timestampSec))}_${cleanSuffix}`;
@@ -41,40 +46,52 @@ export async function generateMobileTeleprompterScript(
   return interviewKitResponseSchema.parse(raw);
 }
 
-export interface ChunkedVideoUploadParams {
+export interface PitchVideoUploadParams {
   uploadId: string;
-  chunksBase64: string[];
+  username: string;
+  /** Local file URI produced by expo-camera's recordAsync(). */
+  fileUri: string;
   onProgress?: (percent: number) => void;
 }
 
-export async function uploadMobilePitchVideoInChunks(
-  params: ChunkedVideoUploadParams
-): Promise<VideoUploadCompleteDTO> {
-  if (!UPLOAD_ID_PATTERN.test(params.uploadId)) {
-    throw new Error("uploadId must match ^upload_\\d+_[a-zA-Z0-9]+$ security pattern");
-  }
-  const totalChunks = params.chunksBase64.length;
-  if (totalChunks === 0) {
-    throw new Error("At least one video chunk is required");
-  }
+/** React Native's FormData accepts `{ uri, name, type }` file descriptors for multipart uploads. */
+function nativeFilePart(uri: string, name: string, type: string): Blob {
+  return { uri, name, type } as unknown as Blob;
+}
 
-  for (let index = 0; index < totalChunks; index += 1) {
-    await mobileApiClient.post("/v1/media/upload/chunk", {
-      upload_id: params.uploadId,
-      chunk_index: index,
-      total_chunks: totalChunks,
-      chunk_data: params.chunksBase64[index],
-    });
-    if (params.onProgress) {
-      params.onProgress(Math.round(((index + 1) / totalChunks) * 100));
-    }
+// ponytail: the recording is sent as a single chunk (total_chunks=1); split into byte ranges if long recordings hit gateway body limits.
+export async function uploadMobilePitchVideo(params: PitchVideoUploadParams): Promise<VideoUploadCompleteDTO> {
+  if (!UPLOAD_ID_PATTERN.test(params.uploadId)) {
+    throw new Error("uploadId must match ^upload_\d+_[a-zA-Z0-9]+$ security pattern");
   }
+  const filename = params.fileUri.split("/").pop() || "pitch.mp4";
+  const form = new FormData();
+  form.append("upload_id", params.uploadId);
+  form.append("chunk_index", "0");
+  form.append("total_chunks", "1");
+  form.append("username", params.username);
+  form.append("file", nativeFilePart(params.fileUri, filename, "video/mp4"));
+  await mobileApiClient.post("/v1/media/upload/chunk", form);
+  params.onProgress?.(100);
 
   const rawComplete = await mobileApiClient.post<unknown>("/v1/media/upload/complete", {
     upload_id: params.uploadId,
-    total_chunks: totalChunks,
+    total_chunks: 1,
+    username: params.username,
+    filename,
   });
   return videoUploadCompleteSchema.parse(rawComplete);
+}
+
+export async function extractMobileCvFile(file: {
+  uri: string;
+  name: string;
+  mimeType?: string;
+}): Promise<{ extracted_text: string; extracted_skills: string[] }> {
+  const form = new FormData();
+  form.append("file", nativeFilePart(file.uri, file.name, file.mimeType ?? "application/octet-stream"));
+  const raw = await mobileApiClient.post<unknown>("/v1/match/extract-cv-file", form);
+  return extractedCvFileSchema.parse(raw);
 }
 
 export async function fetchMobileVideoTranscodingStatus(
@@ -91,9 +108,9 @@ export function useMobileTeleprompterMutation() {
   });
 }
 
-export function useMobileChunkUploadMutation() {
+export function useMobilePitchUploadMutation() {
   return useMutation({
-    mutationFn: uploadMobilePitchVideoInChunks,
+    mutationFn: uploadMobilePitchVideo,
   });
 }
 

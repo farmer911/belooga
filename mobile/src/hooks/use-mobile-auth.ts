@@ -16,7 +16,6 @@ import {
   normalizeMobileUser,
   useMobileAuthStore,
 } from "@/store/auth-store";
-import { mobileRouter } from "@/lib/native-runtime";
 
 export const MOBILE_AUTH_QUERY_KEY = ["mobile", "auth", "me"] as const;
 
@@ -30,8 +29,7 @@ export async function loginMobileUser(input: LoginFormValues): Promise<MobileUse
   }
   await useMobileAuthStore
     .getState()
-    .setSessionTokens(parsed.access_token, parsed.refresh_token, userSummary);
-  mobileRouter.replace("/(tabs)");
+    .setSession(parsed.access_token, parsed.refresh_token, userSummary);
   return userSummary;
 }
 
@@ -55,8 +53,7 @@ export async function registerMobileUser(input: RegisterFormValues): Promise<Mob
   }
   await useMobileAuthStore
     .getState()
-    .setSessionTokens(parsed.access_token, parsed.refresh_token, userSummary);
-  mobileRouter.replace("/(tabs)");
+    .setSession(parsed.access_token, parsed.refresh_token, userSummary);
   return userSummary;
 }
 
@@ -72,7 +69,6 @@ export async function logoutMobileUser(): Promise<void> {
     }
   } finally {
     await clearSession();
-    mobileRouter.replace("/(auth)/login");
   }
 }
 
@@ -83,7 +79,7 @@ export async function fetchCurrentMobileSession(): Promise<MobileUserSummary> {
   if (!summary) {
     throw new Error("Unable to normalize session user profile");
   }
-  await useMobileAuthStore.getState().setUser(summary);
+  useMobileAuthStore.getState().setUser(summary);
   return summary;
 }
 
@@ -121,9 +117,8 @@ export function useMobileLogoutMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: logoutMobileUser,
-    onSuccess: () => {
-      queryClient.removeQueries({ queryKey: MOBILE_AUTH_QUERY_KEY });
-    },
+    // Drop every cached response that belonged to the signed-out user (keep the app-start session gate).
+    onSettled: () => queryClient.removeQueries({ predicate: (q) => q.queryKey[1] !== "session" }),
   });
 }
 
@@ -194,10 +189,20 @@ export function resolveNotificationSpotlightTarget(
 }
 
 
+export const MOBILE_NOTIFICATIONS_QUERY_KEY = ["mobile", "notifications"] as const;
+
+export function useMarkAllMobileNotificationsReadMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markAllMobileNotificationsRead,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MOBILE_NOTIFICATIONS_QUERY_KEY }),
+  });
+}
+
 export function useMobileNotificationsQuery() {
   const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
   return useQuery({
-    queryKey: ["mobile", "notifications"] as const,
+    queryKey: MOBILE_NOTIFICATIONS_QUERY_KEY,
     queryFn: fetchMobileNotifications,
     enabled: isAuthenticated,
     staleTime: 30_000,

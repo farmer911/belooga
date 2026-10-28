@@ -124,8 +124,9 @@ jobs:
       - name: Mobile Typecheck & Unit Tests
         working-directory: mobile
         run: |
-          bun x tsc --noEmit
-          bun test
+          bun run typecheck
+          bun run lint
+          bun run test --ci
 
       - name: Run Playwright E2E Automation Suite
         env:

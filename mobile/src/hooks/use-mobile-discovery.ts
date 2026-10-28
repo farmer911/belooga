@@ -140,7 +140,7 @@ export async function fetchMobileCandidateProfileBatch(
   };
 
   const rawBatch = await mobileApiClient.post<{
-    responses?: Array<{ status: number; data: unknown }>;
+    responses?: { status: number; data: unknown }[];
   }>("/v1/rpc/batch", rpcPayload);
 
   const items = rawBatch.responses ?? [];
