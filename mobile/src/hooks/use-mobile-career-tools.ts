@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import * as WebBrowser from "expo-web-browser";
 import { z } from "zod";
 import { mobileApiClient } from "@/services/api-client";
 
@@ -12,9 +13,10 @@ export type ExpertPackageDTO = z.infer<typeof expertPackageSchema>;
 
 export const momoQrResponseSchema = z.object({
   order_id: z.string().min(1),
+  pay_url: z.string().url(),
   qr_code_url: z.string().default(""),
-  amount_vnd: z.number().default(0),
-  status: z.string().default("PENDING"),
+  amount: z.number().default(0),
+  message: z.string().default(""),
 });
 export type MomoQrResponseDTO = z.infer<typeof momoQrResponseSchema>;
 
@@ -67,12 +69,13 @@ export async function fetchMobileExpertPackages(): Promise<ExpertPackageDTO[]> {
 }
 
 export async function createMobileMomoPaymentQr(input: {
-  packageId: string;
+  packageName: string;
   amountVnd: number;
 }): Promise<MomoQrResponseDTO> {
   const raw = await mobileApiClient.post<unknown>("/v1/payments/momo/create-qr", {
-    package_id: input.packageId,
-    amount_vnd: input.amountVnd,
+    package_type: "EXPERT_REVIEW",
+    amount: input.amountVnd,
+    order_info: input.packageName,
   });
   return momoQrResponseSchema.parse(raw);
 }
@@ -130,7 +133,11 @@ export function useMobileExpertPackagesQuery() {
 
 export function useMobileMomoQrMutation() {
   return useMutation({
-    mutationFn: createMobileMomoPaymentQr,
+    mutationFn: async (input: { packageName: string; amountVnd: number }) => {
+      const order = await createMobileMomoPaymentQr(input);
+      await WebBrowser.openBrowserAsync(order.pay_url);
+      return order;
+    },
   });
 }
 

@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import {
-  BadgePill,
-  BottomSheetDrawer,
-  mobileRouter,
-  NeumorphicButton,
-  NeumorphicCard,
-  NeumorphicInput,
-  NeumorphicInsetWell,
-  ScreenShell,
-} from "@/lib/native-runtime";
+import { FlatList, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { CompaniesDirectorySection } from "@/components/companies-directory-section";
+import { TopCandidatesSection } from "@/components/top-candidates-section";
 import {
   isCandidateBookmarked,
   useMobileBookmarksQuery,
@@ -22,12 +16,13 @@ import {
   useMobileSkillCatalogQuery,
   useMobileTrendingInsightsQuery,
 } from "@/hooks/use-mobile-discovery";
-import { getSemanticTokens } from "@/theme/tokens";
-import { CompaniesDirectorySection } from "@/components/companies-directory-section";
-import { TopCandidatesSection } from "@/components/top-candidates-section";
+import type { CandidateSearchCardDTO } from "@/lib/schemas";
+import { Body, Button, Card, ErrorText, Field, H1, H2, Pill, Row, Sheet, Well } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
+import { NEUMORPHIC_TOKENS } from "@/theme/tokens";
 
-export default function MobileDiscoveryFeedScreen() {
-  const tokens = getSemanticTokens("neumorphic");
+export default function DiscoveryScreen() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
   const [queryText, setQueryText] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [customSkillInput, setCustomSkillInput] = useState("");
@@ -35,12 +30,7 @@ export default function MobileDiscoveryFeedScreen() {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
-  const searchQuery = useMobileCandidateSearchQuery({
-    q: queryText,
-    skill: selectedSkills[0],
-    skills: selectedSkills,
-    cursor,
-  });
+  const searchQuery = useMobileCandidateSearchQuery({ q: queryText, skill: selectedSkills[0], skills: selectedSkills, cursor });
   const trendingQuery = useMobileTrendingInsightsQuery();
   const suggestionsQuery = useMobileSearchSuggestionsQuery(queryText);
   const skillCatalogQuery = useMobileSkillCatalogQuery();
@@ -49,241 +39,218 @@ export default function MobileDiscoveryFeedScreen() {
   const toggleBookmarkMutation = useToggleMobileBookmarkMutation();
 
   const candidates = searchQuery.data?.items ?? [];
-  const searchSuggestions = suggestionsQuery.data ?? [];
   const trendingSkills = trendingQuery.data?.trending_skills ?? [];
-  const catalogSkills = (skillCatalogQuery.data ?? []).map((s) => s.name);
   const bookmarks = bookmarksQuery.data ?? [];
-
   const mergedSkillNames = Array.from(
     new Set([
       ...trendingSkills.map((s) => s.name),
-      ...catalogSkills,
+      ...(skillCatalogQuery.data ?? []).map((s) => s.name),
       ...customSkillsAdded,
     ])
   );
-
-  const toggleSkillSelection = (skillName: string) => {
-    setSelectedSkills((prev) =>
-      prev.includes(skillName) ? prev.filter((s) => s !== skillName) : [...prev, skillName]
-    );
-    setCursor(undefined);
-  };
-
-  const handleAddCustomSkill = async () => {
-    const clean = customSkillInput.trim();
-    if (!clean) return;
-    const created = await createCustomSkillMutation.mutateAsync({ name: clean });
-    const addedName = created.name || clean;
-    setCustomSkillsAdded((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
-    setSelectedSkills((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
-    setCustomSkillInput("");
-    setCursor(undefined);
-  };
-
   const visibleCandidates = showSavedOnly
     ? candidates.filter((c) => isCandidateBookmarked(bookmarks, c.username))
     : candidates;
 
-  return (
-    <ScreenShell testID="mobile-discovery-feed-screen" mode="neumorphic">
-      <NeumorphicCard testID="mobile-search-filter-bar">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <BadgePill label="TALENT DISCOVERY • <15MS GIN" tone="brand" />
-          <NeumorphicButton
-            testID="filter-saved-shortlist-chip"
-            accessibilityLabel="filter-saved-shortlist-chip"
-            label={`Saved Shortlist (${bookmarks.length})`}
-            variant={showSavedOnly ? "primary" : "inset"}
-            style={{ minHeight: 44, padding: "8px 14px" }}
-            onPress={() => setShowSavedOnly((prev) => !prev)}
-          />
-        </div>
-        <h1
-          data-testid="mobile-discovery-heading"
-          style={{ margin: 0, fontSize: 20, fontWeight: 800, color: tokens.typography.heading }}
-        >
-          Talent Discovery & 60s Pitch Feed
-        </h1>
-        <NeumorphicInput
-          testID="mobile-search-input"
-          value={queryText}
-          placeholder="Search skills (FastAPI, PostgreSQL, React Native)..."
-          onChange={(e) => {
-            setQueryText(e.target.value);
-            setCursor(undefined);
-          }}
-        />
-        {searchSuggestions.length > 0 ? (
-          <div data-testid="mobile-search-suggestions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {searchSuggestions.map((suggestion) => (
-              <NeumorphicButton
-                key={suggestion}
-                testID={`mobile-search-suggestion-${suggestion}`}
-                label={suggestion}
-                variant="inset"
-                onPress={() => {
-                  setQueryText(suggestion);
-                  setCursor(undefined);
-                }}
+  const setQuery = (text: string) => {
+    setQueryText(text);
+    setCursor(undefined);
+  };
+
+  const toggleSkillSelection = (skillName: string) => {
+    setSelectedSkills((prev) => (prev.includes(skillName) ? prev.filter((s) => s !== skillName) : [...prev, skillName]));
+    setCursor(undefined);
+  };
+
+  const handleAddCustomSkill = () => {
+    const clean = customSkillInput.trim();
+    if (!clean) return;
+    createCustomSkillMutation.mutate(
+      { name: clean },
+      {
+        onSuccess: (created) => {
+          const addedName = created.name || clean;
+          setCustomSkillsAdded((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
+          setSelectedSkills((prev) => (prev.includes(addedName) ? prev : [...prev, addedName]));
+          setCustomSkillInput("");
+          setCursor(undefined);
+        },
+      }
+    );
+  };
+
+  const openCandidate = (username: string) =>
+    router.push({ pathname: "/candidate/[username]", params: { username } });
+
+  const renderCandidate = ({ item: candidate }: { item: CandidateSearchCardDTO }) => {
+    const bookmarked = isCandidateBookmarked(bookmarks, candidate.username);
+    const skillMatch = computeCandidateSkillMatch(candidate.skills, selectedSkills);
+    return (
+      <Card testID={`mobile-candidate-card-${candidate.username}`}>
+        <H2 testID={`mobile-candidate-name-${candidate.username}`}>
+          {candidate.first_name} {candidate.last_name} (@{candidate.username})
+        </H2>
+        <Row>
+          <Pill testID={`mobile-skill-match-badge-${candidate.username}`} label={skillMatch.label} />
+          <Pill testID={`mobile-candidate-trust-${candidate.username}`} label={`Trust Score: ${candidate.trust_score}%`} tone="success" />
+        </Row>
+        <Body testID={`mobile-candidate-headline-${candidate.username}`} tone="brand">
+          {candidate.headline}
+        </Body>
+        {candidate.skills.length > 0 ? (
+          <Row>
+            {candidate.skills.map((sk) => (
+              <Pill
+                key={sk}
+                label={sk}
+                tone={selectedSkills.some((sel) => sel.toLowerCase() === sk.toLowerCase()) ? "brand" : "neutral"}
               />
             ))}
-          </div>
+          </Row>
         ) : null}
-        <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Multi-Skill Filter & Custom Skill Drawer">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-            <NeumorphicInput
-              testID="mobile-custom-skill-input"
-              accessibilityLabel="mobile-custom-skill-input"
-              value={customSkillInput}
-              placeholder="+ Nhập skill mới (VD: Rust, Zig, GraphQL)..."
-              onChange={(e) => setCustomSkillInput(e.target.value)}
+        <Row>
+          {isAuthenticated ? (
+            <Button
+              testID={`bookmark-candidate-${candidate.username}`}
+              label={bookmarked ? "Saved" : "Save"}
+              variant={bookmarked ? "primary" : "secondary"}
+              disabled={toggleBookmarkMutation.isPending}
+              onPress={() =>
+                toggleBookmarkMutation.mutate({ username: candidate.username, currentlyBookmarked: bookmarked })
+              }
             />
-            <NeumorphicButton
-              testID="mobile-add-custom-skill-btn"
-              accessibilityLabel="mobile-add-custom-skill-btn"
-              label="+ Thêm Skill Mới"
-              style={{ minHeight: 48, padding: "8px 14px" }}
-              onPress={() => void handleAddCustomSkill()}
-            />
-          </div>
-          <NeumorphicInsetWell testID="mobile-trending-skill-chips">
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {mergedSkillNames.map((skillName) => {
-                const trendingMeta = trendingSkills.find((t) => t.name === skillName);
-                const active = selectedSkills.includes(skillName);
-                return (
-                  <NeumorphicButton
-                    key={skillName}
-                    testID={`mobile-skill-chip-${skillName}`}
-                    accessibilityLabel={`mobile-skill-chip-${skillName}`}
-                    label={trendingMeta ? `${skillName} (${trendingMeta.candidate_count})` : skillName}
-                    variant={active ? "primary" : "inset"}
-                    onPress={() => toggleSkillSelection(skillName)}
-                  />
-                );
-              })}
-            </div>
-          </NeumorphicInsetWell>
-        </BottomSheetDrawer>
-      </NeumorphicCard>
+          ) : null}
+          <Button
+            testID={`mobile-open-candidate-${candidate.username}`}
+            label="Watch Pitch & Timeline"
+            onPress={() => openCandidate(candidate.username)}
+          />
+        </Row>
+      </Card>
+    );
+  };
 
+  const header = (
+    <Card testID="mobile-search-filter-bar">
+      <Row style={{ justifyContent: "space-between" }}>
+        <Pill label="TALENT DISCOVERY" />
+        {isAuthenticated ? (
+          <Button
+            testID="filter-saved-shortlist-chip"
+            label={`Saved Shortlist (${bookmarks.length})`}
+            variant={showSavedOnly ? "primary" : "inset"}
+            onPress={() => setShowSavedOnly((prev) => !prev)}
+          />
+        ) : null}
+      </Row>
+      <H1 testID="mobile-discovery-heading">Talent Discovery & 60s Pitch Feed</H1>
+      <Field
+        testID="mobile-search-input"
+        value={queryText}
+        placeholder="Search skills (FastAPI, PostgreSQL, React Native)..."
+        onChangeText={setQuery}
+        returnKeyType="search"
+      />
+      {(suggestionsQuery.data ?? []).length > 0 ? (
+        <Row testID="mobile-search-suggestions">
+          {(suggestionsQuery.data ?? []).map((suggestion) => (
+            <Button
+              key={suggestion}
+              testID={`mobile-search-suggestion-${suggestion}`}
+              label={suggestion}
+              variant="inset"
+              onPress={() => setQuery(suggestion)}
+            />
+          ))}
+        </Row>
+      ) : null}
+      <Sheet testID="mobile-bottom-sheet-drawer" title="Multi-Skill Filter">
+        {isAuthenticated ? (
+          <Row>
+            <Field
+              testID="mobile-custom-skill-input"
+              style={{ flex: 1 }}
+              value={customSkillInput}
+              placeholder="+ Nhập skill mới (VD: Rust, Zig)..."
+              onChangeText={setCustomSkillInput}
+            />
+            <Button
+              testID="mobile-add-custom-skill-btn"
+              label="+ Thêm Skill"
+              disabled={createCustomSkillMutation.isPending}
+              onPress={handleAddCustomSkill}
+            />
+          </Row>
+        ) : null}
+        <ErrorText error={createCustomSkillMutation.error} />
+        <Well testID="mobile-trending-skill-chips">
+          <Row>
+            {mergedSkillNames.map((skillName) => {
+              const trendingMeta = trendingSkills.find((t) => t.name === skillName);
+              return (
+                <Button
+                  key={skillName}
+                  testID={`mobile-skill-chip-${skillName}`}
+                  label={trendingMeta ? `${skillName} (${trendingMeta.candidate_count})` : skillName}
+                  variant={selectedSkills.includes(skillName) ? "primary" : "inset"}
+                  onPress={() => toggleSkillSelection(skillName)}
+                />
+              );
+            })}
+          </Row>
+        </Well>
+      </Sheet>
+      <ErrorText testID="mobile-search-error" error={searchQuery.error} />
       {showSavedOnly && bookmarks.length === 0 ? (
-        <NeumorphicCard testID="shortlist-empty-state">
-          <p style={{ margin: 0, color: tokens.typography.muted, fontSize: 14 }}>
-            No candidates saved yet. Bookmark profiles while browsing search results to compare them here.
-          </p>
-          <NeumorphicButton
+        <Well testID="shortlist-empty-state">
+          <Body>No candidates saved yet. Bookmark profiles while browsing search results to compare them here.</Body>
+          <Button
             testID="shortlist-back-to-filters-btn"
             label="Back to Search Filters"
             variant="secondary"
             onPress={() => setShowSavedOnly(false)}
           />
-        </NeumorphicCard>
+        </Well>
       ) : null}
+    </Card>
+  );
 
-      <div data-testid="mobile-candidate-pitch-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {visibleCandidates.map((candidate) => {
-          const bookmarked = isCandidateBookmarked(bookmarks, candidate.username);
-          const skillMatch = computeCandidateSkillMatch(candidate.skills, selectedSkills);
-          return (
-            <NeumorphicCard
-              key={candidate.username}
-              testID={`mobile-candidate-card-${candidate.username}`}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <h2
-                  data-testid={`mobile-candidate-name-${candidate.username}`}
-                  style={{ margin: 0, fontSize: 17, fontWeight: 700, color: tokens.typography.heading }}
-                >
-                  {candidate.first_name} {candidate.last_name} (@{candidate.username})
-                </h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <BadgePill
-                    testID={`mobile-skill-match-badge-${candidate.username}`}
-                    label={skillMatch.label}
-                    tone="brand"
-                  />
-                  <BadgePill
-                    testID={`mobile-candidate-trust-${candidate.username}`}
-                    label={`Trust Score: ${candidate.trust_score}%`}
-                    tone="success"
-                  />
-                  <NeumorphicButton
-                    testID={`bookmark-candidate-${candidate.username}`}
-                    accessibilityLabel={`bookmark-candidate-${candidate.username}`}
-                    label={bookmarked ? "Saved" : "Save"}
-                    variant={bookmarked ? "primary" : "secondary"}
-                    disabled={toggleBookmarkMutation.isPending}
-                    style={{ minWidth: 44, minHeight: 44, padding: "8px 12px" }}
-                    onPress={() =>
-                      toggleBookmarkMutation.mutate({
-                        username: candidate.username,
-                        currentlyBookmarked: bookmarked,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <p
-                data-testid={`mobile-candidate-headline-${candidate.username}`}
-                style={{ margin: 0, fontSize: 14, color: tokens.brand.primary, fontWeight: 600 }}
-              >
-                {candidate.headline}
-              </p>
-              {candidate.skills.length > 0 ? (
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {candidate.skills.map((sk) => {
-                    const isMatched = selectedSkills.some(
-                      (sel) => sel.toLowerCase() === sk.toLowerCase()
-                    );
-                    return (
-                      <BadgePill
-                        key={sk}
-                        label={sk}
-                        tone={isMatched ? "brand" : "neutral"}
-                      />
-                    );
-                  })}
-                </div>
-              ) : null}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <NeumorphicButton
-                  testID={`mobile-watch-pitch-${candidate.username}`}
-                  accessibilityLabel={`mobile-watch-pitch-${candidate.username}`}
-                  label="0:30 Video Pitch"
-                  variant="secondary"
-                  onPress={() =>
-                    mobileRouter.push(`/candidate/${candidate.username}`, {
-                      username: candidate.username,
-                    })
-                  }
-                />
-                <NeumorphicButton
-                  testID={`mobile-open-candidate-${candidate.username}`}
-                  label="Watch 60s Video Pitch & Timeline"
-                  onPress={() =>
-                    mobileRouter.push(`/candidate/${candidate.username}`, {
-                      username: candidate.username,
-                    })
-                  }
-                />
-              </div>
-            </NeumorphicCard>
-          );
-        })}
-      </div>
-
+  const footer = (
+    <>
       {searchQuery.data?.next_cursor ? (
-        <NeumorphicButton
+        <Button
           testID="mobile-search-load-more"
           label="Load Next Batch"
           variant="secondary"
           onPress={() => setCursor(searchQuery.data?.next_cursor ?? undefined)}
         />
       ) : null}
-
       <TopCandidatesSection />
       <CompaniesDirectorySection />
-    </ScreenShell>
+    </>
+  );
+
+  return (
+    <FlatList
+      testID="mobile-candidate-pitch-list"
+      style={styles.list}
+      contentContainerStyle={styles.content}
+      data={visibleCandidates}
+      keyExtractor={(c) => c.username}
+      renderItem={renderCandidate}
+      ListHeaderComponent={header}
+      ListFooterComponent={footer}
+      ListEmptyComponent={
+        searchQuery.isPending ? undefined : <Body testID="mobile-search-empty">No candidates match these filters.</Body>
+      }
+      refreshing={searchQuery.isRefetching}
+      onRefresh={() => void searchQuery.refetch()}
+      keyboardShouldPersistTaps="handled"
+    />
   );
 }
+
+const styles = StyleSheet.create({
+  list: { flex: 1, backgroundColor: NEUMORPHIC_TOKENS.canvas },
+  content: { padding: 16, gap: 14 },
+});

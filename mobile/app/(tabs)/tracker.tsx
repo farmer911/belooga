@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  BadgePill,
-  BottomSheetDrawer,
-  NeumorphicButton,
-  NeumorphicCard,
-  NeumorphicInput,
-  ScreenShell,
-} from "@/lib/native-runtime";
-import { MobileJobStatus } from "@/lib/schemas";
+import { router } from "expo-router";
 import {
   filterMobileTrackedJobs,
   flushMobileJobOfflineOutbox,
@@ -18,33 +10,25 @@ import {
   useMobileTrackedJobsQuery,
   useSaveMobileCareerGoalMutation,
   useTriggerMobileAiJobMatchMutation,
-  useUpdateMobileJobMutation,
   useUpdateMobileJobStatusMutation,
 } from "@/hooks/use-mobile-tracker";
-import { getSemanticTokens } from "@/theme/tokens";
+import type { MobileJobStatus } from "@/lib/schemas";
+import { Body, Button, Card, ErrorText, Field, H1, H2, Pill, Row, Screen, Sheet } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
 
-const KANBAN_STAGES: readonly MobileJobStatus[] = [
-  "TARGETING",
-  "TAILORED",
-  "APPLIED",
-  "INTERVIEW",
-  "OFFER",
-] as const;
-
+const KANBAN_STAGES: readonly MobileJobStatus[] = ["TARGETING", "TAILORED", "APPLIED", "INTERVIEW", "OFFER"];
 const STAGE_FILTERS = ["ALL", "SAVED", "APPLIED", "INTERVIEW", "OFFER"] as const;
 
-export default function MobileJobTrackerScreen() {
-  const tokens = getSemanticTokens("neumorphic");
+function TrackerBoard() {
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("ALL");
   const [isOnline, setIsOnline] = useState(true);
-
-  const [targetRole, setTargetRole] = useState("Staff Distributed Systems Engineer");
-  const [targetSkillsText, setTargetSkillsText] = useState("Golang, Python, PostgreSQL, Kubernetes");
-  const [minSalary, setMinSalary] = useState("4500");
-  const [preferredLocation, setPreferredLocation] = useState("Ho Chi Minh City / Remote");
+  const [targetRole, setTargetRole] = useState("");
+  const [targetSkillsText, setTargetSkillsText] = useState("");
+  const [minSalary, setMinSalary] = useState("");
+  const [preferredLocation, setPreferredLocation] = useState("");
 
   const jobsQuery = useMobileTrackedJobsQuery();
   const analyticsQuery = useMobileJobPipelineAnalyticsQuery();
@@ -53,230 +37,154 @@ export default function MobileJobTrackerScreen() {
   const aiJobMatchMutation = useTriggerMobileAiJobMatchMutation();
   const createMutation = useCreateMobileJobMutation();
   const statusMutation = useUpdateMobileJobStatusMutation();
-  const updateJobMutation = useUpdateMobileJobMutation();
   const deleteJobMutation = useDeleteMobileJobMutation();
 
   const activeGoal = careerGoalsQuery.data?.[0];
-
-  const handleAddJob = async () => {
-    if (!company.trim() || !position.trim()) return;
-    await createMutation.mutateAsync({
-      company: company.trim(),
-      position: position.trim(),
-      status: "TARGETING",
-      salary: "$195k",
-      score: 90,
-      notes: "",
-    });
-    setCompany("");
-    setPosition("");
-  };
-
-  const handleSaveCareerGoal = async () => {
-    const skills = targetSkillsText
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    await saveGoalMutation.mutateAsync({
-      target_role: targetRole.trim() || "Staff Backend Engineer",
-      target_skills: skills,
-      min_salary: Number(minSalary) || 0,
-      preferred_location: preferredLocation.trim(),
-    });
-  };
-
-  const handleTriggerAiJobMatch = async () => {
-    const goalId = activeGoal?.id ?? "goal_default_1";
-    await aiJobMatchMutation.mutateAsync({
-      goalId,
-      paymentMethod: "WALLET",
-    });
-  };
-
   const analytics = analyticsQuery.data;
   const visibleJobs = filterMobileTrackedJobs(jobsQuery.data ?? [], searchQuery, stageFilter);
 
+  const handleAddJob = () => {
+    if (!company.trim() || !position.trim()) return;
+    createMutation.mutate(
+      { company: company.trim(), position: position.trim(), status: "TARGETING", salary: "", score: 0, notes: "" },
+      {
+        onSuccess: () => {
+          setCompany("");
+          setPosition("");
+        },
+      }
+    );
+  };
+
+  const toggleOnline = async () => {
+    const nextOnline = !isOnline;
+    setIsOnline(nextOnline);
+    if (nextOnline) {
+      await flushMobileJobOfflineOutbox();
+      await jobsQuery.refetch();
+    }
+  };
+
   return (
-    <ScreenShell testID="mobile-job-tracker-screen" mode="neumorphic">
-      <NeumorphicCard testID="mobile-job-tracker-header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <BadgePill label="CANDIDATE CRM • OFFLINE VAULT" tone="brand" />
-          <NeumorphicButton
+    <>
+      <Card testID="mobile-job-tracker-header">
+        <Row style={{ justifyContent: "space-between" }}>
+          <Pill label="CANDIDATE CRM" />
+          <Button
             testID="mobile-tracker-toggle-online"
             label={isOnline ? "Network: Online" : "Network: Offline Outbox"}
             variant="secondary"
-            onPress={async () => {
-              const nextOnline = !isOnline;
-              setIsOnline(nextOnline);
-              if (nextOnline) {
-                await flushMobileJobOfflineOutbox();
-                await jobsQuery.refetch();
-              }
-            }}
+            onPress={() => void toggleOnline()}
           />
-        </div>
-        <h1
-          data-testid="mobile-tracker-title"
-          style={{ margin: 0, fontSize: 20, fontWeight: 800, color: tokens.typography.heading }}
-        >
-          Job Application Kanban Pipeline
-        </h1>
+        </Row>
+        <H1 testID="mobile-tracker-title">Job Application Kanban Pipeline</H1>
         {analytics ? (
-          <div data-testid="mobile-tracker-analytics" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <BadgePill label={`Total: ${analytics.total_applications}`} tone="brand" />
-            <BadgePill label={`Avg ATS: ${analytics.average_ats_score}%`} tone="success" />
-            <BadgePill label={`Interview Rate: ${analytics.interview_rate}%`} tone="neutral" />
-          </div>
+          <Row testID="mobile-tracker-analytics">
+            <Pill label={`Total: ${analytics.total_applications}`} />
+            <Pill label={`Avg ATS: ${analytics.average_ats_score}%`} tone="success" />
+            <Pill label={`Interview Rate: ${analytics.interview_rate}%`} tone="neutral" />
+          </Row>
         ) : null}
-        <NeumorphicInput
-          testID="mobile-tracker-search-input"
-          accessibilityLabel="mobile-tracker-search-input"
-          value={searchQuery}
-          placeholder="Tìm kiếm công việc theo công ty / vị trí..."
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <div data-testid="mobile-tracker-stage-filters" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <Field testID="mobile-tracker-search-input" value={searchQuery} placeholder="Tìm kiếm theo công ty / vị trí..." onChangeText={setSearchQuery} />
+        <Row testID="mobile-tracker-stage-filters">
           {STAGE_FILTERS.map((st) => (
-            <NeumorphicButton
+            <Button
               key={st}
               testID={`mobile-tracker-stage-filter-${st}`}
-              accessibilityLabel={`mobile-tracker-stage-filter-${st}`}
               label={st}
               variant={stageFilter === st ? "primary" : "inset"}
               onPress={() => setStageFilter(st)}
             />
           ))}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <NeumorphicInput
-            testID="mobile-tracker-company-input"
-            value={company}
-            placeholder="Company (e.g. Stripe)"
-            onChange={(e) => setCompany(e.target.value)}
-          />
-          <NeumorphicInput
-            testID="mobile-tracker-position-input"
-            value={position}
-            placeholder="Role (e.g. Staff Mobile)"
-            onChange={(e) => setPosition(e.target.value)}
-          />
-        </div>
-        <NeumorphicButton
+        </Row>
+        <Field testID="mobile-tracker-company-input" value={company} placeholder="Company (e.g. Stripe)" autoCapitalize="words" onChangeText={setCompany} />
+        <Field testID="mobile-tracker-position-input" value={position} placeholder="Role (e.g. Staff Mobile)" autoCapitalize="words" onChangeText={setPosition} />
+        <Button
           testID="mobile-tracker-add-job"
           label="Add Application to Pipeline"
+          disabled={createMutation.isPending}
           onPress={handleAddJob}
         />
-      </NeumorphicCard>
+        <ErrorText error={createMutation.error ?? statusMutation.error ?? deleteJobMutation.error} />
+      </Card>
 
-      <BottomSheetDrawer testID="mobile-bottom-sheet-drawer" title="Mục Tiêu Săn Việc & AI Job Matcher">
-        <div data-testid="mobile-career-goal-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <BadgePill label="PERSISTED CAREER GOAL • /V1/TRACKER/GOALS" tone="brand" />
-          <BadgePill label={activeGoal ? `Synced (#${activeGoal.id})` : "Vault Ready"} tone="success" />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <NeumorphicInput
-            testID="mobile-career-goal-role-input"
-            value={targetRole}
-            placeholder="Target Role"
-            onChange={(e) => setTargetRole(e.target.value)}
-          />
-          <NeumorphicInput
-            testID="mobile-career-goal-salary-input"
-            value={minSalary}
-            placeholder="Min Salary ($/mo)"
-            onChange={(e) => setMinSalary(e.target.value)}
-          />
-        </div>
-        <NeumorphicInput
-          testID="mobile-career-goal-skills-input"
-          value={targetSkillsText}
-          placeholder="Target Skills (comma separated)"
-          onChange={(e) => setTargetSkillsText(e.target.value)}
-        />
-        <NeumorphicInput
-          testID="mobile-career-goal-location-input"
-          value={preferredLocation}
-          placeholder="Preferred Location"
-          onChange={(e) => setPreferredLocation(e.target.value)}
-        />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <NeumorphicButton
+      <Sheet testID="mobile-career-goal-card" title="Mục Tiêu Săn Việc & AI Job Matcher">
+        <Pill label={activeGoal ? `Saved goal #${activeGoal.id}` : "No saved goal yet"} tone={activeGoal ? "success" : "neutral"} />
+        <Field testID="mobile-career-goal-role-input" value={targetRole} placeholder={activeGoal?.target_role ?? "Target role"} onChangeText={setTargetRole} />
+        <Field testID="mobile-career-goal-salary-input" value={minSalary} placeholder="Min salary ($/mo)" keyboardType="numeric" onChangeText={setMinSalary} />
+        <Field testID="mobile-career-goal-skills-input" value={targetSkillsText} placeholder="Target skills (comma separated)" onChangeText={setTargetSkillsText} />
+        <Field testID="mobile-career-goal-location-input" value={preferredLocation} placeholder="Preferred location" onChangeText={setPreferredLocation} />
+        <Row>
+          <Button
             testID="mobile-save-career-goal-btn"
-            accessibilityLabel="mobile-save-career-goal-btn"
             label={saveGoalMutation.isPending ? "Đang lưu..." : "Lưu Mục Tiêu"}
             variant="secondary"
-            onPress={() => void handleSaveCareerGoal()}
+            disabled={saveGoalMutation.isPending || !targetRole.trim()}
+            onPress={() =>
+              saveGoalMutation.mutate({
+                target_role: targetRole.trim(),
+                target_skills: targetSkillsText.split(",").map((s) => s.trim()).filter(Boolean),
+                min_salary: Number(minSalary) || 0,
+                preferred_location: preferredLocation.trim(),
+              })
+            }
           />
-          <NeumorphicButton
+          <Button
             testID="mobile-trigger-ai-job-match-btn"
-            accessibilityLabel="mobile-trigger-ai-job-match-btn"
-            label="Nhờ AI Săn Job Phù Hợp (29k • Ví / MoMo)"
-            onPress={() => void handleTriggerAiJobMatch()}
+            label="Nhờ AI Săn Job (29k • Ví)"
+            disabled={!activeGoal || aiJobMatchMutation.isPending}
+            onPress={() => activeGoal && aiJobMatchMutation.mutate({ goalId: activeGoal.id, paymentMethod: "WALLET" })}
           />
-        </div>
+        </Row>
+        <ErrorText error={saveGoalMutation.error ?? aiJobMatchMutation.error} />
         {aiJobMatchMutation.data ? (
-          <div data-testid="mobile-ai-job-match-results">
-            <BadgePill
-              label={`AI Matched ${aiJobMatchMutation.data.matched_jobs.length} Jobs (${aiJobMatchMutation.data.fee_vnd} VND)`}
-              tone="success"
-            />
-          </div>
+          <Pill
+            testID="mobile-ai-job-match-results"
+            label={`AI matched ${aiJobMatchMutation.data.matched_jobs.length} jobs (${aiJobMatchMutation.data.fee_vnd} VND)`}
+            tone="success"
+          />
         ) : null}
-      </BottomSheetDrawer>
+      </Sheet>
 
-      <div data-testid="mobile-tracker-kanban-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {visibleJobs.map((job) => (
-          <NeumorphicCard key={job.id} testID={`mobile-tracker-card-${job.id}`}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2
-                data-testid={`mobile-tracker-job-title-${job.id}`}
-                style={{ margin: 0, fontSize: 16, fontWeight: 700, color: tokens.typography.heading }}
-              >
-                {job.position} @ {job.company}
-              </h2>
-              <BadgePill
-                testID={`mobile-tracker-job-status-${job.id}`}
-                label={job.status}
-                tone="success"
+      <ErrorText testID="mobile-tracker-error" error={jobsQuery.error} />
+      {visibleJobs.map((job) => (
+        <Card key={job.id} testID={`mobile-tracker-card-${job.id}`}>
+          <H2 testID={`mobile-tracker-job-title-${job.id}`}>
+            {job.position} @ {job.company}
+          </H2>
+          <Pill testID={`mobile-tracker-job-status-${job.id}`} label={job.status} tone="success" />
+          <Row>
+            {KANBAN_STAGES.map((stage) => (
+              <Button
+                key={stage}
+                testID={`mobile-tracker-move-${job.id}-${stage}`}
+                label={stage}
+                variant={job.status === stage ? "primary" : "inset"}
+                onPress={() => statusMutation.mutate({ jobId: job.id, status: stage, isOnline })}
               />
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {KANBAN_STAGES.map((stage) => (
-                <NeumorphicButton
-                  key={stage}
-                  testID={`mobile-tracker-move-${job.id}-${stage}`}
-                  label={stage}
-                  variant={job.status === stage ? "primary" : "inset"}
-                  onPress={() =>
-                    statusMutation.mutate({
-                      jobId: job.id,
-                      status: stage,
-                      isOnline,
-                    })
-                  }
-                />
-              ))}
-              <NeumorphicButton
-                testID={`mobile-tracker-bump-salary-${job.id}`}
-                label="Edit Offer"
-                variant="secondary"
-                onPress={() =>
-                  updateJobMutation.mutate({
-                    jobId: job.id,
-                    input: { salary: "$225k" },
-                  })
-                }
-              />
-              <NeumorphicButton
-                testID={`mobile-tracker-delete-${job.id}`}
-                label="Remove"
-                variant="danger"
-                onPress={() => deleteJobMutation.mutate(job.id)}
-              />
-            </div>
-          </NeumorphicCard>
-        ))}
-      </div>
-    </ScreenShell>
+            ))}
+            <Button testID={`mobile-tracker-delete-${job.id}`} label="Remove" variant="danger" onPress={() => deleteJobMutation.mutate(job.id)} />
+          </Row>
+        </Card>
+      ))}
+      {jobsQuery.isSuccess && visibleJobs.length === 0 ? <Body>No applications in this view yet.</Body> : null}
+    </>
+  );
+}
+
+export default function TrackerScreen() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  return (
+    <Screen testID="mobile-job-tracker-screen">
+      {isAuthenticated ? (
+        <TrackerBoard />
+      ) : (
+        <Card>
+          <H1 testID="mobile-tracker-title">Job Application Kanban Pipeline</H1>
+          <Body>Sign in to track your applications.</Body>
+          <Button testID="mobile-tracker-signin" label="Sign In" onPress={() => router.push("/login")} />
+        </Card>
+      )}
+    </Screen>
   );
 }

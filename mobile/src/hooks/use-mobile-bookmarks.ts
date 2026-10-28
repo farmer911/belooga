@@ -5,6 +5,7 @@ import {
   candidateBookmarkItemSchema,
 } from "@/lib/schemas";
 import { mobileApiClient } from "@/services/api-client";
+import { useMobileAuthStore } from "@/store/auth-store";
 
 const bookmarkEnvelopeSchema = z.object({
   items: z.array(candidateBookmarkItemSchema).default([]),
@@ -63,9 +64,11 @@ export function isCandidateBookmarked(
 }
 
 export function useMobileBookmarksQuery() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
   return useQuery({
     queryKey: MOBILE_BOOKMARKS_QUERY_KEY,
     queryFn: fetchMobileBookmarks,
+    enabled: isAuthenticated,
     staleTime: 30_000,
   });
 }

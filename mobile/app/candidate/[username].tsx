@@ -1,142 +1,81 @@
 import React from "react";
-import {
-  ActionButton,
-  BadgePill,
-  mobileRouter,
-  ScreenShell,
-  SurfaceCard,
-} from "@/lib/native-runtime";
+import { Stack, useLocalSearchParams } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { UserPostsSection } from "@/components/user-posts-section";
 import {
   isCandidateBookmarked,
   useMobileBookmarksQuery,
   useToggleMobileBookmarkMutation,
 } from "@/hooks/use-mobile-bookmarks";
-import {
-  buildCandidatePdfExportUrl,
-  useMobileCandidateProfileQuery,
-} from "@/hooks/use-mobile-discovery";
-import { getSemanticTokens } from "@/theme/tokens";
-import { UserPostsSection } from "@/components/user-posts-section";
+import { buildCandidatePdfExportUrl, useMobileCandidateProfileQuery } from "@/hooks/use-mobile-discovery";
+import { Body, Button, Card, ErrorText, H1, Pill, Row, Screen, Well } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
 
-export interface MobileCandidateProfileScreenProps {
-  username?: string;
-}
-
-export default function MobileCandidateProfileScreen({
-  username,
-}: MobileCandidateProfileScreenProps) {
-  const tokens = getSemanticTokens("dark");
-  const resolvedUsername =
-    username ?? mobileRouter.getState().params.username ?? "alexnguyen";
-  const profileBundleQuery = useMobileCandidateProfileQuery(resolvedUsername);
+export default function CandidateProfileScreen() {
+  const { username = "" } = useLocalSearchParams<{ username: string }>();
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  const profileQuery = useMobileCandidateProfileQuery(username);
   const bookmarksQuery = useMobileBookmarksQuery();
   const toggleBookmarkMutation = useToggleMobileBookmarkMutation();
-  const bundle = profileBundleQuery.data;
-  const bookmarked = isCandidateBookmarked(bookmarksQuery.data, resolvedUsername);
-
-  const pdfExportUrl = buildCandidatePdfExportUrl(resolvedUsername);
+  const bundle = profileQuery.data;
+  const bookmarked = isCandidateBookmarked(bookmarksQuery.data, username);
 
   return (
-    <ScreenShell testID="mobile-candidate-profile-screen" mode="dark">
-      <SurfaceCard testID="mobile-candidate-header-card" mode="dark">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <ActionButton
-            testID="mobile-candidate-back"
-            label="Back to Feed"
-            variant="secondary"
-            onPress={() => mobileRouter.back()}
-          />
-          <ActionButton
+    <Screen testID="mobile-candidate-profile-screen">
+      <Stack.Screen options={{ title: `@${username}` }} />
+      <Card testID="mobile-candidate-header-card">
+        {isAuthenticated ? (
+          <Button
             testID="public-profile-bookmark-btn"
-            accessibilityLabel={`bookmark-candidate-${resolvedUsername}`}
             label={bookmarked ? "Saved in Shortlist" : "Save to Shortlist"}
             variant={bookmarked ? "primary" : "secondary"}
             disabled={toggleBookmarkMutation.isPending}
-            style={{ minHeight: 44 }}
-            onPress={() =>
-              toggleBookmarkMutation.mutate({
-                username: resolvedUsername,
-                currentlyBookmarked: bookmarked,
-              })
-            }
+            onPress={() => toggleBookmarkMutation.mutate({ username, currentlyBookmarked: bookmarked })}
           />
-        </div>
+        ) : null}
+        <ErrorText error={profileQuery.error} />
         {bundle ? (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h1
-                data-testid="mobile-profile-fullname"
-                style={{ margin: 0, fontSize: 21, fontWeight: 800, color: tokens.typography.heading }}
-              >
-                {bundle.profile.first_name} {bundle.profile.last_name}
-              </h1>
-              <BadgePill
-                testID="mobile-profile-trust-badge"
-                label={`${bundle.trust.tier} (${bundle.trust.trust_score}%)`}
-                tone="success"
-              />
-            </div>
-            <p
-              data-testid="mobile-profile-headline"
-              style={{ margin: 0, color: tokens.brand.primary, fontWeight: 600 }}
-            >
+            <H1 testID="mobile-profile-fullname">
+              {bundle.profile.first_name} {bundle.profile.last_name}
+            </H1>
+            <Pill testID="mobile-profile-trust-badge" label={`${bundle.trust.tier} (${bundle.trust.trust_score}%)`} tone="success" />
+            <Body testID="mobile-profile-headline" tone="brand">
               {bundle.profile.headline}
-            </p>
-            <div
-              data-testid="mobile-profile-video-pitch"
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                backgroundColor: tokens.surface.elevated,
-                fontSize: 13,
-              }}
-            >
-              60s Video Pitch: {bundle.profile.video_url ?? "No video uploaded"}
-            </div>
-            <div data-testid="mobile-profile-trajectory-years" style={{ fontWeight: 700 }}>
-              Total Verified Experience: {bundle.trajectory.total_years_experience} yrs
-            </div>
-            <div
-              data-testid="mobile-profile-timeline-list"
-              style={{ display: "flex", flexDirection: "column", gap: 8 }}
-            >
-              {bundle.profile.job_experiences.map((exp) => (
-                <div
-                  key={exp.id}
-                  data-testid={`mobile-job-exp-${exp.id}`}
-                  style={{
-                    padding: 10,
-                    borderRadius: 10,
-                    backgroundColor: tokens.surface.elevated,
-                    border: `1px solid ${tokens.surface.border}`,
-                  }}
-                >
+            </Body>
+            {bundle.profile.video_url ? (
+              <Button
+                testID="mobile-profile-video-pitch"
+                label="Watch 60s Video Pitch"
+                onPress={() => void WebBrowser.openBrowserAsync(bundle.profile.video_url!)}
+              />
+            ) : (
+              <Body testID="mobile-profile-video-pitch">No video pitch uploaded yet.</Body>
+            )}
+            <Body testID="mobile-profile-trajectory-years">
+              Total verified experience: {bundle.trajectory.total_years_experience} yrs
+            </Body>
+            {bundle.profile.job_experiences.map((exp) => (
+              <Well key={exp.id} testID={`mobile-job-exp-${exp.id}`}>
+                <Body>
                   {exp.title} at {exp.company_name} ({exp.start_date})
-                </div>
-              ))}
-            </div>
-            <a
-              data-testid="mobile-profile-pdf-export-link"
-              href={pdfExportUrl}
-              style={{
-                display: "inline-block",
-                textAlign: "center",
-                backgroundColor: tokens.brand.primary,
-                color: tokens.typography.inverse,
-                fontWeight: 700,
-                padding: "12px 16px",
-                borderRadius: 12,
-                textDecoration: "none",
-              }}
-            >
-              Export 1-Click ATS PDF Resume
-            </a>
+                </Body>
+              </Well>
+            ))}
+            <Row>
+              <Button
+                testID="mobile-profile-pdf-export-link"
+                label="Export ATS PDF Resume"
+                variant="secondary"
+                onPress={() => void WebBrowser.openBrowserAsync(buildCandidatePdfExportUrl(username))}
+              />
+            </Row>
           </>
-        ) : (
-          <div data-testid="mobile-profile-loading">Loading Candidate Profile...</div>
-        )}
-      </SurfaceCard>
-      <UserPostsSection username={resolvedUsername} isOwner={false} />
-    </ScreenShell>
+        ) : profileQuery.isPending ? (
+          <Body testID="mobile-profile-loading">Loading candidate profile...</Body>
+        ) : null}
+      </Card>
+      <UserPostsSection username={username} isOwner={false} />
+    </Screen>
   );
 }

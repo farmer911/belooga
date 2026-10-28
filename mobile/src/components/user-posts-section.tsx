@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   USER_POST_CATEGORIES,
   type UserPostCategory,
@@ -9,24 +9,23 @@ import {
   useLikeUserPostMutation,
   useUpdateUserPostMutation,
   useUserPostsByUsernameQuery,
-} from '@/hooks/use-mobile-user-posts';
-import { ActionButton, BadgePill, BottomSheetDrawer, SurfaceCard } from '@/lib/native-runtime';
-import { getSemanticTokens } from '@/theme/tokens';
+} from "@/hooks/use-mobile-user-posts";
+import { Body, Button, Card, ErrorText, Field, H2, Pill, Row, Sheet, Well } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
+
+const EMPTY_DRAFT = { title: "", content: "", tags: "", attachmentUrl: "" };
 
 export interface UserPostsSectionProps {
   username: string;
   isOwner?: boolean;
 }
 
-export function UserPostsSection({ username, isOwner = true }: UserPostsSectionProps) {
-  const tokens = getSemanticTokens('neumorphic');
+export function UserPostsSection({ username, isOwner = false }: UserPostsSectionProps) {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
   const [composerOpen, setComposerOpen] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<UserPostCategory>('Career Insight');
-  const [content, setContent] = useState('');
-  const [tagsRaw, setTagsRaw] = useState('PostgreSQL, FastAPI');
-  const [attachmentUrl, setAttachmentUrl] = useState('');
+  const [category, setCategory] = useState<UserPostCategory>(USER_POST_CATEGORIES[0]);
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
 
   const postsQuery = useUserPostsByUsernameQuery(username);
@@ -35,181 +34,113 @@ export function UserPostsSection({ username, isOwner = true }: UserPostsSectionP
   const deleteMutation = useDeleteUserPostMutation();
   const likeMutation = useLikeUserPostMutation();
   const commentMutation = useCommentUserPostMutation();
-
   const posts = postsQuery.data ?? [];
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: tokens.surface.elevated,
-    color: tokens.typography.main,
-    border: `1px solid ${tokens.surface.border}`,
-    borderRadius: 12,
-    padding: '10px 12px',
-  };
+  const setField = (key: keyof typeof EMPTY_DRAFT) => (value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
-  const openEditDrawer = (post: UserPostItem) => {
-    setEditingPostId(post.id);
-    setTitle(post.title);
-    setCategory(post.category);
-    setContent(post.content);
-    setTagsRaw(post.tags.join(', '));
-    setAttachmentUrl(post.attachment_url ?? '');
+  const openEditor = (post: UserPostItem | null) => {
+    setEditingPostId(post?.id ?? null);
+    setCategory(post?.category ?? USER_POST_CATEGORIES[0]);
+    setDraft(
+      post
+        ? { title: post.title, content: post.content, tags: post.tags.join(", "), attachmentUrl: post.attachment_url ?? "" }
+        : EMPTY_DRAFT
+    );
     setComposerOpen(true);
   };
 
   const submitPost = () => {
-    if (!title.trim() || !content.trim()) return;
-    const tags = tagsRaw
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (editingPostId) {
-      updateMutation.mutate({
-        postId: editingPostId,
-        input: { title: title.trim(), category, content: content.trim(), tags, attachment_url: attachmentUrl.trim() || null },
-      });
-    } else {
-      createMutation.mutate({
-        title: title.trim(),
-        category,
-        content: content.trim(),
-        tags,
-        attachment_url: attachmentUrl.trim() || null,
-      });
-    }
-    setEditingPostId(null);
-    setTitle('');
-    setContent('');
-    setAttachmentUrl('');
-    setComposerOpen(false);
+    const input = {
+      title: draft.title.trim(),
+      category,
+      content: draft.content.trim(),
+      tags: draft.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      attachment_url: draft.attachmentUrl.trim() || null,
+    };
+    const done = { onSuccess: () => setComposerOpen(false) };
+    if (editingPostId) updateMutation.mutate({ postId: editingPostId, input }, done);
+    else createMutation.mutate(input, done);
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <SurfaceCard testID="profile-posts-section" mode="dark">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <strong style={{ fontSize: 15, color: tokens.typography.heading }}>
-            Published Articles &amp; Career Insights (@{username})
-          </strong>
-          {isOwner ? (
-            <ActionButton
-              testID="mobile-quick-post-open-btn"
-              accessibilityLabel="mobile-quick-post-open-btn"
-              label="+ Đăng Bài Viết"
-              onPress={() => {
-                setEditingPostId(null);
-                setComposerOpen((v) => !v);
-              }}
-            />
-          ) : null}
-        </div>
-
-        <div
-          data-testid="mobile-profile-posts-list"
-          aria-label="mobile-profile-posts-list"
-          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-        >
-          {posts.map((post) => (
-            <div
-              key={post.id}
-              data-testid={`mobile-user-post-card-${post.id}`}
-              aria-label={`mobile-user-post-card-${post.id}`}
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                backgroundColor: tokens.surface.elevated,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <BadgePill label={post.category} tone="brand" />
-                <span style={{ fontSize: 12, color: tokens.typography.muted }}>
-                  {post.likes_count} Likes • {post.comments_count} Comments
-                </span>
-              </div>
-              <strong style={{ fontSize: 14, color: tokens.typography.heading }}>{post.title}</strong>
-              <span style={{ fontSize: 13, color: tokens.typography.body }}>{post.content}</span>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <ActionButton
-                  testID={`user-post-like-btn-${post.id}`}
-                  accessibilityLabel={`user-post-like-btn-${post.id}`}
-                  variant="secondary"
-                  label={`Like (${post.likes_count})`}
-                  onPress={() => likeMutation.mutate(post.id)}
-                />
-                {isOwner ? (
-                  <>
-                    <ActionButton
-                      testID={`mobile-user-post-edit-btn-${post.id}`}
-                      accessibilityLabel={`mobile-user-post-edit-btn-${post.id}`}
-                      variant="secondary"
-                      label="Edit"
-                      onPress={() => openEditDrawer(post)}
-                    />
-                    <ActionButton
-                      testID={`mobile-user-post-delete-btn-${post.id}`}
-                      accessibilityLabel={`mobile-user-post-delete-btn-${post.id}`}
-                      variant="danger"
-                      label="Delete"
-                      onPress={() => deleteMutation.mutate(post.id)}
-                    />
-                  </>
-                ) : null}
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  aria-label={`user-post-comment-input-${post.id}`}
-                  value={commentDrafts[post.id] ?? ''}
-                  onChange={(e) => setCommentDrafts((p) => ({ ...p, [post.id]: e.target.value }))}
-                  placeholder="Write a comment..."
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <ActionButton
-                  testID={`user-post-comment-submit-${post.id}`}
-                  accessibilityLabel={`user-post-comment-submit-${post.id}`}
-                  variant="secondary"
-                  label="Reply"
-                  onPress={() => {
-                    const text = (commentDrafts[post.id] ?? '').trim();
-                    if (!text) return;
-                    commentMutation.mutate({ postId: post.id, content: text });
-                    setCommentDrafts((p) => ({ ...p, [post.id]: '' }));
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </SurfaceCard>
+    <>
+      <Card testID="profile-posts-section">
+        <Row style={{ justifyContent: "space-between" }}>
+          <H2>Articles by @{username}</H2>
+          {isOwner ? <Button testID="mobile-quick-post-open-btn" label="+ Đăng Bài" onPress={() => openEditor(null)} /> : null}
+        </Row>
+        <ErrorText error={postsQuery.error ?? deleteMutation.error ?? likeMutation.error ?? commentMutation.error} />
+        {postsQuery.isSuccess && posts.length === 0 ? <Body>No posts yet.</Body> : null}
+        {posts.map((post) => (
+          <Well key={post.id} testID={`mobile-user-post-card-${post.id}`}>
+            <Row style={{ justifyContent: "space-between" }}>
+              <Pill label={post.category} />
+              <Body>
+                {post.likes_count} likes • {post.comments_count} comments
+              </Body>
+            </Row>
+            <H2>{post.title}</H2>
+            <Body>{post.content}</Body>
+            {isAuthenticated ? (
+              <>
+                <Row>
+                  <Button testID={`user-post-like-btn-${post.id}`} variant="secondary" label={`Like (${post.likes_count})`} onPress={() => likeMutation.mutate(post.id)} />
+                  {isOwner ? (
+                    <>
+                      <Button testID={`mobile-user-post-edit-btn-${post.id}`} variant="secondary" label="Edit" onPress={() => openEditor(post)} />
+                      <Button testID={`mobile-user-post-delete-btn-${post.id}`} variant="danger" label="Delete" onPress={() => deleteMutation.mutate(post.id)} />
+                    </>
+                  ) : null}
+                </Row>
+                <Row>
+                  <Field
+                    testID={`user-post-comment-input-${post.id}`}
+                    style={{ flex: 1 }}
+                    value={commentDrafts[post.id] ?? ""}
+                    onChangeText={(text) => setCommentDrafts((p) => ({ ...p, [post.id]: text }))}
+                    placeholder="Write a comment..."
+                  />
+                  <Button
+                    testID={`user-post-comment-submit-${post.id}`}
+                    variant="secondary"
+                    label="Reply"
+                    disabled={!(commentDrafts[post.id] ?? "").trim()}
+                    onPress={() =>
+                      commentMutation.mutate(
+                        { postId: post.id, content: (commentDrafts[post.id] ?? "").trim() },
+                        { onSuccess: () => setCommentDrafts((p) => ({ ...p, [post.id]: "" })) }
+                      )
+                    }
+                  />
+                </Row>
+              </>
+            ) : null}
+          </Well>
+        ))}
+      </Card>
 
       {composerOpen ? (
-        <BottomSheetDrawer
-          testID="mobile-quick-post-drawer"
-          title={editingPostId ? 'Chỉnh Sửa Bài Viết (/v1/posts)' : 'Đăng Bài Viết Mới (/v1/posts)'}
-        >
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <Sheet testID="mobile-quick-post-drawer" title={editingPostId ? "Chỉnh Sửa Bài Viết" : "Đăng Bài Viết Mới"}>
+          <Row>
             {USER_POST_CATEGORIES.map((cat) => (
-              <ActionButton
-                key={cat}
-                testID={`user-post-category-${cat}`}
-                variant={category === cat ? 'primary' : 'secondary'}
-                label={cat}
-                onPress={() => setCategory(cat)}
-              />
+              <Button key={cat} testID={`user-post-category-${cat}`} variant={category === cat ? "primary" : "secondary"} label={cat} onPress={() => setCategory(cat)} />
             ))}
-          </div>
-          <input aria-label="user-post-title-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Tiêu đề bài viết (1-200 ký tự)..." style={inputStyle} />
-          <input aria-label="user-post-body-input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Nội dung chia sẻ kinh nghiệm / dự án..." style={inputStyle} />
-          <input aria-label="user-post-tags-input" value={tagsRaw} onChange={(e) => setTagsRaw(e.target.value)} placeholder="Tags (phân cách bằng dấu phẩy)..." style={inputStyle} />
-          <input aria-label="user-post-link-input" value={attachmentUrl} onChange={(e) => setAttachmentUrl(e.target.value)} placeholder="Link đính kèm / Portfolio URL..." style={inputStyle} />
-          <ActionButton
-            testID="mobile-user-post-submit-btn"
-            accessibilityLabel="mobile-user-post-submit-btn"
-            label={editingPostId ? 'Lưu Chỉnh Sửa' : 'Đăng Bài Viết'}
-            onPress={submitPost}
-          />
-        </BottomSheetDrawer>
+          </Row>
+          <Field testID="user-post-title-input" value={draft.title} onChangeText={setField("title")} placeholder="Tiêu đề (1-200 ký tự)..." />
+          <Field testID="user-post-body-input" value={draft.content} onChangeText={setField("content")} placeholder="Nội dung..." multiline />
+          <Field testID="user-post-tags-input" value={draft.tags} onChangeText={setField("tags")} placeholder="Tags (phân cách bằng dấu phẩy)" />
+          <Field testID="user-post-link-input" value={draft.attachmentUrl} onChangeText={setField("attachmentUrl")} placeholder="Link đính kèm / Portfolio URL" keyboardType="url" />
+          <Row>
+            <Button
+              testID="mobile-user-post-submit-btn"
+              label={editingPostId ? "Lưu Chỉnh Sửa" : "Đăng Bài Viết"}
+              disabled={!draft.title.trim() || !draft.content.trim() || createMutation.isPending || updateMutation.isPending}
+              onPress={submitPost}
+            />
+            <Button testID="mobile-user-post-cancel-btn" label="Cancel" variant="secondary" onPress={() => setComposerOpen(false)} />
+          </Row>
+          <ErrorText error={createMutation.error ?? updateMutation.error} />
+        </Sheet>
       ) : null}
-    </div>
+    </>
   );
 }

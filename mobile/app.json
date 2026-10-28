@@ -5,20 +5,26 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "belooga",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.belooga.mobile",
-      "infoPlist": {
-        "NSCameraUsageDescription": "Record your 60-second video elevator pitch directly in Belooga Studio.",
-        "NSMicrophoneUsageDescription": "Capture clear voice audio for your 60-second video elevator pitch."
-      }
+      "bundleIdentifier": "com.belooga.mobile"
     },
     "android": {
-      "package": "com.belooga.mobile",
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "package": "com.belooga.mobile"
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-camera"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Record your 60-second video elevator pitch directly in Belooga Studio.",
+          "microphonePermission": "Capture clear voice audio for your 60-second video elevator pitch.",
+          "recordAudioAndroid": true
+        }
+      ]
+    ]
   }
 }
