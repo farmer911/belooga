@@ -1,10 +1,18 @@
-"""Unified Pure-ASGI API Gateway Middleware, Distributed Redis State & Edge Telemetry (BEL-513..BEL-137)."""
+"""Unified Pure-ASGI API Gateway Middleware, Distributed Redis State & Edge Telemetry (BEL-513..BEL-137).
+
+Redis failure policy:
+- Rate limiting: fail OPEN to the per-pod in-memory token bucket (logged); limits become per-pod, not global.
+- Idempotency: fail OPEN to the per-pod L1 store (logged); a retry landing on another pod may be re-executed.
+Redis is retried after a 10s back-off.
+"""
 
 import asyncio
 from collections import OrderedDict
 import hashlib
+import ipaddress
 import json
-import os
+import logging
+import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
 import uuid
@@ -16,14 +24,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.cache import platform_cache
+from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.core.events import event_stream
+from app.core.logging_setup import request_id_var
 
-DEFAULT_RATE_LIMIT_RPM = 600
-AUTH_STRICT_RPM = 30
-MUTATION_RPM = 180
-CHUNK_UPLOAD_RPM = 2400
-MAX_JSON_PAYLOAD_BYTES = 10 * 1024 * 1024
+logger = logging.getLogger(__name__)
+access_logger = logging.getLogger("belooga.access")
+
+PROD_PUBLIC_RPM = 600
+PROD_MUTATION_RPM = 180
+SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
 CACHEABLE_PUBLIC_PREFIXES = (
     "/v1/blog", "/v1/catalogs", "/v1/faqs", "/v1/careers",
@@ -48,7 +59,8 @@ def clear_gateway_l1_state() -> None:
 
 
 async def _get_gateway_redis() -> Optional[aioredis.Redis]:
-    if os.getenv("ENVIRONMENT") == "testing" and os.getenv("GATEWAY_REDIS_ENABLED") != "1":
+    settings = get_settings()
+    if settings.ENVIRONMENT == "testing" and not settings.GATEWAY_REDIS_ENABLED:
         return None
     now = time.monotonic()
     if now < float(_redis_state["disabled_until"]):
@@ -57,27 +69,64 @@ async def _get_gateway_redis() -> Optional[aioredis.Redis]:
     if _redis_state["client"] is None or _redis_state["loop"] is not loop:
         try:
             _redis_state["client"] = aioredis.from_url(
-                os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+                settings.REDIS_URL,
                 encoding="utf-8", decode_responses=True, socket_connect_timeout=0.2, socket_timeout=0.4,
             )
             _redis_state["loop"] = loop
-        except Exception:
+        except Exception as exc:
+            logger.warning("Gateway Redis init failed, using per-pod state for 10s: %s", type(exc).__name__)
             _redis_state["disabled_until"] = now + 10.0
             return None
     return _redis_state["client"]
 
 
-def _resolve_rate_tier(method: str, path: str, custom_limit: Optional[str]) -> Tuple[int, str]:
-    if custom_limit and custom_limit.isdigit():
-        return max(1, int(custom_limit)), "custom_override"
-    if path.startswith(("/v1/media/upload/chunk", "/uploads")) or path == "/health":
-        return CHUNK_UPLOAD_RPM, "chunk_upload"
-    is_non_prod = os.getenv("ENVIRONMENT", "development") != "production"
+def _redis_failed(what: str, exc: Exception) -> None:
+    logger.warning("Gateway Redis %s failed, falling back to per-pod state for 10s: %s", what, type(exc).__name__)
+    _redis_state["disabled_until"] = time.monotonic() + 10.0
+
+
+def _tier_limits(s: Settings) -> Dict[str, int]:
+    """Configured value wins in every env; unset public/mutation limits are relaxed outside production."""
+    is_prod = s.is_production
+    return {
+        "auth_strict": s.RATE_LIMIT_AUTH_RPM,
+        "chunk_upload": s.RATE_LIMIT_UPLOAD_RPM,
+        "mutation": s.RATE_LIMIT_MUTATION_RPM or (PROD_MUTATION_RPM if is_prod else s.RATE_LIMIT_UPLOAD_RPM),
+        "public_read": s.RATE_LIMIT_PUBLIC_RPM or (PROD_PUBLIC_RPM if is_prod else s.RATE_LIMIT_UPLOAD_RPM),
+    }
+
+
+def _resolve_rate_tier(method: str, path: str, s: Settings) -> Tuple[int, str]:
     if path.startswith(("/v1/auth/login", "/v1/auth/register", "/v1/auth/forgot-password")):
-        return (CHUNK_UPLOAD_RPM if is_non_prod else AUTH_STRICT_RPM), "auth_strict"
-    if method in ("POST", "PUT", "PATCH", "DELETE"):
-        return (CHUNK_UPLOAD_RPM if is_non_prod else MUTATION_RPM), "mutation"
-    return (CHUNK_UPLOAD_RPM if is_non_prod else DEFAULT_RATE_LIMIT_RPM), "public_read"
+        tier = "auth_strict"
+    elif path.startswith(("/v1/media/upload/chunk", "/uploads")) or path == "/health":
+        tier = "chunk_upload"
+    elif method in ("POST", "PUT", "PATCH", "DELETE"):
+        tier = "mutation"
+    else:
+        tier = "public_read"
+    return max(1, _tier_limits(s)[tier]), tier
+
+
+def _is_trusted(ip: str, trusted: List[Any]) -> bool:
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return any(addr in net for net in trusted)
+
+
+def resolve_client_ip(scope: Scope, trusted: List[Any]) -> str:
+    """ASGI peer, unless the peer is a trusted proxy: then the right-most untrusted X-Forwarded-For hop."""
+    peer = scope["client"][0] if scope.get("client") else "127.0.0.1"
+    if not trusted or not _is_trusted(peer, trusted):
+        return peer
+    xff = ",".join(v.decode("latin1") for k, v in scope.get("headers") or [] if k == b"x-forwarded-for")
+    hops = [h.strip() for h in xff.split(",") if h.strip()]
+    for hop in reversed(hops):
+        if not _is_trusted(hop, trusted):
+            return hop
+    return hops[0] if hops else peer
 
 
 def _consume_token_bucket(bucket_key: str, capacity: int, max_buckets: int = 8192) -> Tuple[bool, int]:
@@ -108,8 +157,8 @@ async def _consume_rate_limit(bucket_key: str, capacity: int, max_buckets: int =
                 await r_client.expire(win_key, 65)
             _gateway_stats["redis_distributed_ops"] += 1
             return count <= capacity, max(0, capacity - count)
-        except Exception:
-            _redis_state["disabled_until"] = time.monotonic() + 10.0
+        except Exception as exc:
+            _redis_failed("rate-limit", exc)
     return _consume_token_bucket(bucket_key, capacity, max_buckets)
 
 
@@ -131,8 +180,8 @@ async def _lookup_idempotency(idem_key: str) -> Optional[Tuple[int, List[Tuple[b
                 c_hdrs = [(k.encode("latin1"), v.encode("latin1")) for k, v in doc["headers"]]
                 _idempotency_store[idem_key] = (time.monotonic() + 300.0, c_status, c_hdrs, c_body)
                 return c_status, c_hdrs, c_body, b"redis"
-        except Exception:
-            _redis_state["disabled_until"] = time.monotonic() + 10.0
+        except Exception as exc:
+            _redis_failed("idempotency lookup", exc)
     return None
 
 
@@ -145,10 +194,10 @@ async def _store_idempotency(idem_key: str, status: int, headers: List[Tuple[byt
     if r_client is not None:
         try:
             doc = {"status": status, "headers": [[k.decode("latin1"), v.decode("latin1")] for k, v in c_hdrs], "body_hex": body.hex()}
-            await r_client.setex(f"belooga:gw:idem:{idem_key}", 300, json.dumps(doc))
+            await r_client.set(f"belooga:gw:idem:{idem_key}", json.dumps(doc), ex=300)
             _gateway_stats["redis_distributed_ops"] += 1
-        except Exception:
-            _redis_state["disabled_until"] = time.monotonic() + 10.0
+        except Exception as exc:
+            _redis_failed("idempotency store", exc)
 
 
 async def _send_json_response(send: Send, status_code: int, payload: Dict[str, Any], extra_headers: List[Tuple[bytes, bytes]]) -> None:
@@ -172,14 +221,36 @@ class APIGatewayMiddleware:
 
         start_time = time.perf_counter()
         _gateway_stats["total_requests"] += 1
+        settings = get_settings()
         method, path = scope.get("method", "GET").upper(), scope.get("path", "/")
         raw_headers: Dict[bytes, bytes] = dict(scope.get("headers") or [])
-        req_id_b = raw_headers.get(b"x-request-id")
-        request_id = req_id_b.decode("latin1") if req_id_b else f"req_{uuid.uuid4().hex[:16]}"
-        xff = raw_headers.get(b"x-forwarded-for")
-        client_ip = xff.decode("latin1").split(",")[0].strip() if xff else (scope.get("client")[0] if scope.get("client") else "127.0.0.1")
-        custom_limit = raw_headers[b"x-test-rate-limit"].decode("latin1") if b"x-test-rate-limit" in raw_headers else None
-        limit, policy_name = _resolve_rate_tier(method, path, custom_limit)
+        req_id_raw = raw_headers.get(b"x-request-id", b"").decode("latin1")
+        request_id = req_id_raw if SAFE_REQUEST_ID.match(req_id_raw) else f"req_{uuid.uuid4().hex[:16]}"
+        client_ip = resolve_client_ip(scope, settings.trusted_proxies)
+        # Not reset on exit: the global 500 handler (ServerErrorMiddleware, outside us) still needs it.
+        # Each server request runs in its own task/context copy, so it cannot leak across requests.
+        request_id_var.set(request_id)
+        status_holder = [500]
+
+        async def logging_send(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                status_holder[0] = message["status"]
+            await send(message)
+
+        try:
+            await self._dispatch(scope, receive, logging_send, settings, method, path, raw_headers, request_id, client_ip, start_time)
+        finally:
+            access_logger.info(
+                "%s %s %s", method, path, status_holder[0],
+                extra={"method": method, "path": path, "status": status_holder[0], "client_ip": client_ip,
+                       "duration_ms": round((time.perf_counter() - start_time) * 1000.0, 2)},
+            )
+
+    async def _dispatch(
+        self, scope: Scope, receive: Receive, send: Send, settings: Settings, method: str, path: str,
+        raw_headers: Dict[bytes, bytes], request_id: str, client_ip: str, start_time: float,
+    ) -> None:
+        limit, policy_name = _resolve_rate_tier(method, path, settings)
         allowed, remaining = await _consume_rate_limit(f"{client_ip}:{policy_name}:{limit}", limit, self.max_buckets)
 
         base_sec_headers: List[Tuple[bytes, bytes]] = [
@@ -198,9 +269,10 @@ class APIGatewayMiddleware:
             return
 
         content_len_str = raw_headers.get(b"content-length", b"").decode("latin1").strip()
-        if content_len_str.isdigit() and not path.startswith("/v1/media/") and int(content_len_str) > MAX_JSON_PAYLOAD_BYTES:
+        max_body = settings.UPLOAD_MAX_CHUNK_BYTES + 1024 * 1024 if path.startswith("/v1/media/") else settings.MAX_JSON_BODY_BYTES
+        if content_len_str.isdigit() and int(content_len_str) > max_body:
             _gateway_stats["payload_rejected_413"] += 1
-            await _send_json_response(send, 413, {"detail": "Payload too large. Maximum JSON body size is 10MB.", "request_id": request_id}, base_sec_headers)
+            await _send_json_response(send, 413, {"detail": f"Payload too large. Maximum body size is {max_body // (1024 * 1024)}MB.", "request_id": request_id}, base_sec_headers)
             return
 
         idem_raw = raw_headers.get(b"idempotency-key")
@@ -277,13 +349,11 @@ async def get_gateway_status(db: AsyncSession = Depends(get_db)):
     t0 = time.perf_counter()
     await db.execute(text("SELECT 1"))
     db_latency_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+    tiers = _tier_limits(get_settings())
     return {
         "gateway": "belooga-api-gateway", "architecture": "pure-asgi-token-bucket",
-        "state_backend": "redis-distributed-l1-fallback", "status": "healthy", "rate_limit_rpm": DEFAULT_RATE_LIMIT_RPM,
-        "route_tiers": {
-            "auth_strict_rpm": AUTH_STRICT_RPM, "mutation_rpm": MUTATION_RPM,
-            "public_read_rpm": DEFAULT_RATE_LIMIT_RPM, "chunk_upload_rpm": CHUNK_UPLOAD_RPM,
-        },
+        "state_backend": "redis-distributed-l1-fallback", "status": "healthy", "rate_limit_rpm": tiers["public_read"],
+        "route_tiers": {f"{name}_rpm": rpm for name, rpm in tiers.items()},
         "security_headers_enabled": True,
         "gateway_metrics": {**_gateway_stats, "active_ip_buckets": len(_token_buckets), "idempotency_keys_cached": len(_idempotency_store)},
         "cache_metrics": platform_cache.get_stats(), "event_stream_metrics": event_stream.get_status(),

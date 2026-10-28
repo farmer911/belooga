@@ -1,11 +1,21 @@
-import os
+import asyncio
+import logging
 from contextlib import asynccontextmanager
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import Settings, get_settings
+from app.core.logging_setup import configure_logging, request_id_var
+
+settings = get_settings()
+settings.trusted_proxies  # fail fast on a malformed TRUSTED_PROXY_IPS
+configure_logging(settings.LOG_LEVEL, settings.LOG_FORMAT)
+logger = logging.getLogger("belooga")
 
 from app.core.cache import platform_cache
 from app.core.database import get_db
@@ -32,14 +42,36 @@ async def lifespan(app: FastAPI):
     yield
     await event_stream.drain_all()
 
+def docs_kwargs(s: Settings) -> dict:
+    """/docs, /redoc, /openapi.json are off in production unless ENABLE_API_DOCS=1."""
+    if s.docs_enabled:
+        return {"docs_url": "/docs", "redoc_url": "/redoc", "openapi_url": "/openapi.json"}
+    return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+
+
 app = FastAPI(
     title="Belooga Modern API Engine",
     description="High-performance async modular monolith powering the Next.js recruitment platform.",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
+    **docs_kwargs(settings),
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Last-resort 500: log the traceback with the request id, never leak internals to the client."""
+    request_id = request_id_var.get()
+    logger.error(
+        "Unhandled exception on %s %s", request.method, request.url.path,
+        exc_info=exc, extra={"request_id": request_id},
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "request_id": request_id},
+        headers={"x-request-id": request_id},
+    )
+
 
 # API Gateway & Compression Middlewares
 app.add_middleware(GZipMiddleware, minimum_size=500)
@@ -47,11 +79,10 @@ app.add_middleware(APIGatewayMiddleware)
 
 # CORS Configuration
 def get_cors_origins() -> list[str]:
-    raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
-    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return Settings().cors_origins  # fresh read of env on purpose (tests patch CORS_ORIGINS)
 
 
-from app.services.media_transcoder import UPLOAD_BASE
+from app.services.media_transcoder import AVATARS_DIR, VIDEOS_DIR
 
 app.add_middleware(
     CORSMiddleware,
@@ -61,10 +92,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for sub in ["avatars", "resumes", "videos", "chunks"]:
-    os.makedirs(os.path.join(UPLOAD_BASE, sub), exist_ok=True)
-
-app.mount("/uploads", StaticFiles(directory=UPLOAD_BASE), name="uploads")
+# Only public media is served statically. Resumes (owner-only download endpoint) and raw upload
+# chunks live under the same UPLOAD_DIR but are never mounted.
+app.mount("/uploads/avatars", StaticFiles(directory=AVATARS_DIR), name="uploads-avatars")
+app.mount("/uploads/videos", StaticFiles(directory=VIDEOS_DIR), name="uploads-videos")
 
 # Domain Routers Mounting
 app.include_router(auth_router, prefix="/v1")
@@ -104,8 +135,28 @@ async def k8s_liveness_probe():
 
 @app.get("/health/ready", tags=["Health Probe"])
 async def k8s_readiness_probe(db: AsyncSession = Depends(get_db)):
-    """Kubernetes Readiness Probe: Verifies PostgreSQL, Tiered Cache, and Partitioned Event Stream."""
-    await db.execute(text("SELECT 1"))
+    """Kubernetes Readiness Probe.
+
+    PostgreSQL is required: down -> 503. Redis is optional (cache and gateway fall back to per-pod
+    state), so a Redis failure reports "degraded" but stays ready (200).
+    """
+    try:
+        await db.execute(text("SELECT 1"))
+    except Exception as exc:
+        logger.warning("Readiness: PostgreSQL check failed: %s", type(exc).__name__)
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "probe": "readiness", "checks": {"postgres": "error"}},
+        )
+    redis_status = "disabled"
+    r_client = await platform_cache._get_redis()
+    if r_client is not None:
+        try:
+            await asyncio.wait_for(r_client.ping(), timeout=0.5)
+            redis_status = "ok"
+        except Exception as exc:
+            logger.warning("Readiness: Redis ping failed (degraded, still ready): %s", type(exc).__name__)
+            redis_status = "degraded"
     cache_stats = platform_cache.get_stats()
     evt_stats = event_stream.get_status()
     return {
@@ -113,6 +164,7 @@ async def k8s_readiness_probe(db: AsyncSession = Depends(get_db)):
         "probe": "readiness",
         "checks": {
             "postgres": "ok",
+            "redis": redis_status,
             "cache": "ok",
             "event_stream": "ok",
         },
