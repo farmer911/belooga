@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { apiClient } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
+import { OAUTH_STATE_KEY } from "@/components/features/auth/auth-split-shell";
 
 interface OAuthTokenResponse {
   access_token: string;
@@ -23,24 +24,29 @@ interface OAuthTokenResponse {
 function OAuthCallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const provider = (searchParams.get("provider") || "google").toLowerCase();
-  const code = searchParams.get("code") || `oauth_${provider}_code`;
-  const email = searchParams.get("email") || "alex@belooga.com";
+  const code = searchParams.get("code");
+  const state = searchParams.get("state");
   const nextParam = searchParams.get("next");
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
 
   const { data, isError } = useQuery<OAuthTokenResponse>({
-    queryKey: ["oauth-callback", provider, code, email],
+    queryKey: ["oauth-callback", code, state],
     queryFn: async () => {
+      const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+      sessionStorage.removeItem(OAUTH_STATE_KEY);
+      if (!code || !state || state !== expectedState) {
+        throw new Error("OAuth state mismatch or missing authorization code");
+      }
       const res = await apiClient.post<OAuthTokenResponse>("/v1/auth/oauth/callback/", {
-        provider,
+        provider: "google",
         code,
-        email,
+        redirect_uri: `${window.location.origin}/callback`,
       });
       return res.data;
     },
     retry: false,
+    staleTime: Infinity,
   });
 
   useEffect(() => {
@@ -64,7 +70,7 @@ function OAuthCallbackHandler() {
           : `/user/${data.user.username}`
       );
     } else if (isError) {
-      router.push("/login");
+      router.push("/login?error=oauth");
     }
   }, [data, isError, nextParam, router, setAccessToken, setUser]);
 
@@ -77,7 +83,7 @@ function OAuthCallbackHandler() {
       )}
       <h2 className="text-lg font-bold text-typography-main">Completing Authentication Handshake...</h2>
       <p className="text-xs text-typography-muted">
-        Verifying your {provider} identity and linking social account session.
+        Verifying your Google identity and linking your account.
       </p>
     </div>
   );

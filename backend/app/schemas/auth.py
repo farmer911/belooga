@@ -64,10 +64,9 @@ class ChangePasswordRequest(BaseModel):
 
 class OAuthCallbackRequest(BaseModel):
     provider: str = Field("google", min_length=2, max_length=32)
-    code: str = Field(..., min_length=4, max_length=255)
-    email: Optional[EmailStr] = None
-    first_name: Optional[str] = "Belooga"
-    last_name: Optional[str] = "Candidate"
+    code: str = Field(..., min_length=4, max_length=2048)
+    redirect_uri: str = Field(..., min_length=8, max_length=512)
+    code_verifier: Optional[str] = Field(None, min_length=43, max_length=128)
 
 
 class EmailVerificationRequestResponse(BaseModel):

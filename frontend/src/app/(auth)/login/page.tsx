@@ -13,8 +13,8 @@ import { useAuthStore, normalizeAuthUser } from "@/store/auth-store";
 import { loginSchema, LoginFormValues } from "@/lib/schemas";
 import {
   AuthSplitShell,
-  buildOAuthCallbackUrl,
-  OAUTH_PROVIDERS,
+  GOOGLE_CLIENT_ID,
+  GoogleSignInButton,
 } from "@/components/features/auth/auth-split-shell";
 
 export default function LoginPage() {
@@ -26,13 +26,11 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
-  const emailVal = watch("email") || "";
 
   const loginMutation = useMutation({
     mutationFn: async (values: LoginFormValues) => {
@@ -126,31 +124,19 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-surface-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-surface-page px-3 text-typography-muted">Or continue with</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        {OAUTH_PROVIDERS.map((provider) => {
-          const slug = provider.toLowerCase();
-          return (
-            <button
-              key={provider}
-              type="button"
-              data-testid={`oauth-${slug}-btn`}
-              onClick={() => router.push(buildOAuthCallbackUrl(provider, emailVal, true))}
-              className="flex items-center justify-center py-2.5 px-4 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-slate-50 transition-colors cursor-pointer"
-            >
-              {provider}
-            </button>
-          );
-        })}
-      </div>
+      {GOOGLE_CLIENT_ID && (
+        <>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-surface-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-surface-page px-3 text-typography-muted">Or continue with</span>
+            </div>
+          </div>
+          <GoogleSignInButton testId="oauth-google-btn" includeReturnTo />
+        </>
+      )}
 
       <p className="text-center text-sm text-typography-muted">
         Don't have a candidate account yet?{" "}

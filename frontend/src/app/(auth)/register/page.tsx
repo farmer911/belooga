@@ -13,8 +13,7 @@ import { useAuthStore, normalizeAuthUser } from "@/store/auth-store";
 import { registerSchema, RegisterFormValues } from "@/lib/schemas";
 import {
   AuthSplitShell,
-  buildOAuthCallbackUrl,
-  OAUTH_PROVIDERS,
+  GoogleSignInButton,
 } from "@/components/features/auth/auth-split-shell";
 
 type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
@@ -173,16 +172,7 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <div className="grid grid-cols-3 gap-2">
-        {OAUTH_PROVIDERS.map((provider) => {
-          const slug = provider.toLowerCase();
-          return (
-            <button key={provider} type="button" data-testid={`register-oauth-${slug}-btn`} onClick={() => router.push(buildOAuthCallbackUrl(provider, email, false))} className="py-2 px-3 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-surface-page transition-colors cursor-pointer">
-              {provider}
-            </button>
-          );
-        })}
-      </div>
+      <GoogleSignInButton testId="register-oauth-google-btn" />
       <p className="text-center text-sm text-typography-muted">
         Already have an account?{" "}
         <Link href="/login" className="font-semibold text-brand-primary hover:underline">

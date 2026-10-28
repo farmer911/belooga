@@ -31,13 +31,13 @@ describe("BEL-237 Shared Hooks/Components Deduplication (NTA-P005) & Viewfinder 
     expect(recruiterSrc.includes("prependAndInvalidateList")).toBe(true);
   });
 
-  test("login/page.tsx and register/page.tsx share AuthSplitShell and buildOAuthCallbackUrl", () => {
+  test("login/page.tsx and register/page.tsx share AuthSplitShell and GoogleSignInButton", () => {
     const loginSrc = readSrc("app/(auth)/login/page.tsx");
     const registerSrc = readSrc("app/(auth)/register/page.tsx");
     expect(loginSrc.includes("AuthSplitShell")).toBe(true);
-    expect(loginSrc.includes("buildOAuthCallbackUrl")).toBe(true);
+    expect(loginSrc.includes("GoogleSignInButton")).toBe(true);
     expect(registerSrc.includes("AuthSplitShell")).toBe(true);
-    expect(registerSrc.includes("buildOAuthCallbackUrl")).toBe(true);
+    expect(registerSrc.includes("GoogleSignInButton")).toBe(true);
   });
 
   test("cv-studio-preview.tsx reuses STANDARD_CV_SECTIONS from cv-studio-sidebar.tsx", () => {

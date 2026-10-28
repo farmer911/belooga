@@ -10,6 +10,7 @@ from typing import Any, Optional, Union
 import uuid
 
 from fastapi import HTTPException, Response, status
+import httpx
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,6 +34,8 @@ from app.schemas.auth import (
     VerifyEmailRequest, VerifyEmailResponse,
 )
 
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 IS_PRODUCTION = os.getenv("ENVIRONMENT", "development").lower() in ("production", "prod", "staging")
 
 
@@ -51,6 +54,29 @@ def _build_user_dto(row: Any, fallback_username: str = "", fallback_email: str =
         role=getattr(row, "role", "candidate") or "candidate",
         avatar_url=getattr(row, "avatar_url", None) or "/images/avatar.jpg",
     )
+
+
+async def fetch_google_identity(code: str, redirect_uri: str, code_verifier: Optional[str]) -> dict:
+    """Exchange a Google authorization code and return the verified OpenID userinfo claims."""
+    client_id, client_secret = os.getenv("GOOGLE_CLIENT_ID"), os.getenv("GOOGLE_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google sign-in is not configured")
+    form = {
+        "code": code, "client_id": client_id, "client_secret": client_secret,
+        "redirect_uri": redirect_uri, "grant_type": "authorization_code",
+    }
+    if code_verifier:
+        form["code_verifier"] = code_verifier
+    async with httpx.AsyncClient(timeout=10) as client:
+        token_res = await client.post(GOOGLE_TOKEN_URL, data=form)
+        if token_res.status_code != 200:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google authorization code")
+        info_res = await client.get(
+            GOOGLE_USERINFO_URL, headers={"Authorization": f"Bearer {token_res.json()['access_token']}"}
+        )
+    if info_res.status_code != 200:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Google userinfo request failed")
+    return info_res.json()
 
 
 def _ensure_utc(dt: datetime) -> datetime:
@@ -128,35 +154,37 @@ class AuthService:
 
     async def oauth_callback(self, payload: OAuthCallbackRequest, response: Response) -> TokenResponse:
         provider = payload.provider.lower().strip()
-        code_puid = hash_token(f"{provider}:{payload.code.strip()}")[:32]
-        puid = hash_token(f"{provider}:{payload.email.strip().lower()}")[:32] if payload.email else code_puid
+        if provider != "google":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported OAuth provider: {provider}")
+        info = await fetch_google_identity(payload.code, payload.redirect_uri, payload.code_verifier)
+        puid = str(info.get("sub") or "")
+        email = str(info.get("email") or "").lower().strip()
+        if not puid or not email or info.get("email_verified") is not True:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Google account has no verified email")
+
         user_row = await self.identity_repo.get_identity_by_social_account(provider, puid)
-        if not user_row and code_puid != puid:
-            user_row = await self.identity_repo.get_identity_by_social_account(provider, code_puid)
-        if not user_row and payload.email:
-            user_row = await self.identity_repo.get_identity_with_profile_by_email(payload.email)
+        if not user_row:
+            user_row = await self.identity_repo.get_identity_with_profile_by_email(email)
         if user_row:
+            if user_row.status == "suspended":
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account has been suspended")
             await self.identity_repo.link_social_account(user_row.id, provider, puid)
-            if code_puid != puid:
-                await self.identity_repo.link_social_account(user_row.id, provider, code_puid)
             return await self._issue_session(_build_user_dto(user_row), response)
 
         identity_id = uuid.uuid4()
-        clean_email = (payload.email or f"oauth_{puid[:10]}@belooga.com").lower().strip()
-        clean_username = f"user_{puid[:10]}"
+        username = f"user_{hash_token(f'{provider}:{puid}')[:10]}"
+        first_name = str(info.get("given_name") or "Belooga")[:100]
+        last_name = str(info.get("family_name") or "Candidate")[:100]
         await self.identity_repo.create_identity(
-            identity_id=identity_id, email=clean_email, password_hash="", role="candidate", status="active"
+            identity_id=identity_id, email=email, password_hash="", role="candidate", status="active"
         )
         await self.profile_facade.create_initial_profile(
-            profile_id=uuid.uuid4(), identity_id=identity_id, username=clean_username,
-            first_name=payload.first_name or "Belooga", last_name=payload.last_name or "Candidate",
+            profile_id=uuid.uuid4(), identity_id=identity_id, username=username,
+            first_name=first_name, last_name=last_name,
         )
         await self.identity_repo.link_social_account(identity_id, provider, puid)
-        if code_puid != puid:
-            await self.identity_repo.link_social_account(identity_id, provider, code_puid)
         user_dto = UserProfileDTO(
-            id=identity_id, email=clean_email, username=clean_username,
-            first_name=payload.first_name or "Belooga", last_name=payload.last_name or "Candidate",
+            id=identity_id, email=email, username=username, first_name=first_name, last_name=last_name,
             role="candidate", avatar_url="/images/avatar.jpg",
         )
         return await self._issue_session(user_dto, response)

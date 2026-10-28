@@ -226,40 +226,72 @@ async def test_oauth_sso_callback_links_social_account_and_issues_session(
     client: AsyncClient,
     test_candidate_a: dict,
     db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """
-    BEL-503: Verify POST /v1/auth/oauth/callback/ exchanges OAuth code, links
-    social_accounts row idempotently, and auto-provisions new OAuth identities.
+    POST /v1/auth/oauth/callback/ trusts only the identity Google returns for the code:
+    links by Google `sub`, falls back to a verified email, and never trusts client-sent email.
     """
-    email = test_candidate_a["email"]
-    uid = test_candidate_a["id"]
-    code = f"google_auth_code_{uuid.uuid4().hex[:8]}"
+    from app.modules.auth import service as auth_service
 
-    # 1. Link OAuth provider to existing identity by email
-    res1 = await client.post(
-        "/v1/auth/oauth/callback/",
-        json={"provider": "google", "code": code, "email": email},
-    )
-    assert res1.status_code == 200
-    data1 = res1.json()
-    assert "access_token" in data1
-    assert data1["user"]["username"] == test_candidate_a["username"]
+    sub = f"google-sub-{uuid.uuid4().hex[:8]}"
+    claims = {"sub": sub, "email": test_candidate_a["email"], "email_verified": True}
+    seen: list[tuple] = []
 
-    # Verify social_accounts record exists in DB
-    sa_res = await db_session.execute(
-        text("SELECT provider, provider_user_id FROM social_accounts WHERE identity_id = :uid"),
-        {"uid": uid},
-    )
-    sa_row = sa_res.fetchone()
-    assert sa_row is not None and sa_row.provider == "google"
+    async def fake_google(code, redirect_uri, code_verifier):
+        seen.append((code, redirect_uri, code_verifier))
+        return claims
 
-    # 2. Idempotent repeat login with same provider + code
-    res2 = await client.post(
-        "/v1/auth/oauth/callback/",
-        json={"provider": "google", "code": code},
-    )
+    monkeypatch.setattr(auth_service, "fetch_google_identity", fake_google)
+    body = {"provider": "google", "code": "real-google-code", "redirect_uri": "http://localhost:3000/callback"}
+
+    # 1. Verified Google email links to the existing identity
+    res1 = await client.post("/v1/auth/oauth/callback/", json=body)
+    assert res1.status_code == 200, res1.text
+    assert res1.json()["user"]["username"] == test_candidate_a["username"]
+    assert seen[0] == ("real-google-code", "http://localhost:3000/callback", None)
+    sa_row = (await db_session.execute(
+        text("SELECT provider_user_id FROM social_accounts WHERE identity_id = :uid AND provider = 'google'"),
+        {"uid": test_candidate_a["id"]},
+    )).fetchone()
+    assert sa_row is not None and sa_row.provider_user_id == sub
+
+    # 2. Repeat login resolves by `sub` even if Google later reports a different email
+    claims["email"] = f"changed_{uuid.uuid4().hex[:6]}@example.com"
+    res2 = await client.post("/v1/auth/oauth/callback/", json=body)
     assert res2.status_code == 200
-    assert res2.json()["user"]["id"] == str(uid)
+    assert res2.json()["user"]["id"] == str(test_candidate_a["id"])
+
+    # 3. Client-supplied email is ignored (schema no longer accepts it as identity)
+    claims.update(sub=f"other-{uuid.uuid4().hex[:8]}", email="attacker@example.com")
+    res3 = await client.post("/v1/auth/oauth/callback/", json={**body, "email": test_candidate_a["email"]})
+    assert res3.status_code == 200
+    assert res3.json()["user"]["id"] != str(test_candidate_a["id"])
+
+
+@pytest.mark.asyncio
+async def test_oauth_rejects_unverified_email_and_unknown_provider(
+    client: AsyncClient,
+    test_candidate_a: dict,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from app.modules.auth import service as auth_service
+
+    async def unverified(code, redirect_uri, code_verifier):
+        return {"sub": "x-1", "email": test_candidate_a["email"], "email_verified": False}
+
+    monkeypatch.setattr(auth_service, "fetch_google_identity", unverified)
+    body = {"provider": "google", "code": "abcd", "redirect_uri": "http://localhost:3000/callback"}
+    assert (await client.post("/v1/auth/oauth/callback/", json=body)).status_code == 401
+    assert (await client.post("/v1/auth/oauth/callback/", json={**body, "provider": "facebook"})).status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_oauth_unconfigured_returns_503(client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_CLIENT_SECRET", raising=False)
+    body = {"provider": "google", "code": "abcd", "redirect_uri": "http://localhost:3000/callback"}
+    assert (await client.post("/v1/auth/oauth/callback/", json=body)).status_code == 503
 
 
 @pytest.mark.asyncio
