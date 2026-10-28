@@ -84,7 +84,7 @@ jobs:
       - name: Run Frontend & Mobile Unit Tests + Typecheck
         run: |
           cd frontend && bun run test
-          cd ../mobile && bun x tsc --noEmit && bun test
+          cd ../mobile && bun run typecheck && bun run lint && bun run test --ci
 
       - name: Run Playwright E2E Automation Suite
         env:
