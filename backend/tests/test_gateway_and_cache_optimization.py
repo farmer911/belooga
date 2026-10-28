@@ -12,7 +12,7 @@ from app.modules.profile.service import profile_cache
 
 
 @pytest.mark.asyncio
-async def test_gateway_is_pure_asgi_and_enforces_bounded_lru_and_route_tiers():
+async def test_gateway_is_pure_asgi_and_enforces_bounded_lru_and_route_tiers(monkeypatch):
     """Verify APIGatewayMiddleware is Pure ASGI (not BaseHTTPMiddleware) and caps IP buckets."""
     assert not issubclass(APIGatewayMiddleware, BaseHTTPMiddleware)
 
@@ -29,8 +29,12 @@ async def test_gateway_is_pure_asgi_and_enforces_bounded_lru_and_route_tiers():
         assert "cache_metrics" in body
         assert "hit_ratio_pct" in body["cache_metrics"]
 
-        # 2. Enforce custom rate limit via X-Test-Rate-Limit
-        headers = {"X-Test-Rate-Limit": "2", "X-Forwarded-For": "203.0.113.77"}
+        # 2. Enforce a settings-configured public read limit (client override header was removed)
+        import uuid
+        from app.core.config import get_settings
+        monkeypatch.setattr(get_settings(), "RATE_LIMIT_PUBLIC_RPM", 2)
+        monkeypatch.setattr(get_settings(), "TRUSTED_PROXY_IPS", "127.0.0.1")
+        headers = {"X-Forwarded-For": f"203.0.113.{uuid.uuid4().int % 250 + 1}"}
         r1 = await client.get("/v1/faqs", headers=headers)
         r2 = await client.get("/v1/faqs", headers=headers)
         r3 = await client.get("/v1/faqs", headers=headers)
@@ -153,7 +157,10 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
     from app.core import gateway as gw_mod
 
     assert hasattr(gw_mod, "clear_gateway_l1_state"), "Missing clear_gateway_l1_state helper for multi-pod test"
-    monkeypatch.setenv("GATEWAY_REDIS_ENABLED", "1")
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "GATEWAY_REDIS_ENABLED", True)
+    monkeypatch.setattr(get_settings(), "RATE_LIMIT_PUBLIC_RPM", 2)
+    monkeypatch.setattr(get_settings(), "TRUSTED_PROXY_IPS", "127.0.0.1")
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -178,7 +185,7 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
 
         # 2. Cross-worker Distributed Rate-Limiting via Redis (L1 wiped before each call)
         test_ip = f"198.51.100.{uuid.uuid4().int % 200 + 10}"
-        rl_headers = {"X-Test-Rate-Limit": "2", "X-Forwarded-For": test_ip}
+        rl_headers = {"X-Forwarded-For": test_ip}
 
         gw_mod.clear_gateway_l1_state()
         r1 = await client.get("/v1/faqs", headers=rl_headers)
@@ -218,8 +225,7 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
 
         for rel_file in [
             "backend/app/modules/profile/service.py",
-            "backend/app/modules/media/service.py",
-            "backend/app/services/media_transcoder.py",
+            "backend/app/core/config.py",
             "frontend/src/hooks/use-analytics-dashboard.ts",
             "qc/tests/e2e/workspace.spec.ts",
             "qc/tests/e2e/expert-review.spec.ts",

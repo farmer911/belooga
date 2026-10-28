@@ -163,7 +163,7 @@ async def test_seo_sitemap_feed_and_lighthouse_metadata_contracts(client: AsyncC
 
 
 @pytest.mark.asyncio
-async def test_api_gateway_headers_rate_limiting_and_edge_proxy(client: AsyncClient):
+async def test_api_gateway_headers_rate_limiting_and_edge_proxy(client: AsyncClient, monkeypatch):
     """
     BEL-513: Verify Dual-Layer API Gateway middleware (X-Request-ID, X-Process-Time-Ms,
     X-RateLimit-*, Security Headers, 429 rate-limit enforcement, GET /v1/gateway/status)
@@ -186,7 +186,13 @@ async def test_api_gateway_headers_rate_limiting_and_edge_proxy(client: AsyncCli
     assert gw_data["upstreams"]["postgres"] == "connected"
 
     # 2. Verify sliding-window rate-limiting enforcement (429 Too Many Requests)
-    rl_headers = {"X-Test-Rate-Limit": "2", "X-Forwarded-For": "203.0.113.99"}
+    # Limits come from settings (no client override header); trust the ASGI test peer as a proxy
+    # so X-Forwarded-For isolates this test's bucket.
+    import uuid
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "RATE_LIMIT_UPLOAD_RPM", 2)
+    monkeypatch.setattr(get_settings(), "TRUSTED_PROXY_IPS", "127.0.0.1")
+    rl_headers = {"X-Forwarded-For": f"203.0.113.{uuid.uuid4().int % 250 + 1}, 127.0.0.1"}
     r1 = await client.get("/health", headers=rl_headers)
     r2 = await client.get("/health", headers=rl_headers)
     r3 = await client.get("/health", headers=rl_headers)
