@@ -60,6 +60,11 @@ from app.models.notifications import (
 from app.models.bookmarks import (
     CandidateBookmark,
 )
+from app.models.payments import (
+    PaymentOrder,
+    Wallet,
+    WalletTransaction,
+)
 
 __all__ = [
     "Base",
@@ -98,4 +103,7 @@ __all__ = [
     "Notification",
     "NotificationPreference",
     "CandidateBookmark",
+    "Wallet",
+    "WalletTransaction",
+    "PaymentOrder",
 ]

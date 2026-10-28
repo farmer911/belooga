@@ -1,193 +1,139 @@
-"""Repository Layer for Domain 13: MoMo Payments, User Wallet Ledger & Escrow (Vertical Module: payments)."""
+"""Repository Layer for Domain 13: MoMo payment orders, wallet balances and ledger (Vertical Module: payments).
 
-from datetime import datetime, timedelta, timezone
-import json
-from typing import Any, Dict, Optional
+Balance mutations run under `SELECT ... FOR UPDATE` on the wallet row so concurrent
+payments cannot double-spend; callers commit once per business operation.
+"""
+
+from typing import Any, Optional
 import uuid
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-ORDERS_DB: Dict[str, Dict[str, Any]] = {}
-
-
-def _default_wallet_state() -> Dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    return {
-        "available_balance_vnd": 1500000,
-        "escrow_locked_vnd": 490000,
-        "transactions": [
-            {
-                "id": "wtx-init-1",
-                "tx_type": "TOPUP",
-                "amount_vnd": 2000000,
-                "description": "Nạp số dư Ví Belooga qua MoMo QR",
-                "reference_id": "MOMO-TOPUP-001",
-                "status": "COMPLETED",
-                "created_at": (now - timedelta(days=2)).isoformat(),
-            },
-            {
-                "id": "wtx-init-2",
-                "tx_type": "EXPERT_ESCROW_LOCK",
-                "amount_vnd": 490000,
-                "description": "Tạm giữ Escrow bảo vệ đơn chấm CV Expert Review",
-                "reference_id": "ORD-ESCROW-01",
-                "status": "LOCKED_IN_ESCROW",
-                "created_at": (now - timedelta(days=1)).isoformat(),
-            },
-            {
-                "id": "wtx-init-3",
-                "tx_type": "SYSTEM_PURCHASE",
-                "amount_vnd": 20000,
-                "description": "Mua gói 1-Click Tối Ưu CV Chuẩn STAR (ATS Micro-Pass)",
-                "reference_id": "ATS-PASS-01",
-                "status": "COMPLETED",
-                "created_at": (now - timedelta(hours=5)).isoformat(),
-            },
-        ],
-    }
-
 
 class PaymentRepository:
-    """Repository encapsulating MoMo payment order state, Wallet ledger, PostgreSQL sync, and idempotent transitions."""
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
-    @staticmethod
-    def create_order(
-        order_id: str, amount: float, package_type: str, review_order_id: Optional[str] = None
-    ) -> Dict[str, Any]:
-        record = {
-            "order_id": order_id, "amount": amount, "package_type": package_type,
-            "review_order_id": review_order_id, "status": "PENDING",
-            "created_at": datetime.now().isoformat(), "trans_id": None,
-        }
-        ORDERS_DB[order_id] = record
-        return record
-
-    @staticmethod
-    async def persist_order_to_db(
-        db: AsyncSession, order_id: str, amount: float, package_type: str, review_order_id: Optional[str] = None
+    # ---- payment orders -------------------------------------------------
+    async def create_order(
+        self, order_id: str, identity_id: uuid.UUID, package_type: str, amount_vnd: int,
+        review_order_id: Optional[uuid.UUID],
     ) -> None:
-        if review_order_id:
-            try:
-                rid = uuid.UUID(str(review_order_id))
-                await db.execute(
-                    text("UPDATE cv_review_orders SET payment_reference = :oid, updated_at = NOW() WHERE id = :rid"),
-                    {"oid": order_id, "rid": rid},
-                )
-                await db.commit()
-            except ValueError:
-                return
-        else:
-            _ = (amount, package_type)
-
-    @staticmethod
-    def get_order(order_id: str) -> Optional[Dict[str, Any]]:
-        return ORDERS_DB.get(order_id)
-
-    @staticmethod
-    async def get_order_with_db(order_id: str, db: Optional[AsyncSession] = None) -> Optional[Dict[str, Any]]:
-        order = ORDERS_DB.get(order_id)
-        if order:
-            return order
-        if db is None:
-            return None
-        res = await db.execute(
+        await self.db.execute(
             text("""
-                SELECT id, order_status, amount_paid_cents, payment_reference
-                FROM cv_review_orders
-                WHERE payment_reference = :oid OR payment_reference LIKE :prefix
-                LIMIT 1
+                INSERT INTO payment_orders (order_id, identity_id, package_type, amount_vnd, review_order_id)
+                VALUES (:oid, :uid, :pkg, :amt, :rid)
             """),
-            {"oid": order_id, "prefix": f"{order_id}:%"},
+            {"oid": order_id, "uid": identity_id, "pkg": package_type, "amt": amount_vnd, "rid": review_order_id},
         )
-        row = res.mappings().first()
-        if not row:
-            return None
-        is_paid = row["order_status"] in ("paid", "in_review", "completed")
-        record = {
-            "order_id": order_id, "amount": float(row["amount_paid_cents"] or 0),
-            "package_type": "EXPERT_REVIEW", "review_order_id": str(row["id"]),
-            "status": "PAID" if is_paid else "PENDING",
-            "created_at": datetime.now().isoformat(), "trans_id": None,
-        }
-        ORDERS_DB[order_id] = record
-        return record
 
-    @staticmethod
-    def mark_order_paid(order_id: str, trans_id: Optional[str]) -> Optional[Dict[str, Any]]:
-        order = ORDERS_DB.get(order_id)
-        if not order:
-            return None
-        order["status"] = "PAID"
-        order["trans_id"] = trans_id
-        order["paid_at"] = datetime.now().isoformat()
-        return order
+    async def get_order(self, order_id: str, for_update: bool = False) -> Optional[dict[str, Any]]:
+        lock = " FOR UPDATE" if for_update else ""
+        row = (await self.db.execute(
+            text(f"SELECT * FROM payment_orders WHERE order_id = :oid{lock}"), {"oid": order_id}
+        )).mappings().first()
+        return dict(row) if row else None
 
-    @staticmethod
-    async def sync_paid_order_to_db(db: AsyncSession, order_id: str, trans_id: Optional[str]) -> None:
-        order = ORDERS_DB.get(order_id) or {}
-        raw_rid = str(order.get("review_order_id") or "")
-        pref = f"{order_id}:{trans_id or 'momo'}"
-        if len(raw_rid) == 36:
-            try:
-                rid: Optional[uuid.UUID] = uuid.UUID(raw_rid)
-            except ValueError:
-                rid = None
-            if rid is not None:
-                await db.execute(
-                    text("""
-                        UPDATE cv_review_orders
-                        SET order_status = 'paid', payment_reference = :pref, updated_at = NOW()
-                        WHERE (id = :rid OR payment_reference = :oid) AND order_status = 'pending_payment'
-                    """),
-                    {"rid": rid, "oid": order_id, "pref": pref},
-                )
-                await db.commit()
-                return
-        await db.execute(
+    async def set_order_status(self, order_id: str, new_status: str, trans_id: Optional[str]) -> None:
+        await self.db.execute(
+            text("""
+                UPDATE payment_orders
+                SET status = CAST(:st AS VARCHAR), trans_id = :tid,
+                    paid_at = CASE WHEN CAST(:st AS VARCHAR) = 'PAID' THEN NOW() ELSE paid_at END
+                WHERE order_id = :oid
+            """),
+            {"oid": order_id, "st": new_status, "tid": trans_id},
+        )
+
+    async def get_review_order(self, review_order_id: uuid.UUID, for_update: bool = False) -> Optional[dict[str, Any]]:
+        lock = " FOR UPDATE" if for_update else ""
+        row = (await self.db.execute(
+            text(f"""
+                SELECT id, candidate_identity_id, order_status, amount_paid_cents
+                FROM cv_review_orders WHERE id = :rid{lock}
+            """),
+            {"rid": review_order_id},
+        )).mappings().first()
+        return dict(row) if row else None
+
+    async def mark_review_order(self, review_order_id: uuid.UUID, new_status: str, payment_reference: str) -> None:
+        await self.db.execute(
             text("""
                 UPDATE cv_review_orders
-                SET order_status = 'paid', payment_reference = :pref, updated_at = NOW()
-                WHERE payment_reference = :oid AND order_status = 'pending_payment'
+                SET order_status = :st, payment_reference = :pref, updated_at = NOW()
+                WHERE id = :rid AND order_status = 'pending_payment'
             """),
-            {"oid": order_id, "pref": pref},
+            {"rid": review_order_id, "st": new_status, "pref": payment_reference},
         )
-        await db.commit()
 
-    @staticmethod
-    async def get_wallet_state(db: AsyncSession, wallet_key: str) -> Dict[str, Any]:
-        key_tag = f"WALLET_STATE:{wallet_key}"
-        res = await db.execute(
-            text("SELECT id, message FROM contact_inquiries WHERE name = :k ORDER BY created_at DESC LIMIT 1"),
-            {"k": key_tag},
+    # ---- wallet ---------------------------------------------------------
+    async def lock_wallet(self, identity_id: uuid.UUID) -> dict[str, Any]:
+        await self.db.execute(
+            text("INSERT INTO wallets (identity_id) VALUES (:uid) ON CONFLICT (identity_id) DO NOTHING"),
+            {"uid": identity_id},
         )
-        row = res.mappings().first()
-        if row and row["message"]:
-            return json.loads(row["message"])
-        default_state = _default_wallet_state()
-        await PaymentRepository.save_wallet_state(db, wallet_key, default_state)
-        return default_state
+        row = (await self.db.execute(
+            text("SELECT * FROM wallets WHERE identity_id = :uid FOR UPDATE"), {"uid": identity_id}
+        )).mappings().one()
+        return dict(row)
 
-    @staticmethod
-    async def save_wallet_state(db: AsyncSession, wallet_key: str, state: Dict[str, Any]) -> Dict[str, Any]:
-        key_tag = f"WALLET_STATE:{wallet_key}"
-        payload_json = json.dumps(state, ensure_ascii=False)
-        res = await db.execute(
-            text("SELECT id FROM contact_inquiries WHERE name = :k ORDER BY created_at DESC LIMIT 1"),
-            {"k": key_tag},
+    async def get_wallet(self, identity_id: uuid.UUID) -> dict[str, Any]:
+        row = (await self.db.execute(
+            text("SELECT available_balance_vnd, escrow_locked_vnd FROM wallets WHERE identity_id = :uid"),
+            {"uid": identity_id},
+        )).mappings().first()
+        return dict(row) if row else {"available_balance_vnd": 0, "escrow_locked_vnd": 0}
+
+    async def apply_wallet_delta(self, identity_id: uuid.UUID, available_delta: int, escrow_delta: int) -> None:
+        await self.db.execute(
+            text("""
+                UPDATE wallets
+                SET available_balance_vnd = available_balance_vnd + :a,
+                    escrow_locked_vnd = escrow_locked_vnd + :e,
+                    updated_at = NOW()
+                WHERE identity_id = :uid
+            """),
+            {"uid": identity_id, "a": available_delta, "e": escrow_delta},
         )
-        row = res.mappings().first()
-        if row:
-            await db.execute(
-                text("UPDATE contact_inquiries SET message = :msg WHERE id = :id"),
-                {"msg": payload_json, "id": row["id"]},
-            )
-        else:
-            await db.execute(
-                text("""
-                    INSERT INTO contact_inquiries (id, name, email, message)
-                    VALUES (:id, :k, 'wallet@belooga.internal', :msg)
-                """),
-                {"id": uuid.uuid4(), "k": key_tag, "msg": payload_json},
-            )
-        await db.commit()
-        return state
+
+    async def add_transaction(
+        self, identity_id: uuid.UUID, tx_type: str, amount_vnd: int, description: str,
+        reference_id: Optional[str], tx_status: str,
+    ) -> None:
+        await self.db.execute(
+            text("""
+                INSERT INTO wallet_transactions (identity_id, tx_type, amount_vnd, description, reference_id, status)
+                VALUES (:uid, :tt, :amt, :d, :ref, :st)
+            """),
+            {"uid": identity_id, "tt": tx_type, "amt": amount_vnd, "d": description[:500],
+             "ref": reference_id, "st": tx_status},
+        )
+
+    async def find_escrow_lock(self, identity_id: uuid.UUID, reference_id: str) -> Optional[dict[str, Any]]:
+        row = (await self.db.execute(
+            text("""
+                SELECT id, amount_vnd FROM wallet_transactions
+                WHERE identity_id = :uid AND reference_id = :ref
+                  AND tx_type = 'EXPERT_ESCROW_LOCK' AND status = 'LOCKED_IN_ESCROW'
+                ORDER BY created_at DESC LIMIT 1
+            """),
+            {"uid": identity_id, "ref": reference_id},
+        )).mappings().first()
+        return dict(row) if row else None
+
+    async def set_transaction_status(self, tx_id: uuid.UUID, new_status: str) -> None:
+        await self.db.execute(
+            text("UPDATE wallet_transactions SET status = :st WHERE id = :id"), {"id": tx_id, "st": new_status}
+        )
+
+    async def list_transactions(self, identity_id: uuid.UUID, limit: int = 50) -> list[dict[str, Any]]:
+        rows = (await self.db.execute(
+            text("""
+                SELECT id, tx_type, amount_vnd, description, reference_id, status, created_at
+                FROM wallet_transactions WHERE identity_id = :uid
+                ORDER BY created_at DESC LIMIT :lim
+            """),
+            {"uid": identity_id, "lim": limit},
+        )).mappings().all()
+        return [dict(r) for r in rows]

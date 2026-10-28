@@ -10,14 +10,18 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.payments_support import fund_wallet
+
 
 @pytest.mark.asyncio
 async def test_recruiter_hiring_hub_pipeline_compare_and_invite(
     client: AsyncClient,
     test_candidate_a: dict,
     test_candidate_b: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     headers_recruiter = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+    await fund_wallet(client, test_candidate_a["token"], 100000, monkeypatch)  # paid feature below
     cand_b_username = test_candidate_b["username"]
 
     # 1. GET /v1/recruiter/pipeline returns initial seeded or persisted pipeline items

@@ -424,3 +424,38 @@ CREATE INDEX IF NOT EXISTS idx_candidate_bookmarks_recruiter_created
     ON candidate_bookmarks(recruiter_identity_id, created_at DESC);
 
 
+
+-- 25. Domain 13: Wallet ledger & MoMo payment orders (replaces JSON blobs in contact_inquiries)
+CREATE TABLE IF NOT EXISTS wallets (
+    identity_id UUID PRIMARY KEY REFERENCES identities(id) ON DELETE CASCADE,
+    available_balance_vnd BIGINT NOT NULL DEFAULT 0 CHECK (available_balance_vnd >= 0),
+    escrow_locked_vnd BIGINT NOT NULL DEFAULT 0 CHECK (escrow_locked_vnd >= 0),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    tx_type VARCHAR(32) NOT NULL CHECK (tx_type IN ('TOPUP', 'SYSTEM_PURCHASE', 'EXPERT_ESCROW_LOCK', 'EXPERT_ESCROW_RELEASE')),
+    amount_vnd BIGINT NOT NULL CHECK (amount_vnd > 0),
+    description VARCHAR(500) NOT NULL,
+    reference_id VARCHAR(255),
+    status VARCHAR(32) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_identity_created
+    ON wallet_transactions(identity_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS payment_orders (
+    order_id VARCHAR(64) PRIMARY KEY,
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    package_type VARCHAR(32) NOT NULL CHECK (package_type IN ('MICRO_PASS_29K', 'MICRO_PASS_59K', 'EXPERT_REVIEW', 'WALLET_TOPUP')),
+    amount_vnd BIGINT NOT NULL CHECK (amount_vnd > 0),
+    review_order_id UUID REFERENCES cv_review_orders(id) ON DELETE SET NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PAID', 'FAILED')),
+    trans_id VARCHAR(64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    paid_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_payment_orders_identity_created
+    ON payment_orders(identity_id, created_at DESC);

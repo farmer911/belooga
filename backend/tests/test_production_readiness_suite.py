@@ -1,49 +1,31 @@
 """Integration & Security Tests for BEL-520: Production Readiness Full Suite."""
 
-import hashlib
-import hmac
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.payments.service import MOMO_SECRET_KEY
+from tests.payments_support import configure_momo, signed_ipn
 
 
 @pytest.mark.asyncio
-async def test_momo_hmac_signature_rejection_and_valid_verification(client: AsyncClient):
-    """Verify MoMo IPN rejects tampered HMAC signatures with 400 and accepts valid HMAC-SHA256."""
+async def test_momo_hmac_signature_rejection_and_valid_verification(
+    client: AsyncClient, test_candidate_a: dict, monkeypatch: pytest.MonkeyPatch
+):
+    """MoMo IPN rejects tampered HMAC signatures with 400 and accepts a valid HMAC-SHA256 signature."""
+    configure_momo(monkeypatch)
     res_create = await client.post(
         "/v1/payments/momo/create-qr",
-        json={"package_type": "MICRO_PASS_59K", "amount": 59000.0, "order_info": "ATS Full Pass"},
+        json={"package_type": "MICRO_PASS_59K", "order_info": "ATS Full Pass"},
+        headers={"Authorization": f"Bearer {test_candidate_a['token']}"},
     )
     assert res_create.status_code == 201
     order_id = res_create.json()["order_id"]
 
-    # 1. Tampered HMAC signature must be rejected with HTTP 400
-    bad_ipn = {
-        "order_id": order_id,
-        "trans_id": "MOMO_TX_BAD",
-        "result_code": 0,
-        "signature": "tampered_forged_signature_000",
-        "amount": 59000.0,
-    }
-    res_bad = await client.post("/v1/payments/momo/ipn", json=bad_ipn)
+    res_bad = await client.post("/v1/payments/momo/ipn", json={**signed_ipn(order_id, 59000), "signature": "f" * 64})
     assert res_bad.status_code == 400
-
-    # 2. Valid cryptographic HMAC-SHA256 signature must succeed
-    raw_msg = f"amount=59000.0&orderId={order_id}&transId=MOMO_TX_OK"
-    valid_sig = hmac.new(MOMO_SECRET_KEY.encode("utf-8"), raw_msg.encode("utf-8"), hashlib.sha256).hexdigest()
-    good_ipn = {
-        "order_id": order_id,
-        "trans_id": "MOMO_TX_OK",
-        "result_code": 0,
-        "signature": valid_sig,
-        "amount": 59000.0,
-    }
-    res_good = await client.post("/v1/payments/momo/ipn", json=good_ipn)
-    assert res_good.status_code == 200
-    assert res_good.json()["status"] == "PAID"
+    res_good = await client.post("/v1/payments/momo/ipn", json=signed_ipn(order_id, 59000))
+    assert res_good.status_code == 204
 
 
 @pytest.mark.asyncio

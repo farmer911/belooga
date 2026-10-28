@@ -8,13 +8,17 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.payments_support import fund_wallet
+
 
 @pytest.mark.asyncio
 async def test_job_tracker_search_persisted_goals_and_paid_ai_match(
     client: AsyncClient,
     test_candidate_a: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+    await fund_wallet(client, test_candidate_a["token"], 100000, monkeypatch)  # paid feature below
 
     # 1. Persist a Career Goal via POST /v1/tracker/goals & verify GET /v1/tracker/goals
     goal_res = await client.post(

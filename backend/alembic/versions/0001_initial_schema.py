@@ -16,7 +16,9 @@ down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-INITDB_PATH = Path(__file__).resolve().parent.parent.parent / "initdb.sql"
+# Frozen copy of initdb.sql at the time this baseline was written: a migration must not change
+# behaviour when the live initdb.sql gains tables that later revisions own.
+INITDB_PATH = Path(__file__).resolve().parent / "0001_baseline_schema.sql"
 
 TABLES_IN_REVERSE_ORDER = [
     "career_applications",

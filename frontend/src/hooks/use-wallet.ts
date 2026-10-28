@@ -26,6 +26,15 @@ export interface UserWalletStateDTO {
   transactions: WalletTransactionDTO[];
 }
 
+export interface MomoPaymentDTO {
+  order_id: string;
+  pay_url: string;
+  qr_code_url?: string | null;
+  deeplink?: string | null;
+  amount: number;
+  message: string;
+}
+
 export function formatVnd(amount: number): string {
   return `${Math.round(amount).toLocaleString("vi-VN")} đ`;
 }
@@ -51,14 +60,14 @@ export function useWallet() {
     ]);
   };
 
+  // Top-up creates a MoMo order and sends the user to MoMo; the balance changes only after MoMo's IPN.
   const topupMutation = useMutation({
-    mutationFn: async (payload: { amount_vnd: number; payment_method?: string }) => {
-      const res = await apiClient.post<UserWalletStateDTO>("/v1/wallet/topup", payload);
+    mutationFn: async (payload: { amount_vnd: number }) => {
+      const res = await apiClient.post<MomoPaymentDTO>("/v1/wallet/topup", payload);
       return res.data;
     },
-    onSuccess: async (data) => {
-      queryClient.setQueryData(["user-wallet"], data);
-      await invalidateRelated();
+    onSuccess: (data) => {
+      window.location.assign(data.pay_url);
     },
   });
 

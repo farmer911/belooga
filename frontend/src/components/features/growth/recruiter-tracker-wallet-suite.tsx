@@ -226,7 +226,6 @@ export function TrackerCalendarAndPulseSuite() {
 }
 
 export function WalletRewardsCashbackCard() {
-  const { topupWallet } = useWallet();
   const [claimedIds, setClaimedIds] = useState<string[]>([]);
 
   const { data: rewards = [] } = useQuery<WalletRewardItem[]>({
@@ -243,8 +242,7 @@ export function WalletRewardsCashbackCard() {
 
   const claimMutation = useMutation({
     mutationFn: async (rew: WalletRewardItem) => {
-      await apiClient.post("/v1/growth/claim-reward", { reward_id: rew.id, reward_code: rew.id, amount_vnd: rew.bonus_vnd });
-      await topupWallet({ amount_vnd: rew.bonus_vnd, payment_method: "Belooga Career Cashback" });
+      await apiClient.post("/v1/growth/claim-reward", { reward_id: rew.id, reward_code: rew.id });
       return rew.id;
     },
     onSuccess: (id) => {
