@@ -1,0 +1,12 @@
+# gitleaks config used by the `security` job in .github/workflows/ci.yml.
+# Default ruleset + narrow allowlist for verified false positives (not credentials).
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Service-worker cache names and demo QR tokens are not secrets"
+regexTarget = "match"
+regexes = [
+  '''belooga-[a-z]+-swr-v\d+''',
+  '''BEL-QR-[A-Z0-9-]+''',
+]

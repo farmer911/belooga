@@ -220,7 +220,10 @@ fi
 # ------------------------------------------------------------------------------
 echo -e "\n${YELLOW}[7/8] Running Backend Pytest Integration & Security Test Suite...${NC}"
 
-if [ ! -f "backend/.venv/bin/pytest" ]; then
+if [ "${AUDIT_SKIP_PYTEST:-}" = "1" ]; then
+    # CI runs pytest once, with coverage, in its own step (.github/workflows/ci.yml).
+    echo -e "  ${YELLOW}Skipped (AUDIT_SKIP_PYTEST=1): pytest runs in a dedicated CI step.${NC}"
+elif [ ! -f "backend/.venv/bin/pytest" ]; then
     echo -e "  ${RED}CRITICAL: backend/.venv/bin/pytest not found! Run 'python3 -m venv backend/.venv && backend/.venv/bin/pip install -r backend/requirements.txt'${NC}"
     ERRORS=$((ERRORS + 1))
 else
