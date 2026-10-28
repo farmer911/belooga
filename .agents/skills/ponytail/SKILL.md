@@ -1,6 +1,6 @@
 ---
 name: ponytail
-description: Pragmatic senior developer mode enforcing YAGNI, standard library over custom code, and minimal diffs. Use when the user invokes ponytail or explicitly asks to simplify, reduce complexity, or find the shortest path. Not for general coding tasks where domain layering is required.
+description: Belooga's always-on minimalism ladder (YAGNI, reuse, stdlib, minimal diffs) applied to every code change per .agents/rules/ponytail.md. Use when writing, refactoring, fixing or reviewing code, or when the user says ponytail, simplify, or shortest path. Not for flattening the router -> service -> repository layering.
 argument-hint: "[lite|full|ultra]"
 license: MIT
 ---
@@ -22,6 +22,10 @@ Stop at the first rung that holds:
 5. **Already-installed dependency solves it?** Use it.
 6. **Can it be one line?** Make it one line.
 7. **Only then:** the minimum code that works.
+
+The ladder runs after you understand the problem, not instead of it: read the task and the code it touches, trace the real flow end to end, then climb.
+
+Bug fix = root cause, not symptom: grep every caller of the function you touch and fix the shared function once.
 
 ## Rules
 - No unrequested abstractions: no interface with one implementation, no factory for one product.

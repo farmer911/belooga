@@ -1,6 +1,6 @@
 # Belooga Engineering System (GEMINI.md)
 
-Always-on project instruction for Gemini / Antigravity agent.
+Always-on project instruction for Gemini / Antigravity. Claude Code loads it via `CLAUDE.md`.
 
 ## 1. Verified Tech Stack (Ground Truth)
 - **Frontend (Web):** Next.js 16.3.8, React 19 (App Router), Bun runtime, Tailwind CSS v4, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`, Zustand.
@@ -9,7 +9,8 @@ Always-on project instruction for Gemini / Antigravity agent.
 - **Backend:** FastAPI, Python 3.12+, SQLAlchemy 2.0 Async (`asyncpg`), Alembic (`backend/alembic/`), Pydantic v2, ReportLab, AnyIO.
 - **Database:** PostgreSQL 16 (See `CURRENT_STATE.md` §1; GIN `TSVECTOR`, `pg_trgm`), Redis 7.
 - **QC:** Playwright (TypeScript/Bun) in `qc/` (`bun run test:e2e`), Pytest in `backend/tests/`.
-- **Legacy Source:** Located locally at `$LEGACY_DIR` (default: `../Beloga-CV`).
+- **Legacy Source:** In-repo `legacy/` (read-only reference). Set `$LEGACY_DIR` only if you also keep an upstream checkout elsewhere; when unset, `legacy/` is the reference.
+- **Python venv paths:** commands write `backend/.venv/bin/<tool>` (Linux/macOS/CI). On Windows use `backend/.venv/Scripts/<tool>.exe`, or run `<venv python> -m pytest` / `-m alembic`, which works everywhere.
 
 ## 2. Precedence of Truth
 1. `Running Source Code` (`backend/`, `frontend/`, `qc/`)
@@ -25,20 +26,20 @@ Always-on project instruction for Gemini / Antigravity agent.
 3. **No fake success banners, band-aid code, or `useEffect` API calls:** Never stub UI toasts, swallow exceptions (`except: pass`), bypass `router -> service -> repository` layers, call `apiClient` inside `useEffect` (must use `@tanstack/react-query`), or skip tests (`test.skip()`).
 4. **No blocking calls in async event loop:** Never call `open()`, `doc.build()`, `shutil.rmtree()`, or `remove()` synchronously inside async functions across `backend/app/`; use `asyncio.to_thread`.
 5. **No unindexed search fallbacks:** Never combine `search_vector @@` with `OR ILIKE` (violates ADR-005).
-6. **No completion without proof or PR CI green:** Never claim a task or bug fix is done without running `python3 scripts/trust-benchmark.py`, verified tests, and pushing via a feature branch PR (`gh pr create` -> `gh pr checks --watch` green). Never push directly to `main`.
+6. **No completion without proof or PR CI green:** Never claim a task or bug fix is done without completing `.agents/workflows/definition-of-done.md` (the single canonical DoD). Never push directly to `main`.
 
 ## 4. Supervisor Operating Discipline (Always-On)
 - **Ultra-Short & Simplified Responses (<= 8 Lines):** Mọi câu trả lời hoặc clarify của AI phải cực ngắn gọn, đi thẳng vào trọng tâm (tối đa 5–8 dòng hoặc 3–5 gạch đầu dòng: *Root Cause -> Option A/B ngắn gọn -> Kết quả*). Không viết sớ dài dòng, không lặp lại code diff. Query `graphify` -> `CURRENT_STATE.md` -> `.agents/PRODUCT_THESIS.md` -> Domain `SKILL.md` -> Code before acting.
-- **Default Ponytail Compression:** Apply `ponytail` automatically without asking permission. If 200 lines can be written in 50 lines while keeping clean layering and type safety, refactor immediately. Only ask the user when business requirements are ambiguous.
+- **Ponytail Minimalism (always on):** Apply the `ponytail` ladder to every code change without asking (policy: `.agents/rules/ponytail.md`). If 200 lines can be written in 50 while keeping `router -> service -> repository` layering and type safety, do it. Never flatten layers in its name.
+- **When to ask the user:** One policy for every agent and mode: `.agents/rules/anti-hallucination-harness.md` rule 6.
 - **Stateful Working Memory:** For tasks touching >= 3 files or changing contracts, record hypothesis, risks, and `[ ] -> [x]` checklist in `.agents/STATE.md` (<= 50 lines).
 - **5-Step Self-Learn & Knowledge Sync:** On any bug/correction or new feature, execute `belooga-self-learn` (Where -> How/Why -> Minimal Fix -> Script Guard -> Skill/Thesis Upgrade) and run `python3 scripts/render-skill-facts.py --write`.
 
 ## 5. Task Routing
 - **Forensic Investigation & Plan (`/investigate`):** Skill `investigate` (read-only trace + Option A/B trade-off + writes `.agents/STATE.md` & halts).
 - **Supervisor & Product Challenge:** Skill `belooga-supervisor` + `.agents/PRODUCT_THESIS.md`.
-- **Backend API / Gateway / DB:** Skill `belooga-backend-engineering` (covers Edge `:8080` + `backend/app/core/gateway.py` + routes to `be-domain-*`), test with `backend/.venv/bin/pytest backend/tests/`.
+- **Backend API / Gateway / DB:** Skill `belooga-backend-engineering` (covers Edge `:8080` + `backend/app/core/gateway.py` + routes to `be-domain-*`), test with `backend/.venv/bin/pytest backend/tests/` (Windows: `backend/.venv/Scripts/pytest.exe backend/tests/`).
 - **Frontend App Router / UI:** Skill `belooga-frontend-engineering` (routes to `fe-domain-*`), test with `cd frontend && bun x tsc --noEmit`.
 - **E2E / Visual QC:** Skill `belooga-qc-engineering`, run `cd qc && bun run test:e2e`.
-- **Agile Planning & PR Delivery:** Skill `belooga-senior-agile-workflow`, task breakdown with standalone engine at `../beloga-agent-kanban` (CLI: `bun run agent`).
-- **Quality Gate / PR:** Workflow `.agents/workflows/definition-of-done.md` (Always branch -> `git push -u origin <branch>` -> `gh pr create` -> `gh pr checks --watch` -> `gh pr merge --squash --delete-branch`).
-- **Before claiming done:** Always run `python3 scripts/lint-skills.py --quiet && python3 scripts/trust-benchmark.py` and verify remote PR checks pass (`gh pr checks --watch`).
+- **Agile Planning & PR Delivery:** Skill `belooga-senior-agile-workflow`, GitHub Issues + `Kanban Belooga` board via `gh`; dispatch a ticket with `python3 scripts/agent-dispatch.py <issue>`.
+- **Quality Gate / PR / Before claiming done:** Workflow `.agents/workflows/definition-of-done.md` (canonical; every other DoD mention links here).

@@ -76,7 +76,7 @@
 - skill: engineering-integrity-and-evidence
   should_trigger:
     - "Tuân thủ nguyên tắc zero-hallucination và bằng chứng test chạy thật"
-    - "Đối chiếu asset CSS và layout với repo legacy Beloga-CV"
+    - "Đối chiếu asset CSS và layout với thư mục legacy/"
   should_not_trigger:
     - prompt: "Viết test case Playwright E2E mới"
       expected: belooga-qc-engineering
@@ -172,7 +172,7 @@
 - skill: belooga-senior-agile-workflow
   should_trigger:
     - "Chia nhỏ tính năng thành các ticket Kanban, ước lượng story points và tạo nhánh git feature"
-    - "Thực hiện quy trình tạo Pull Request và đồng bộ trạng thái với beloga-agent-kanban"
+    - "Thực hiện quy trình tạo Pull Request và đồng bộ trạng thái với Kanban Belooga"
   should_not_trigger:
     - prompt: "Chỉ điều tra lỗi read-only không tạo branch hay sửa code"
       expected: investigate
