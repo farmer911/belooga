@@ -42,7 +42,18 @@ async def upload_resume(
     return await MediaService(db).upload_resume(username, file, current_user)
 
 
-@router.delete("/profile/{username}/resume/", response_model=Dict[str, str], tags=["Domain 4: Media & Uploads"])
+@router.get("/profile/{username}/resume/{filename}", response_model=None, tags=["Domain 4: Media & Uploads"])
+async def download_resume(
+    username: str,
+    filename: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Owner/admin-only download of the uploaded resume PDF (no longer served from /uploads)."""
+    return await MediaService(db).download_resume(username, filename, current_user)
+
+
+@router.delete("/profile/{username}/resume/",response_model=Dict[str, str], tags=["Domain 4: Media & Uploads"])
 async def delete_resume(
     username: str,
     current_user: AuthenticatedUser = Depends(get_current_user),
