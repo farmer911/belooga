@@ -284,7 +284,7 @@ def check_ecosystem_coverage():
             add("ERROR", trig_path, f"skill `{sk}` missing from triggers.yaml evaluation dataset")
 
     # Enforce strict repository markdown whitelist (prevent redundant .md sprawl)
-    allowed_md = {"CURRENT_STATE.md", "GEMINI.md", "README.md", "docs/VIOLATIONS_REGISTER.md", "docs/ponytail-debt.md", "frontend/AGENTS.md", "graphify-out/GRAPH_REPORT.md"}
+    allowed_md = {"CLAUDE.md", "CURRENT_STATE.md", "GEMINI.md", "README.md", "docs/VIOLATIONS_REGISTER.md", "docs/ponytail-debt.md", "frontend/AGENTS.md", "graphify-out/GRAPH_REPORT.md"}
     for md in ROOT.rglob("*.md"):
         rel = md.relative_to(ROOT).as_posix()
         if any(rel.startswith(p) for p in (".agents/", "docs/adr/", "legacy/", "node_modules/", "frontend/node_modules/", "frontend/.next/", "mobile/node_modules/", "mobile/.expo/", "qc/node_modules/", "qc/playwright-report/", "qc/test-results/", "backend/.venv/", ".pytest_cache/", ".git/")):
