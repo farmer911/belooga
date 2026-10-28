@@ -1,7 +1,8 @@
 name: "🛠️ Engineering Task"
 description: "Direct technical engineering task for Backend, Frontend, or QC."
 title: "[Task]: "
-labels: ["type:task", "status:todo"]
+# status:todo is applied by a maintainer after triage; agents only pick up trusted issues.
+labels: ["type:task"]
 body:
   - type: markdown
     attributes:

@@ -1,25 +1,47 @@
 name: Belooga AI PM Planner
 
+# Public repo: issue bodies are untrusted prompt input that ends up in status:todo
+# tickets for coding agents. Only run when a maintainer applies `type:idea` to an
+# issue authored by an owner/member/collaborator. The issue template no longer
+# auto-applies the label.
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 
 permissions:
   issues: write
   contents: read
 
+concurrency:
+  group: ai-pm-planner-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   plan-idea:
     name: AI PM Decomposition
-    # Only run on issues with label 'type:idea'
-    if: contains(github.event.issue.labels.*.name, 'type:idea') && !contains(github.event.issue.labels.*.name, 'status:in-progress')
+    if: >-
+      github.event.label.name == 'type:idea' &&
+      !contains(github.event.issue.labels.*.name, 'status:in-progress') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     steps:
+      - name: Verify the label was applied by a maintainer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENDER: ${{ github.event.sender.login }}
+        run: |
+          perm="$(gh api "repos/${GITHUB_REPOSITORY}/collaborators/${SENDER}/permission" --jq .permission || echo none)"
+          echo "label added by ${SENDER} (permission: ${perm})"
+          case "$perm" in
+            admin|maintain|write) ;;
+            *) echo "::error::type:idea must be applied by a maintainer"; exit 1 ;;
+          esac
+
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
 
@@ -28,5 +50,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          python3 scripts/ai-pm-manager.py ${{ github.event.issue.number }}
+          python3 scripts/ai-pm-manager.py "$ISSUE_NUMBER"

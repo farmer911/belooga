@@ -3,7 +3,7 @@
 Belooga AI Code Reviewer Agent (Powered by Gemini)
 Inspects git diffs against GEMINI.md invariants, Ponytail principles,
 security boundaries, and async safety. Posts findings to GitHub Step Summary,
-PR comments, or commit comments.
+and PR comments.
 """
 
 import json
@@ -14,14 +14,10 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
+from gemini_client import generate
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 GEMINI_MD = ROOT_DIR / "GEMINI.md"
-
-GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-]
-
 
 def get_git_diff() -> str:
     """Extract git diff for the current commit or pull request."""
@@ -60,105 +56,12 @@ def read_project_rules() -> str:
     return "Enforce clean code, async safety, zero mock fallbacks, and valid tests."
 
 
-def discover_gemini_models(api_key: str) -> list[str]:
-    """Query Google API to discover available models for this specific API key."""
-    discovered = []
-    for ver in ["v1beta", "v1"]:
-        url = f"https://generativelanguage.googleapis.com/{ver}/models?key={api_key}"
-        try:
-            req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                for m in data.get("models", []):
-                    methods = m.get("supportedGenerationMethods", [])
-                    if "generateContent" in methods:
-                        name = m.get("name", "").replace("models/", "")
-                        if name and f"{ver}/{name}" not in discovered:
-                            discovered.append(f"{ver}/{name}")
-        except Exception as e:
-            sys.stderr.write(f"[warn] Gemini model discovery skipped for {ver}: {e}\n")
-    return discovered
-
-
-def call_gemini_api(api_key: str, prompt: str) -> str:
-    """Call Google Gemini API using pure standard library (urllib) with dynamic model discovery."""
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 4096
-        }
-    }
-    data = json.dumps(payload).encode("utf-8")
-
-    available_targets = discover_gemini_models(api_key)
-    if available_targets:
-        print(f"[*] Discovered {len(available_targets)} supported model targets.")
-
-    preferred = [
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
-    ]
-    targets_to_try = []
-    for pref in preferred:
-        for target in available_targets:
-            if pref in target and target not in targets_to_try:
-                targets_to_try.append(target)
-    for target in available_targets:
-        if target not in targets_to_try:
-            targets_to_try.append(target)
-
-    if not targets_to_try:
-        targets_to_try = ["v1beta/gemini-1.5-flash", "v1/gemini-1.5-flash", "v1beta/gemini-pro"]
-
-    last_error = None
-    for target in targets_to_try:
-        if "/" in target:
-            ver, model = target.split("/", 1)
-        else:
-            ver, model = "v1beta", target
-        url = f"https://generativelanguage.googleapis.com/{ver}/models/{model}:generateContent?key={api_key}"
-        try:
-            req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                candidates = result.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        print(f"[✓] Successfully generated review using {ver}/{model}")
-                        return parts[0].get("text", "")
-        except urllib.error.HTTPError as e:
-            err_body = e.read().decode("utf-8")
-            print(f"[!] Gemini API Error on {ver}/{model} (HTTP {e.code}): {err_body}")
-            last_error = e
-        except Exception as e:
-            print(f"[!] Connection error on {ver}/{model}: {e}")
-            last_error = e
-
-    if last_error:
-        raise last_error
-    return ""
-
-
 def post_github_comment(review_text: str):
-    """Post comment to GitHub Pull Request or Commit using GitHub REST API."""
+    """Post the review as a PR comment (pull_request events only; needs pull-requests: write)."""
     github_token = os.getenv("GITHUB_TOKEN")
     repo = os.getenv("GITHUB_REPOSITORY")
     event_name = os.getenv("GITHUB_EVENT_NAME", "")
     event_path = os.getenv("GITHUB_EVENT_PATH", "")
-    sha = os.getenv("GITHUB_SHA", "")
 
     if not github_token or not repo:
         print("[*] GITHUB_TOKEN or GITHUB_REPOSITORY not set. Skipping API comment.")
@@ -186,13 +89,8 @@ def post_github_comment(review_text: str):
         except Exception as e:
             print(f"[!] Failed to parse PR event for commenting: {e}")
 
-    # 2. Commit Comment (Push)
-    if not url and sha:
-        url = f"https://api.github.com/repos/{repo}/commits/{sha}/comments"
-        print(f"[*] Posting review to Commit {sha[:8]}...")
-
     if not url:
-        print("[!] No target PR or commit found for comment.")
+        print("[*] Not a pull_request event: review is in the step summary only.")
         return
 
     try:
@@ -281,7 +179,7 @@ Format your entire response in clear GitHub-flavored Markdown:
 
     print("[*] Querying Gemini AI for code review analysis...")
     try:
-        review_markdown = call_gemini_api(api_key, prompt)
+        review_markdown = generate(api_key, prompt, max_tokens=4096, timeout=45)
     except Exception as e:
         print(f"[!] AI Review failed: {e}")
         sys.exit(0)  # Do not block the build if API has temporary outage
