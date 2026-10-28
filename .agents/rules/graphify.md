@@ -5,7 +5,7 @@ description: Consult the graphify knowledge graph at graphify-out/ when graphify
 
 ## graphify
 
-This project has a graphify knowledge graph at graphify-out/.
+graphify-out/ is a local, gitignored knowledge graph built by the user-global graphify skill. It may be missing or stale: if so, skip these steps (do not fail).
 
 Rules:
 - For codebase or architecture questions, when `graphify-out/graph.json` exists and graphify tools are available, first run `graphify query "<question>"` (CLI) or `query_graph` (MCP). Use `graphify path "<A>" "<B>"` / `shortest_path` for relationships and `graphify explain "<concept>"` / `get_node` for focused concepts.

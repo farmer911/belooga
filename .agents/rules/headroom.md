@@ -5,10 +5,10 @@ description: Headroom context and token optimization guidelines when Headroom MC
 
 # Headroom Context Optimization Guidelines
 
-When the Headroom MCP server is active with tools `headroom_compress`, `headroom_retrieve`, `headroom_stats`, and `headroom_read`:
+When the Headroom MCP server is active with tools `headroom_compress`, `headroom_retrieve`, and `headroom_stats`:
 
 1. **Large Output & File Optimization:**
-   - When inspecting large command outputs, lengthy logs, large data/JSON dumps, or files (> 250 lines), use `headroom_compress` or `headroom_read` to compress repetitive context before reasoning over it.
+   - When inspecting large command outputs, lengthy logs, large data/JSON dumps, or files (> 250 lines), use `headroom_compress` to compress repetitive context before reasoning over it.
    - The original content is automatically preserved in Headroom's local Compress-Cache-Retrieve (CCR) store.
 
 2. **Decompression on Demand:**

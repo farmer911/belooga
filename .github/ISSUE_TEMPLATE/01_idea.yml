@@ -1,7 +1,8 @@
 name: "💡 Propose an Idea / Feature"
-description: "Submit a high-level feature idea. The PM Agent will analyze and decompose it."
+description: "Submit a high-level feature idea. After maintainer triage, the PM Agent may decompose it."
 title: "[Idea]: "
-labels: ["type:idea", "status:todo"]
+# No auto-labels: a maintainer applies `type:idea` to start the AI PM Agent (see ai-pm-planner.yml).
+labels: []
 body:
   - type: markdown
     attributes:

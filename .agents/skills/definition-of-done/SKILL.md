@@ -13,8 +13,9 @@ description: Enterprise Definition of Done (DoD) contract, automatic SSOT/skill 
 
 1. **Backend Layered Architecture:**
    - **Router (`app/api/v1/endpoints/`):** Thin controller; parses HTTP requests, authenticates user, delegates to Service, returns typed response. Zero SQL (`select`, `db.execute`, `text`) and zero business workflows.
-   - **Service (`app/services/`):** Business logic, transaction orchestration, ownership guards, `asyncio.to_thread` for blocking I/O, and calls Repositories.
-   - **Repository (`app/repositories/`):** Database queries, inserts, updates, deletes, and row-level locks (`with_for_update`).
+   - **Service (`app/modules/<domain>/service.py`):** Business logic, transaction orchestration, ownership guards, `asyncio.to_thread` for blocking I/O, and calls Repositories.
+   - **Repository (`app/modules/<domain>/repository.py`):** Database queries, inserts, updates, deletes, and row-level locks (`with_for_update`).
+   - `app/services/*_service.py` and `app/repositories/*_repo.py` are re-export shims; never add domain code there or import `app.services` from routers (`scripts/trust-benchmark.py` rejects it). Only the shared helpers `app/services/media_transcoder.py` and `app/services/pdf_generator.py` are real code.
    - **Models & Schemas:** SQLAlchemy ORM models in `app/models/`, Pydantic DTOs in `app/schemas/`, and migrations in `backend/alembic/versions/`.
 2. **Frontend Atomic Design:**
    - **Atoms (`components/ui/`):** Pure presentation primitives without business logic.
@@ -28,49 +29,11 @@ description: Enterprise Definition of Done (DoD) contract, automatic SSOT/skill 
 
 ---
 
-## 2. Mandatory Post-Feature Knowledge Sync
+## 2. Gates & Procedure
 
-Before running final gates on any new feature or contract change, synchronize the harness automatically:
-```bash
-python3 scripts/generate-current-state.py --allow-dirty
-python3 scripts/render-skill-facts.py --write
-```
-If a new trap or product insight was discovered, update the target `SKILL.md` (`## Known Traps`) or `.agents/PRODUCT_THESIS.md` per `belooga-self-learn`.
-
----
-
-## 3. The Verification Gates
-
-Every pull request or task completion must pass these empirical gates:
-
-| Gate | Verification Command | Requirement |
-|---|---|---|
-| **Anti-Deception Benchmark** | `python3 scripts/trust-benchmark.py` | 100% Trust Score (0 violations) |
-| **Skill Lint & Ratchet** | `python3 scripts/lint-skills.py --quiet && python3 scripts/ratchet.py` | 0 errors, no WORSE metrics |
-| **Backend Tests** | `backend/.venv/bin/pytest backend/tests/ -v` | 100% pass (Exit: 0) |
-| **Frontend Typecheck** | `cd frontend && bun x tsc --noEmit` | 0 errors (Exit: 0) |
-| **E2E / Visual & Video Evidence** | `cd qc && bun run test:e2e -- <spec>` | Pass + retain `.png`/`.webm` evidence |
-| **Local Pre-Push Gate** | `bash scripts/pre-push-gate.sh` | Blocks push if any check or orphan worker fails |
-| **Master SSOT Truth** | `bash scripts/audit-truth.sh` | All gates pass (Exit: 0) |
-| **Remote GitHub Actions CI** | `gh pr checks --watch` | Wait until remote `Belooga SSOT & Integrity CI` and `CodeQL` finish green |
-| **Repo-Wide GitHub Health** | `python3 scripts/trust-benchmark.py` (on `main`) | 0 failing open PRs (`gh pr list`), 0 failed `main` runs, 0 open CodeQL alerts |
+The gates, commands and PR procedure live in exactly one place: `.agents/workflows/definition-of-done.md`. Run it; do not restate it here.
 
 ## Known Traps
 - **CI Runner Stdlib Isolation (`python3 -I -S`):** Root gate scripts (`scripts/lint-skills.py`, `scripts/ratchet.py`, `scripts/render-skill-facts.py`, `scripts/generate-current-state.py`) run under system `python3` in GitHub Actions and must never require unguarded third-party packages (`PyYAML`, etc.). Always wait for `gh pr checks --watch` to complete green after `git push`.
 - **Post-Merge CodeQL & Background Bot PRs (`VIOLATION-007` & `VIOLATION-008`):** Never report task completion immediately after merging without verifying on `main` that post-merge `CodeQL` runs completed with `0` open alerts and that no background bot PRs (`app/dependabot`) are failing CI (`scripts/trust-benchmark.py` enforces all 3 checks automatically).
 
----
-
-## 4. Ratchet Tightening Rule
-
-When an engineering task improves any metric recorded in `.agents/ratchet.json` (eliminating `any` types, removing `# type: ignore`, or reducing file bloat), run:
-```bash
-python3 scripts/ratchet.py --update
-```
-to lock in the improved baseline.
-
----
-
-## 5. Empirical Proof of Work & Independent Review
-
-Never claim a task is complete without running the verified commands above, attaching screenshot/video evidence for UI changes, and verifying via an independent reviewer pass (`be-code-review` / `fe-code-review`) with exit code 0.

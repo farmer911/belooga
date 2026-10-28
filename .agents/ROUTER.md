@@ -64,7 +64,7 @@ flowchart LR
 | **TDD & Bug Fixes** | Backend / tests / QC | `tdd-workflow` |
 | **5-Step Self-Learn & Evolution**| `docs/VIOLATIONS_REGISTER.md`, `.agents/` | `belooga-self-learn` |
 | **Senior Agile / Kanban Delivery** | Feature branches, PRs, Kanban tickets | `belooga-senior-agile-workflow` |
-| **Default Code Compression** | All code implementations | `ponytail` |
+| **Always-on Minimalism** (policy: `.agents/rules/ponytail.md`) | All code implementations | `ponytail` |
 | **UI/UX Design Intelligence** | Design tokens, palettes, UX checklists | `ui-ux-pro-max` |
 | **Backend System & API Gateway Standards** | `backend/app/`, `nginx/gateway.conf`, `k8s/` | `belooga-backend-engineering` |
 | **Frontend UI Standards** | `frontend/src/` | `belooga-frontend-engineering` |
@@ -90,7 +90,4 @@ When modifying a backend bounded context, verify its downstream frontend depende
 - **`be-domain-discovery`:** Verify `fe-domain-public` (`/search`, `/contact-us`, `/careers`) and `fe-domain-career-tools` (`/salary-benchmark`).
 - **`be-domain-monetization`:** Verify `fe-domain-career-tools` (`/expert-review`, `/ats-diagnostics`, `/workspace/jobs`, `/admin/analytics`, MoMo QR checkout).
 
-Merge only when:
-1. `python3 scripts/trust-benchmark.py` achieves **100% Trust Score (0 violations)**.
-2. CI passes all verification gates: `bash scripts/audit-truth.sh`.
-3. `python3 scripts/lint-skills.py --quiet` reports 0 ERROR.
+Merge only when `.agents/workflows/definition-of-done.md` (the canonical DoD) is complete and remote CI is green.

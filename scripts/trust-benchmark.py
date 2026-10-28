@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -356,21 +357,20 @@ for p in BE_APP.rglob("*.py"):
                         )
 
 # --- 5. RATCHET & SIZE DISCIPLINE ---
-r_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "ratchet.py")], capture_output=True, text=True)
+r_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "ratchet.py")], capture_output=True, text=True, encoding="utf-8")
 if r_proc.returncode != 0:
-    for line in r_proc.stdout.splitlines():
-        if "WORSE" in line:
-            violations["5. Ratchet & Size Discipline"].append(line.strip())
+    bad = [line.strip() for line in r_proc.stdout.splitlines() if "WORSE" in line or "FAIL" in line]
+    violations["5. Ratchet & Size Discipline"].extend(bad or [f"scripts/ratchet.py exited {r_proc.returncode}: {r_proc.stderr.strip()[-200:]}"])
 
 # --- 6. MEMORY CAP & SKILL SSOT ---
 state_md = AGENTS / "STATE.md"
 thesis_md = AGENTS / "PRODUCT_THESIS.md"
-if not state_md.exists() or len(state_md.read_text().splitlines()) > 50:
+if not state_md.exists() or len(state_md.read_text(encoding="utf-8").splitlines()) > 50:
     violations["6. Memory Cap & Skill SSOT"].append(".agents/STATE.md missing or exceeds 50-line cap")
-if not thesis_md.exists() or len(thesis_md.read_text().splitlines()) > 120:
+if not thesis_md.exists() or len(thesis_md.read_text(encoding="utf-8").splitlines()) > 120:
     violations["6. Memory Cap & Skill SSOT"].append(".agents/PRODUCT_THESIS.md missing or exceeds 120-line cap")
 
-l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True)
+l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True, encoding="utf-8")
 if l_proc.returncode != 0:
     violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors (or failed stdlib -I -S isolation check)")
 
@@ -379,9 +379,9 @@ env_example = ROOT / ".env.example"
 if not env_example.exists():
     violations["6. Memory Cap & Skill SSOT"].append(".env.example is missing at repository root")
 else:
-    defined_env_keys = set(re.findall(r"^([A-Z][A-Z0-9_]+)=", env_example.read_text(), re.MULTILINE))
+    defined_env_keys = set(re.findall(r"^([A-Z][A-Z0-9_]+)=", env_example.read_text(encoding="utf-8"), re.MULTILINE))
     for p in sorted(BE_APP.rglob("*.py")):
-        txt = p.read_text()
+        txt = p.read_text(encoding="utf-8")
         for m in re.finditer(r'os\.getenv\(\s*["\']([A-Z0-9_]+)["\']\s*(?:,\s*([^)]+))?\)', txt):
             env_key, default_arg = m.group(1), m.group(2)
             if env_key not in defined_env_keys:
@@ -393,7 +393,7 @@ else:
                     f"{p.relative_to(ROOT)} -> {env_key} has unguarded hardcoded fallback in os.getenv()"
                 )
     for p in sorted(list(FE_SRC.rglob("*.ts*")) + (list(MOBILE_SRC.rglob("*.ts*")) if MOBILE_SRC.exists() else [])):
-        txt = p.read_text()
+        txt = p.read_text(encoding="utf-8")
         for m in re.finditer(r"process\.env\.((?:NEXT|EXPO)_PUBLIC_[A-Z0-9_]+)", txt):
             fe_key = m.group(1)
             if fe_key not in defined_env_keys:
@@ -404,12 +404,12 @@ else:
 if os.getenv("CI") != "true":
     try:
         curr_branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), text=True, timeout=5
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), text=True, encoding="utf-8", timeout=5
         ).strip()
         pr_proc = subprocess.run(
             ["gh", "pr", "list", "--state", "open", "--json", "number,title,headRefName,statusCheckRollup"],
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8",
             timeout=5,
             cwd=str(ROOT),
         )
@@ -427,11 +427,11 @@ if os.getenv("CI") != "true":
                         f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
                     )
         if curr_branch == "main":
-            head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True, timeout=5).strip()
+            head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True, encoding="utf-8", timeout=5).strip()
             run_proc = subprocess.run(
                 ["gh", "run", "list", "--branch", "main", "--limit", "10", "--json", "name,status,conclusion,headSha"],
                 capture_output=True,
-                text=True,
+                text=True, encoding="utf-8",
                 timeout=5,
                 cwd=str(ROOT),
             )
@@ -444,7 +444,7 @@ if os.getenv("CI") != "true":
             alerts_proc = subprocess.run(
                 ["gh", "api", "repos/farmer911/belooga/code-scanning/alerts?state=open&per_page=100"],
                 capture_output=True,
-                text=True,
+                text=True, encoding="utf-8",
                 timeout=5,
                 cwd=str(ROOT),
             )

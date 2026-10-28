@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Install once per clone:  git config core.hooksPath .githooks
+# Runs the local gate (scripts/pre-push-gate.sh); bypass only in emergencies with --no-verify.
+exec bash "$(git rev-parse --show-toplevel)/scripts/pre-push-gate.sh"

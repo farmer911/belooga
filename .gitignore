@@ -55,8 +55,19 @@ backend/uploads/avatars/*
 backend/uploads/resumes/*
 !backend/uploads/resumes/.gitkeep
 
-# Graphify Cache
-graphify-out/cache/
+# Graphify output (generated locally by the user-global graphify skill; ~4 MB)
+graphify-out/
+
+# Claude Code agent worktrees
+.claude/worktrees/
+
+# Coverage & ad-hoc QC screenshots
+.coverage
+coverage.xml
+qc/screenshot_*.png
+
+# Real k8s secrets (template lives in k8s/secrets.example.yaml)
+k8s/secrets.yaml
 
 # Audit Reports
 SKILLS_AUDIT*.md

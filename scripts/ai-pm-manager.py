@@ -11,106 +11,24 @@ import os
 import re
 import subprocess
 import sys
-import urllib.request
-import urllib.error
 from pathlib import Path
+
+from gemini_client import generate
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CURRENT_STATE_MD = ROOT_DIR / "CURRENT_STATE.md"
 GEMINI_MD = ROOT_DIR / "GEMINI.md"
-
-
-def discover_gemini_models(api_key: str) -> list[str]:
-    """Query Google API to discover available models for this specific API key."""
-    discovered = []
-    for ver in ["v1beta", "v1"]:
-        url = f"https://generativelanguage.googleapis.com/{ver}/models?key={api_key}"
-        try:
-            req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                for m in data.get("models", []):
-                    methods = m.get("supportedGenerationMethods", [])
-                    if "generateContent" in methods:
-                        name = m.get("name", "").replace("models/", "")
-                        if name and f"{ver}/{name}" not in discovered:
-                            discovered.append(f"{ver}/{name}")
-        except Exception as e:
-            sys.stderr.write(f"[warn] Gemini model discovery skipped for {ver}: {e}\n")
-    return discovered
-
-
-def call_gemini_api(api_key: str, prompt: str) -> str:
-    """Call Google Gemini API using pure standard library (urllib)."""
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 8192,
-            "responseMimeType": "application/json"
-        }
-    }
-    data = json.dumps(payload).encode("utf-8")
-
-    available_targets = discover_gemini_models(api_key)
-    preferred = [
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
-    ]
-    targets_to_try = []
-    for pref in preferred:
-        for target in available_targets:
-            if pref in target and target not in targets_to_try:
-                targets_to_try.append(target)
-    for target in available_targets:
-        if target not in targets_to_try:
-            targets_to_try.append(target)
-
-    if not targets_to_try:
-        targets_to_try = ["v1beta/gemini-1.5-flash", "v1/gemini-1.5-flash", "v1beta/gemini-pro"]
-
-    last_error = None
-    for target in targets_to_try:
-        if "/" in target:
-            ver, model = target.split("/", 1)
-        else:
-            ver, model = "v1beta", target
-        url = f"https://generativelanguage.googleapis.com/{ver}/models/{model}:generateContent?key={api_key}"
-        try:
-            req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                candidates = result.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        return parts[0].get("text", "")
-        except urllib.error.HTTPError as e:
-            last_error = e
-        except Exception as e:
-            last_error = e
-
-    if last_error:
-        raise last_error
-    return ""
+# Hard cap: the issue text is untrusted LLM input, so one idea can never fan out into an
+# unbounded number of status:todo tickets that coding agents will pick up.
+MAX_TASKS = 8
+ROLES = {"backend", "frontend", "qc"}
 
 
 def get_issue_details(issue_number: int) -> dict:
     """Fetch issue details from GitHub via gh CLI."""
     try:
         cmd = ["gh", "issue", "view", str(issue_number), "--json", "number,title,body,labels"]
-        res = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True)
+        res = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8")
         return json.loads(res)
     except Exception as e:
         print(f"[!] Error fetching issue #{issue_number}: {e}")
@@ -123,7 +41,7 @@ def create_github_task_issue(title: str, body: str, labels: list[str]) -> int:
     for lbl in labels:
         cmd.extend(["--label", lbl])
     try:
-        out = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True).strip()
+        out = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8").strip()
         # Output is issue URL e.g. https://github.com/farmer911/belooga/issues/12
         match = re.search(r"/issues/(\d+)", out)
         if match:
@@ -239,7 +157,7 @@ You MUST respond strictly with valid JSON conforming to this schema (do not wrap
 
     print("[*] Requesting PM decomposition from Gemini AI...")
     try:
-        raw_response = call_gemini_api(api_key, prompt)
+        raw_response = generate(api_key, prompt, max_tokens=8192, json_mode=True)
     except Exception as e:
         print(f"[!] Gemini call failed: {e}")
         sys.exit(1)
@@ -256,8 +174,11 @@ You MUST respond strictly with valid JSON conforming to this schema (do not wrap
         print(f"[!] Failed to parse Gemini response as JSON: {e}\nRaw was:\n{raw_response}")
         sys.exit(1)
 
-    spec_md = plan.get("spec_markdown", "")
-    tasks = plan.get("tasks", [])
+    spec_md = str(plan.get("spec_markdown", ""))
+    tasks = [t for t in plan.get("tasks", []) if isinstance(t, dict)] if isinstance(plan.get("tasks"), list) else []
+    if len(tasks) > MAX_TASKS:
+        print(f"[!] Gemini proposed {len(tasks)} tasks; keeping the first {MAX_TASKS}.")
+        tasks = tasks[:MAX_TASKS]
 
     print(f"\n[✓] PM Decomposition Successful! Generated {len(tasks)} engineering tasks.")
 
@@ -265,9 +186,9 @@ You MUST respond strictly with valid JSON conforming to this schema (do not wrap
     parent_ref = f"#{issue_num}" if issue_num else "Direct Submission"
 
     for t in tasks:
-        role = t.get("role", "backend")
-        title = t.get("title", f"[{role.upper()}] Task")
-        body = t.get("body", "")
+        role = str(t.get("role", "backend")).lower()
+        title = str(t.get("title", f"[{role.upper()}] Task"))[:120]
+        body = str(t.get("body", ""))
         
         full_body = f"""### 📋 Context & Parent Idea
 Originating from {parent_ref}: **{idea_title}**
@@ -278,7 +199,7 @@ Originating from {parent_ref}: **{idea_title}**
 ---
 *Created automatically by Belooga AI PM Manager Agent*
 """
-        role_label = f"role:{role}" if role in ["backend", "frontend", "qc"] else "type:task"
+        role_label = f"role:{role}" if role in ROLES else "type:task"
         labels = ["type:task", "status:todo", role_label]
         
         print(f"[*] Creating GitHub Task: {title}...")

@@ -18,7 +18,9 @@ Usage:
 import ast
 import json
 import re
+import subprocess
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 try:
@@ -53,6 +55,17 @@ NEG_PATH_RE = re.compile(
     re.I,
 )
 CALL_RE = re.compile(r"`([a-z_][a-z0-9_]*)\(([^`()]*)\)`")
+# Repo file references, incl. dot-dirs and `@path` imports (CLAUDE.md / .claude/commands).
+REPO_FILE_RE = re.compile(
+    r"(?:^|[\s`\"@(])((?:frontend|backend|qc|scripts|docs|tests|mobile|k8s|nginx|\.agents|\.github|\.claude|\.githooks)/"
+    r"[\w\-/\[\]().]+\.(?:tsx?|py|sql|sh|md|json|ya?ml|conf|toml|csv|mjs|js))"
+)
+# "skill `x`", "`x` skill", "the x skill"
+SKILL_PHRASE_RE = re.compile(r"\b[Ss]kill\s+`([a-z][\w-]*)`|`([a-z][\w-]*)`\s+skill\b|\bthe ([a-z][\w-]+) skill\b")
+GLOBAL_SKILLS = {"graphify"}  # installed per user (~/.claude/skills), deliberately not vendored
+HEADROOM_TOOLS = {"compress", "retrieve", "stats"}
+UI_STACKS_DIR = SKILLS_DIR / "ui-ux-pro-max" / "data" / "stacks"
+MACHINE_PATH_RE = re.compile(r"/Users/[A-Za-z0-9_]+/|(?<![\w$])/tmp/[\w.-]+|\b[A-Z]:\\\\?Users\\")
 
 findings = []  # (severity, file, message)
 
@@ -136,6 +149,12 @@ def check_frontmatter_yaml(path, text):
         return None
 
 
+def check_machine_paths(path, body):
+    m = MACHINE_PATH_RE.search(body)
+    if m:
+        add("ERROR", path, f"contains a machine-specific absolute path (`{m.group(0)}`); use a repo-relative path")
+
+
 def check_common(path, text):
     check_frontmatter_yaml(path, text)
     body = AUTO_BLOCK_RE.sub("", text)
@@ -171,8 +190,40 @@ def check_common(path, text):
                 break
 
     # 5. machine-specific absolute paths
-    if re.search(r"/Users/[A-Za-z0-9_]+/", body):
-        add("ERROR", path, "contains a machine-specific absolute path (/Users/...); use $LEGACY_DIR")
+    check_machine_paths(path, body)
+
+    # 5b. paths that leave the repo (`../Beloga-CV`, `../beloga-agent-kanban`): only `../<top-level repo dir>` is allowed
+    for name in set(re.findall(r"(?<![\w.])\.\./([A-Za-z][\w.-]*)", body)):
+        if not (ROOT / name).exists():
+            add("ERROR", path, f"references `../{name}`, which is outside the repo; use an in-repo path (e.g. `legacy/`)")
+
+    # 5c. skills named in prose must exist (vendored) or be declared user-global on the same line
+    for line in body.splitlines():
+        for groups in set(SKILL_PHRASE_RE.findall(line)):
+            tok = next(t for t in groups if t)
+            if groups[2] and "-" not in tok and tok not in GLOBAL_SKILLS:
+                continue  # plain prose like "the engineering skill"
+            if tok in existing_skills:
+                continue
+            if tok in GLOBAL_SKILLS:
+                if "global" not in line.lower():
+                    add("ERROR", path, f"`{tok}` is a user-global skill, not vendored in .agents/skills/; say so on that line")
+                continue
+            add("ERROR", path, f"references skill `{tok}` that does not exist")
+
+    # 5d. ui-ux-pro-max --stack values must have a vendored data/stacks/<stack>.csv
+    for val in re.findall(r"--stack\s+([a-z][\w/-]*)", body):
+        for stack in val.split("/"):
+            if not (UI_STACKS_DIR / f"{stack}.csv").exists():
+                add("ERROR", path, f"`--stack {stack}` has no vendored {UI_STACKS_DIR.relative_to(ROOT).as_posix()}/{stack}.csv")
+
+    # 5e. layering pointers to the re-export shim directories
+    for m in re.finditer(r"`(?:backend/)?app/(services|repositories)/`", body):
+        add("ERROR", path, f"`app/{m.group(1)}/` is a re-export shim; point to `app/modules/<domain>/` instead")
+
+    # 5f. MCP tool names that do not exist
+    for tool in set(re.findall(r"\bheadroom_([a-z_]+)", body)) - HEADROOM_TOOLS:
+        add("ERROR", path, f"`headroom_{tool}` is not a Headroom MCP tool (have: {', '.join(sorted('headroom_' + t for t in HEADROOM_TOOLS))})")
 
     # 6. bun scripts that do not exist
     for sub, script in re.findall(r"cd (qc|frontend) && bun run ([\w:\-]+)", body):
@@ -180,7 +231,7 @@ def check_common(path, text):
             add("ERROR", path, f"`cd {sub} && bun run {script}` — script '{script}' not in {sub}/package.json")
 
     # 7. referenced repo files (both inline backticks AND inside bash commands) that do not exist
-    for m in re.finditer(r"(?:^|[\s`\"])((?:frontend|backend|qc|scripts|docs|tests)/[\w\-/\[\]().]+\.(?:tsx?|py|sql|sh|md|json))", body):
+    for m in re.finditer(REPO_FILE_RE, body):
         fp = m.group(1)
         if "<" in fp or ">" in fp or "*" in fp or "{" in fp:
             continue
@@ -284,22 +335,28 @@ def check_ecosystem_coverage():
             add("ERROR", trig_path, f"skill `{sk}` missing from triggers.yaml evaluation dataset")
 
     # Enforce strict repository markdown whitelist (prevent redundant .md sprawl)
-    allowed_md = {"CLAUDE.md", "CURRENT_STATE.md", "GEMINI.md", "README.md", "docs/VIOLATIONS_REGISTER.md", "docs/ponytail-debt.md", "frontend/AGENTS.md", "graphify-out/GRAPH_REPORT.md"}
+    allowed_md = {"CURRENT_STATE.md", "GEMINI.md", "README.md", "docs/VIOLATIONS_REGISTER.md", "docs/ponytail-debt.md", "frontend/AGENTS.md", "CLAUDE.md"}
     for md in ROOT.rglob("*.md"):
         rel = md.relative_to(ROOT).as_posix()
-        if any(rel.startswith(p) for p in (".agents/", "docs/adr/", "legacy/", "node_modules/", "frontend/node_modules/", "frontend/.next/", "mobile/node_modules/", "mobile/.expo/", "qc/node_modules/", "qc/playwright-report/", "qc/test-results/", "backend/.venv/", ".pytest_cache/", ".git/")):
+        if any(rel.startswith(p) for p in (".agents/", "docs/adr/", "legacy/", "node_modules/", "frontend/node_modules/", "frontend/.next/", "mobile/node_modules/", "mobile/.expo/", "qc/node_modules/", "qc/playwright-report/", "qc/test-results/", "backend/.venv/", ".pytest_cache/", ".git/", ".claude/", ".githooks/", "graphify-out/")):
             continue
         if rel not in allowed_md:
             add("ERROR", md, f"redundant/unapproved markdown file `{rel}` outside canonical SSOT whitelist")
 
 
-targets = sorted(AGENTS.rglob("*.md")) + [ROOT / "GEMINI.md", ROOT / "README.md"] + sorted((ROOT / "docs" / "adr").glob("*.md"))
+targets = (
+    sorted(AGENTS.rglob("*.md")) + [ROOT / "GEMINI.md", ROOT / "README.md", ROOT / "CLAUDE.md"]
+    + sorted((ROOT / "docs" / "adr").glob("*.md"))
+    + sorted((ROOT / ".claude" / "commands").glob("*.md")) + sorted((ROOT / ".claude" / "agents").glob("*.md"))
+)
 for p in targets:
     if not p.exists():
         continue
     t = p.read_text(encoding="utf-8", errors="ignore")
     if p.name != "STATE.md":
         check_common(p, t)
+    else:
+        check_machine_paths(p, t)
     if p.name == "SKILL.md":
         check_skill(p, t)
     elif p.name == "STATE.md" and len(t.splitlines()) > 50:
@@ -310,6 +367,12 @@ for p in targets:
         check_reference(p, t)
 
 check_ecosystem_coverage()
+
+# Claude Code mirror (.claude/skills stubs) must match .agents/skills
+_sync = subprocess.run([sys.executable, str(ROOT / "scripts" / "sync-claude-skills.py"), "--check"],
+                       capture_output=True, text=True, encoding="utf-8")
+if _sync.returncode != 0:
+    add("ERROR", ROOT / ".claude" / "skills", "out of sync with .agents/skills; run `python3 scripts/sync-claude-skills.py`\n" + _sync.stdout.rstrip())
 
 # ---------- report ----------
 by_file = {}

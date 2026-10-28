@@ -16,11 +16,11 @@ argument-hint: "[bug | feature | target-module]"
 Before proposing any plan, trace the exact execution path end-to-end:
 1. **Knowledge & State Lookup:**
    - Query `graphify` (`query_graph` / `get_node` if available) -> `CURRENT_STATE.md` -> `.agents/PRODUCT_THESIS.md` -> target Domain `SKILL.md`.
-   - If the investigation spans > 5 files, delegate a read-only survey to the `research` subagent so the main context stays clean.
+   - If the investigation spans > 5 files, delegate a read-only survey to a subagent so the main context stays clean (Claude Code: the `investigator` agent in `.claude/agents/investigator.md`).
 2. **End-to-End Symbol Pinpointing:**
    - Trace the exact chain with file paths and line numbers:
      `UI Component / Page` $\rightarrow$ `Custom Hook` $\rightarrow$ `FastAPI Router` $\rightarrow$ `Service` $\rightarrow$ `Repository` $\rightarrow$ `PostgreSQL Table`.
-   - If investigating a UI issue, check `$LEGACY_DIR` (`../Beloga-CV`) and `docs/VIOLATIONS_REGISTER.md` first.
+   - If investigating a UI issue, check `legacy/` (or `$LEGACY_DIR` if set) and `docs/VIOLATIONS_REGISTER.md` first.
 
 ---
 
