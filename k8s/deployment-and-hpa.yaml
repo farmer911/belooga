@@ -1,3 +1,37 @@
+# Belooga backend: config, uploads volume, Deployment, Service, HPA, PDB and the edge Ingress.
+# Secrets come from the `belooga-secrets` Secret (never committed): see k8s/secrets.example.yaml.
+# Images are rewritten to the commit SHA by .github/workflows/deploy.yml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: belooga-config
+data:
+  ENVIRONMENT: "production"
+  CORS_ORIGINS: "https://belooga.com,https://www.belooga.com"
+  FRONTEND_URL: "https://belooga.com"
+  PUBLIC_API_URL: "https://api.belooga.com"
+  UPLOAD_DIR: "/app/uploads"
+  GATEWAY_REDIS_ENABLED: "1"
+  WEB_CONCURRENCY: "2"
+  # uvicorn --proxy-headers: trust X-Forwarded-* from the ingress controller only.
+  # Narrow to the ingress-nginx pod CIDR for your cluster.
+  FORWARDED_ALLOW_IPS: "*"
+  SMTP_PORT: "587"
+  SMTP_FROM: "noreply@belooga.com"
+---
+# Uploads (avatars, resumes, videos, chunks) must be shared by every replica, so this
+# needs a ReadWriteMany storage class (NFS, EFS, Azure Files, Filestore...). If the
+# cluster has none, move uploads to object storage before scaling past 1 replica.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: belooga-uploads
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 20Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,15 +56,56 @@ spec:
         tier: api
     spec:
       terminationGracePeriodSeconds: 30
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: backend
-          image: belooga/backend:1.0.0
+          image: ghcr.io/farmer911/belooga-backend:latest
           ports:
             - containerPort: 8000
               name: http
+          envFrom:
+            - configMapRef:
+                name: belooga-config
           env:
-            - name: ENVIRONMENT
-              value: "production"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: DATABASE_URL } }
+            - name: REDIS_URL
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: REDIS_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: JWT_SECRET } }
+            - name: MOMO_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: MOMO_SECRET_KEY } }
+            - name: MOMO_PARTNER_CODE
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: MOMO_PARTNER_CODE, optional: true } }
+            - name: MOMO_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: MOMO_ACCESS_KEY, optional: true } }
+            - name: GOOGLE_CLIENT_ID
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: GOOGLE_CLIENT_ID, optional: true } }
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: GOOGLE_CLIENT_SECRET, optional: true } }
+            - name: SMTP_HOST
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: SMTP_HOST, optional: true } }
+            - name: SMTP_USER
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: SMTP_USER, optional: true } }
+            - name: SMTP_PASSWORD
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: SMTP_PASSWORD, optional: true } }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: uploads
+              mountPath: /app/uploads
           resources:
             requests:
               cpu: "250m"
@@ -58,6 +133,12 @@ spec:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "sleep 3"]
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: belooga-uploads
 ---
 apiVersion: v1
 kind: Service
@@ -106,16 +187,24 @@ spec:
     matchLabels:
       app: belooga-backend
 ---
+# TLS terminates here (cert-manager issues the certificate into belooga-tls).
+# CORS is handled by the app (CORS_ORIGINS), so ingress-level CORS is not enabled.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: belooga-edge-ingress
   annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/limit-rps: "100"
     nginx.ingress.kubernetes.io/proxy-body-size: "15m"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.belooga.com
+        - belooga.com
+      secretName: belooga-tls
   rules:
     - host: api.belooga.com
       http:
@@ -139,5 +228,15 @@ spec:
             backend:
               service:
                 name: belooga-backend-svc
+                port:
+                  number: 80
+    - host: belooga.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: belooga-frontend-svc
                 port:
                   number: 80

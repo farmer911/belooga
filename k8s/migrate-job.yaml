@@ -1,0 +1,53 @@
+# One-shot schema migration, run by .github/workflows/deploy.yml before the rollout:
+#   kubectl delete job belooga-migrate --ignore-not-found
+#   kubectl apply -f k8s/migrate-job.yaml   (image rewritten to the release SHA)
+#   kubectl wait --for=condition=complete job/belooga-migrate --timeout=300s
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: belooga-migrate
+  labels:
+    app: belooga-migrate
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: belooga-migrate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: ghcr.io/farmer911/belooga-backend:latest
+          command: ["alembic", "upgrade", "head"]
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: belooga-secrets, key: DATABASE_URL } }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+      volumes:
+        - name: tmp
+          emptyDir: {}
