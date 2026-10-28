@@ -23,7 +23,9 @@ export function createStudioPreviewStream(
 
   let frame = 0;
   let lastDrawTime = 0;
-  let videoTrack: MediaStreamTrack | undefined;
+  const stream = canvas.captureStream(30) as MediaStream & { isSynthetic?: boolean };
+  stream.isSynthetic = true;
+  const videoTrack: MediaStreamTrack | undefined = stream.getVideoTracks()[0];
   let audioCtxInstance: AudioContext | null = null;
   const fpsInterval = 1000 / 30; // 30 FPS target throttling
 
@@ -153,9 +155,6 @@ export function createStudioPreviewStream(
     ctx.fillText(`${name} • 0:30 Pitch`, cx, height * 0.77);
   };
 
-  const stream = canvas.captureStream(30) as MediaStream & { isSynthetic?: boolean };
-  stream.isSynthetic = true;
-  videoTrack = stream.getVideoTracks()[0];
   requestAnimationFrame(draw);
 
   try {

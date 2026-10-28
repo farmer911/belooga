@@ -65,7 +65,7 @@ export function PricingTiers({ packages, onSelectPackage }: PricingTiersProps) {
                 <CardContent className="flex-1 py-4">
                   <div className="border-t border-surface-divider pt-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-typography-muted mb-3">
-                      What's Included
+                      What&apos;s Included
                     </p>
                     <ul className="space-y-2.5">
                       {pkg.features.map((feature, idx) => (

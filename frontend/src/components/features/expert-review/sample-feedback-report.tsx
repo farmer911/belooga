@@ -38,7 +38,7 @@ export function SampleFeedbackReport() {
                   CV Health Score: 88 / 100
                 </h3>
                 <p className="text-xs text-typography-heading mt-1 max-w-lg">
-                  "Strong technical fundamentals, but previous work experiences bury the lead. Quantifying system impact will instantly elevate callback rates."
+                  &ldquo;Strong technical fundamentals, but previous work experiences bury the lead. Quantifying system impact will instantly elevate callback rates.&rdquo;
                 </p>
               </div>
 
@@ -94,7 +94,7 @@ export function SampleFeedbackReport() {
                     </span>
                   </div>
                   <p className="text-sm text-typography-muted italic line-through">
-                    "Responsible for developing backend APIs and working with database tables for our web application."
+                    &ldquo;Responsible for developing backend APIs and working with database tables for our web application.&rdquo;
                   </p>
 
                   <div className="flex items-center gap-2 my-3">
@@ -104,7 +104,7 @@ export function SampleFeedbackReport() {
                     </span>
                   </div>
                   <p className="text-sm font-medium text-typography-main bg-surface-card p-3 rounded border border-brand-primary/40 shadow-xs">
-                    "Architected 14 async FastAPI endpoints in PostgreSQL, reducing query latency by 34% across 1.2M daily active requests."
+                    &ldquo;Architected 14 async FastAPI endpoints in PostgreSQL, reducing query latency by 34% across 1.2M daily active requests.&rdquo;
                   </p>
                   <p className="text-xs text-brand-primary mt-2 font-medium flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 shrink-0" /> Reviewer Note: Replaced passive duty phrasing with strong action verb + quantified performance gain.
@@ -118,7 +118,7 @@ export function SampleFeedbackReport() {
                     </span>
                   </div>
                   <p className="text-sm text-typography-muted italic line-through">
-                    "Helped the frontend team refactor UI components and improve web page speed."
+                    &ldquo;Helped the frontend team refactor UI components and improve web page speed.&rdquo;
                   </p>
 
                   <div className="flex items-center gap-2 my-3">
@@ -128,7 +128,7 @@ export function SampleFeedbackReport() {
                     </span>
                   </div>
                   <p className="text-sm font-medium text-typography-main bg-surface-card p-3 rounded border border-brand-primary/40 shadow-xs">
-                    "Modularized monolithic React codebase into Atomic Design primitives, cutting initial JS bundle by 42% and accelerating CI build times by 3x."
+                    &ldquo;Modularized monolithic React codebase into Atomic Design primitives, cutting initial JS bundle by 42% and accelerating CI build times by 3x.&rdquo;
                   </p>
                 </div>
               </div>
