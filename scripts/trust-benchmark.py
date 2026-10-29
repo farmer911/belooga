@@ -351,7 +351,7 @@ for p in BE_APP.rglob("*.py"):
                 )
                 if is_mut and n.name not in PUBLIC_MUTATIONS_WHITELIST:
                     src = ast.get_source_segment(txt, n) or ""
-                    if "get_current_user" not in src:
+                    if "get_current_user" not in src and "require_role(" not in src:
                         violations["4. Async & IDOR Safety (All BE)"].append(
                             f"{rel}:{n.lineno} -> mutation {n.name}() missing get_current_user IDOR guard"
                         )

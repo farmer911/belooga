@@ -16,7 +16,7 @@ concurrency:
 env:
   # Backend line-coverage floor enforced by pytest-cov. "0" = report only.
   # The lead sets this to the measured baseline; raise it, never lower it.
-  COV_MIN: "0"
+  COV_MIN: "75"
   BUN_VERSION: "1.4.4"
 
 jobs:
