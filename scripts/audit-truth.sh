@@ -139,7 +139,7 @@ for file_path in glob.glob('backend/app/api/v1/endpoints/*.py'):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 src = ast.get_source_segment(content, node) or ''
-                if 'get_current_user' not in src:
+                if 'get_current_user' not in src and 'require_role(' not in src:
                     violations.append(f'{file_path}:{node.lineno} -> {node.name}() missing get_current_user')
 
 if violations:

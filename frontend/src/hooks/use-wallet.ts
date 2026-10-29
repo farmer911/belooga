@@ -90,7 +90,7 @@ export function useWallet() {
 
   const releaseEscrowMutation = useMutation({
     mutationFn: async (payload: { order_id: string; amount_vnd: number; expert_name?: string }) => {
-      await apiClient.post(`/v1/expert-review/orders/${payload.order_id}/complete`, {});
+      await apiClient.post(`/v1/expert-review/orders/${encodeURIComponent(payload.order_id)}/complete`, {});
       const res = await apiClient.get<UserWalletStateDTO>("/v1/wallet/");
       return res.data;
     },
@@ -121,17 +121,25 @@ export function useWallet() {
   };
 }
 
+const SAFE_MOMO_ORDER_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
 /** MoMo redirects back with ?momo_order=<id>; the IPN credits the wallet, so poll the order until it settles. */
 export function useMomoReturnStatus() {
   const queryClient = useQueryClient();
-  const [orderId] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("momo_order")
-  );
+  const [orderId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get("momo_order");
+    return raw && SAFE_MOMO_ORDER_ID_RE.test(raw) ? raw : null;
+  });
   const { data } = useQuery<{ order_id: string; status: "PENDING" | "PAID" | "FAILED"; amount: number }>({
     queryKey: ["momo-order-status", orderId],
     enabled: Boolean(orderId),
     queryFn: async () => {
-      const order = (await apiClient.get(`/v1/payments/momo/order-status/${orderId}`)).data;
+      if (!orderId || !SAFE_MOMO_ORDER_ID_RE.test(orderId)) {
+        throw new Error("Invalid MoMo order id");
+      }
+      const safeOrderId = encodeURIComponent(orderId);
+      const order = (await apiClient.get(`/v1/payments/momo/order-status/${safeOrderId}`)).data;
       if (order.status === "PAID") await queryClient.invalidateQueries({ queryKey: ["user-wallet"] });
       return order;
     },

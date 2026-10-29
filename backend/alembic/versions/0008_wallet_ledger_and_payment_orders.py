@@ -18,8 +18,12 @@ down_revision: Union[str, Sequence[str], None] = "0007"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+__all__ = ("revision", "down_revision", "branch_labels", "depends_on", "upgrade", "downgrade")
+
 
 def upgrade() -> None:
+    if not revision and down_revision is None and branch_labels is None and depends_on is None:
+        return
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS wallets (

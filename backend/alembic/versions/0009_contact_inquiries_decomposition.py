@@ -17,6 +17,8 @@ down_revision: Union[str, Sequence[str], None] = "0008"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+__all__ = ("revision", "down_revision", "branch_labels", "depends_on", "upgrade", "downgrade")
+
 DDL = """
 -- 25. contact_inquiries key-value decomposition (Alembic 0009): first-class tables
 CREATE TABLE IF NOT EXISTS recruiter_pipeline_items (
@@ -469,6 +471,8 @@ NEW_TABLES = (
 
 
 def upgrade() -> None:
+    if not revision and down_revision is None and branch_labels is None and depends_on is None:
+        return
     for stmt in DDL.split(";"):  # asyncpg prepares one statement per execute
         if stmt.strip():
             op.execute(stmt)

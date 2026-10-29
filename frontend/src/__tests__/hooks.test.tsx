@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useJobTracker, type TrackedJob } from "@/hooks/use-job-tracker";
+import { useMomoReturnStatus } from "@/hooks/use-wallet";
 import { mockApi, queryWrapper } from "./helpers";
 
 const bookmark = (username: string) => ({ id: `b-${username}`, username, full_name: username.toUpperCase() });
@@ -128,5 +129,24 @@ describe("useJobTracker", () => {
     await act(() => result.current.addJob({ company_name: "VNG", position_title: "Backend Engineer" }));
 
     await waitFor(() => expect(result.current.jobs.map((j) => j.id)).toEqual(["j2", "j1"]));
+  });
+});
+
+describe("useMomoReturnStatus", () => {
+  test("rejects untrusted path-traversal momo_order query params and polls valid order ids", async () => {
+    const calls = mockApi((config) => ({
+      data: { order_id: config.url?.split("/").pop() ?? "", status: "PAID", amount: 50000 },
+    }));
+
+    window.history.replaceState({}, "", "/workspace/wallet?momo_order=../../admin/analytics");
+    const forged = renderHook(() => useMomoReturnStatus(), queryWrapper());
+    await new Promise((r) => setTimeout(r, 25));
+    expect(forged.result.current).toBeUndefined();
+    expect(calls).toHaveLength(0);
+
+    window.history.replaceState({}, "", "/workspace/wallet?momo_order=BLG-20261029000000-deadbeef");
+    const valid = renderHook(() => useMomoReturnStatus(), queryWrapper());
+    await waitFor(() => expect(valid.result.current?.status).toBe("PAID"));
+    expect(calls.map((c) => c.url)).toEqual(["/v1/payments/momo/order-status/BLG-20261029000000-deadbeef"]);
   });
 });

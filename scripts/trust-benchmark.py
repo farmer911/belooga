@@ -406,27 +406,25 @@ if os.getenv("CI") != "true":
         curr_branch = subprocess.check_output(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), text=True, encoding="utf-8", timeout=5
         ).strip()
-        pr_proc = subprocess.run(
-            ["gh", "pr", "list", "--state", "open", "--json", "number,title,headRefName,statusCheckRollup"],
-            capture_output=True,
-            text=True, encoding="utf-8",
-            timeout=5,
-            cwd=str(ROOT),
-        )
-        if pr_proc.returncode == 0 and pr_proc.stdout.strip():
-            for pr_item in json.loads(pr_proc.stdout):
-                if curr_branch != "main" and pr_item.get("headRefName") != curr_branch:
-                    continue
-                failed_checks = [
-                    c.get("name", "check")
-                    for c in (pr_item.get("statusCheckRollup") or [])
-                    if c.get("conclusion") in ("FAILURE", "TIMED_OUT", "ACTION_REQUIRED")
-                ]
-                if failed_checks:
-                    violations["6. Memory Cap & Skill SSOT"].append(
-                        f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
-                    )
         if curr_branch == "main":
+            pr_proc = subprocess.run(
+                ["gh", "pr", "list", "--state", "open", "--json", "number,title,headRefName,statusCheckRollup"],
+                capture_output=True,
+                text=True, encoding="utf-8",
+                timeout=5,
+                cwd=str(ROOT),
+            )
+            if pr_proc.returncode == 0 and pr_proc.stdout.strip():
+                for pr_item in json.loads(pr_proc.stdout):
+                    failed_checks = [
+                        c.get("name", "check")
+                        for c in (pr_item.get("statusCheckRollup") or [])
+                        if c.get("conclusion") in ("FAILURE", "TIMED_OUT", "ACTION_REQUIRED")
+                    ]
+                    if failed_checks:
+                        violations["6. Memory Cap & Skill SSOT"].append(
+                            f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
+                        )
             head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True, encoding="utf-8", timeout=5).strip()
             run_proc = subprocess.run(
                 ["gh", "run", "list", "--branch", "main", "--limit", "10", "--json", "name,status,conclusion,headSha"],

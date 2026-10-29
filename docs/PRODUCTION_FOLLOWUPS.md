@@ -18,7 +18,7 @@ Những việc còn lại sau đợt hardening. Đánh `[x]` khi xong, xoá file
 - [ ] Chạy thử `deploy.yml` lần đầu, xác nhận `alembic upgrade head` và `/health/ready` OK.
 
 ## 3. Cần quyết định
-- [ ] Hai endpoint không ai gọi (trust-benchmark báo 2 vi phạm): `/v1/growth/rewards`, `/v1/growth/expert-mock-slots`.
+- [x] Hai endpoint không ai gọi (trust-benchmark báo 2 vi phạm): `/v1/growth/rewards`, `/v1/growth/expert-mock-slots`.
   Chọn một: nối vào `WalletRewardsCashbackCard` / `ExpertLiveMockBookingCard`, hoặc xoá route + service + test.
 
 ## 4. Dữ liệu chưa thật (cần làm trước khi dùng số liệu để ra quyết định)
