@@ -55,8 +55,8 @@ export interface PitchVideoUploadParams {
 }
 
 /** React Native's FormData accepts `{ uri, name, type }` file descriptors for multipart uploads. */
-function nativeFilePart(uri: string, name: string, type: string): Blob {
-  return { uri, name, type } as unknown as Blob;
+function nativeFilePart(uri: string, name: string, type: string): NativeFilePart {
+  return { uri, name, type };
 }
 
 // ponytail: the recording is sent as a single chunk (total_chunks=1); split into byte ranges if long recordings hit gateway body limits.

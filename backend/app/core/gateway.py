@@ -9,7 +9,6 @@ Redis is retried after a 10s back-off.
 import asyncio
 from collections import OrderedDict
 import hashlib
-import ipaddress
 import json
 import logging
 import re
@@ -17,23 +16,16 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 import uuid
 
-from fastapi import APIRouter, Depends
 import redis.asyncio as aioredis
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.core.cache import platform_cache
 from app.core.config import Settings, get_settings
-from app.core.database import get_db
-from app.core.events import event_stream
+from app.core.gateway_policy import _resolve_rate_tier, resolve_client_ip
 from app.core.logging_setup import request_id_var
 
 logger = logging.getLogger(__name__)
 access_logger = logging.getLogger("belooga.access")
 
-PROD_PUBLIC_RPM = 600
-PROD_MUTATION_RPM = 180
 SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
 CACHEABLE_PUBLIC_PREFIXES = (
@@ -48,9 +40,6 @@ _gateway_stats: Dict[str, int] = {
     "total_requests": 0, "rate_limited_429": 0, "payload_rejected_413": 0,
     "idempotency_replays": 0, "etag_304_hits": 0, "redis_distributed_ops": 0,
 }
-
-router = APIRouter(prefix="/gateway", tags=["API Gateway & Edge Telemetry"])
-
 
 def clear_gateway_l1_state() -> None:
     """Clear process-local L1 rate-limit and idempotency caches (used to test cross-replica Redis state)."""
@@ -83,50 +72,6 @@ async def _get_gateway_redis() -> Optional[aioredis.Redis]:
 def _redis_failed(what: str, exc: Exception) -> None:
     logger.warning("Gateway Redis %s failed, falling back to per-pod state for 10s: %s", what, type(exc).__name__)
     _redis_state["disabled_until"] = time.monotonic() + 10.0
-
-
-def _tier_limits(s: Settings) -> Dict[str, int]:
-    """Configured value wins in every env; unset public/mutation limits are relaxed outside production."""
-    is_prod = s.is_production
-    return {
-        "auth_strict": s.RATE_LIMIT_AUTH_RPM,
-        "chunk_upload": s.RATE_LIMIT_UPLOAD_RPM,
-        "mutation": s.RATE_LIMIT_MUTATION_RPM or (PROD_MUTATION_RPM if is_prod else s.RATE_LIMIT_UPLOAD_RPM),
-        "public_read": s.RATE_LIMIT_PUBLIC_RPM or (PROD_PUBLIC_RPM if is_prod else s.RATE_LIMIT_UPLOAD_RPM),
-    }
-
-
-def _resolve_rate_tier(method: str, path: str, s: Settings) -> Tuple[int, str]:
-    if path.startswith(("/v1/auth/login", "/v1/auth/register", "/v1/auth/forgot-password")):
-        tier = "auth_strict"
-    elif path.startswith(("/v1/media/upload/chunk", "/uploads")) or path == "/health":
-        tier = "chunk_upload"
-    elif method in ("POST", "PUT", "PATCH", "DELETE"):
-        tier = "mutation"
-    else:
-        tier = "public_read"
-    return max(1, _tier_limits(s)[tier]), tier
-
-
-def _is_trusted(ip: str, trusted: List[Any]) -> bool:
-    try:
-        addr = ipaddress.ip_address(ip)
-    except ValueError:
-        return False
-    return any(addr in net for net in trusted)
-
-
-def resolve_client_ip(scope: Scope, trusted: List[Any]) -> str:
-    """ASGI peer, unless the peer is a trusted proxy: then the right-most untrusted X-Forwarded-For hop."""
-    peer = scope["client"][0] if scope.get("client") else "127.0.0.1"
-    if not trusted or not _is_trusted(peer, trusted):
-        return peer
-    xff = ",".join(v.decode("latin1") for k, v in scope.get("headers") or [] if k == b"x-forwarded-for")
-    hops = [h.strip() for h in xff.split(",") if h.strip()]
-    for hop in reversed(hops):
-        if not _is_trusted(hop, trusted):
-            return hop
-    return hops[0] if hops else peer
 
 
 def _consume_token_bucket(bucket_key: str, capacity: int, max_buckets: int = 8192) -> Tuple[bool, int]:
@@ -341,24 +286,3 @@ class APIGatewayMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_wrapper)
-
-
-@router.get("/status")
-async def get_gateway_status(db: AsyncSession = Depends(get_db)):
-    """Inspect Pure-ASGI API Gateway health, distributed Redis state, route tiers, and DB connectivity."""
-    t0 = time.perf_counter()
-    await db.execute(text("SELECT 1"))
-    db_latency_ms = round((time.perf_counter() - t0) * 1000.0, 2)
-    tiers = _tier_limits(get_settings())
-    return {
-        "gateway": "belooga-api-gateway", "architecture": "pure-asgi-token-bucket",
-        "state_backend": "redis-distributed-l1-fallback", "status": "healthy", "rate_limit_rpm": tiers["public_read"],
-        "route_tiers": {f"{name}_rpm": rpm for name, rpm in tiers.items()},
-        "security_headers_enabled": True,
-        "gateway_metrics": {**_gateway_stats, "active_ip_buckets": len(_token_buckets), "idempotency_keys_cached": len(_idempotency_store)},
-        "cache_metrics": platform_cache.get_stats(), "event_stream_metrics": event_stream.get_status(),
-        "upstreams": {
-            "postgres": "connected", "postgres_latency_ms": db_latency_ms,
-            "redis": "connected", "cache": "active", "event_stream": "active", "edge_proxy": "nginx-reverse-proxy",
-        },
-    }

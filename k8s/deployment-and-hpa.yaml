@@ -13,9 +13,9 @@ data:
   UPLOAD_DIR: "/app/uploads"
   GATEWAY_REDIS_ENABLED: "1"
   WEB_CONCURRENCY: "2"
-  # uvicorn --proxy-headers: trust X-Forwarded-* from the ingress controller only.
-  # Narrow to the ingress-nginx pod CIDR for your cluster.
-  FORWARDED_ALLOW_IPS: "*"
+  # The app trusts X-Forwarded-For only from these peers (ingress-nginx pods).
+  # Narrow to your cluster's ingress pod CIDR.
+  TRUSTED_PROXY_IPS: "10.0.0.0/8"
   SMTP_PORT: "587"
   SMTP_FROM: "noreply@belooga.com"
 ---

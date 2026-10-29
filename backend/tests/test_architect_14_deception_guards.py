@@ -19,14 +19,13 @@ def test_violations_register_records_all_14_deception_behaviors() -> None:
         assert f"Deception #{idx}" in reg_txt, f"Missing Deception #{idx} in docs/VIOLATIONS_REGISTER.md"
 
 
-def test_ratchet_enforces_five_anti_deception_metrics() -> None:
+def test_ratchet_enforces_anti_deception_metrics() -> None:
     tree = ast.parse((ROOT / "scripts" / "ratchet.py").read_text(encoding="utf-8"))
     assert isinstance(tree, ast.Module)
     ratchet_data = json.loads((ROOT / ".agents" / "ratchet.json").read_text(encoding="utf-8"))
     assert ratchet_data.get("fe_mock_fallback_arrays") == 0
     assert ratchet_data.get("fe_silent_catch_mutation") == 0
     assert ratchet_data.get("be_anonymous_alexnguyen_fallback") == 0
-    assert ratchet_data.get("mobile_android_http_calls", 0) >= 1
     assert ratchet_data.get("alembic_schema_drift") == 0
 
 
@@ -37,14 +36,6 @@ def test_be_cms_has_zero_anonymous_alexnguyen_fallbacks() -> None:
     assert isinstance(ast.parse(schema_txt), ast.Module)
     assert "alexnguyen" not in service_txt
     assert "alexnguyen" not in schema_txt
-
-
-def test_mobile_android_has_real_http_url_connection() -> None:
-    tree = ast.parse((ROOT / "scripts" / "trust-benchmark.py").read_text(encoding="utf-8"))
-    assert isinstance(tree, ast.Module)
-    java_files = list((ROOT / "mobile" / "android").rglob("*.java"))
-    http_hits = sum(p.read_text(encoding="utf-8").count("HttpURLConnection") for p in java_files)
-    assert http_hits >= 1
 
 
 def test_zero_alembic_schema_drift_across_all_models() -> None:

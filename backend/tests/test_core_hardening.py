@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.core import gateway as gw_mod
+from app.core import gateway_policy as gw_policy
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.main import app, docs_kwargs, unhandled_exception_handler
@@ -60,10 +61,10 @@ async def test_xff_honoured_only_from_trusted_proxy(client, settings):
 def test_resolve_client_ip_rules():
     trusted = Settings(TRUSTED_PROXY_IPS="10.0.0.0/8, 127.0.0.1").trusted_proxies
     scope = lambda peer, xff: {"client": (peer, 1), "headers": [(b"x-forwarded-for", xff.encode())] if xff else []}
-    assert gw_mod.resolve_client_ip(scope("8.8.8.8", "1.1.1.1"), trusted) == "8.8.8.8"      # untrusted peer
-    assert gw_mod.resolve_client_ip(scope("10.0.0.5", "1.1.1.1, 2.2.2.2, 10.0.0.9"), trusted) == "2.2.2.2"
-    assert gw_mod.resolve_client_ip(scope("10.0.0.5", ""), trusted) == "10.0.0.5"
-    assert gw_mod.resolve_client_ip(scope("10.0.0.5", "1.1.1.1"), []) == "10.0.0.5"         # trust none
+    assert gw_policy.resolve_client_ip(scope("8.8.8.8", "1.1.1.1"), trusted) == "8.8.8.8"      # untrusted peer
+    assert gw_policy.resolve_client_ip(scope("10.0.0.5", "1.1.1.1, 2.2.2.2, 10.0.0.9"), trusted) == "2.2.2.2"
+    assert gw_policy.resolve_client_ip(scope("10.0.0.5", ""), trusted) == "10.0.0.5"
+    assert gw_policy.resolve_client_ip(scope("10.0.0.5", "1.1.1.1"), []) == "10.0.0.5"         # trust none
 
 
 @pytest.mark.asyncio

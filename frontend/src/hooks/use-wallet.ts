@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
 
@@ -118,4 +119,23 @@ export function useWallet() {
     releaseEscrow: releaseEscrowMutation.mutateAsync,
     isReleasingEscrow: releaseEscrowMutation.isPending,
   };
+}
+
+/** MoMo redirects back with ?momo_order=<id>; the IPN credits the wallet, so poll the order until it settles. */
+export function useMomoReturnStatus() {
+  const queryClient = useQueryClient();
+  const [orderId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("momo_order")
+  );
+  const { data } = useQuery<{ order_id: string; status: "PENDING" | "PAID" | "FAILED"; amount: number }>({
+    queryKey: ["momo-order-status", orderId],
+    enabled: Boolean(orderId),
+    queryFn: async () => {
+      const order = (await apiClient.get(`/v1/payments/momo/order-status/${orderId}`)).data;
+      if (order.status === "PAID") await queryClient.invalidateQueries({ queryKey: ["user-wallet"] });
+      return order;
+    },
+    refetchInterval: (q) => (q.state.data?.status === "PENDING" ? 3000 : false),
+  });
+  return data;
 }

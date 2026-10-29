@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Wallet, ShieldCheck, ArrowUpRight, ArrowDownLeft, PlusCircle, CheckCircle2, Lock, Sparkles } from "lucide-react";
 import { apiClient } from "@/services/api-client";
-import { useWallet, formatVnd, WalletTxType, UserWalletStateDTO } from "@/hooks/use-wallet";
+import { useWallet, useMomoReturnStatus, formatVnd, WalletTxType, UserWalletStateDTO } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -24,21 +24,7 @@ export default function UserWalletPage() {
   const liveEscrowVnd = balanceSummary?.escrow_locked_vnd ?? escrowLockedVnd;
   const [selectedAmount, setSelectedAmount] = useState<number>(500000);
   const [txFilter, setTxFilter] = useState<"ALL" | WalletTxType>("ALL");
-  const queryClient = useQueryClient();
-  // MoMo redirects back with ?momo_order=<id>; the balance is credited by MoMo's IPN, so poll until it settles.
-  const [returnedOrderId] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("momo_order")
-  );
-  const { data: returnedOrder } = useQuery<{ order_id: string; status: "PENDING" | "PAID" | "FAILED"; amount: number }>({
-    queryKey: ["momo-order-status", returnedOrderId],
-    enabled: Boolean(returnedOrderId),
-    queryFn: async () => {
-      const order = (await apiClient.get(`/v1/payments/momo/order-status/${returnedOrderId}`)).data;
-      if (order.status === "PAID") await queryClient.invalidateQueries({ queryKey: ["user-wallet"] });
-      return order;
-    },
-    refetchInterval: (q) => (q.state.data?.status === "PENDING" ? 3000 : false),
-  });
+  const returnedOrder = useMomoReturnStatus();
   const receiptMsg =
     returnedOrder?.status === "PAID"
       ? `MoMo đã xác nhận: +${formatVnd(returnedOrder.amount)} vào Số dư khả dụng.`

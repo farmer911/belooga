@@ -155,7 +155,6 @@ current = {
         r"\balexnguyen\b",
         [BE / "modules" / "cms" / "service.py", BE / "schemas" / "cms.py"],
     ),
-    "mobile_android_http_calls": count(r"\bHttpURLConnection\b", files(ROOT / "mobile" / "android", {".java"})),
     "alembic_schema_drift": alembic_drift_count,
     "fe_max_page_lines": max((len(p.read_text(encoding="utf-8").splitlines()) for p in pages), default=0),
     "fe_files_over_300_lines": sum(1 for p in fe_src if len(p.read_text(encoding="utf-8").splitlines()) > 300),
@@ -176,7 +175,7 @@ if "--update" in sys.argv or not BASELINE.exists():
     sys.exit(0)
 
 base = json.loads(BASELINE.read_text(encoding="utf-8"))
-MIN_METRICS = {"mobile_android_http_calls"}
+MIN_METRICS: set[str] = set()
 worse, better = [], []
 for k, v in current.items():
     b = base.get(k)

@@ -39,7 +39,7 @@ services:
     # DEV ONLY: hot reload over the bind mount below. The image's default CMD is the
     # production server (no --reload, non-root); root here only so the bind-mounted
     # ./backend/uploads is writable regardless of the host uid.
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--proxy-headers"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--no-access-log"]
     user: "0:0"
     environment:
       ENVIRONMENT: development
@@ -47,7 +47,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       # Read from .env; the fallback is a well-known DEV-ONLY value, never use it in production.
       JWT_SECRET: ${JWT_SECRET:-dev_only_insecure_jwt_secret_do_not_use_in_prod}
-      FORWARDED_ALLOW_IPS: "*"
+      # nginx gateway container on the compose bridge network (Docker default address pools)
+      TRUSTED_PROXY_IPS: "172.16.0.0/12,192.168.0.0/16"
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 15
       REFRESH_TOKEN_EXPIRE_DAYS: 30

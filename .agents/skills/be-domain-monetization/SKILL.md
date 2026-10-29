@@ -47,13 +47,13 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/analytics/expert` | `get_expert_analytics` | public |
 | `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | public |
 | `GET` | `/v1/analytics/bi-export` | `export_bi_star_schema` | public |
-| `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | public |
+| `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | required |
 | `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | public |
-| `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | public |
-| `GET` | `/v1/wallet/` | `get_user_wallet_state` | optional |
-| `GET` | `/v1/wallet/balance` | `get_user_wallet_balance` | optional |
-| `POST` | `/v1/wallet/topup` | `topup_user_wallet` | optional |
-| `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | optional |
+| `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | required |
+| `GET` | `/v1/wallet/` | `get_user_wallet_state` | required |
+| `GET` | `/v1/wallet/balance` | `get_user_wallet_balance` | required |
+| `POST` | `/v1/wallet/topup` | `topup_user_wallet` | required |
+| `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | required |
 
 - Router: `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/api/v1/endpoints/ats_matching.py`, `backend/app/api/v1/endpoints/job_tracker.py`, `backend/app/api/v1/endpoints/analytics.py`, `backend/app/api/v1/endpoints/payments.py`
 - Service: `backend/app/modules/analytics/service.py`, `backend/app/modules/ats_matching/service.py`, `backend/app/modules/expert_review/service.py`, `backend/app/modules/job_tracker/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/payments/service.py`

@@ -165,20 +165,7 @@ export function ReviewBookingDialog({
           <div className="py-8 text-center space-y-4">
             <p className="text-sm text-typography-heading">Please login or create a candidate account to order an expert CV review.</p>
             <div className="flex justify-center gap-3">
-              <Link
-                href="/login"
-                onClick={(e) => {
-                  if (typeof window !== "undefined" && "sessionStorage" in window) {
-                    try {
-                      window.sessionStorage.setItem("belooga_return_to", "/expert-review");
-                    } catch (err: unknown) {
-                      e.preventDefault();
-                      setErrorMsg(getApiErrorDetail(err, "Trình duyệt chặn sessionStorage; chuyển hướng qua URL return_to."));
-                      window.location.assign("/login?return_to=%2Fexpert-review");
-                    }
-                  }
-                }}
-              >
+              <Link href="/login?next=%2Fexpert-review">
                 <Button variant="outline" className="border-brand-primary text-brand-primary">Login to Continue</Button>
               </Link>
               <Link href="/register"><Button className="bg-brand-primary text-white">Register</Button></Link>

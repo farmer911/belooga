@@ -34,7 +34,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
     CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2).status == 200 else 1)"]
 
-# uvicorn reads WEB_CONCURRENCY for --workers. --proxy-headers trusts X-Forwarded-*
-# only from FORWARDED_ALLOW_IPS (uvicorn env; default 127.0.0.1) - set it to the
-# ingress/gateway CIDR in k8s/compose.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+# uvicorn reads WEB_CONCURRENCY for --workers. Client IPs come from the app gateway, which
+# trusts X-Forwarded-For only from TRUSTED_PROXY_IPS; uvicorn's own --proxy-headers stays off so
+# there is a single trust decision. The app writes its own access log.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

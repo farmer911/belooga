@@ -50,13 +50,10 @@ export interface MobileRequestOptions {
 let inflightRefreshPromise: Promise<string | null> | null = null;
 
 async function parseErrorDetail(response: Response): Promise<string> {
-  try {
-    const payload = (await response.json()) as { detail?: unknown; message?: unknown };
-    if (typeof payload.detail === "string" && payload.detail) return payload.detail;
-    if (typeof payload.message === "string" && payload.message) return payload.message;
-  } catch {
-    // Non-JSON error body: fall through to the status line.
-  }
+  // Non-JSON error bodies resolve to null and fall through to the status line.
+  const payload = (await response.json().catch(() => null)) as { detail?: unknown; message?: unknown } | null;
+  if (typeof payload?.detail === "string" && payload.detail) return payload.detail;
+  if (typeof payload?.message === "string" && payload.message) return payload.message;
   return `HTTP ${response.status}`;
 }
 

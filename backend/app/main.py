@@ -20,7 +20,8 @@ logger = logging.getLogger("belooga")
 from app.core.cache import platform_cache
 from app.core.database import get_db
 from app.core.events import event_stream, router as events_router
-from app.core.gateway import APIGatewayMiddleware, router as gateway_router
+from app.core.gateway import APIGatewayMiddleware
+from app.core.gateway_status import router as gateway_router
 from app.core.rpc import router as rpc_router
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.profile import router as profile_router

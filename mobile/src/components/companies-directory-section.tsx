@@ -26,7 +26,7 @@ function CompanyReviewForm({ slug }: { slug: string }) {
     <Sheet testID="company-review-drawer" title="Write a Verified Review">
       <Row>
         {[1, 2, 3, 4, 5].map((n) => (
-          <Button key={n} testID={`company-review-rating-${n}`} label={`${n}★`} variant={rating === n ? "primary" : "inset"} onPress={() => setRating(n)} />
+          <Button key={n} testID={`company-review-rating-${n}`} label={`${n}/5`} variant={rating === n ? "primary" : "inset"} onPress={() => setRating(n)} />
         ))}
       </Row>
       <Field testID="company-review-title-input" value={title} onChangeText={setTitle} placeholder="Review headline..." />
@@ -126,7 +126,7 @@ export function CompaniesDirectorySection() {
             ? profile.reviews.map((r) => (
                 <Well key={r.id}>
                   <Body>
-                    {"★".repeat(r.rating)} {r.title} — @{r.author_username}
+                    {r.rating}/5 · {r.title} — @{r.author_username}
                   </Body>
                   <Body>{r.content}</Body>
                 </Well>

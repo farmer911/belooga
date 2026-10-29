@@ -29,7 +29,7 @@ async def create_momo_payment_qr(
     return await PaymentService.create_payment(db, current_user.id, payload)
 
 
-@router.post("/payments/momo/ipn", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/payments/momo/ipn", response_model=None, status_code=status.HTTP_204_NO_CONTENT)
 async def momo_ipn_webhook(payload: MomoIpnRequest, db: AsyncSession = Depends(get_db)):
     """MoMo IPN receiver: HMAC-SHA256 verified, idempotent; the only path that marks orders PAID."""
     await PaymentService.handle_ipn(db, payload)
