@@ -39,11 +39,12 @@ async def test_get_executive_analytics_dashboard(client: AsyncClient, test_admin
     assert funnel[0]["stage"].startswith("1. Khách truy cập")
     assert funnel[0]["conversion_rate"] == 100.0
 
-    # 4. Assert Recent Transactions
+    # 4. Recent transactions come only from real orders (none invented when the platform is empty);
+    #    test_expert_feedback_submission_and_analytics_db_revenue covers a populated table.
     assert "recent_transactions" in data
     txns = data["recent_transactions"]
-    assert len(txns) > 0
-    assert txns[0]["payment_method"] == "MoMo QR"
+    assert isinstance(txns, list)
+    assert all(t["id"].startswith("ORD-") and t["payment_method"] == "MoMo QR" for t in txns)
 
 
 @pytest.mark.asyncio

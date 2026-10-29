@@ -1,11 +1,11 @@
 ---
 name: belooga-frontend-engineering
-description: Technical architecture and engineering guide for Belooga Frontend (Next.js 16.3.8, React 19, App Router, Tailwind CSS v4, Bun, Zustand). Use when modifying frontend layouts, shared UI primitives, styling tokens, custom hooks, or client state. Not for backend endpoints (belooga-backend-engineering) or writing tests (tdd-workflow).
+description: Technical architecture and engineering guide for Belooga Frontend (Next.js 16.4.3, React 19, App Router, Tailwind CSS v4, Bun, Zustand). Use when modifying frontend layouts, shared UI primitives, styling tokens, custom hooks, or client state. Not for backend endpoints (belooga-backend-engineering) or writing tests (tdd-workflow).
 ---
 
 # Belooga Frontend Engineering, PWA Service Worker & SEO Architecture
 
-> **Architecture:** Next.js 16.3.8 (App Router), React 19, Tailwind CSS v4, `@tanstack/react-query`, `react-hook-form` + `zod`, Zustand, Production Service Worker (`public/sw.js`), and Bun runtime.
+> **Architecture:** Next.js 16.4.3 (App Router), React 19, Tailwind CSS v4, `@tanstack/react-query`, `react-hook-form` + `zod`, Zustand, Production Service Worker (`public/sw.js`), and Bun runtime.
 
 ---
 

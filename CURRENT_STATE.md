@@ -324,7 +324,7 @@ pytest-asyncio>=1.4.0
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.51.0",
-    "next": "16.3.8",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.90.0",
@@ -342,7 +342,7 @@ pytest-asyncio>=1.4.0
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
