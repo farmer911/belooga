@@ -116,38 +116,21 @@ class ATSMatchingRepository:
         total_matched = int(rows[0]["total_window_count"]) if rows else 0
         return rows, total_matched
 
-    async def list_scan_history(
-        self, candidate_identity_id: Optional[uuid.UUID] = None, limit: int = 20
-    ) -> List[Dict[str, Any]]:
-        where_sql = "WHERE m.candidate_identity_id = :cid" if candidate_identity_id else "WHERE m.candidate_identity_id IS NULL"
-        query = text(f"""
-            SELECT m.id, m.id AS match_id, jd.job_title, jd.company_name,
-                   m.ats_score, m.matched_skills, m.missing_skills, m.created_at
-            FROM resume_jd_matches m
-            JOIN job_descriptions jd ON jd.id = m.job_description_id
-            {where_sql}
-            ORDER BY m.created_at DESC
-            LIMIT :lim
-        """)
-        params: Dict[str, Any] = {"lim": limit}
-        if candidate_identity_id:
-            params["cid"] = candidate_identity_id
-        res = await self.db.execute(query, params)
-        rows = [dict(r._mapping) for r in res.fetchall()]
-        if not rows and candidate_identity_id is None:
-            res2 = await self.db.execute(
-                text("""
-                    SELECT m.id, m.id AS match_id, jd.job_title, jd.company_name,
-                           m.ats_score, m.matched_skills, m.missing_skills, m.created_at
-                    FROM resume_jd_matches m
-                    JOIN job_descriptions jd ON jd.id = m.job_description_id
-                    ORDER BY m.created_at DESC
-                    LIMIT :lim
-                """),
-                {"lim": limit},
-            )
-            rows = [dict(r._mapping) for r in res2.fetchall()]
-        return rows
+    async def list_scan_history(self, candidate_identity_id: uuid.UUID, limit: int = 20) -> List[Dict[str, Any]]:
+        """Only the caller's own scans (anonymous scans are never listed)."""
+        res = await self.db.execute(
+            text("""
+                SELECT m.id, m.id AS match_id, jd.job_title, jd.company_name,
+                       m.ats_score, m.matched_skills, m.missing_skills, m.created_at
+                FROM resume_jd_matches m
+                JOIN job_descriptions jd ON jd.id = m.job_description_id
+                WHERE m.candidate_identity_id = :cid
+                ORDER BY m.created_at DESC
+                LIMIT :lim
+            """),
+            {"cid": candidate_identity_id, "lim": limit},
+        )
+        return [dict(r._mapping) for r in res.fetchall()]
 
     async def get_market_pulse_stats(self) -> Dict[str, Any]:
         query = text("""

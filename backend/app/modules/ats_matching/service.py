@@ -139,7 +139,7 @@ class ATSMatchingService:
         )
         return ATSTailorResponse(tailored_cv_text=tailored_cv_text, scan_result=scan_result)
 
-    async def list_scan_history(self, candidate_identity_id: Optional[uuid.UUID] = None) -> List[ATSScanHistoryItem]:
+    async def list_scan_history(self, candidate_identity_id: uuid.UUID) -> List[ATSScanHistoryItem]:
         return [ATSScanHistoryItem(**r) for r in await self.repo.list_scan_history(candidate_identity_id=candidate_identity_id, limit=20)]
 
     async def generate_talent_shortlist(self, request: TalentShortlistRequest) -> TalentShortlistResponse:

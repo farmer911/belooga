@@ -5,7 +5,8 @@ salary benchmarking, and career upskill ROI calculation.
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
@@ -167,9 +168,10 @@ class CatalogsService:
         }
 
     async def crawl_salary_benchmark(
-        self, role: str = "backend", tech_stack: str = "Golang", level: str = "Senior", location: str = "Ho Chi Minh"
+        self, role: str = "backend", tech_stack: str = "Golang", level: str = "Senior", location: str = "Ho Chi Minh",
+        triggered_by: Optional[uuid.UUID] = None,
     ) -> Dict[str, Any]:
-        await self.catalogs_repo.record_salary_crawl_run()
+        await self.catalogs_repo.record_salary_crawl_run(triggered_by)
         await platform_cache.invalidate_prefix("catalog:")
         return await self.get_salary_benchmark(role, tech_stack, level, location, year="all")
 

@@ -1,5 +1,6 @@
 """Service Layer for Domain 11: Candidate Job Applications Tracker (Kanban) (Vertical Module: job_tracker)."""
 
+from datetime import datetime, timezone
 import uuid
 from typing import Any, Dict, List, Optional
 from fastapi import HTTPException, status
@@ -39,7 +40,7 @@ class JobTrackerService:
 
     async def list_tracked_jobs(
         self,
-        candidate_identity_id: Optional[uuid.UUID] = None,
+        candidate_identity_id: uuid.UUID,
         q: Optional[str] = None,
         status_filter: Optional[str] = None,
         min_score: int = 0,
@@ -90,18 +91,34 @@ class JobTrackerService:
             pool = [j for j in pool if ll in j["location"].lower()]
         return [MarketJobItemDTO(**j) for j in pool]
 
-    async def get_career_goal(self, candidate_identity_id: Optional[uuid.UUID] = None) -> CareerGoalResponse:
-        data = await self.repo.get_career_goal(candidate_identity_id)
-        return CareerGoalResponse(**data)
+    @staticmethod
+    def _goal_dto(candidate_identity_id: uuid.UUID, row: Dict[str, Any]) -> CareerGoalResponse:
+        updated = row.get("updated_at")
+        return CareerGoalResponse(
+            id=f"goal-{str(candidate_identity_id)[:8]}",
+            target_role=row["target_role"],
+            target_salary=row["target_salary"],
+            preferred_skills=row["preferred_skills"],
+            location=row["location"],
+            updated_at=updated.isoformat() if hasattr(updated, "isoformat") else str(updated or ""),
+        )
+
+    async def get_career_goal(self, candidate_identity_id: uuid.UUID) -> CareerGoalResponse:
+        row = await self.repo.get_career_goal(candidate_identity_id)
+        if not row:
+            # Unsaved goal: defaults from the request schema, nothing persisted.
+            defaults = CareerGoalUpsertRequest(target_role="Senior Backend Engineer").model_dump()
+            row = {**defaults, "updated_at": datetime.now(timezone.utc)}
+        return self._goal_dto(candidate_identity_id, row)
 
     async def save_career_goal(
-        self, request: CareerGoalUpsertRequest, candidate_identity_id: Optional[uuid.UUID] = None
+        self, request: CareerGoalUpsertRequest, candidate_identity_id: uuid.UUID
     ) -> CareerGoalResponse:
-        saved = await self.repo.upsert_career_goal(request.model_dump(), candidate_identity_id)
-        return CareerGoalResponse(**saved)
+        saved = await self.repo.upsert_career_goal(candidate_identity_id, request.model_dump())
+        return self._goal_dto(candidate_identity_id, saved)
 
     async def ai_match_goal_jobs(
-        self, goal_id: str, request: AiJobMatchRequest, candidate_identity_id: Optional[uuid.UUID] = None
+        self, goal_id: str, request: AiJobMatchRequest, candidate_identity_id: uuid.UUID
     ) -> AiJobMatchResponse:
         fee_vnd = 19000
         await PaymentService.pay_with_wallet(
@@ -122,6 +139,7 @@ class JobTrackerService:
                 notes=f"AI Job Radar khớp tự động theo kỹ năng: {skills_str}",
             ),
             candidate_identity_id=candidate_identity_id,
+            commit=False,
         )
         j2 = await self.add_tracked_job(
             TrackedJobCreateRequest(
@@ -130,10 +148,12 @@ class JobTrackerService:
                 notes="AI Job Radar đề xuất ưu tiên phỏng vấn",
             ),
             candidate_identity_id=candidate_identity_id,
+            commit=False,
         )
+        await self.db.commit()  # both matched cards land together
         return AiJobMatchResponse(goal_id=goal_id, fee_charged_vnd=fee_vnd, matched_count=2, matched_jobs=[j1, j2])
 
-    async def get_pipeline_analytics(self, candidate_identity_id: Optional[uuid.UUID] = None) -> JobPipelineAnalyticsResponse:
+    async def get_pipeline_analytics(self, candidate_identity_id: uuid.UUID) -> JobPipelineAnalyticsResponse:
         cache_key = f"tracker_analytics:{candidate_identity_id or 'anon'}"
 
         async def _compute() -> dict:
@@ -161,7 +181,9 @@ class JobTrackerService:
         cached = await platform_cache.get_or_set(cache_key, ttl_seconds=15, loader=_compute)
         return JobPipelineAnalyticsResponse(**cached)
 
-    async def add_tracked_job(self, request: TrackedJobCreateRequest, candidate_identity_id: Optional[uuid.UUID] = None) -> TrackedJobResponse:
+    async def add_tracked_job(
+        self, request: TrackedJobCreateRequest, candidate_identity_id: uuid.UUID, commit: bool = True
+    ) -> TrackedJobResponse:
         status_val = request.status.upper()
         if status_val not in VALID_STATUSES:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid status '{request.status}'. Allowed: {', '.join(VALID_STATUSES)}")
@@ -169,6 +191,7 @@ class JobTrackerService:
             company_name=request.company_name, position_title=request.position_title, status=status_val,
             expected_salary=request.expected_salary, match_score=request.match_score,
             interview_date=request.interview_date, notes=request.notes, candidate_identity_id=candidate_identity_id,
+            commit=commit,
         )
         await platform_cache.invalidate_prefix("tracker_analytics:")
         await platform_cache.invalidate_prefix("analytics:")

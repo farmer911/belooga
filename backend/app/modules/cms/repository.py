@@ -1,6 +1,5 @@
 """Public CMS, community social feed, and moderation repository (Vertical Module: cms)."""
 
-import json
 from typing import Any, Dict, List, Optional
 import uuid
 
@@ -10,77 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.cms import CareerApplication, CareerPosting, ContactInquiry, ProfileReport
 from app.models.job_tracker import CandidateJobApplicationTracker
 from app.models.profile import CandidateProfile
-
-DEFAULT_BLOG_POSTS: List[Dict[str, Any]] = [
-    {
-        "id": "editorial-1", "slug": "how-to-master-the-30-second-pitch",
-        "title": "How to Master Your 30-Second Video Elevator Pitch",
-        "excerpt": "Proven techniques to articulate your career highlights, project confidence, and hook recruiters in half a minute.",
-        "date": "October 2026", "image": "/images/blog/blog-1.jpg", "author": "Ava Morgan",
-        "author_username": "avamorgan", "author_headline": "Head of Talent Coaching @ Belooga Editorial",
-        "post_type": "EDITORIAL", "category": "Video Pitch Mastery", "tags": ["VideoPitch", "CareerGrowth", "InterviewPrep"],
-        "read_time_minutes": 4, "likes_count": 42, "comments_count": 1, "liked_by": [],
-        "comments": [{"id": "c-1", "author_name": "Alex Nguyen", "author_username": "alexnguyen", "content": "Kịch bản 60s Teleprompter trong ATS Studio giúp mình quay 1 lần ăn ngay!", "created_at": "2 giờ trước"}],
-        "content": [
-            "In today's fast-paced recruitment landscape, hiring managers spend an average of less than six seconds glancing at an incoming PDF resume before deciding whether to advance a candidate or pass.",
-            "A high-impact 30-second elevator pitch breaks through automated applicant tracking systems (ATS) by instantly establishing human presence, communication clarity, and genuine enthusiasm for the role.",
-        ],
-        "key_takeaways": ["Hook (0-5s): State your name, primary craft, and core value proposition.", "Proof (5-20s): Share a tangible milestone or quantifiable impact.", "Direction (20-30s): Clarify the mission you want to join next."],
-    },
-    {
-        "id": "status-1", "slug": "alex-nguyen-ats-94-golang-milestone",
-        "title": "Vừa tối ưu CV chuẩn STAR đạt 94/100 điểm ATS cho vị trí Senior Golang @ VNG!",
-        "excerpt": "Sau khi dùng tính năng Nạp CV Hồ Sơ và 1-Click STAR Tailor trên Belooga, điểm khớp từ khóa PostgreSQL GIN & Distributed Systems của mình tăng từ 68 lên 94/100.",
-        "date": "Hôm nay", "image": "/images/blog/blog-1.jpg", "author": "Alex Nguyen",
-        "author_username": "alexnguyen", "author_headline": "Senior Distributed Systems Engineer",
-        "post_type": "USER_STATUS", "category": "Community Feed", "tags": ["Golang", "PostgreSQL", "ATSScore", "SystemDesign"],
-        "ats_score_badge": 94, "read_time_minutes": 2, "likes_count": 29, "comments_count": 1, "liked_by": [],
-        "comments": [{"id": "c-2", "author_name": "Minh Tran", "author_username": "minhtran", "content": "Chúc mừng bác! Điểm STAR Impact 24/25 quá đỉnh.", "created_at": "1 giờ trước"}],
-        "content": ["Sau khi dùng tính năng Nạp CV Hồ Sơ và 1-Click STAR Tailor trên Belooga, điểm khớp từ khóa PostgreSQL GIN & Distributed Systems của mình tăng từ 68 lên 94/100."],
-        "key_takeaways": [],
-    },
-    {
-        "id": "editorial-2", "slug": "why-video-resumes-are-the-future",
-        "title": "Why Video Resumes Outperform Static PDFs by 3x",
-        "excerpt": "Data from 250+ tech companies reveals how personalized video introductions lead to higher interview conversion rates.",
-        "date": "September 2026", "image": "/images/blog/blog-1.jpg", "author": "Jeremy Tran",
-        "author_username": "jeremytran", "author_headline": "Principal Talent Researcher",
-        "post_type": "EDITORIAL", "category": "Hiring Data", "tags": ["HiringData", "VideoResume", "ATS"],
-        "read_time_minutes": 5, "likes_count": 37, "comments_count": 0, "liked_by": [], "comments": [],
-        "content": [
-            "Empirical cohort data across 250+ engineering teams shows candidates with a verified 30-second video pitch receive 3.1x more direct recruiter outreach than text-only resumes.",
-            "Combining structured STAR metrics with a concise video introduction eliminates early screening friction and accelerates technical interview invitations.",
-        ],
-        "key_takeaways": ["3.1x higher shortlist conversion rate compared to static PDF-only profiles.", "Async video screening saves engineering managers up to 4.5 hours per hire."],
-    },
-    {
-        "id": "status-2", "slug": "sarah-le-hiring-fullstack-nextjs-fastapi",
-        "title": "Team Fintech đang tìm gấp 2 Senior Full-Stack (Next.js 16 + FastAPI) — Ưu tiên ứng viên có Video Pitch!",
-        "excerpt": "Mình vừa lọc trên Recruiter Talent Shortlist thấy nhiều hồ sơ rất chất. Bạn nào có sẵn Video Pitch 30s và điểm ATS > 85 gửi link hồ sơ Belooga dưới comment nhé!",
-        "date": "3 giờ trước", "image": "/images/blog/blog-1.jpg", "author": "Sarah Le",
-        "author_username": "sarahle", "author_headline": "Tech Talent Acquisition Lead @ FinCloud",
-        "post_type": "USER_STATUS", "category": "Community Feed", "tags": ["Hiring", "NextJS", "FastAPI", "RemoteVN"],
-        "ats_score_badge": None, "read_time_minutes": 2, "likes_count": 51, "comments_count": 1, "liked_by": [],
-        "comments": [{"id": "c-3", "author_name": "Hoang Pham", "author_username": "hoangpham", "content": "Mình vừa gửi link hồ sơ /public/alexnguyen kèm Video Pitch nhé chị!", "created_at": "45 phút trước"}],
-        "content": ["Mình vừa lọc trên Recruiter Talent Shortlist thấy nhiều hồ sơ rất chất. Bạn nào có sẵn Video Pitch 30s và điểm ATS > 85 gửi link hồ sơ Belooga dưới comment nhé!"],
-        "key_takeaways": [],
-    },
-    {
-        "id": "editorial-3", "slug": "optimizing-candidate-experience",
-        "title": "Reinventing the Modern Candidate Discovery Experience",
-        "excerpt": "Behind the scenes of Belooga's design system and architectural evolution to Next.js 16.3.8, PostgreSQL 16 GIN, and FastAPI.",
-        "date": "September 2026", "image": "/images/blog/blog-1.jpg", "author": "Engineering Team",
-        "author_username": "belooga_eng", "author_headline": "Core Platform Engineering",
-        "post_type": "EDITORIAL", "category": "Platform Engineering", "tags": ["PostgreSQL", "FastAPI", "NextJS16"],
-        "read_time_minutes": 6, "likes_count": 64, "comments_count": 0, "liked_by": [], "comments": [],
-        "content": [
-            "Belooga's talent discovery engine combines PostgreSQL 16 GIN TSVECTOR full-text indexing with pg_trgm trigram similarity for sub-15ms candidate search.",
-            "Every candidate workspace integrates WebRTC teleprompter recording, real-time ATS diagnostics, and verified career timelines into a single cohesive platform.",
-        ],
-        "key_takeaways": ["Sub-15ms full-text & trigram search powered by PostgreSQL 16 GIN indexes.", "Browser-native WebRTC studio with voice-activated teleprompter scrolling."],
-    },
-]
-
 
 class CmsRepository:
     """Repository handling database operations for public CMS content, community feed, and trust reports."""
@@ -94,78 +22,101 @@ class CmsRepository:
         await self.db.flush()
         return inquiry_id
 
+    @staticmethod
+    def _career_dict(r: Any) -> Dict[str, Any]:
+        skills = list(r["skills"] or [])
+        return {
+            "id": str(r["id"]),
+            "title": r["title"],
+            "company_name": r["company_name"] or "Belooga",
+            "company_logo_url": r["company_logo_url"],
+            "company_website": r["company_website"],
+            "department": r["department"],
+            "location": r["location"],
+            "salary_range": r["salary_range"] or "Negotiable",
+            "skills": skills,
+            "skills_required": skills,
+            "is_partner": bool(r["is_partner"]),
+            "is_system_role": bool(r["is_system_role"]),
+            "posted_by_identity_id": str(r["posted_by_identity_id"]) if r["posted_by_identity_id"] else None,
+            "description": r["description"],
+            "is_active": True,
+        }
+
     async def list_active_career_jobs(self) -> List[Dict[str, Any]]:
         res = await self.db.execute(
-            text("SELECT id, title, department, location, description FROM career_postings WHERE is_active = TRUE ORDER BY created_at DESC")
+            text("""
+                SELECT p.id, p.title, p.department, p.location, p.description,
+                       m.company_name, m.company_logo_url, m.company_website, m.salary_range,
+                       COALESCE(m.skills, '{}') AS skills, COALESCE(m.is_partner, FALSE) AS is_partner,
+                       COALESCE(m.is_system_role, TRUE) AS is_system_role, m.posted_by_identity_id
+                FROM career_postings p
+                LEFT JOIN career_posting_meta m ON m.career_posting_id = p.id
+                WHERE p.is_active = TRUE
+                ORDER BY p.created_at DESC
+            """)
         )
-        rows = res.fetchall()
-        meta_res = await self.db.execute(text("SELECT name, message FROM contact_inquiries WHERE name LIKE 'CAREER_META:%'"))
-        meta_map: Dict[str, Dict[str, Any]] = {}
-        for m in meta_res.mappings().all():
-            if m["message"]:
-                meta_map[str(m["name"]).replace("CAREER_META:", "")] = json.loads(m["message"])
-        out: List[Dict[str, Any]] = []
-        for r in rows:
-            jid = str(r.id)
-            meta = meta_map.get(jid, {})
-            skills = meta.get("skills") or ["FastAPI", "Next.js", "PostgreSQL", "TypeScript"]
-            out.append({
-                "id": jid,
-                "title": r.title,
+        return [self._career_dict(r) for r in res.mappings().all()]
+
+    async def _insert_career_posting(
+        self, title: str, department: str, location: str, description: str, meta: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        res = await self.db.execute(
+            text("""
+                WITH p AS (
+                    INSERT INTO career_postings (title, department, location, description, is_active)
+                    VALUES (:title, :department, :location, :description, TRUE)
+                    RETURNING id, title, department, location, description
+                ), m AS (
+                    INSERT INTO career_posting_meta (career_posting_id, company_name, company_logo_url, company_website,
+                        salary_range, skills, is_partner, is_system_role, posted_by_identity_id)
+                    SELECT p.id, CAST(:company_name AS varchar), CAST(:company_logo_url AS text), CAST(:company_website AS text),
+                        CAST(:salary_range AS varchar), CAST(:skills AS text[]), CAST(:is_partner AS boolean),
+                        CAST(:is_system_role AS boolean), CAST(:posted_by_identity_id AS uuid)
+                    FROM p
+                    RETURNING *
+                )
+                SELECT p.*, m.company_name, m.company_logo_url, m.company_website, m.salary_range, m.skills,
+                       m.is_partner, m.is_system_role, m.posted_by_identity_id
+                FROM p JOIN m ON m.career_posting_id = p.id
+            """),
+            {
+                "title": title, "department": department, "location": location, "description": description,
                 "company_name": meta.get("company_name") or "Belooga",
                 "company_logo_url": meta.get("company_logo_url"),
                 "company_website": meta.get("company_website"),
-                "department": r.department,
-                "location": r.location,
-                "salary_range": meta.get("salary_range") or "$4,500 - $6,500 / month",
-                "skills": skills,
-                "skills_required": skills,
+                "salary_range": meta.get("salary_range") or "Negotiable",
+                "skills": list(meta.get("skills") or []),
                 "is_partner": bool(meta.get("is_partner", False)),
-                "is_system_role": bool(meta.get("is_system_role", True)),
+                "is_system_role": bool(meta.get("is_system_role", False)),
                 "posted_by_identity_id": meta.get("posted_by_identity_id"),
-                "description": r.description,
-                "is_active": True,
-            })
-        return out
+            },
+        )
+        return self._career_dict(res.mappings().one())
 
     async def seed_default_career_postings(self, defaults: List[Dict[str, Any]]) -> None:
         existing_titles = {j["title"].strip().lower() for j in await self.list_active_career_jobs()}
         for item in defaults:
             if item["title"].strip().lower() in existing_titles:
                 continue
-            jid = uuid.uuid4()
-            self.db.add(CareerPosting(id=jid, title=item["title"], department=item["department"], location=item["location"], description=item["description"], is_active=True))
-            meta_json = json.dumps({
-                "company_name": item.get("company_name", "Belooga"),
-                "salary_range": item.get("salary_range", "$4,500 - $6,500 / month"),
-                "skills": item.get("skills", ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"]),
-                "is_partner": bool(item.get("is_partner", False)),
-                "is_system_role": not bool(item.get("is_partner", False)),
-            }, ensure_ascii=False)
-            self.db.add(ContactInquiry(id=uuid.uuid4(), name=f"CAREER_META:{jid}", email="careers@belooga.internal", message=meta_json))
-        await self.db.flush()
+            await self._insert_career_posting(
+                item["title"], item["department"], item["location"], item["description"],
+                {
+                    "company_name": item.get("company_name", "Belooga"),
+                    "salary_range": item.get("salary_range", "$4,500 - $6,500 / month"),
+                    "skills": item.get("skills", ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"]),
+                    "is_partner": bool(item.get("is_partner", False)),
+                    "is_system_role": not bool(item.get("is_partner", False)),
+                },
+            )
 
     async def create_career_posting(self, title: str, department: str, location: str, description: str, meta: Dict[str, Any]) -> Dict[str, Any]:
-        existing = await self.list_active_career_jobs()
         comp_norm = (meta.get("company_name") or "Belooga").strip().lower()
         title_norm = title.strip().lower()
-        for item in existing:
+        for item in await self.list_active_career_jobs():
             if item["title"].strip().lower() == title_norm and (item.get("company_name") or "Belooga").strip().lower() == comp_norm:
                 return item
-        jid = uuid.uuid4()
-        self.db.add(CareerPosting(id=jid, title=title, department=department, location=location, description=description, is_active=True))
-        meta_json = json.dumps(meta, ensure_ascii=False)
-        self.db.add(ContactInquiry(id=uuid.uuid4(), name=f"CAREER_META:{jid}", email="careers@belooga.internal", message=meta_json))
-        await self.db.flush()
-        skills = meta.get("skills") or []
-        return {
-            "id": str(jid), "title": title, "company_name": meta.get("company_name") or "Belooga",
-            "company_logo_url": meta.get("company_logo_url"), "company_website": meta.get("company_website"),
-            "department": department, "location": location, "salary_range": meta.get("salary_range") or "Negotiable",
-            "skills": skills, "skills_required": skills, "is_partner": bool(meta.get("is_partner", True)),
-            "is_system_role": bool(meta.get("is_system_role", False)), "posted_by_identity_id": meta.get("posted_by_identity_id"),
-            "description": description, "is_active": True,
-        }
+        return await self._insert_career_posting(title, department, location, description, meta)
 
     async def sync_career_application_to_tracker(
         self, candidate_identity_id: Optional[uuid.UUID], company_name: str, position_title: str, salary_range: str, location: str
@@ -222,54 +173,146 @@ class CmsRepository:
         res = await self.db.execute(stmt)
         return [r[0] for r in res.fetchall() if r[0]]
 
-    async def list_persisted_blog_posts(self) -> List[Dict[str, Any]]:
-        res = await self.db.execute(text("SELECT id, message FROM contact_inquiries WHERE name LIKE 'BLOG_POST:%' ORDER BY created_at DESC"))
-        return [json.loads(r["message"]) for r in res.mappings().all() if r["message"]]
+    # --- Blog / community feed (blog_posts, blog_post_likes, blog_post_comments) ---
 
-    async def upsert_blog_post(self, slug: str, post_data: Dict[str, Any]) -> Dict[str, Any]:
-        key_tag = f"BLOG_POST:{slug}"
-        payload_json = json.dumps(post_data, ensure_ascii=False)
-        res = await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :k LIMIT 1"), {"k": key_tag})
+    _BLOG_SQL = """
+        SELECT b.id, b.slug, b.title, b.excerpt, b.date_label AS date, b.image, b.author, b.author_username,
+               b.author_headline, b.author_avatar, b.post_type, b.category, b.tags, b.ats_score_badge,
+               b.read_time_minutes, b.likes_count, b.content, b.key_takeaways, b.author_identity_id,
+               EXISTS (SELECT 1 FROM blog_post_likes l WHERE l.post_id = b.id AND l.identity_id = :viewer) AS is_liked_by_me,
+               COALESCE((
+                   SELECT json_agg(json_build_object(
+                       'id', c.id, 'author_name', c.author_name, 'author_username', c.author_username,
+                       'content', c.content, 'created_at', to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI'))
+                       ORDER BY c.created_at)
+                   FROM blog_post_comments c WHERE c.post_id = b.id
+               ), '[]'::json) AS comments
+        FROM blog_posts b
+    """
+
+    async def list_blog_posts(self, post_type: Optional[str], viewer_id: Optional[uuid.UUID]) -> List[Dict[str, Any]]:
+        where = "WHERE b.post_type = :pt" if post_type else ""
+        res = await self.db.execute(
+            text(f"{self._BLOG_SQL} {where} ORDER BY b.created_at DESC"),
+            {"viewer": viewer_id, **({"pt": post_type} if post_type else {})},
+        )
+        return [dict(r) for r in res.mappings().all()]
+
+    async def get_blog_post(self, slug_or_id: str, viewer_id: Optional[uuid.UUID]) -> Optional[Dict[str, Any]]:
+        res = await self.db.execute(
+            text(f"{self._BLOG_SQL} WHERE b.slug = :k OR b.id = :k LIMIT 1"),
+            {"viewer": viewer_id, "k": slug_or_id.strip()},
+        )
         row = res.mappings().first()
-        if row:
-            await self.db.execute(text("UPDATE contact_inquiries SET message = :msg WHERE id = :id"), {"msg": payload_json, "id": row["id"]})
-        else:
+        return dict(row) if row else None
+
+    async def insert_blog_post(self, data: Dict[str, Any]) -> None:
+        await self.db.execute(
+            text("""
+                INSERT INTO blog_posts (id, slug, author_identity_id, author, author_username, author_headline, author_avatar,
+                    title, excerpt, date_label, image, post_type, category, tags, ats_score_badge, read_time_minutes,
+                    likes_count, content, key_takeaways)
+                VALUES (:id, :slug, :author_identity_id, :author, :author_username, :author_headline, :author_avatar,
+                    :title, :excerpt, :date_label, :image, :post_type, :category, :tags, :ats_score_badge, :read_time_minutes,
+                    :likes_count, :content, :key_takeaways)
+            """),
+            data,
+        )
+
+    async def toggle_blog_like(self, post_id: str, identity_id: uuid.UUID) -> None:
+        """Like if not yet liked, otherwise unlike; counter moves in the same statement batch."""
+        removed = await self.db.execute(
+            text("DELETE FROM blog_post_likes WHERE post_id = :pid AND identity_id = :iid RETURNING post_id"),
+            {"pid": post_id, "iid": identity_id},
+        )
+        if removed.scalar_one_or_none():
             await self.db.execute(
-                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :k, 'blog@belooga.internal', :msg)"),
-                {"id": uuid.uuid4(), "k": key_tag, "msg": payload_json},
+                text("UPDATE blog_posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = :pid"), {"pid": post_id}
             )
-        await self.db.commit()
-        return post_data
+            return
+        await self.db.execute(
+            text("INSERT INTO blog_post_likes (post_id, identity_id) VALUES (:pid, :iid) ON CONFLICT DO NOTHING"),
+            {"pid": post_id, "iid": identity_id},
+        )
+        await self.db.execute(text("UPDATE blog_posts SET likes_count = likes_count + 1 WHERE id = :pid"), {"pid": post_id})
 
-    async def list_persisted_user_posts(self) -> List[Dict[str, Any]]:
-        res = await self.db.execute(text("SELECT id, message FROM contact_inquiries WHERE name LIKE 'USER_POST:%' ORDER BY created_at DESC"))
-        out: List[Dict[str, Any]] = []
-        for r in res.mappings().all():
-            if r["message"]:
-                try:
-                    out.append(json.loads(r["message"]))
-                except Exception:
-                    continue
-        return out
+    async def add_blog_comment(self, post_id: str, author_identity_id: uuid.UUID, author_username: str, content: str) -> None:
+        await self.db.execute(
+            text("""
+                INSERT INTO blog_post_comments (id, post_id, author_identity_id, author_name, author_username, content)
+                VALUES (:id, :pid, :aid, :uname, :uname, :content)
+            """),
+            {"id": f"cm-{uuid.uuid4().hex[:10]}", "pid": post_id, "aid": author_identity_id, "uname": author_username, "content": content},
+        )
 
-    async def upsert_user_post(self, post_id: str, post_data: Dict[str, Any]) -> Dict[str, Any]:
-        key_tag = f"USER_POST:{post_id}"
-        payload_json = json.dumps(post_data, ensure_ascii=False)
-        res = await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :k LIMIT 1"), {"k": key_tag})
+    # --- User profile posts (user_posts, user_post_likes, user_post_comments) ---
+
+    _USER_POST_SQL = """
+        SELECT p.id, p.author_identity_id, p.username, p.author_name, p.title, p.category, p.body, p.tags,
+               p.attachment_link, p.likes_count, to_char(p.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS created_at,
+               COALESCE((
+                   SELECT json_agg(json_build_object(
+                       'id', c.id, 'author_name', c.author_name, 'content', c.content,
+                       'created_at', to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI'))
+                       ORDER BY c.created_at)
+                   FROM user_post_comments c WHERE c.post_id = p.id
+               ), '[]'::json) AS comments
+        FROM user_posts p
+    """
+
+    async def list_user_posts(self, username: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        if username:
+            res = await self.db.execute(
+                text(f"{self._USER_POST_SQL} WHERE LOWER(p.username) = LOWER(:u) ORDER BY p.created_at DESC LIMIT :lim"),
+                {"u": username.strip(), "lim": limit},
+            )
+        else:
+            res = await self.db.execute(text(f"{self._USER_POST_SQL} ORDER BY p.created_at DESC LIMIT :lim"), {"lim": limit})
+        return [dict(r) for r in res.mappings().all()]
+
+    async def get_user_post(self, post_id: str) -> Optional[Dict[str, Any]]:
+        res = await self.db.execute(text(f"{self._USER_POST_SQL} WHERE p.id = :id"), {"id": post_id})
         row = res.mappings().first()
-        if row:
-            await self.db.execute(text("UPDATE contact_inquiries SET message = :msg WHERE id = :id"), {"msg": payload_json, "id": row["id"]})
-        else:
-            await self.db.execute(
-                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :k, 'posts@belooga.internal', :msg)"),
-                {"id": uuid.uuid4(), "k": key_tag, "msg": payload_json},
-            )
-        await self.db.commit()
-        return post_data
+        return dict(row) if row else None
+
+    async def insert_user_post(self, data: Dict[str, Any]) -> None:
+        await self.db.execute(
+            text("""
+                INSERT INTO user_posts (id, author_identity_id, username, author_name, title, category, body, tags, attachment_link, likes_count)
+                VALUES (:id, :author_identity_id, :username, :author_name, :title, :category, :body, :tags, :attachment_link, 0)
+            """),
+            data,
+        )
+
+    async def update_user_post(self, post_id: str, fields: Dict[str, Any]) -> None:
+        allowed = {k: v for k, v in fields.items() if k in ("title", "category", "body", "tags", "attachment_link")}
+        if not allowed:
+            return
+        set_sql = ", ".join(f"{k} = :{k}" for k in allowed)
+        await self.db.execute(text(f"UPDATE user_posts SET {set_sql} WHERE id = :id"), {**allowed, "id": post_id})
 
     async def delete_user_post(self, post_id: str) -> bool:
-        key_tag = f"USER_POST:{post_id}"
-        res = await self.db.execute(text("DELETE FROM contact_inquiries WHERE name = :k RETURNING id"), {"k": key_tag})
-        await self.db.commit()
+        res = await self.db.execute(text("DELETE FROM user_posts WHERE id = :id RETURNING id"), {"id": post_id})
         return res.scalar_one_or_none() is not None
 
+    async def like_user_post(self, post_id: str, identity_id: uuid.UUID) -> None:
+        """Idempotent like: the counter only moves when the like row is new."""
+        await self.db.execute(
+            text("""
+                WITH ins AS (
+                    INSERT INTO user_post_likes (post_id, identity_id) VALUES (:pid, :iid)
+                    ON CONFLICT DO NOTHING RETURNING post_id
+                )
+                UPDATE user_posts SET likes_count = likes_count + 1 WHERE id IN (SELECT post_id FROM ins)
+            """),
+            {"pid": post_id, "iid": identity_id},
+        )
+
+    async def add_user_post_comment(self, post_id: str, author_identity_id: uuid.UUID, author_name: str, content: str) -> None:
+        await self.db.execute(
+            text("""
+                INSERT INTO user_post_comments (id, post_id, author_identity_id, author_name, content)
+                VALUES (:id, :pid, :aid, :name, :content)
+            """),
+            {"id": f"uc-{uuid.uuid4().hex[:10]}", "pid": post_id, "aid": author_identity_id, "name": author_name, "content": content},
+        )

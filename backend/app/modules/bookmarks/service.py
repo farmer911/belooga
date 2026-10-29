@@ -27,11 +27,7 @@ from app.schemas.bookmarks import (
 from app.schemas.job_tracker import TrackedJobCreateRequest
 from app.schemas.payments import WalletPayRequest
 
-SEEDED_PIPELINE: List[dict[str, Any]] = [
-    {"id": "pipe-1", "username": "phucnguyen", "full_name": "Nguyễn Minh Phúc", "headline": "Principal Distributed Systems & Golang Architect", "target_role": "Principal Engineer", "stage": "INTERVIEW_INVITED", "ats_score": 96, "years_experience": 7, "expected_salary": "75.000.000 VNĐ", "video_pitch_url": "/videos/pitch-phuc.mp4", "matched_skills": ["Golang", "PostgreSQL", "Kubernetes", "FastAPI"], "missing_skills": [], "recruiter_rating": 5, "evaluation_notes": "Kiến trúc sư hệ thống xuất sắc, tối ưu 25k CCU thực chiến.", "contact_unlocked": True, "interview_datetime": "2026-10-25 14:00"},
-    {"id": "pipe-2", "username": "huypham", "full_name": "Phạm Gia Huy", "headline": "Senior Backend & Cloud Native Engineer", "target_role": "Principal Engineer", "stage": "SHORTLISTED", "ats_score": 91, "years_experience": 5, "expected_salary": "60.000.000 VNĐ", "video_pitch_url": "/videos/pitch-huy.mp4", "matched_skills": ["Golang", "PostgreSQL", "Docker"], "missing_skills": ["Kubernetes"], "recruiter_rating": 4, "evaluation_notes": "Nền tảng Golang & Microservices rất vững.", "contact_unlocked": False, "interview_datetime": None},
-    {"id": "pipe-3", "username": "maivo", "full_name": "Võ Thị Mai", "headline": "Staff Full-Stack React 19 & FastAPI Lead", "target_role": "Staff Full-Stack Engineer", "stage": "PITCH_REVIEWED", "ats_score": 89, "years_experience": 5, "expected_salary": "58.000.000 VNĐ", "video_pitch_url": "/videos/pitch-mai.mp4", "matched_skills": ["React", "TypeScript", "FastAPI", "PostgreSQL"], "missing_skills": ["Golang"], "recruiter_rating": 5, "evaluation_notes": "Video Pitch 60s trình bày rõ ràng, tốc độ làm sản phẩm rất nhanh.", "contact_unlocked": False, "interview_datetime": None},
-]
+PIPELINE_STAGES = {"SHORTLISTED", "PITCH_REVIEWED", "INTERVIEW_INVITED", "OFFER_SENT", "HIRED"}
 
 
 class BookmarkService:
@@ -46,8 +42,11 @@ class BookmarkService:
         return f"bookmarks:recruiter:{recruiter_identity_id}"
 
     @staticmethod
-    def _recruiter_key(recruiter_identity_id: Optional[uuid.UUID]) -> str:
-        return str(recruiter_identity_id) if recruiter_identity_id else "default"
+    def _stage(raw: str) -> str:
+        stage = (raw or "").strip().upper()
+        if stage not in PIPELINE_STAGES:
+            raise HTTPException(status_code=400, detail=f"Invalid stage '{raw}'. Allowed: {', '.join(sorted(PIPELINE_STAGES))}")
+        return stage
 
     async def list_bookmarks(self, recruiter_identity_id: uuid.UUID) -> list[dict[str, Any]]:
         return await platform_cache.get_or_set(
@@ -97,34 +96,30 @@ class BookmarkService:
         await platform_cache.invalidate_prefix("analytics:")
         return {"status": "deleted", "username": username.strip()}
 
-    async def list_pipeline(self, recruiter_identity_id: Optional[uuid.UUID] = None) -> List[RecruiterPipelineItemDTO]:
-        rkey = self._recruiter_key(recruiter_identity_id)
-        persisted = await self.repo.list_pipeline_rows(rkey)
-        seen = {p["username"].lower() for p in persisted}
-        merged = list(persisted) + [dict(s) for s in SEEDED_PIPELINE if s["username"].lower() not in seen]
-        return [RecruiterPipelineItemDTO(**m) for m in merged]
+    async def list_pipeline(self, recruiter_identity_id: uuid.UUID) -> List[RecruiterPipelineItemDTO]:
+        return [RecruiterPipelineItemDTO(**r) for r in await self.repo.list_pipeline_rows(recruiter_identity_id)]
 
     async def add_to_pipeline(
         self,
-        recruiter_identity_id: Optional[uuid.UUID],
+        recruiter_identity_id: uuid.UUID,
         payload: RecruiterPipelineCreateRequest,
     ) -> RecruiterPipelineItemDTO:
+        stage = self._stage(payload.stage)
         clean_uname = payload.username.strip().lstrip("@")
         cand = await self.repo.get_visible_candidate(clean_uname)
-        if cand and cand.get("is_hidden"):
-            raise HTTPException(status_code=404, detail="Candidate profile is hidden or private.")
-        skills = cand["skills"] if cand and cand.get("skills") else ["Golang", "React", "PostgreSQL"]
+        if not cand or cand.get("is_hidden"):
+            raise HTTPException(status_code=404, detail="Candidate profile not found or hidden.")
+        skills = cand.get("skills") or []
         item = {
-            "id": str(uuid.uuid4()),
-            "username": cand["username"] if cand else clean_uname,
-            "full_name": cand["full_name"] if cand else clean_uname.upper(),
-            "headline": cand["headline"] if cand else "Senior Software Engineer",
+            "username": cand["username"],
+            "full_name": cand["full_name"],
+            "headline": cand["headline"],
             "target_role": payload.target_role,
-            "stage": payload.stage.upper(),
+            "stage": stage,
             "ats_score": 90,
             "years_experience": 5,
             "expected_salary": "55.000.000 VNĐ",
-            "video_pitch_url": f"/videos/pitch-{clean_uname}.mp4",
+            "video_pitch_url": f"/videos/pitch-{cand['username']}.mp4",
             "matched_skills": skills[:4],
             "missing_skills": ["Kubernetes"] if "Kubernetes" not in skills else [],
             "recruiter_rating": payload.recruiter_rating,
@@ -132,25 +127,29 @@ class BookmarkService:
             "contact_unlocked": False,
             "interview_datetime": None,
         }
-        saved = await self.repo.upsert_pipeline_row(self._recruiter_key(recruiter_identity_id), item)
+        saved = await self.repo.upsert_pipeline_row(recruiter_identity_id, item)
+        await self.db.commit()
         return RecruiterPipelineItemDTO(**saved)
 
     async def update_pipeline_item(
         self,
-        recruiter_identity_id: Optional[uuid.UUID],
+        recruiter_identity_id: uuid.UUID,
         item_id: str,
         payload: RecruiterPipelineUpdateRequest,
     ) -> RecruiterPipelineItemDTO:
         updates = payload.model_dump(exclude_unset=True)
-        updated = await self.repo.update_pipeline_by_id(item_id, updates)
-        if updated:
-            return RecruiterPipelineItemDTO(**updated)
-        for s in SEEDED_PIPELINE:
-            if s["id"] == item_id:
-                merged = {**s, **{k: v for k, v in updates.items() if v is not None}}
-                saved = await self.repo.upsert_pipeline_row(self._recruiter_key(recruiter_identity_id), merged)
-                return RecruiterPipelineItemDTO(**saved)
-        raise HTTPException(status_code=404, detail="Pipeline item not found.")
+        if updates.get("stage") is not None:
+            updates["stage"] = self._stage(updates["stage"])
+        try:
+            item_uuid = uuid.UUID(item_id)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Pipeline item not found.")
+        # Owner-scoped UPDATE: another recruiter's id is indistinguishable from a missing one (404, no existence leak).
+        updated = await self.repo.update_pipeline_row(recruiter_identity_id, item_uuid, updates)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Pipeline item not found.")
+        await self.db.commit()
+        return RecruiterPipelineItemDTO(**updated)
 
     async def compare_candidates(self, payload: RecruiterCompareRequest) -> RecruiterCompareResponse:
         jd_low = (payload.jd_text or "Golang Python FastAPI React PostgreSQL Kubernetes").lower()
@@ -158,27 +157,27 @@ class BookmarkService:
         if not target_skills:
             target_skills = ["Golang", "PostgreSQL", "Kubernetes", "React"]
         out: List[RecruiterCompareItemDTO] = []
-        for idx, uname in enumerate(payload.usernames[:3]):
-            clean = uname.strip().lstrip("@")
-            cand = await self.repo.get_visible_candidate(clean)
-            if cand and cand.get("is_hidden"):
+        wanted = [u.strip().lstrip("@") for u in payload.usernames[:3]]
+        found = await self.repo.get_visible_candidates(wanted)
+        for idx, clean in enumerate(wanted):
+            cand = found.get(clean.lower())
+            if not cand:
                 continue
-            seeded = next((s for s in SEEDED_PIPELINE if s["username"].lower() == clean.lower()), None)
-            cand_skills = (cand.get("skills") if cand else None) or (seeded["matched_skills"] if seeded else ["Golang", "FastAPI", "PostgreSQL", "React"])
+            cand_skills = cand.get("skills") or []
             matched = [s for s in cand_skills if s in target_skills] or cand_skills[:3]
             missing = [s for s in target_skills if s not in matched][:2]
             score = min(98, 84 + len(matched) * 3 - idx)
             out.append(
                 RecruiterCompareItemDTO(
-                    username=cand["username"] if cand else clean,
-                    full_name=(cand["full_name"] if cand else (seeded["full_name"] if seeded else clean.upper())),
-                    headline=(cand["headline"] if cand else (seeded["headline"] if seeded else "Senior Software Engineer")),
+                    username=cand["username"],
+                    full_name=cand["full_name"],
+                    headline=cand["headline"],
                     ats_score=score,
                     matched_skills=matched,
                     missing_skills=missing,
-                    years_experience=seeded["years_experience"] if seeded else 5,
-                    expected_salary=seeded["expected_salary"] if seeded else "60.000.000 VNĐ",
-                    video_pitch_url=seeded["video_pitch_url"] if seeded else f"/videos/pitch-{clean}.mp4",
+                    years_experience=5,
+                    expected_salary="60.000.000 VNĐ",
+                    video_pitch_url=f"/videos/pitch-{cand['username']}.mp4",
                     differentiator="Verified 60s Video Pitch & High-Concurrency Architecture Fit",
                 )
             )
@@ -186,14 +185,14 @@ class BookmarkService:
 
     async def invite_candidate(
         self,
-        recruiter_identity_id: Optional[uuid.UUID],
+        recruiter_identity_id: uuid.UUID,
         payload: RecruiterInviteRequest,
     ) -> RecruiterPipelineItemDTO:
         clean = payload.username.strip().lstrip("@")
         cand = await self.repo.get_visible_candidate(clean)
-        if cand and cand.get("is_hidden"):
-            raise HTTPException(status_code=404, detail="Candidate profile is hidden or private.")
-        rkey = self._recruiter_key(recruiter_identity_id)
+        if not cand or cand.get("is_hidden") or not cand.get("identity_id"):
+            raise HTTPException(status_code=404, detail="Candidate profile not found or hidden.")
+        rkey = str(recruiter_identity_id)
         if payload.unlock_contact_via_wallet:
             await PaymentService.pay_with_wallet(
                 db=self.db,
@@ -206,45 +205,46 @@ class BookmarkService:
                 ),
             )
         item = {
-            "id": str(uuid.uuid4()),
-            "username": cand["username"] if cand else clean,
-            "full_name": cand["full_name"] if cand else clean.upper(),
-            "headline": cand["headline"] if cand else "Senior Software Engineer",
+            "username": cand["username"],
+            "full_name": cand["full_name"],
+            "headline": cand["headline"],
             "target_role": payload.job_title,
             "stage": "INTERVIEW_INVITED",
             "ats_score": 94,
             "years_experience": 5,
             "expected_salary": payload.offered_salary_range,
-            "video_pitch_url": f"/videos/pitch-{clean}.mp4",
-            "matched_skills": (cand.get("skills") if cand else None) or ["Golang", "PostgreSQL", "Kubernetes"],
+            "video_pitch_url": f"/videos/pitch-{cand['username']}.mp4",
+            "matched_skills": cand.get("skills") or [],
             "missing_skills": [],
             "recruiter_rating": 5,
             "evaluation_notes": f"Invited for {payload.job_title} at {payload.interview_datetime}",
             "contact_unlocked": bool(payload.unlock_contact_via_wallet),
             "interview_datetime": payload.interview_datetime,
         }
-        saved = await self.repo.upsert_pipeline_row(rkey, item)
-        target_uid = (cand.get("identity_id") if cand else None) or recruiter_identity_id
-        if target_uid:
-            await NotificationService(self.db).dispatch_event(
-                identity_id=target_uid,
-                event_type="RECRUITER_INTERVIEW_INVITE",
-                title=f"Lời mời phỏng vấn vị trí {payload.job_title}",
-                message=f"Nhà tuyển dụng B2B mời bạn phỏng vấn ({payload.interview_datetime}) với mức lương đề xuất {payload.offered_salary_range}.",
-                deep_link="/workspace/jobs",
-                send_email=True,
-                category="career",
-            )
-            await JobTrackerService(self.db).add_tracked_job(
-                TrackedJobCreateRequest(
-                    company_name="Belooga Enterprise Partner",
-                    position_title=payload.job_title,
-                    status="INTERVIEW",
-                    expected_salary=payload.offered_salary_range,
-                    match_score=94,
-                    notes=f"B2B Direct Invite ({payload.interview_datetime}) — Prompt: {payload.custom_video_prompt or '60s Pitch'}",
-                ),
-                candidate_identity_id=target_uid,
-            )
+        target_uid = cand["identity_id"]
+        # Pipeline card, candidate notification and candidate Kanban card commit together (one transaction).
+        saved = await self.repo.upsert_pipeline_row(recruiter_identity_id, item)
+        await NotificationService(self.db).dispatch_event(
+            identity_id=target_uid,
+            event_type="RECRUITER_INTERVIEW_INVITE",
+            title=f"Lời mời phỏng vấn vị trí {payload.job_title}",
+            message=f"Nhà tuyển dụng B2B mời bạn phỏng vấn ({payload.interview_datetime}) với mức lương đề xuất {payload.offered_salary_range}.",
+            deep_link="/workspace/jobs",
+            send_email=True,
+            category="career",
+            auto_commit=False,
+        )
+        await JobTrackerService(self.db).add_tracked_job(
+            TrackedJobCreateRequest(
+                company_name="Belooga Enterprise Partner",
+                position_title=payload.job_title,
+                status="INTERVIEW",
+                expected_salary=payload.offered_salary_range,
+                match_score=94,
+                notes=f"B2B Direct Invite ({payload.interview_datetime}) — Prompt: {payload.custom_video_prompt or '60s Pitch'}",
+            ),
+            candidate_identity_id=target_uid,
+            commit=False,
+        )
+        await self.db.commit()
         return RecruiterPipelineItemDTO(**saved)
-

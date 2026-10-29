@@ -137,6 +137,21 @@ async def get_current_user_optional(
         return None
 
 
+def require_role(*roles: str):
+    """Dependency factory: authenticated user whose role is in `roles` (else 403)."""
+
+    async def _dep(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        if current_user.role not in roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: insufficient role")
+        return current_user
+
+    return _dep
+
+
+def is_owner_or_admin(current_user: AuthenticatedUser, owner_identity_id: Optional[uuid.UUID]) -> bool:
+    return current_user.role == "admin" or (owner_identity_id is not None and owner_identity_id == current_user.id)
+
+
 def verify_profile_owner(current_user: AuthenticatedUser, target_username: str) -> None:
     if current_user.role == "admin":
         return
