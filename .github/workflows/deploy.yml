@@ -73,6 +73,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.belooga.com' }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://belooga.com' }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
           tags: |
             ${{ env.FRONTEND_IMAGE }}:${{ env.RELEASE_SHA }}
             ${{ env.FRONTEND_IMAGE }}:latest
