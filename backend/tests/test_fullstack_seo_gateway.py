@@ -94,11 +94,13 @@ async def test_cv_studio_draft_load_and_cloud_save_with_idor_guard(
 async def test_analytics_time_range_and_expert_order_feedback_scorecard(
     client: AsyncClient,
     test_candidate_a: dict,
+    test_admin: dict,
 ):
     """
     BEL-511: Verify GET /v1/analytics/dashboard?range=30D scales telemetry by range
     and GET /v1/expert-review/orders/{order_id}/feedback/ returns a live scorecard for paid orders.
     """
+    client.headers.update(test_admin["headers"])
     headers_a = {"Authorization": f"Bearer {test_candidate_a['token']}"}
 
     # 1. Create and checkout an expert review order

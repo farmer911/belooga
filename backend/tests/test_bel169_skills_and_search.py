@@ -8,7 +8,8 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_custom_skill_catalog_and_multi_skill_candidate_search(client: AsyncClient):
+async def test_custom_skill_catalog_and_multi_skill_candidate_search(client: AsyncClient, candidate_headers: dict):
+    client.headers.update(candidate_headers)
     # 1. List initial skills from /v1/catalogs/skills
     list_res = await client.get("/v1/catalogs/skills")
     assert list_res.status_code == 200

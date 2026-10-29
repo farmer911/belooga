@@ -4,8 +4,9 @@ import pytest
 from httpx import AsyncClient
 
 @pytest.mark.asyncio
-async def test_get_executive_analytics_dashboard(client: AsyncClient):
+async def test_get_executive_analytics_dashboard(client: AsyncClient, test_admin: dict):
     """Test retrieving platform executive analytics, financial metrics, and funnel."""
+    client.headers.update(test_admin["headers"])
     response = await client.get("/v1/analytics/dashboard")
     assert response.status_code == 200
     data = response.json()
@@ -46,8 +47,9 @@ async def test_get_executive_analytics_dashboard(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_bi_star_schema_export_and_olap_cte_telemetry(client: AsyncClient):
+async def test_bi_star_schema_export_and_olap_cte_telemetry(client: AsyncClient, test_admin: dict):
     """Verify GET /v1/analytics/bi-export returns Power BI / DuckDB Star-Schema facts & dimensions from PostgreSQL OLAP CTEs."""
+    client.headers.update(test_admin["headers"])
     # Seed a real ATS scan so fact_ats_scans & dim_skills_demand reflect live DB rows
     scan_res = await client.post(
         "/v1/match/ats-scan",

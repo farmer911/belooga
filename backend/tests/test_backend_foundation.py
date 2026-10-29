@@ -28,6 +28,23 @@ EXPECTED_TABLES = {
     "job_descriptions", "resume_jd_matches", "candidate_job_applications_tracker",
     "notifications", "notification_preferences", "candidate_bookmarks",
     "wallets", "wallet_transactions", "payment_orders",
+    "recruiter_pipeline_items",
+    "reverse_bids",
+    "cv_roasts",
+    "cv_roast_votes",
+    "salary_crawl_runs",
+    "company_profiles",
+    "company_reviews",
+    "company_interview_questions",
+    "career_posting_meta",
+    "blog_posts",
+    "blog_post_likes",
+    "blog_post_comments",
+    "user_posts",
+    "user_post_likes",
+    "user_post_comments",
+    "expert_applications",
+    "career_goals",
 }
 
 

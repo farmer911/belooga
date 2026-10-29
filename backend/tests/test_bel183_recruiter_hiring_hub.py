@@ -24,12 +24,11 @@ async def test_recruiter_hiring_hub_pipeline_compare_and_invite(
     await fund_wallet(client, test_candidate_a["token"], 100000, monkeypatch)  # paid feature below
     cand_b_username = test_candidate_b["username"]
 
-    # 1. GET /v1/recruiter/pipeline returns initial seeded or persisted pipeline items
+    # 1. A new recruiter starts with an empty pipeline (no seeded demo candidates)
     list_res = await client.get("/v1/recruiter/pipeline", headers=headers_recruiter)
     assert list_res.status_code == 200
     initial_items = list_res.json()
-    assert isinstance(initial_items, list)
-    assert len(initial_items) >= 1
+    assert initial_items == []
 
     # 2. POST /v1/recruiter/pipeline adds a visible candidate to pipeline
     add_res = await client.post(

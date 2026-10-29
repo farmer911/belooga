@@ -112,3 +112,22 @@ async def test_candidate_b(db_session: AsyncSession):
 
     token = create_access_token({"sub": str(uid), "username": username, "email": email, "role": "candidate"})
     return {"id": uid, "profile_id": pid, "username": username, "email": email, "token": token}
+
+
+@pytest_asyncio.fixture
+async def test_admin(db_session: AsyncSession):
+    """Creates an admin identity (admin-only analytics and moderation routes)."""
+    uid = uuid.uuid4()
+    email = f"admin_{uuid.uuid4().hex[:6]}@test.com"
+    await db_session.execute(
+        text("INSERT INTO identities (id, email, password_hash, role, status) VALUES (:id, :email, 'hash', 'admin', 'active')"),
+        {"id": uid, "email": email},
+    )
+    await db_session.commit()
+    token = create_access_token({"sub": str(uid), "username": "admin", "email": email, "role": "admin"})
+    return {"id": uid, "email": email, "token": token, "headers": {"Authorization": f"Bearer {token}"}}
+
+
+@pytest_asyncio.fixture
+async def candidate_headers(test_candidate_a: dict) -> dict:
+    return {"Authorization": f"Bearer {test_candidate_a['token']}"}

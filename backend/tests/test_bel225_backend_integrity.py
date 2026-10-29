@@ -7,8 +7,9 @@ from app.modules.catalogs import service as catalogs_service_mod
 
 
 @pytest.mark.asyncio
-async def test_bel225_item5_fe_and_mobile_growth_and_wallet_routes_parity(client: AsyncClient):
+async def test_bel225_item5_fe_and_mobile_growth_and_wallet_routes_parity(client: AsyncClient, candidate_headers: dict):
     """Item #5: Every route called by Web FE & Mobile App must exist and persist in PostgreSQL."""
+    client.headers.update(candidate_headers)
     # 1. GET /v1/growth/referrals
     r_ref = await client.get("/v1/growth/referrals")
     assert r_ref.status_code == 200
@@ -48,7 +49,7 @@ async def test_bel225_item5_fe_and_mobile_growth_and_wallet_routes_parity(client
     r_bids = await client.get("/v1/recruiter/reverse-bids")
     assert r_bids.status_code == 200
     bids = r_bids.json()
-    assert isinstance(bids, list) and len(bids) >= 1
+    assert isinstance(bids, list)
 
     r_post_bid = await client.post(
         "/v1/recruiter/reverse-bids",
@@ -67,8 +68,9 @@ async def test_bel225_item5_fe_and_mobile_growth_and_wallet_routes_parity(client
     assert "bonus_vnd" in rewards[0]
 
     # 6. GET /v1/wallet/balance (Mobile Wallet screen parity) is private to the signed-in user
-    r_wallet = await client.get("/v1/wallet/balance")
-    assert r_wallet.status_code == 401
+    assert (await client.get("/v1/wallet/balance")).status_code == 200
+    client.headers.pop("Authorization")
+    assert (await client.get("/v1/wallet/balance")).status_code == 401
 
 
 @pytest.mark.asyncio

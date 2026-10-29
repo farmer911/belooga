@@ -144,9 +144,11 @@ async def test_timeline_patch_and_awards_languages_interests_crud(
 
 @pytest.mark.asyncio
 async def test_expert_feedback_submission_and_analytics_db_revenue(
-    client: AsyncClient, test_candidate_a: dict
+    client: AsyncClient, test_candidate_a: dict,
+    test_admin: dict,
 ):
     """Verify Expert Feedback submission transitions order to completed and updates Analytics DB ledger."""
+    client.headers.update(test_admin["headers"])
     headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
 
     # 1. Create and checkout an order

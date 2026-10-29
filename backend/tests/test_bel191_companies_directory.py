@@ -5,6 +5,7 @@
 - POST /v1/companies/{slug}/reviews
 """
 
+import uuid
 import pytest
 from httpx import AsyncClient
 
@@ -25,10 +26,11 @@ async def test_companies_search_profile_crud_and_reviews(
     assert any("VNG" in c["name"] for c in items)
 
     # 2. Create a new company profile via POST /v1/companies/
+    company_name = f"Zalo AI Cloud Labs {uuid.uuid4().hex[:6]}"
     create_res = await client.post(
         "/v1/companies/",
         json={
-            "name": "Zalo AI Cloud Labs",
+            "name": company_name,
             "industry": "AI / Cloud",
             "company_size": "500-1000 nhân sự",
             "location": "Ho Chi Minh",
@@ -40,7 +42,7 @@ async def test_companies_search_profile_crud_and_reviews(
     assert create_res.status_code in (200, 201)
     created = create_res.json()
     slug = created["slug"]
-    assert created["name"] == "Zalo AI Cloud Labs"
+    assert created["name"] == company_name
 
     # 3. Get company profile by slug via GET /v1/companies/{slug}
     detail_res = await client.get(f"/v1/companies/{slug}")

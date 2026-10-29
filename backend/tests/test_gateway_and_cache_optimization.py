@@ -150,7 +150,7 @@ async def test_tiered_cache_singleflight_swr_and_unified_invalidation():
 
 
 @pytest.mark.asyncio
-async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(monkeypatch):
+async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(monkeypatch, test_admin: dict):
     """BEL-137: Verify Redis-backed distributed rate-limiting & idempotency across stateless worker restarts."""
     from pathlib import Path
     import uuid
@@ -217,7 +217,7 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
         assert "http://localhost:8080" in mob_api_txt
 
         # 4. BEL-138: Verify services, E2E specs, and README route through Edge Gateway (:8080)
-        bi_res = await client.get("/v1/analytics/bi-export?limit=10")
+        bi_res = await client.get("/v1/analytics/bi-export?limit=10", headers=test_admin["headers"])
         assert bi_res.status_code == 200
         bi_body = bi_res.json()
         assert "http://localhost:8080/v1/analytics/bi-export" in bi_body["power_bi_m_query_snippet"]
