@@ -84,32 +84,31 @@ test.describe('ATS Diagnostics & Bot-Eye Dual Screen Quality Gate', () => {
     await expect(page.locator('[data-testid="ats-flex-card-canvas"]')).not.toBeVisible();
   });
 
-  test('TC-ATS-005: MoMo Micro-Pass 29k checkout modal and simulated payment flow', async ({ page }) => {
+  test('TC-ATS-005: MoMo Micro-Pass 29k checkout never fakes a payment', async ({ page }) => {
+    const loginRes = await page.request.post('http://localhost:8080/v1/auth/login/', {
+      data: { email: 'alex@belooga.com', password: 'SecurePassword123!' },
+    });
+    expect(loginRes.status()).toBe(200);
     await page.goto('/ats-diagnostics');
 
-    // Run Scan first
     await page.click('button:has-text("Senior Go @ VNG")');
     await page.click('button:has-text("Quét Điểm ATS Ngay")');
 
-    // Wait for Scorecard
     const payBtn = page.locator('[data-testid="btn-pay-momo-29k"]');
     await expect(payBtn).toBeVisible({ timeout: 10000 });
     await payBtn.click();
 
-    // Assert MoMo QR Dialog opens
-    await expect(page.locator('text=Thanh Toán MoMo QR Realtime')).toBeVisible();
-    await expect(page.locator('text=29.000 đ')).toBeVisible();
-    await expect(page.locator('[data-testid="momo-qr-image"]')).toBeVisible();
+    // Dialog shows the server price and real payment options only (no "simulate" button)
+    await expect(page.locator('text=Thanh Toán MoMo & Ví Belooga')).toBeVisible();
+    await expect(page.locator('[data-testid="btn-momo-pay"]')).toBeVisible();
+    await expect(page.locator('[data-testid="btn-simulate-momo-pay"]')).toHaveCount(0);
 
-    // Click Simulate Payment
-    await page.click('[data-testid="btn-simulate-momo-pay"]');
+    // E2E runs without MoMo credentials: the backend refuses (503) and the UI must not show success
+    await page.click('[data-testid="btn-momo-pay"]');
+    await expect(page.locator('[data-testid="momo-error"]')).toContainText('MoMo payments are not configured', { timeout: 10000 });
+    await expect(page.locator('[data-testid="payment-success-receipt"]')).toHaveCount(0);
 
-    // Assert Success screen
-    await expect(page.locator('text=Thanh Toán Thành Công!')).toBeVisible();
-    await expect(page.locator('text=Đã mở khóa tính năng tự động tối ưu form STAR')).toBeVisible();
-
-    // Close Dialog
-    await page.click('button:has-text("Tiếp Tục Sử Dụng")');
-    await expect(page.locator('text=Thanh Toán MoMo QR Realtime')).not.toBeVisible();
+    await page.click('button:has-text("Hủy Giao Dịch")');
+    await expect(page.locator('[data-testid="momo-checkout-modal"]')).toHaveCount(0);
   });
 });

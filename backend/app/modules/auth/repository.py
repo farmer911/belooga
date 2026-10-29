@@ -56,7 +56,7 @@ class IdentityRepository:
             SELECT i.id, i.email, i.password_hash, i.role, i.status,
                    p.username, p.first_name, p.last_name, p.avatar_url
             FROM identities i
-            JOIN candidate_profiles p ON p.identity_id = i.id
+            LEFT JOIN candidate_profiles p ON p.identity_id = i.id
             WHERE i.email = :email
             LIMIT 1
         """)

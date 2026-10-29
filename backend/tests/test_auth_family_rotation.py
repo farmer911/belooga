@@ -363,3 +363,19 @@ async def test_mobile_dual_mode_refresh_token_and_logout(
 
 
 
+
+
+@pytest.mark.asyncio
+async def test_admin_without_candidate_profile_can_log_in(client: AsyncClient, db_session: AsyncSession):
+    """Admins have no candidate_profiles row; login must not require one."""
+    from app.core.security import get_password_hash
+
+    email = f"admin_login_{uuid.uuid4().hex[:6]}@test.com"
+    await db_session.execute(
+        text("INSERT INTO identities (id, email, password_hash, role, status) VALUES (:id, :e, :h, 'admin', 'active')"),
+        {"id": uuid.uuid4(), "e": email, "h": get_password_hash("AdminPass123!")},
+    )
+    await db_session.commit()
+    res = await client.post("/v1/auth/login/", json={"email": email, "password": "AdminPass123!"})
+    assert res.status_code == 200, res.text
+    assert res.json()["user"]["role"] == "admin"

@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Public Routes & Full Page E2E Quality Gate', () => {
   test('TC-PUB-001: Public candidate CV read-only security and report modal', async ({ page }) => {
+    // Reporting requires a signed-in reporter (anonymous reports are rejected with 401)
+    const loginRes = await page.request.post('http://localhost:8080/v1/auth/login/', {
+      data: { email: 'jane@belooga.com', password: 'JaneSecret123!' },
+    });
+    expect(loginRes.status()).toBe(200);
     await page.goto('/public/alexnguyen');
 
     // Assert public header

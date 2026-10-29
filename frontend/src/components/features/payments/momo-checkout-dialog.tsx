@@ -163,7 +163,7 @@ export function MomoCheckoutDialog({
             {orderStatus?.status === "FAILED" && (
               <p className="text-[11px] text-red-700">Giao dịch MoMo không thành công.</p>
             )}
-            {error && <p role="alert" className="text-[11px] text-red-700">{error}</p>}
+            {error && <p role="alert" data-testid="momo-error" className="text-[11px] text-red-700">{error}</p>}
 
             <Button
               onClick={handleClose}

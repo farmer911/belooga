@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Executive Analytics & Monetization Terminal Quality Gate', () => {
+  test.beforeEach(async ({ page }) => {
+    // Admin session: the page requires a signed-in user (sets the HttpOnly refresh cookie)
+    const loginRes = await page.request.post('http://localhost:8080/v1/auth/login/', {
+      data: { email: 'admin@belooga.com', password: 'AdminSecret123!' },
+    });
+    expect(loginRes.status()).toBe(200);
+  });
+
   test('TC-ANALYTICS-001: Analytics dashboard landing, header, and breadcrumb rendering', async ({ page }) => {
     await page.goto('/admin/analytics');
 
