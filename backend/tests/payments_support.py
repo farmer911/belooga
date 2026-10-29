@@ -86,3 +86,16 @@ async def fund_wallet(client: AsyncClient, token: str, amount_vnd: int, monkeypa
     assert res.status_code == 201, res.text
     ipn = await client.post("/v1/payments/momo/ipn", json=signed_ipn(res.json()["order_id"], amount_vnd))
     assert ipn.status_code == 204, ipn.text
+
+
+async def pay_review_order(client: AsyncClient, token: str, order_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pay a CV review order through MoMo: create the payment, then deliver the signed IPN."""
+    configure_momo(monkeypatch)
+    res = await client.post(
+        "/v1/payments/momo/create-qr",
+        json={"package_type": "EXPERT_REVIEW", "review_order_id": order_id, "order_info": "CV review"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 201, res.text
+    ipn = await client.post("/v1/payments/momo/ipn", json=signed_ipn(res.json()["order_id"], res.json()["amount"]))
+    assert ipn.status_code == 204, ipn.text

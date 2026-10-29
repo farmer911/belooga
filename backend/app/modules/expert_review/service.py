@@ -108,16 +108,10 @@ class ExpertReviewService:
         if order.candidate_identity_id != candidate_identity_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
 
-        payment_ref = f"txn_{uuid.uuid4().hex[:12]}_{payload.payment_method}"
-        updated_order = await self.repo.update_order_status(order_id=order_id, new_status="paid", payment_reference=payment_ref)
-        full_order = await self.repo.get_order_by_id(updated_order.id)
-        await NotificationService(self.db).dispatch_event(
-            identity_id=candidate_identity_id, event_type="EXPERT_ORDER_PAID",
-            title="Expert CV Review Payment Confirmed",
-            message=f"Payment reference {payment_ref} verified. Your senior reviewer is now auditing your CV.",
-            deep_link=f"/expert-review?order_id={order_id}&status=paid", send_email=True, category="order",
-        )
-        return self._serialize_order(full_order)
+        _ = payload  # payment happens via MoMo IPN or wallet escrow; checkout only confirms it
+        if order.order_status == "pending_payment":
+            raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Payment not confirmed yet")
+        return self._serialize_order(order)
 
     async def list_my_orders(self, candidate_identity_id: uuid.UUID) -> List[CVReviewOrderResponse]:
         return [self._serialize_order(o) for o in await self.repo.list_orders_by_candidate(candidate_identity_id)]
@@ -132,8 +126,6 @@ class ExpertReviewService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
 
         feedback = await self.repo.get_feedback_by_order_id(order_id)
-        if not feedback and order.order_status in ("paid", "in_review", "completed"):
-            feedback = await self.repo.ensure_feedback_for_paid_order(order)
         if not feedback:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review feedback is still in progress by the expert")
         return self._serialize_feedback(feedback)
@@ -145,10 +137,14 @@ class ExpertReviewService:
         order = await self.repo.get_order_by_id(order_id)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-        is_owner = order.candidate_identity_id == actor_identity_id
-        is_privileged = actor_role in ("admin", "expert") or await self.repo.is_expert_or_admin(actor_identity_id)
-        if not (is_owner or is_privileged):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
+        if order.expert is None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No expert is assigned to this order")
+        assigned_identity = order.expert.identity_id
+        is_reviewer = actor_role == "admin" or assigned_identity == actor_identity_id
+        if not is_reviewer:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the assigned expert can review this order")
+        if order.order_status not in ("paid", "in_review"):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Order is not paid or already completed")
 
         feedback = await self.repo.upsert_order_feedback(
             order=order, score_overall=payload.score_overall,
@@ -169,59 +165,17 @@ class ExpertReviewService:
         )
         return self._serialize_feedback(feedback)
 
-    async def simulate_delivery(
-        self, order_id: uuid.UUID, actor_identity_id: uuid.UUID, actor_role: str = "candidate"
-    ) -> CVReviewOrderResponse:
-        order = await self.repo.get_order_by_id(order_id)
-        if not order:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-        if order.candidate_identity_id != actor_identity_id and actor_role not in ("admin", "expert"):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
-
-        target_co = order.target_companies or "Tier-1 Engineering Teams"
-        verdict = (
-            f"[Executive Summary] Strong senior trajectory for {order.target_role} targeting {target_co}.\n"
-            f"[Experience STAR Critique] Top bullets demonstrate ownership; convert passive phrases into STAR metrics (baseline -> action -> p95 latency/RPS delta).\n"
-            f"[Skills Gap & Keyword Calibration] Core backend/cloud keywords aligned with ATS parser rules.\n"
-            f"[Line-by-Line Rewrite] Lead each role with quantified production SLA and throughput impact."
-        )
-        await self.repo.upsert_order_feedback(
-            order=order, score_overall=92, score_ats_compatibility=95,
-            score_impact_action_verbs=90, score_structure_formatting=93,
-            summary_verdict=verdict,
-            strengths=[
-                f"High-signal architecture progression tailored for {order.target_role}.",
-                "Clean single-column ATS structure with zero parser warnings.",
-                "Strong production ownership across distributed systems and database indexing.",
-            ],
-            improvements=[
-                "Rewrite bullet #2 using STAR format: 'Engineered X handling 45,000+ RPS, reducing p95 latency by 38%'.",
-                f"Highlight domain keywords specific to {target_co} in the Executive Summary.",
-                "Attach a 30-second Belooga Video Elevator Pitch link at the top header.",
-            ],
-        )
-        await self.repo.update_order_status(order_id=order_id, new_status="in_review")
-        await platform_cache.invalidate_prefix("expert_")
-        await NotificationService(self.db).dispatch_event(
-            identity_id=order.candidate_identity_id, event_type="EXPERT_FEEDBACK_READY",
-            title=f"Báo cáo chấm CV từ Chuyên gia đã sẵn sàng ({order.target_role})",
-            message="Chuyên gia đã hoàn tất bản nhận xét chi tiết chuẩn STAR. Hãy xem báo cáo và nghiệm thu giải ngân Escrow.",
-            deep_link=f"/expert-review?order_id={order_id}&status=report_ready",
-            send_email=True, category="order",
-        )
-        full_order = await self.repo.get_order_by_id(order_id)
-        return self._serialize_order(full_order)
-
     async def complete_order_and_release_escrow(
         self, order_id: uuid.UUID, actor_identity_id: uuid.UUID, actor_role: str = "candidate"
     ) -> CVReviewOrderResponse:
         order = await self.repo.get_order_by_id(order_id)
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-        if order.candidate_identity_id != actor_identity_id and actor_role not in ("admin", "expert"):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this review order")
+        if order.candidate_identity_id != actor_identity_id and actor_role != "admin":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the buyer can accept this review")
+        if not await self.repo.get_feedback_by_order_id(order.id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The expert has not delivered feedback yet")
 
-        await self.repo.ensure_feedback_for_paid_order(order)
         await self.repo.update_order_status(order_id=order_id, new_status="completed")
         full_order = await self.repo.get_order_by_id(order_id)
         amount_vnd = int((full_order.amount_paid_cents or 1960) * 250)

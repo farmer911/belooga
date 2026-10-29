@@ -192,33 +192,10 @@ class ExpertReviewRepository:
                 new_cnt = prev_cnt + (0 if is_update else 1)
                 exp.total_reviews_count = max(new_cnt, 1)
                 exp.rating = round(((prev_rating * prev_cnt) + review_stars) / max(new_cnt, 1), 2)
-        order.order_status = "completed"
+        # Delivered feedback waits for the buyer to accept (/complete), which releases escrow.
+        order.order_status = "in_review"
         await self.db.commit()
         return await self.get_feedback_by_order_id(order.id) or existing
-
-    async def ensure_feedback_for_paid_order(self, order: CVReviewOrder) -> CVReviewFeedback:
-        existing = await self.get_feedback_by_order_id(order.id)
-        if existing:
-            return existing
-        return await self.upsert_order_feedback(
-            order=order,
-            score_overall=88,
-            score_ats_compatibility=92,
-            score_impact_action_verbs=85,
-            score_structure_formatting=89,
-            summary_verdict=(
-                f"Strong technical trajectory for {order.target_role}. Quantifying p95 latency and revenue impact "
-                "in your top two roles will elevate shortlist conversion."
-            ),
-            strengths=[
-                "Clear architectural progression and modern stack alignment.",
-                "Single-column ATS-safe formatting with zero parsing obstructions.",
-            ],
-            improvements=[
-                "Add baseline-to-target metrics (e.g., RPS, latency, cost savings) to 3 bullets.",
-                "Pair your top role with a 30-second Belooga Video Elevator Pitch.",
-            ],
-        )
 
     async def seed_packages_if_empty(self, pkg_seeds: list[tuple]) -> None:
         await self.db.execute(text("SELECT pg_advisory_xact_lock(9001)"))

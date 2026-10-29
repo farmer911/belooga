@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+from tests.payments_support import pay_review_order
 
 
 @pytest.mark.asyncio
@@ -34,7 +35,8 @@ async def test_list_experts_and_packages(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_order_creation_checkout_and_idor_protection(
-    client: AsyncClient, test_candidate_a: dict, test_candidate_b: dict
+    client: AsyncClient, test_candidate_a: dict, test_candidate_b: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify order creation, checkout state transitions, and IDOR protection."""
     token_a = test_candidate_a["token"]
@@ -80,16 +82,19 @@ async def test_order_creation_checkout_and_idor_protection(
     )
     assert res_idor.status_code == 403
 
-    # 4. User A successfully checks out their order
+    # 4. Checkout cannot mark an order paid by itself; it confirms a real MoMo payment
+    unpaid = await client.post(
+        f"/v1/expert-review/orders/{order_id}/checkout/", json={"payment_method": "card"}, headers=headers_a
+    )
+    assert unpaid.status_code == 402
+    await pay_review_order(client, test_candidate_a["token"], order_id, monkeypatch)
     res_checkout = await client.post(
-        f"/v1/expert-review/orders/{order_id}/checkout/",
-        json={"payment_method": "stripe_card", "coupon_code": "BELOOGA10"},
-        headers=headers_a,
+        f"/v1/expert-review/orders/{order_id}/checkout/", json={"payment_method": "momo"}, headers=headers_a
     )
     assert res_checkout.status_code == 200
     paid_order = res_checkout.json()
     assert paid_order["order_status"] == "paid"
-    assert "stripe_card" in paid_order["payment_reference"]
+    assert paid_order["payment_reference"].startswith("BLG-")
 
     # 5. User A lists their orders
     res_my_orders = await client.get("/v1/expert-review/orders/my-orders/", headers=headers_a)

@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+from tests.payments_support import pay_review_order
 
 
 @pytest.mark.asyncio
@@ -95,6 +96,8 @@ async def test_analytics_time_range_and_expert_order_feedback_scorecard(
     client: AsyncClient,
     test_candidate_a: dict,
     test_admin: dict,
+    test_expert: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """
     BEL-511: Verify GET /v1/analytics/dashboard?range=30D scales telemetry by range
@@ -117,14 +120,22 @@ async def test_analytics_time_range_and_expert_order_feedback_scorecard(
     assert ord_res.status_code == 201
     order_id = ord_res.json()["id"]
 
-    pay_res = await client.post(
-        f"/v1/expert-review/orders/{order_id}/checkout/",
-        json={"payment_method": "card"},
-        headers=headers_a,
+    await pay_review_order(client, test_candidate_a["token"], order_id, monkeypatch)
+    pending = await client.get(f"/v1/expert-review/orders/{order_id}/feedback/", headers=headers_a)
+    assert pending.status_code == 404  # no canned feedback before the expert delivers
+    await test_expert["assign"](order_id)
+    delivered = await client.post(
+        f"/v1/expert-review/orders/{order_id}/feedback/",
+        json={
+            "score_overall": 88, "score_ats_compatibility": 90, "score_impact_action_verbs": 85,
+            "score_structure_formatting": 87, "summary_verdict": "Quantify impact in the top two roles.",
+            "strengths": ["Clear progression", "ATS-safe layout"], "improvements": ["Add latency metrics"],
+        },
+        headers=test_expert["headers"],
     )
-    assert pay_res.status_code == 200
+    assert delivered.status_code == 200, delivered.text
 
-    # 2. Fetch live Expert Review Feedback Scorecard for the paid order
+    # 2. Fetch the delivered Expert Review Feedback Scorecard
     fb_res = await client.get(
         f"/v1/expert-review/orders/{order_id}/feedback/",
         headers=headers_a,

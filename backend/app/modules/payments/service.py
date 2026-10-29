@@ -16,6 +16,7 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
+from app.modules.notifications import NotificationService
 from app.modules.payments.repository import PaymentRepository
 from app.schemas.payments import (
     MomoCreatePaymentRequest,
@@ -171,6 +172,14 @@ class PaymentService:
         elif order["package_type"] == "EXPERT_REVIEW" and order["review_order_id"]:
             await repo.mark_review_order(order["review_order_id"], "paid", f"{payload.orderId}:{payload.transId}")
         await db.commit()
+        if order["package_type"] == "EXPERT_REVIEW" and order["review_order_id"]:
+            await NotificationService(db).dispatch_event(
+                identity_id=order["identity_id"], event_type="EXPERT_ORDER_PAID",
+                title="Expert CV Review Payment Confirmed",
+                message=f"MoMo payment {payload.transId} confirmed. Your reviewer will start shortly.",
+                deep_link=f"/expert-review?order_id={order['review_order_id']}&status=paid",
+                send_email=True, category="order",
+            )
         await platform_cache.invalidate_prefix("analytics:")
 
     @staticmethod

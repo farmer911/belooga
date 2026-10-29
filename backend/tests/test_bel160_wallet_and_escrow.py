@@ -1,6 +1,6 @@
 """TDD Integration Tests for BEL-160 (#81):
 - GET /v1/wallet/, POST /v1/wallet/topup, POST /v1/wallet/pay
-- POST /v1/expert-review/orders/{order_id}/simulate-delivery & /complete
+- POST /v1/expert-review/orders/{order_id}/feedback/ (assigned expert) & /complete (buyer)
 """
 
 import pytest
@@ -14,6 +14,7 @@ async def test_wallet_topup_pay_and_expert_escrow_fulfillment_flow(
     client: AsyncClient,
     test_candidate_a: dict,
     monkeypatch: pytest.MonkeyPatch,
+    test_expert: dict,
 ):
     """Verify end-to-end Wallet ledger (topup, pay, insufficient funds guard) and Expert Escrow delivery & release."""
     headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
@@ -72,17 +73,22 @@ async def test_wallet_topup_pay_and_expert_escrow_fulfillment_flow(
     )
     assert bad_pay.status_code == 400
 
-    # 6. Simulate Expert Review Delivery -> generates detailed critique report & notification
-    sim_res = await client.post(
-        f"/v1/expert-review/orders/{order_id}/simulate-delivery",
-        json={},
-        headers=headers,
+    # 6. Completing before the expert delivers is refused (no canned feedback)
+    early = await client.post(f"/v1/expert-review/orders/{order_id}/complete", json={}, headers=headers)
+    assert early.status_code == 409
+
+    # The assigned expert delivers the review
+    await test_expert["assign"](order_id)
+    fb_res = await client.post(
+        f"/v1/expert-review/orders/{order_id}/feedback/",
+        json={
+            "score_overall": 88, "score_ats_compatibility": 90, "score_impact_action_verbs": 85,
+            "score_structure_formatting": 87, "summary_verdict": "Quantify impact in the top two roles.",
+            "strengths": ["Clear progression", "ATS-safe layout"], "improvements": ["Add latency metrics"],
+        },
+        headers=test_expert["headers"],
     )
-    assert sim_res.status_code == 200
-    sim_ord = sim_res.json()
-    assert sim_ord["feedback"] is not None
-    assert sim_ord["feedback"]["score_overall"] >= 85
-    assert "STAR" in sim_ord["feedback"]["summary_verdict"]
+    assert fb_res.status_code == 200, fb_res.text
 
     # 7. Complete Order & Release Escrow (92% Expert / 8% Platform Fee)
     comp_res = await client.post(

@@ -5,7 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.payments_support import configure_momo, signed_ipn
+from tests.payments_support import configure_momo, pay_review_order, signed_ipn
 
 
 @pytest.mark.asyncio
@@ -146,6 +146,8 @@ async def test_timeline_patch_and_awards_languages_interests_crud(
 async def test_expert_feedback_submission_and_analytics_db_revenue(
     client: AsyncClient, test_candidate_a: dict,
     test_admin: dict,
+    test_expert: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify Expert Feedback submission transitions order to completed and updates Analytics DB ledger."""
     client.headers.update(test_admin["headers"])
@@ -164,12 +166,8 @@ async def test_expert_feedback_submission_and_analytics_db_revenue(
     assert c_ord.status_code == 201
     order_id = c_ord.json()["id"]
 
-    chk = await client.post(
-        f"/v1/expert-review/orders/{order_id}/checkout/",
-        json={"payment_method": "momo_qr"},
-        headers=headers,
-    )
-    assert chk.status_code == 200
+    await pay_review_order(client, test_candidate_a["token"], order_id, monkeypatch)
+    await test_expert["assign"](order_id)
 
     # 2. Submit structured Expert Review Feedback
     fb_payload = {
@@ -181,17 +179,21 @@ async def test_expert_feedback_submission_and_analytics_db_revenue(
         "strengths": ["Quantified GPU cluster utilization gains", "Clean system architecture narrative"],
         "improvements": ["Highlight multi-region failover SLA in summary"],
     }
+    own = await client.post(f"/v1/expert-review/orders/{order_id}/feedback/", json=fb_payload, headers=headers)
+    assert own.status_code == 403  # buyers cannot review their own order
     sub_res = await client.post(
         f"/v1/expert-review/orders/{order_id}/feedback/",
         json=fb_payload,
-        headers=headers,
+        headers=test_expert["headers"],
     )
     assert sub_res.status_code == 200
     fb_data = sub_res.json()
     assert fb_data["score_overall"] == 96
     assert "vLLM throughput" in fb_data["summary_verdict"]
 
-    # 3. Verify order status is now completed
+    # 3. Buyer accepts the delivered review -> completed
+    accept = await client.post(f"/v1/expert-review/orders/{order_id}/complete", json={}, headers=headers)
+    assert accept.status_code == 200
     orders = (await client.get("/v1/expert-review/orders/my-orders/", headers=headers)).json()
     target_ord = next(o for o in orders if o["id"] == order_id)
     assert target_ord["order_status"] == "completed"

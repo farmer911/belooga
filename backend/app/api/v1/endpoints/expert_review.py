@@ -144,17 +144,6 @@ async def submit_order_feedback(
     )
 
 
-@router.post("/orders/{order_id}/simulate-delivery", response_model=CVReviewOrderResponse)
-async def simulate_expert_review_delivery(
-    order_id: uuid.UUID,
-    current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    return await ExpertReviewService(db).simulate_delivery(
-        order_id=order_id, actor_identity_id=current_user.id, actor_role=current_user.role
-    )
-
-
 @router.post("/orders/{order_id}/complete", response_model=CVReviewOrderResponse)
 async def complete_expert_review_order(
     order_id: uuid.UUID,
