@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
 from app.core.security import AuthenticatedUser
-from app.modules.cms.repository import CmsRepository, DEFAULT_BLOG_POSTS
+from app.modules.cms.repository import CmsRepository
 from app.modules.notifications import NotificationService
 from app.schemas.cms import (
     BlogCommentCreateRequest, BlogPostCreateRequest, CareerPostingCreateRequest,
@@ -58,102 +58,80 @@ class CmsService:
     async def get_faqs(self) -> List[Dict[str, Any]]:
         return STATIC_FAQS
 
-    def _format_post(self, raw: Dict[str, Any], viewer_username: Optional[str] = None) -> Dict[str, Any]:
-        post = dict(raw)
-        liked_by, comments = list(post.get("liked_by") or []), list(post.get("comments") or [])
-        post.update({"is_liked_by_me": bool(viewer_username and viewer_username in liked_by), "comments_count": len(comments), "likes_count": int(post.get("likes_count", 12))})
+    @staticmethod
+    def _format_post(row: Dict[str, Any]) -> Dict[str, Any]:
+        post = {k: v for k, v in row.items() if k != "author_identity_id"}
+        post["comments_count"] = len(post.get("comments") or [])
         return post
 
-    async def _load_all_posts(self) -> List[Dict[str, Any]]:
-        if not self.cms_repo:
-            return [dict(p) for p in DEFAULT_BLOG_POSTS]
-        persisted = await self.cms_repo.list_persisted_blog_posts()
-        by_slug = {p["slug"]: p for p in persisted if "slug" in p}
-        default_slugs = {d["slug"] for d in DEFAULT_BLOG_POSTS}
-        merged: List[Dict[str, Any]] = [p for p in persisted if p.get("slug") not in default_slugs]
-        return merged + [by_slug.get(d["slug"], dict(d)) for d in DEFAULT_BLOG_POSTS]
-
-    async def list_blog_posts(self, post_type: Optional[str] = None, viewer_username: Optional[str] = None) -> List[Dict[str, Any]]:
-        posts = await self._load_all_posts()
+    async def list_blog_posts(self, post_type: Optional[str] = None, viewer_id: Optional[uuid.UUID] = None) -> List[Dict[str, Any]]:
         t_norm = (post_type or "all").strip().lower()
-        if t_norm in ("user", "user_status"):
-            posts = [p for p in posts if p.get("post_type") == "USER_STATUS"]
-        elif t_norm == "editorial":
-            posts = [p for p in posts if p.get("post_type", "EDITORIAL") == "EDITORIAL"]
-        return [self._format_post(p, viewer_username) for p in posts]
+        pt = "USER_STATUS" if t_norm in ("user", "user_status") else "EDITORIAL" if t_norm == "editorial" else None
+        return [self._format_post(p) for p in await self.cms_repo.list_blog_posts(pt, viewer_id)]
 
-    async def get_blog_post_by_slug(self, slug: str, viewer_username: Optional[str] = None) -> Dict[str, Any]:
-        clean_slug = slug.lower().strip()
-        for post in await self._load_all_posts():
-            if post.get("slug") == clean_slug or post.get("id") == clean_slug:
-                return self._format_post(post, viewer_username)
-        raise HTTPException(status_code=404, detail=f"Blog article '{slug}' not found")
+    async def get_blog_post_by_slug(self, slug: str, viewer_id: Optional[uuid.UUID] = None) -> Dict[str, Any]:
+        row = await self.cms_repo.get_blog_post(slug.lower().strip(), viewer_id)
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Blog article '{slug}' not found")
+        return self._format_post(row)
 
-    async def create_blog_post(self, payload: BlogPostCreateRequest, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
+    async def create_blog_post(self, payload: BlogPostCreateRequest, current_user: AuthenticatedUser) -> Dict[str, Any]:
         body_text = (payload.excerpt or (payload.content[0] if payload.content else "") or payload.title or "").strip()
         if not body_text:
             raise HTTPException(status_code=400, detail="Post content cannot be empty")
-        title_text = (payload.title or body_text[:72]).strip()
-        username = current_user.username if current_user else "community_member"
+        if payload.post_type == "EDITORIAL" and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Forbidden: only admins can publish editorial posts.")
+        if payload.ats_score_badge is not None and not 0 <= payload.ats_score_badge <= 100:
+            raise HTTPException(status_code=422, detail="ats_score_badge must be between 0 and 100.")
+        title_text = (payload.title or body_text[:72]).strip()[:300]
+        username = current_user.username or current_user.email.split("@")[0]
         slug_base = re.sub(r"[^a-z0-9]+", "-", title_text.lower()).strip("-")[:36] or "status"
         slug = f"{slug_base}-{uuid.uuid4().hex[:6]}"
-        post_data: Dict[str, Any] = {
-            "id": f"post-{uuid.uuid4().hex[:8]}", "slug": slug, "title": title_text, "excerpt": body_text,
-            "date": "Vừa xong", "image": "/images/blog/blog-1.jpg", "author": username, "author_username": username,
+        await self.cms_repo.insert_blog_post({
+            "id": f"post-{uuid.uuid4().hex[:10]}", "slug": slug, "author_identity_id": current_user.id,
+            "author": username, "author_username": username,
             "author_headline": "Verified Member @ Belooga Talent Network", "author_avatar": "/images/avatar.jpg",
-            "post_type": payload.post_type if payload.post_type in ("EDITORIAL", "USER_STATUS") else "USER_STATUS",
+            "title": title_text, "excerpt": body_text, "date_label": "Vừa xong", "image": "/images/blog/blog-1.jpg",
+            "post_type": "EDITORIAL" if payload.post_type == "EDITORIAL" else "USER_STATUS",
             "category": payload.category or "Community Feed", "tags": payload.tags or ["Belooga", "Career"],
-            "ats_score_badge": payload.ats_score_badge, "read_time_minutes": 2, "likes_count": 1, "comments_count": 0,
-            "liked_by": [username], "comments": [], "content": payload.content or [body_text], "key_takeaways": [],
-        }
-        if self.cms_repo:
-            await self.cms_repo.upsert_blog_post(slug, post_data)
+            "ats_score_badge": payload.ats_score_badge, "read_time_minutes": 2, "likes_count": 0,
+            "content": payload.content or [body_text], "key_takeaways": [],
+        })
+        await self.db.commit()
         await platform_cache.invalidate_prefix("cms:")
-        return self._format_post(post_data, username)
+        return await self.get_blog_post_by_slug(slug, current_user.id)
 
-    async def toggle_like_blog_post(self, post_id: str, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
-        viewer = current_user.username if current_user else "guest_viewer"
-        target = next((p for p in await self._load_all_posts() if p.get("slug") == post_id or p.get("id") == post_id), None)
-        if not target:
+    async def _require_blog_post(self, post_id: str, viewer_id: uuid.UUID) -> Dict[str, Any]:
+        row = await self.cms_repo.get_blog_post(post_id, viewer_id)
+        if not row:
             raise HTTPException(status_code=404, detail="Blog post not found")
-        post = dict(target)
-        liked_by = list(post.get("liked_by") or [])
-        base_likes = int(post.get("likes_count", 12))
-        if viewer in liked_by:
-            liked_by = [u for u in liked_by if u != viewer]
-            post["likes_count"] = max(0, base_likes - 1)
-        else:
-            liked_by.append(viewer)
-            post["likes_count"] = base_likes + 1
-        post["liked_by"] = liked_by
-        if self.cms_repo:
-            await self.cms_repo.upsert_blog_post(post["slug"], post)
-        await platform_cache.invalidate_prefix("cms:")
-        return self._format_post(post, viewer)
+        return row
 
-    async def add_comment_blog_post(self, post_id: str, payload: BlogCommentCreateRequest, current_user: Optional[AuthenticatedUser] = None) -> Dict[str, Any]:
-        viewer = current_user.username if current_user else "community_member"
-        target = next((p for p in await self._load_all_posts() if p.get("slug") == post_id or p.get("id") == post_id), None)
-        if not target:
-            raise HTTPException(status_code=404, detail="Blog post not found")
-        post = dict(target)
-        comments = list(post.get("comments") or [])
-        comments.append({"id": f"cm-{uuid.uuid4().hex[:8]}", "author_name": viewer, "author_username": viewer, "content": payload.content.strip(), "created_at": datetime.now(timezone.utc).strftime("%H:%M")})
-        post["comments"], post["comments_count"] = comments, len(comments)
-        if self.cms_repo:
-            await self.cms_repo.upsert_blog_post(post["slug"], post)
-            author_username = post.get("author_username")
-            if author_username and self.db:
-                author_identity_id = await self.cms_repo.get_candidate_identity_by_username(author_username)
-                if author_identity_id:
-                    await NotificationService(self.db).dispatch_event(
-                        identity_id=author_identity_id, event_type="COMMUNITY_POST_COMMENT",
-                        title=f"@{viewer} đã bình luận bài viết của bạn",
-                        message=payload.content.strip()[:160], deep_link=f"/blog/{post['slug']}",
-                        send_email=False, category="general",
-                    )
+    async def toggle_like_blog_post(self, post_id: str, current_user: AuthenticatedUser) -> Dict[str, Any]:
+        post = await self._require_blog_post(post_id, current_user.id)
+        await self.cms_repo.toggle_blog_like(post["id"], current_user.id)
+        await self.db.commit()
         await platform_cache.invalidate_prefix("cms:")
-        return self._format_post(post, viewer)
+        return self._format_post(await self._require_blog_post(post["id"], current_user.id))
+
+    async def add_comment_blog_post(self, post_id: str, payload: BlogCommentCreateRequest, current_user: AuthenticatedUser) -> Dict[str, Any]:
+        post = await self._require_blog_post(post_id, current_user.id)
+        viewer = current_user.username or current_user.email.split("@")[0]
+        content = payload.content.strip()
+        if not content:
+            raise HTTPException(status_code=422, detail="Comment cannot be empty")
+        await self.cms_repo.add_blog_comment(post["id"], current_user.id, viewer, content)
+        author_id = post.get("author_identity_id")
+        if author_id and author_id != current_user.id:
+            await NotificationService(self.db).dispatch_event(
+                identity_id=author_id, event_type="COMMUNITY_POST_COMMENT",
+                title=f"@{viewer} đã bình luận bài viết của bạn",
+                message=content[:160], deep_link=f"/blog/{post['slug']}",
+                send_email=False, category="general", auto_commit=False,
+            )
+        await self.db.commit()  # comment + notification land together
+        await platform_cache.invalidate_prefix("cms:")
+        return self._format_post(await self._require_blog_post(post["id"], current_user.id))
 
     async def get_seo_sitemap_data(self) -> Dict[str, Any]:
         async def _compute() -> Dict[str, Any]:
@@ -171,14 +149,12 @@ class CmsService:
         location: Optional[str] = None, q: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         async def _compute() -> List[Dict[str, Any]]:
-            if not self.cms_repo:
-                return DEFAULT_CAREER_JOBS
             jobs = await self.cms_repo.list_active_career_jobs()
             if len(jobs) < 3:
                 await self.cms_repo.seed_default_career_postings(DEFAULT_CAREER_JOBS)
                 await self.db.commit()
                 jobs = await self.cms_repo.list_active_career_jobs()
-            return jobs if jobs else DEFAULT_CAREER_JOBS
+            return jobs
 
         all_jobs = await _compute() if os.getenv("ENVIRONMENT") == "testing" else await platform_cache.get_or_set("cms:career_jobs", 60, _compute)
         out = [dict(j) for j in all_jobs]
@@ -203,8 +179,9 @@ class CmsService:
         return out
 
     async def create_career_job(
-        self, payload: CareerPostingCreateRequest, current_user: Optional[AuthenticatedUser] = None
+        self, payload: CareerPostingCreateRequest, current_user: AuthenticatedUser
     ) -> Dict[str, Any]:
+        is_admin = current_user.role == "admin"
         desc = (payload.description or payload.job_description or "").strip() or "Join a high-velocity engineering and product team."
         skills = payload.skills or payload.skills_required or ["FastAPI", "Next.js", "PostgreSQL"]
         meta = {
@@ -213,9 +190,9 @@ class CmsService:
             "company_website": payload.company_website,
             "salary_range": (payload.salary_range or "Negotiable").strip(),
             "skills": skills,
-            "is_partner": payload.is_partner,
-            "is_system_role": payload.is_system_role,
-            "posted_by_identity_id": str(current_user.id) if current_user else None,
+            "is_partner": payload.is_partner if is_admin else True,
+            "is_system_role": payload.is_system_role if is_admin else False,
+            "posted_by_identity_id": current_user.id,
         }
         created = await self.cms_repo.create_career_posting(
             title=payload.title.strip(), department=(payload.department or "Engineering").strip(),
@@ -256,28 +233,31 @@ class CmsService:
             job_id=target_uuid, applicant_name=payload.applicant_name.strip(),
             applicant_email=payload.applicant_email.lower().strip(), resume_url=payload.resume_url.strip(),
         )
-        cand_id = current_user.id if current_user else await self.cms_repo.get_candidate_identity_by_username(payload.applicant_name.lower().replace(" ", ""))
+        cand_id = current_user.id if current_user else None
         comp_name = (matched_job or {}).get("company_name") or "Belooga"
         pos_title = (matched_job or {}).get("title") or "Software Engineer"
         sal_range = (matched_job or {}).get("salary_range") or "Negotiable"
         loc_str = (matched_job or {}).get("location") or "Remote"
-        tracker_id = await self.cms_repo.sync_career_application_to_tracker(cand_id, comp_name, pos_title, sal_range, loc_str)
-        if cand_id and self.db:
+        tracker_id = None
+        if cand_id:
+            tracker_id = await self.cms_repo.sync_career_application_to_tracker(cand_id, comp_name, pos_title, sal_range, loc_str)
             await NotificationService(self.db).dispatch_event(
                 identity_id=cand_id, event_type="CAREER_APPLICATION_SUBMITTED",
                 title=f"Đã ứng tuyển 1-Click: {pos_title} @ {comp_name}",
                 message=f"Hồ sơ của bạn đã gửi tới {comp_name} và tự động đồng bộ vào Kanban Job Tracker.",
-                deep_link="/workspace/jobs", send_email=False, category="system",
+                deep_link="/workspace/jobs", send_email=False, category="system", auto_commit=False,
             )
         await self.db.commit()
         return {"message": "Application submitted successfully.", "id": str(app_id), "tracker_synced": bool(tracker_id), "tracker_item_id": tracker_id}
 
-    async def report_candidate_profile(self, user_id: uuid.UUID, payload: ReportProfileRequest) -> Dict[str, str]:
+    async def report_candidate_profile(
+        self, user_id: uuid.UUID, payload: ReportProfileRequest, reporter_identity_id: uuid.UUID
+    ) -> Dict[str, str]:
         reason = payload.reason.strip()
         if not reason:
             raise HTTPException(status_code=400, detail="Report reason cannot be empty")
         if not await self.cms_repo.check_candidate_exists(user_id):
             raise HTTPException(status_code=404, detail="Candidate profile not found")
-        report_id = await self.cms_repo.create_profile_report(reported_profile_id=user_id, reason=reason)
+        report_id = await self.cms_repo.create_profile_report(reported_profile_id=user_id, reason=reason, reporter_identity_id=reporter_identity_id)
         await self.db.commit()
         return {"message": "Candidate profile reported. Our trust and safety team will investigate.", "id": str(report_id)}

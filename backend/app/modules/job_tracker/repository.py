@@ -1,7 +1,5 @@
 """Repository Layer for Domain 11: Candidate Job Applications Tracker (Kanban) (Vertical Module: job_tracker)."""
 
-from datetime import datetime, timezone
-import json
 import uuid
 from typing import Any, Dict, List, Optional
 from fastapi import HTTPException, status
@@ -15,20 +13,12 @@ class JobTrackerRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def resolve_demo_identity_id(self) -> Optional[uuid.UUID]:
-        res = await self.db.execute(
-            text("SELECT id FROM identities WHERE email = 'alex@belooga.com' LIMIT 1")
+    async def list_jobs(self, candidate_identity_id: uuid.UUID) -> List[CandidateJobApplicationTracker]:
+        query = (
+            select(CandidateJobApplicationTracker)
+            .where(CandidateJobApplicationTracker.candidate_identity_id == candidate_identity_id)
+            .order_by(CandidateJobApplicationTracker.created_at.desc())
         )
-        return res.scalar_one_or_none()
-
-    async def list_jobs(self, candidate_identity_id: Optional[uuid.UUID] = None) -> List[CandidateJobApplicationTracker]:
-        target_id = candidate_identity_id or await self.resolve_demo_identity_id()
-        query = select(CandidateJobApplicationTracker)
-        if target_id:
-            query = query.where(CandidateJobApplicationTracker.candidate_identity_id == target_id)
-        else:
-            query = query.where(CandidateJobApplicationTracker.candidate_identity_id.is_(None))
-        query = query.order_by(CandidateJobApplicationTracker.created_at.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
@@ -47,8 +37,10 @@ class JobTrackerRepository:
         interview_date: Optional[object] = None,
         notes: Optional[str] = None,
         candidate_identity_id: Optional[uuid.UUID] = None,
+        commit: bool = True,
     ) -> CandidateJobApplicationTracker:
-        target_id = candidate_identity_id or await self.resolve_demo_identity_id()
+        if candidate_identity_id is None:
+            raise ValueError("candidate_identity_id is required")
         job = CandidateJobApplicationTracker(
             company_name=company_name,
             position_title=position_title,
@@ -57,51 +49,40 @@ class JobTrackerRepository:
             match_score=match_score,
             interview_date=interview_date,
             notes=notes,
-            candidate_identity_id=target_id,
+            candidate_identity_id=candidate_identity_id,
         )
         self.db.add(job)
-        await self.db.commit()
-        await self.db.refresh(job)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(job)
+        else:
+            await self.db.flush()
+            await self.db.refresh(job)
         return job
 
-    async def get_career_goal(self, candidate_identity_id: Optional[uuid.UUID] = None) -> Dict[str, Any]:
-        target_id = candidate_identity_id or await self.resolve_demo_identity_id()
-        key_tag = f"CAREER_GOAL:{target_id or 'anon'}"
-        res = await self.db.execute(text("SELECT id, message FROM contact_inquiries WHERE name = :k LIMIT 1"), {"k": key_tag})
-        row = res.fetchone()
-        if row and row.message:
-            return json.loads(row.message)
-        return {
-            "id": f"goal-{str(target_id or 'default')[:8]}",
-            "target_role": "Senior Backend / Golang Engineer",
-            "target_salary": "55.000.000 VNĐ",
-            "preferred_skills": "Golang, PostgreSQL, Kubernetes, System Design",
-            "location": "Ho Chi Minh / Remote",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
+    _GOAL_COLS = "target_role, target_salary, preferred_skills, location, updated_at"
 
-    async def upsert_career_goal(self, payload: Dict[str, Any], candidate_identity_id: Optional[uuid.UUID] = None) -> Dict[str, Any]:
-        target_id = candidate_identity_id or await self.resolve_demo_identity_id()
-        key_tag = f"CAREER_GOAL:{target_id or 'anon'}"
-        goal_data = {
-            "id": f"goal-{str(target_id or 'default')[:8]}",
-            "target_role": payload.get("target_role") or "Senior Backend Engineer",
-            "target_salary": payload.get("target_salary") or "55.000.000 VNĐ",
-            "preferred_skills": payload.get("preferred_skills") or "Golang, PostgreSQL, Kubernetes",
-            "location": payload.get("location") or "Ho Chi Minh / Remote",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-        msg = json.dumps(goal_data, ensure_ascii=False)
-        existing = (await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :k LIMIT 1"), {"k": key_tag})).fetchone()
-        if existing:
-            await self.db.execute(text("UPDATE contact_inquiries SET message = :m WHERE id = :id"), {"m": msg, "id": existing.id})
-        else:
-            await self.db.execute(
-                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :k, 'goal@belooga.internal', :m)"),
-                {"id": uuid.uuid4(), "k": key_tag, "m": msg},
-            )
+    async def get_career_goal(self, candidate_identity_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+        res = await self.db.execute(
+            text(f"SELECT {self._GOAL_COLS} FROM career_goals WHERE identity_id = :iid"), {"iid": candidate_identity_id}
+        )
+        row = res.mappings().first()
+        return dict(row) if row else None
+
+    async def upsert_career_goal(self, candidate_identity_id: uuid.UUID, goal: Dict[str, Any]) -> Dict[str, Any]:
+        res = await self.db.execute(
+            text(f"""
+                INSERT INTO career_goals (identity_id, target_role, target_salary, preferred_skills, location, updated_at)
+                VALUES (:iid, :target_role, :target_salary, :preferred_skills, :location, NOW())
+                ON CONFLICT (identity_id) DO UPDATE SET
+                    target_role = EXCLUDED.target_role, target_salary = EXCLUDED.target_salary,
+                    preferred_skills = EXCLUDED.preferred_skills, location = EXCLUDED.location, updated_at = NOW()
+                RETURNING {self._GOAL_COLS}
+            """),
+            {"iid": candidate_identity_id, **goal},
+        )
         await self.db.commit()
-        return goal_data
+        return dict(res.mappings().one())
 
     @staticmethod
     def _enforce_owner(

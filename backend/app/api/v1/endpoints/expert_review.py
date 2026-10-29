@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
+from app.core.security import AuthenticatedUser, get_current_user
 from app.modules.expert_review import ExpertLeaderboardService, ExpertReviewService
 from app.schemas.expert_review import (
     CVReviewFeedbackResponse,
@@ -46,20 +46,20 @@ async def get_expert_leaderboard(
 @router.post("/apply", response_model=RegisteredExpertApplicationDTO, status_code=status.HTTP_201_CREATED)
 async def apply_become_expert_reviewer(
     payload: ExpertApplicationRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """BEL-203: Register or update Expert Reviewer profile in PostgreSQL."""
-    return await ExpertLeaderboardService(db).apply_expert(current_user.id if current_user else None, payload)
+    return await ExpertLeaderboardService(db).apply_expert(current_user.id, payload)
 
 
 @router.get("/me", response_model=Optional[RegisteredExpertApplicationDTO])
 async def get_my_expert_reviewer_profile(
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """BEL-203: Retrieve current user's registered Expert Reviewer profile."""
-    return await ExpertLeaderboardService(db).get_my_expert_application(current_user.id if current_user else None)
+    return await ExpertLeaderboardService(db).get_my_expert_application(current_user.id)
 
 
 

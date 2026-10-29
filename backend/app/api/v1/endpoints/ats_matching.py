@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import AuthenticatedUser, get_current_user_optional
+from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.ats_matching import ATSMatchingService
 from app.schemas.ats_matching import (
     ATSScanHistoryItem,
@@ -38,22 +38,22 @@ async def scan_and_match_cv_jd(
 @router.post("/tailor-cv", response_model=ATSTailorResponse, status_code=status.HTTP_200_OK)
 async def tailor_cv(
     request: ATSScanRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Rewrite weak CV bullets with quantified STAR metrics, inject missing JD skills, and persist re-scored match."""
-    candidate_id = current_user.id if current_user else None
+    candidate_id = current_user.id
     service = ATSMatchingService(db)
     return await service.tailor_cv(request=request, candidate_identity_id=candidate_id)
 
 
 @router.get("/history", response_model=List[ATSScanHistoryItem])
 async def list_ats_scan_history(
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List recent ATS scan history from PostgreSQL."""
-    candidate_id = current_user.id if current_user else None
+    """List the caller's own recent ATS scans."""
+    candidate_id = current_user.id
     service = ATSMatchingService(db)
     return await service.list_scan_history(candidate_identity_id=candidate_id)
 
@@ -61,7 +61,7 @@ async def list_ats_scan_history(
 @router.post("/talent-shortlist", response_model=TalentShortlistResponse)
 async def generate_recruiter_talent_shortlist(
     request: TalentShortlistRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Rank and shortlist verified candidates against a target JD using GIN search_vector + video pitch readiness."""

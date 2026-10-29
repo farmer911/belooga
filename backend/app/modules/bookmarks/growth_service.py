@@ -3,6 +3,7 @@
 import re
 import uuid
 from typing import List, Optional
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.bookmarks.repository import BookmarkRepository
@@ -179,43 +180,33 @@ class GrowthService:
         sid = payload.slot_id or f"ref-{uuid.uuid4().hex[:6]}"
         return ReferralRequestResponse(id=sid, slot_id=sid, status="REQUESTED")
 
+    @staticmethod
+    def _roast_dto(row: dict) -> CvRoastResponse:
+        return CvRoastResponse(**row, upvotes=row["votes"])
+
     async def list_cv_roasts(self) -> List[CvRoastResponse]:
-        rows = await self.repo.list_growth_rows("CV_ROAST")
-        if not rows:
-            seed = {
-                "id": "roast-1", "alias": "Anonymous Senior Go #402", "target_role": "Staff Backend @ Fintech",
-                "summary": "7 năm Go/K8s nhưng mô tả dự án toàn liệt kê trách nhiệm, thiếu metrics P99/RPS.",
-                "votes": 24, "upvotes": 24, "ai_roast": "AI Roast: Hãy thay các câu liệt kê nhiệm vụ bằng % giảm độ trễ P99.",
-            }
-            await self.repo.upsert_growth_row("CV_ROAST", "roast-1", seed)
-            rows = [seed]
-        return [CvRoastResponse(**r) for r in rows]
+        return [self._roast_dto(r) for r in await self.repo.list_cv_roasts()]
 
-    async def submit_cv_roast(self, payload: CvRoastRequest) -> CvRoastResponse:
-        rid = f"roast-{uuid.uuid4().hex[:6]}"
+    async def submit_cv_roast(self, payload: CvRoastRequest, author_identity_id: uuid.UUID) -> CvRoastResponse:
         summary_txt = (payload.summary or payload.cv_snippet or "CV cần tối ưu hóa động từ STAR và định lượng kết quả.").strip()
-        item = {
-            "id": rid, "alias": payload.anonymous_handle or "Anonymous Candidate #808",
+        row = await self.repo.create_cv_roast({
+            "id": f"roast-{uuid.uuid4().hex[:10]}",
+            "author_identity_id": author_identity_id,
+            "alias": (payload.anonymous_handle or "Anonymous Candidate").strip()[:120],
             "target_role": payload.target_role or "Senior Backend Engineer",
-            "summary": summary_txt, "votes": 12, "upvotes": 12,
+            "summary": summary_txt,
             "ai_roast": "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng hoặc độ trễ P99 tiết kiệm được.",
-        }
-        await self.repo.upsert_growth_row("CV_ROAST", rid, item)
-        return CvRoastResponse(**item)
+            "votes": 0,
+        })
+        await self.db.commit()
+        return self._roast_dto(row)
 
-    async def vote_cv_roast(self, roast_id: str) -> CvRoastResponse:
-        roasts = await self.list_cv_roasts()
-        target = next((r.model_dump() for r in roasts if r.id == roast_id), None)
-        if not target:
-            target = {
-                "id": roast_id, "alias": "Anonymous Senior Go #402", "target_role": "Senior Engineer",
-                "summary": "CV Roast Community Post", "votes": 12, "upvotes": 12,
-                "ai_roast": "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng.",
-            }
-        target["votes"] = int(target.get("votes", 12)) + 1
-        target["upvotes"] = target["votes"]
-        await self.repo.upsert_growth_row("CV_ROAST", roast_id, target)
-        return CvRoastResponse(**target)
+    async def vote_cv_roast(self, roast_id: str, identity_id: uuid.UUID) -> CvRoastResponse:
+        row = await self.repo.vote_cv_roast(roast_id, identity_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="CV roast not found.")
+        await self.db.commit()
+        return self._roast_dto(row)
 
     async def list_expert_mock_slots(self) -> List[ExpertMockSlotDTO]:
         return [
@@ -237,26 +228,36 @@ class GrowthService:
         amt = 100000 if payload.reward_id == "rew-2" else 50000
         return ClaimRewardResponse(reward_id=payload.reward_id, credited_vnd=amt)
 
-    async def list_reverse_bids(self) -> List[ReverseBidResponse]:
-        rows = await self.repo.list_growth_rows("REVERSE_BID")
-        if not rows:
-            seed = {
-                "id": "bid-1", "username": "phucnguyen", "candidate_username": "phucnguyen",
-                "role": "Staff Distributed Systems Engineer", "salary_usd": 4200,
-                "salary_offer_usd": 4200, "offered_salary_usd": 4200, "status": "SENT",
-            }
-            await self.repo.upsert_growth_row("REVERSE_BID", "bid-1", seed)
-            rows = [seed]
-        return [ReverseBidResponse(**r) for r in rows]
+    @staticmethod
+    def _bid_dto(row: dict) -> ReverseBidResponse:
+        uname, usd = row["candidate_username"], row["salary_usd"]
+        return ReverseBidResponse(
+            id=row["id"], username=uname, candidate_username=uname, role=row["role"],
+            salary_usd=usd, salary_offer_usd=usd, offered_salary_usd=usd, status=row["status"],
+        )
 
-    async def create_reverse_bid(self, payload: ReverseBidRequest) -> ReverseBidResponse:
-        uname = (payload.username or payload.candidate_username or "phucnguyen").strip()
-        usd = int(payload.salary_usd or payload.offered_salary_usd or payload.salary_offer_usd or 3800)
-        bid_id = f"bid-{uuid.uuid4().hex[:6]}"
-        item = {
-            "id": bid_id, "username": uname, "candidate_username": uname,
+    async def list_reverse_bids(self, identity_id: uuid.UUID, username: str) -> List[ReverseBidResponse]:
+        """Bids the caller sent (recruiter) or received (candidate username)."""
+        return [self._bid_dto(r) for r in await self.repo.list_reverse_bids(identity_id, username)]
+
+    async def create_reverse_bid(self, payload: ReverseBidRequest, recruiter_identity_id: uuid.UUID) -> ReverseBidResponse:
+        uname = (payload.candidate_username or payload.username or "").strip().lstrip("@")
+        if not uname:
+            raise HTTPException(status_code=422, detail="candidate_username is required.")
+        usd = int(payload.salary_usd or payload.offered_salary_usd or payload.salary_offer_usd or 0)
+        if usd <= 0:
+            raise HTTPException(status_code=422, detail="salary_usd must be a positive amount.")
+        cand = await self.repo.get_visible_candidate(uname)
+        if not cand or cand.get("is_hidden"):
+            raise HTTPException(status_code=404, detail="Candidate profile not found or hidden.")
+        row = await self.repo.create_reverse_bid({
+            "id": f"bid-{uuid.uuid4().hex[:10]}",
+            "rid": recruiter_identity_id,
+            "candidate_username": cand["username"],
             "role": payload.role or "Staff Software Engineer",
-            "salary_usd": usd, "salary_offer_usd": usd, "offered_salary_usd": usd, "status": "SENT",
-        }
-        await self.repo.upsert_growth_row("REVERSE_BID", bid_id, item)
-        return ReverseBidResponse(**item)
+            "company_name": payload.company_name or "",
+            "salary_usd": usd,
+            "pitch_note": payload.pitch_note or "",
+        })
+        await self.db.commit()
+        return self._bid_dto(row)

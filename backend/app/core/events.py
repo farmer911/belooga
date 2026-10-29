@@ -17,8 +17,10 @@ from typing import Any, Awaitable, Callable, Deque, Dict, List, Tuple
 import uuid
 import zlib
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
+
+from app.core.security import require_role
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,8 @@ EventHandler = Callable[[Dict[str, Any]], Awaitable[None]]
 
 
 class PublishEventRequest(BaseModel):
-    event_type: str = Field(..., min_length=2, max_length=64)
+    # Upper-snake domain event names only (e.g. USER_POST_COMMENT); free text is rejected with 422.
+    event_type: str = Field(..., min_length=2, max_length=64, pattern=r"^[A-Z][A-Z0-9_]*$")
     partition_key: str = Field(..., min_length=1, max_length=128)
     payload: Dict[str, Any] = Field(default_factory=dict)
 
@@ -176,15 +179,16 @@ event_stream.subscribe("platform-telemetry-group", _default_audit_telemetry_cons
 router = APIRouter(prefix="/events", tags=["Partitioned Event Stream & DLQ"])
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(require_role("admin"))])
 async def get_event_stream_status():
     """Inspect Kafka-style partition offsets, consumer lag, and Dead-Letter Queue (DLQ) telemetry."""
     return event_stream.get_status()
 
 
-@router.post("/publish")
+@router.post("/publish", dependencies=[Depends(require_role("admin"))])
 async def publish_domain_event(req: PublishEventRequest):
-    """Publish a partitioned domain event and flush micro-batch consumer group."""
+    """Admin/ops-only: publish a partitioned domain event and flush micro-batch consumer group.
+    Domain services publish in-process via `event_stream.publish`; this HTTP hook is for operational replay/testing."""
     envelope = event_stream.publish(
         event_type=req.event_type,
         partition_key=req.partition_key,
