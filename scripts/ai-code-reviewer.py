@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """
-Belooga AI Code Reviewer Agent (Powered by Gemini)
-Inspects git diffs against GEMINI.md invariants, Ponytail principles,
-security boundaries, and async safety. Posts findings to GitHub Step Summary,
-and PR comments.
+Belooga Domain-Specialized AI Code Reviewer Agents (Backend / Frontend / Mobile)
+Partitions git diffs by domain, loads domain-specific review skills
+(be-code-review/SKILL.md, fe-code-review/SKILL.md), posts domain review reports
+to GitHub PR comments + Step Summary, and exits 1 on CHANGES REQUESTED.
 """
 
 import json
 import os
+import re
 import subprocess
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 from gemini_client import generate
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 GEMINI_MD = ROOT_DIR / "GEMINI.md"
+BE_REVIEW_SKILL = ROOT_DIR / ".agents" / "skills" / "be-code-review" / "SKILL.md"
+FE_REVIEW_SKILL = ROOT_DIR / ".agents" / "skills" / "fe-code-review" / "SKILL.md"
+
 
 def get_git_diff() -> str:
     """Extract git diff for the current commit or pull request."""
@@ -39,9 +43,11 @@ def get_git_diff() -> str:
     try:
         diff_output = subprocess.check_output(diff_cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8")
     except subprocess.CalledProcessError:
-        # Fallback to single commit diff
         try:
-            diff_output = subprocess.check_output(["git", "show", "HEAD", "--stat", "--patch"], cwd=str(ROOT_DIR), text=True, encoding="utf-8")
+            diff_output = subprocess.check_output(
+                ["git", "show", "HEAD", "--stat", "--patch"],
+                cwd=str(ROOT_DIR), text=True, encoding="utf-8",
+            )
         except Exception as e:
             print(f"[!] Could not obtain git diff: {e}")
             diff_output = ""
@@ -49,11 +55,60 @@ def get_git_diff() -> str:
     return diff_output
 
 
+def partition_diff_by_domain(diff_text: str) -> dict[str, str]:
+    """Split a unified git diff into backend, frontend, mobile, and other chunks."""
+    buckets: dict[str, list[str]] = {"backend": [], "frontend": [], "mobile": [], "other": []}
+    if not diff_text:
+        return {k: "" for k in buckets}
+
+    chunks = re.split(r"(?=^diff --git )", diff_text, flags=re.MULTILINE)
+    for chunk in chunks:
+        if not chunk.strip():
+            continue
+        first_line = chunk.splitlines()[0]
+        m = re.match(r"^diff --git a/(\S+)\s+b/(\S+)", first_line)
+        rel_path = m.group(2) if m else ""
+        if rel_path.startswith(("backend/", "scripts/")):
+            buckets["backend"].append(chunk)
+        elif rel_path.startswith("frontend/"):
+            buckets["frontend"].append(chunk)
+        elif rel_path.startswith("mobile/"):
+            buckets["mobile"].append(chunk)
+        else:
+            buckets["other"].append(chunk)
+
+    return {k: "".join(v) for k, v in buckets.items()}
+
+
 def read_project_rules() -> str:
     """Read the always-on rules from GEMINI.md."""
     if GEMINI_MD.exists():
         return GEMINI_MD.read_text(encoding="utf-8")
     return "Enforce clean code, async safety, zero mock fallbacks, and valid tests."
+
+
+def read_domain_review_rules(domain: str) -> str:
+    """Load the dedicated BE / FE / Mobile adversarial code review skill."""
+    norm = domain.lower().strip()
+    if norm == "backend" and BE_REVIEW_SKILL.exists():
+        return BE_REVIEW_SKILL.read_text(encoding="utf-8")
+    if norm == "frontend" and FE_REVIEW_SKILL.exists():
+        return FE_REVIEW_SKILL.read_text(encoding="utf-8")
+    if norm == "mobile":
+        return (
+            "name: mobile-code-review\n"
+            "- Enforce Expo SDK 58 + React Native 0.88 TypeScript strictness, @tanstack/react-query, "
+            "expo-secure-store for tokens, and zero mock/fallback arrays."
+        )
+    return read_project_rules()
+
+
+def has_blocking_verdict(review_markdown: str) -> bool:
+    """Return True if the AI Reviewer issued a blocking CHANGES REQUESTED verdict."""
+    for line in review_markdown.splitlines():
+        if "Verdict:" in line and "CHANGES REQUESTED" in line.upper():
+            return True
+    return False
 
 
 def post_github_comment(review_text: str):
@@ -71,13 +126,12 @@ def post_github_comment(review_text: str):
         "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github.v3+json",
         "Content-Type": "application/json",
-        "User-Agent": "Belooga-AI-Reviewer"
+        "User-Agent": "Belooga-AI-Reviewer",
     }
 
     url = None
     payload = {"body": review_text}
 
-    # 1. Pull Request Comment
     if event_name == "pull_request" and event_path and os.path.exists(event_path):
         try:
             with open(event_path, "r", encoding="utf-8") as f:
@@ -110,10 +164,54 @@ def write_step_summary(review_text: str):
         try:
             with open(summary_path, "a", encoding="utf-8") as f:
                 f.write(review_text)
-                f.write("\n\n---\n*Automated review generated by Belooga AI Code Reviewer Agent (Gemini 2.0)*\n")
-            print(f"[✓] Wrote AI review to GITHUB_STEP_SUMMARY.")
+                f.write("\n\n---\n*Automated review generated by Belooga Domain AI Code Reviewer Agent*\n")
+            print("[✓] Wrote AI review to GITHUB_STEP_SUMMARY.")
         except Exception as e:
             print(f"[!] Could not write to GITHUB_STEP_SUMMARY: {e}")
+
+
+def review_single_domain(api_key: str, domain: str, domain_diff: str, project_rules: str) -> str:
+    """Execute the specialized review agent for a single domain (backend, frontend, mobile)."""
+    truncated = False
+    if len(domain_diff) > 50000:
+        domain_diff = domain_diff[:50000] + "\n\n... [Diff truncated for AI review] ..."
+        truncated = True
+
+    domain_skill = read_domain_review_rules(domain)
+    domain_label = domain.upper()
+
+    prompt = f"""
+You are the Belooga Staff Principal {domain_label} AI Code Reviewer Agent.
+Perform an uncompromising, accurate code review on the {domain_label} git diff below.
+
+### PROJECT GROUND TRUTH & LAWS (GEMINI.md)
+{project_rules}
+
+### DOMAIN REVIEW SKILL ({domain_label})
+{domain_skill}
+
+### GIT DIFF TO REVIEW ({domain_label})
+```diff
+{domain_diff}
+```
+{"Note: Diff was truncated due to length." if truncated else ""}
+
+### OUTPUT FORMAT REQUIREMENTS
+Format your response in GitHub-flavored Markdown:
+## 🤖 Belooga {domain_label} AI Code Review Report
+
+### 🎯 Verdict: [PASS ✅ | WARNINGS ⚠️ | CHANGES REQUESTED 🛑]
+(Issue CHANGES REQUESTED 🛑 ONLY for actual bugs, IDOR/security holes, blocking async calls, mock/fallback violations, or broken contracts.)
+
+### 📋 Executive Summary
+(2-3 concise bullet points)
+
+### 🔍 Domain Checklist ({domain_label})
+- **Architecture & Layering:**
+- **Security, IDOR & Data Integrity:**
+- **Performance & Ponytail Minimalism:**
+"""
+    return generate(api_key, prompt, max_tokens=3072, timeout=45) or ""
 
 
 def main():
@@ -122,82 +220,54 @@ def main():
         print("[-] GEMINI_API_KEY is not set. Skipping AI review.")
         sys.exit(0)
 
-    diff = get_git_diff()
-    if not diff or len(diff.strip()) < 10:
+    requested_domain = os.getenv("REVIEW_DOMAIN", "all").lower().strip()
+    if len(sys.argv) > 1 and sys.argv[1] in ("backend", "frontend", "mobile", "all"):
+        requested_domain = sys.argv[1]
+
+    full_diff = get_git_diff()
+    if not full_diff or len(full_diff.strip()) < 10:
         print("[*] No code changes detected in diff. Nothing to review.")
         sys.exit(0)
 
-    # Truncate diff if extremely large to prevent token exhaustion (> 60,000 chars)
-    truncated = False
-    if len(diff) > 60000:
-        diff = diff[:60000] + "\n\n... [Diff truncated for AI review] ..."
-        truncated = True
+    partitions = partition_diff_by_domain(full_diff)
+    project_rules = read_project_rules()
 
-    rules = read_project_rules()
+    domains_to_run = (
+        [requested_domain]
+        if requested_domain in ("backend", "frontend", "mobile")
+        else [d for d in ("backend", "frontend", "mobile") if partitions.get(d, "").strip()]
+    )
 
-    prompt = f"""
-You are the Belooga Staff Principal AI Code Reviewer.
-Your role is to perform an uncompromising, constructive, and accurate code review on the git diff below.
+    if not domains_to_run:
+        if requested_domain in ("backend", "frontend", "mobile"):
+            print(f"[*] No {requested_domain} changes in this PR. Skipping {requested_domain} review agent.")
+            sys.exit(0)
+        domains_to_run = ["other"]
 
-### PROJECT GROUND TRUTH & LAWS (GEMINI.md)
-{rules}
+    blocking = False
+    for dom in domains_to_run:
+        dom_diff = partitions.get(dom, "") or full_diff
+        if not dom_diff.strip():
+            continue
+        print(f"[*] Running Dedicated {dom.upper()} AI Code Review Agent...")
+        try:
+            report = review_single_domain(api_key, dom, dom_diff, project_rules)
+        except Exception as e:
+            print(f"[!] {dom.upper()} AI Review failed: {e}")
+            continue
+        if not report:
+            continue
+        print("\n" + "=" * 60)
+        print(report)
+        print("=" * 60 + "\n")
+        write_step_summary(report)
+        post_github_comment(report)
+        if has_blocking_verdict(report):
+            blocking = True
 
-### ABSOLUTE REVIEW CRITERIA
-1. **Rule 1: Never edit legacy/**: Any modification to files inside legacy/ is strictly prohibited.
-2. **Rule 2: No Fake Success UI**: Stubs or buttons with fake toasts without real backend endpoints are prohibited.
-3. **Rule 3: Async Event Loop Safety**: Never use synchronous blocking I/O (`open()`, `doc.build()`, etc.) inside async endpoints. Must use `asyncio.to_thread`.
-4. **Rule 4: Search Conformance (ADR-005)**: Never use unindexed search fallbacks (`OR ILIKE` on search queries). Must rely on PostgreSQL GIN `search_vector`.
-5. **Rule 5: No Proof = Not Done**: New endpoints or bug fixes must include tests.
-6. **Ponytail Simplicity**: The best code is minimal, robust, and borrows from existing patterns. Reject speculative abstractions and unnecessary dependencies.
-7. **Security & IDOR**: Mutations must check authenticated user ownership. PII (email, phone) must not leak to anonymous users.
-
-### GIT DIFF TO REVIEW
-```diff
-{diff}
-```
-{"Note: Diff was truncated due to length." if truncated else ""}
-
-### OUTPUT FORMAT REQUIREMENTS
-Format your entire response in clear GitHub-flavored Markdown:
-## 🤖 Belooga AI Code Review Report
-
-### 🎯 Verdict: [PASS ✅ | WARNINGS ⚠️ | CHANGES REQUESTED 🛑]
-(One-sentence executive verdict summarizing code safety and readiness)
-
-### 📋 Executive Summary
-(2-3 bullet points summarizing what this change introduces and overall engineering quality)
-
-### 🔍 Detailed Analysis
-- **Architecture & Rules Compliance:** (Check against GEMINI.md 5 Prohibitions)
-- **Security & Integrity:** (IDOR, PII leakage, input validation)
-- **Performance & Async Safety:** (Event loop non-blocking, database indexing)
-- **Code Simplicity (Ponytail):** (Over-engineering check, minimal diff)
-
-### 💡 Specific Suggestions & Improvements
-(Point to specific files/lines if any, with concise code snippets if applicable)
-"""
-
-    print("[*] Querying Gemini AI for code review analysis...")
-    try:
-        review_markdown = generate(api_key, prompt, max_tokens=4096, timeout=45)
-    except Exception as e:
-        print(f"[!] AI Review failed: {e}")
-        sys.exit(0)  # Do not block the build if API has temporary outage
-
-    if not review_markdown:
-        print("[!] No review content returned from Gemini.")
-        sys.exit(0)
-
-    # Output to console
-    print("\n" + "=" * 60)
-    print(review_markdown)
-    print("=" * 60 + "\n")
-
-    # Write to Step Summary
-    write_step_summary(review_markdown)
-
-    # Post comment to GitHub
-    post_github_comment(review_markdown)
+    if blocking:
+        print("[!] Blocking verdict (CHANGES REQUESTED) detected by AI Review Agent.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

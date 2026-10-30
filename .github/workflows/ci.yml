@@ -14,14 +14,12 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Backend line-coverage floor enforced by pytest-cov. "0" = report only.
-  # The lead sets this to the measured baseline; raise it, never lower it.
   COV_MIN: "75"
   BUN_VERSION: "1.4.4"
 
 jobs:
   audit-and-test:
-    name: SSOT Ground Truth & Test Verification
+    name: SSOT Ground Truth & Fast Build Verification
     runs-on: ubuntu-latest
 
     services:
@@ -71,11 +69,10 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Install Frontend, Mobile & QC Dependencies (frozen lockfiles)
+      - name: Install Frontend & Mobile Dependencies (frozen lockfiles)
         run: |
           (cd frontend && bun install --frozen-lockfile)
           (cd mobile && bun install --frozen-lockfile)
-          (cd qc && bun install --frozen-lockfile && bun x playwright install --with-deps chromium)
 
       - name: Initialize Database Schema & Seed Data
         run: |
@@ -85,8 +82,6 @@ jobs:
           backend/.venv/bin/python scripts/seed-data.py
           DATABASE_URL="postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_test" backend/.venv/bin/python scripts/seed-data.py
 
-      # initdb.sql builds the test DBs above; this step proves the Alembic chain
-      # alone can build the schema from empty and has exactly one head.
       - name: Alembic Migrations From Empty DB (single head)
         env:
           DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_migrate_check"
@@ -104,7 +99,7 @@ jobs:
       - name: Run Master SSOT Truth Auditor
         env:
           CI: "true"
-          AUDIT_SKIP_PYTEST: "1" # pytest runs once, with coverage, in the next step
+          AUDIT_SKIP_PYTEST: "1"
         run: |
           bash scripts/audit-truth.sh
 
@@ -128,33 +123,6 @@ jobs:
           bun run lint
           bun run test --ci
 
-      - name: Run Playwright E2E Automation Suite
-        env:
-          CI: "true"
-          DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_db"
-          REDIS_URL: "redis://localhost:6379/0"
-          CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080"
-          # The whole suite logs in from one IP; the default 30/min auth limit is exercised by pytest instead.
-          RATE_LIMIT_AUTH_RPM: "1000"
-        run: |
-          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/uvicorn-8000.log 2>&1 &)
-          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 > /tmp/uvicorn-8080.log 2>&1 &)
-          for port in 8000 8080; do
-            for i in $(seq 1 60); do
-              if curl -fsS "http://localhost:${port}/health/ready" > /dev/null; then
-                echo "backend :${port} ready after ${i}s"
-                break
-              fi
-              if [ "$i" -eq 60 ]; then
-                echo "::error::backend :${port} not ready after 60s"
-                cat "/tmp/uvicorn-${port}.log"
-                exit 1
-              fi
-              sleep 1
-            done
-          done
-          cd qc && bun run test:e2e:chromium
-
       - name: Verify Zero State Drift (Generator must match repo)
         run: |
           python3 scripts/generate-current-state.py
@@ -176,8 +144,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      # pip-audit has no severity filter (PyPI advisories carry none), so any known
-      # vulnerability blocks. Accept a specific risk with --ignore-vuln <ID> + a comment.
       - name: Python Dependency Audit (pip-audit)
         run: |
           python3 -m pip install --upgrade pip pip-audit
@@ -188,7 +154,6 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      # Blocks on high/critical advisories in production dependencies.
       - name: Frontend Dependency Audit (bun audit)
         working-directory: frontend
         run: bun audit --audit-level=high --production
@@ -225,3 +190,112 @@ jobs:
           tags: belooga-frontend:ci
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+
+  # Post-merge Track 1: Automated E2E Suite (runs in parallel with QC Manual after merge to main)
+  automation-e2e:
+    name: Post-Merge Automation E2E Suite
+    if: github.event_name == 'push'
+    needs: [audit-and-test, docker]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: belooga
+          POSTGRES_PASSWORD: belooga_secret_password
+          POSTGRES_DB: belooga_db
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Backend Runtime
+        run: |
+          python3 -m venv backend/.venv
+          backend/.venv/bin/pip install --upgrade pip
+          backend/.venv/bin/pip install -r backend/requirements.txt
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install Frontend & QC Playwright Dependencies
+        run: |
+          (cd frontend && bun install --frozen-lockfile)
+          (cd qc && bun install --frozen-lockfile && bun x playwright install --with-deps chromium)
+
+      - name: Seed Isolated Automation Database
+        run: |
+          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_db -f backend/initdb.sql
+          backend/.venv/bin/python scripts/seed-data.py
+
+      - name: Run Playwright E2E Automation Suite
+        env:
+          CI: "true"
+          DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_db"
+          REDIS_URL: "redis://localhost:6379/0"
+          CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080"
+          RATE_LIMIT_AUTH_RPM: "1000"
+        run: |
+          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/uvicorn-8000.log 2>&1 &)
+          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 > /tmp/uvicorn-8080.log 2>&1 &)
+          for port in 8000 8080; do
+            for i in $(seq 1 60); do
+              if curl -fsS "http://localhost:${port}/health/ready" > /dev/null; then
+                echo "backend :${port} ready after ${i}s"
+                break
+              fi
+              if [ "$i" -eq 60 ]; then
+                echo "::error::backend :${port} not ready after 60s"
+                cat "/tmp/uvicorn-${port}.log"
+                exit 1
+              fi
+              sleep 1
+            done
+          done
+          cd qc && bun run test:e2e:chromium
+
+  # Post-merge Track 2: QC Manual Exploratory & Visual Gate (runs in parallel with Automation E2E)
+  qc-manual-gate:
+    name: Post-Merge QC Manual Verification Dispatch
+    if: github.event_name == 'push'
+    needs: [audit-and-test, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Publish QC Manual Verification Manifest
+        run: |
+          {
+            echo "## 🧪 Post-Merge QC Manual Verification Ready"
+            echo "- **Merged Commit:** \`${GITHUB_SHA}\`"
+            echo "- **Parallel Track 1:** \`Post-Merge Automation E2E Suite\` (Playwright Chromium)"
+            echo "- **Parallel Track 2:** \`QC Manual Verification\` (Kanban \`Testing\` Column)"
+            echo "- **Manual QC Checklist:** Verify live visual layout, 375px mobile parity, Dark Mode contrast, and interactive flows per \`.agents/workflows/visual-verify.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"

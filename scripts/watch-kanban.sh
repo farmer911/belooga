@@ -36,24 +36,14 @@ def trusted_issues(label, limit):
 
 if role == "qc":
     testing_issues = trusted_issues("status:testing", 50)
-    prs = gh_json(["pr", "list", "--state", "open", "--limit", "50", "--json", "number,title,headRefName,mergeable,statusCheckRollup"])
+    runs = gh_json(["run", "list", "--branch", "main", "--limit", "5", "--json", "databaseId,name,status,conclusion,headSha"])
     actionable = []
-    for pr in prs:
-        checks = pr.get("statusCheckRollup") or []
-        in_prog = [c for c in checks if c.get("status") != "COMPLETED"]
-        failed = [c for c in checks if c.get("conclusion") not in ("SUCCESS", "NEUTRAL", "SKIPPED", "")]
-        mergeable = pr.get("mergeable")
-        if checks and not in_prog and not failed and mergeable == "MERGEABLE":
-            actionable.append(f"PR #{pr['number']} ({pr['headRefName']}) ALL CI GREEN & MERGEABLE -> Verify & Merge")
+    for run in runs:
+        if run.get("name") == "Belooga SSOT & Integrity CI" and run.get("status") == "completed":
+            if run.get("conclusion") not in ("success", "neutral", "skipped"):
+                actionable.append(f"Post-Merge Automation CI Run #{run['databaseId']} FAILED on main ({run.get('headSha', '')[:7]}) -> File regression or revert")
     for iss in testing_issues:
-        # Check if there is a matching PR with still-running checks
-        matching_pr = next((p for p in prs if f"#{iss['number']}" in p.get("title", "") or ("BEL-" in iss.get("title", "") and iss["title"].split("]")[0].strip("[") in p.get("headRefName", ""))), None)
-        if matching_pr:
-            checks = matching_pr.get("statusCheckRollup") or []
-            in_prog = [c for c in checks if c.get("status") != "COMPLETED"]
-            if not checks or in_prog:
-                continue
-        actionable.append(f"Testing Issue #{iss['number']}: {iss['title']}")
+        actionable.append(f"Post-Merge QC Manual & Automation Verification -> Testing Issue #{iss['number']}: {iss['title']}")
     if actionable:
         print("\n".join(actionable))
         sys.exit(0)
@@ -66,13 +56,28 @@ else:
         "architect": {"Architect", "role:architect"},
     }
     target_labels = label_map.get(role, {role})
-    todo = []
+    actionable = []
+
+    # Priority 0: Open PRs with failing AI Review Agent or Build checks that need immediate fixes on the agent's worktree
+    prs = gh_json(["pr", "list", "--state", "open", "--limit", "30", "--json", "number,title,headRefName,mergeable,statusCheckRollup"])
+    for pr in prs:
+        if str(pr.get("headRefName", "")).startswith("dependabot/"):
+            continue
+        checks = pr.get("statusCheckRollup") or []
+        in_prog = [c for c in checks if c.get("status") != "COMPLETED"]
+        failed = [c for c in checks if c.get("conclusion") not in ("SUCCESS", "NEUTRAL", "SKIPPED", "")]
+        if failed and not in_prog:
+            actionable.append(f"PR #{pr['number']} ({pr['headRefName']}) FAILED Review/Build -> Fix on worktree")
+        elif checks and not in_prog and not failed and pr.get("mergeable") == "MERGEABLE":
+            actionable.append(f"PR #{pr['number']} ({pr['headRefName']}) Review & Fast Build GREEN -> Merge to main & move ticket to Testing")
+
+    # Priority 1: Todo tickets matching the agent's role
     for iss in trusted_issues("status:todo", 60):
         names = {l.get("name") for l in (iss.get("labels") or [])}
         if names & target_labels:
-            todo.append(f"Issue #{iss['number']}: {iss['title']}")
-    if todo:
-        print("\n".join(todo))
+            actionable.append(f"Issue #{iss['number']}: {iss['title']} -> Dispatch isolated worktree")
+    if actionable:
+        print("\n".join(actionable))
         sys.exit(0)
 
 sys.exit(1)
