@@ -167,7 +167,7 @@ export async function createMobileReferralRequest(
 }
 
 export async function fetchCompanyInterviewQuestions(slug = "stripe", client: MobileApiClient = mobileApiClient) {
-  return client.get<Array<{ id: string; question: string; difficulty: string }>>(
+  return client.get<{ id: string; question: string; difficulty: string }[]>(
     `/v1/companies/${encodeURIComponent(slug)}/interview-questions`
   );
 }

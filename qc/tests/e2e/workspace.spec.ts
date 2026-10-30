@@ -183,7 +183,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
           name: 'test_pitch.webm',
           mimeType: 'video/webm',
           // Small synthetic webm video payload created earlier in container or valid stream
-          buffer: Buffer.from('GkXfo59ChoEBQveBAULygQ8t84M2qksb7bW7'),
+          buffer: Buffer.from('GkXfo59ChoEBQveBAULygQ8t84M2qksb7bW7', 'base64'), // EBML (WebM) magic header
         },
       },
     });
@@ -204,7 +204,7 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     expect(completeRes.status()).toBe(200);
     const completeJson = await completeRes.json();
     expect(completeJson.status).toBe('completed');
-    expect(completeJson.video_url).toContain('/uploads/videos/alexnguyen_pitch');
+    expect(completeJson.video_url).toMatch(/\/uploads\/videos\/[0-9a-f]{32}_pitch/); // server-generated name, never the client filename
     expect(completeJson.poster_url).toBeDefined();
 
     // 7. Verify profile API now reflects the auto-generated video pitch & poster

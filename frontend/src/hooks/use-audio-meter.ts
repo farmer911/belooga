@@ -33,7 +33,6 @@ export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean
               src.connect(analyser);
             } catch (err: unknown) {
               console.warn("AudioMeter stream source notice:", err);
-              setAudioMeterLevel(0);
             }
           }
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -57,12 +56,10 @@ export function useAudioMeter(mediaStream: MediaStream | null, isActive: boolean
         }
       } catch (err: unknown) {
         console.warn("AudioMeter initialization notice:", err);
-        setAudioMeterLevel(0);
       }
-    } else {
-      setAudioMeterLevel(0);
     }
   }, [mediaStream, isActive]);
 
-  return audioMeterLevel;
+  // Inactive meters read 0 without a synchronous setState in the effect.
+  return isActive ? audioMeterLevel : 0;
 }

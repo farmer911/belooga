@@ -8,7 +8,8 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_salary_benchmark_historical_series_and_crawler(client: AsyncClient):
+async def test_salary_benchmark_historical_series_and_crawler(client: AsyncClient, test_admin: dict):
+    client.headers.update(test_admin["headers"])
     # 1. Fetch full historical series (2024 -> 2026)
     res_all = await client.get(
         "/v1/catalogs/salary-benchmark?role=backend&tech_stack=Golang&level=Senior&location=Ho%20Chi%20Minh&year=all"

@@ -122,16 +122,15 @@ class ATSMatchingService:
         star_critiques = self._analyze_star_bullets(request.cv_text)
         focus_skills = ", ".join((missing or jd_skills or cv_skills or ["Python", "PostgreSQL"])[:4])
         weak_map = {
-            c["original_text"]: f"• Engineered and scaled {focus_skills} services ({c['original_text']}), handling 45,000+ RPS, reducing p95 latency by 38% and maintaining 99.99% SLA."
+            c["original_text"]: f"• Engineered and optimized {focus_skills} workflows ({c['original_text']})."
             for c in star_critiques
         }
         rewritten = [weak_map.get(ln.strip("-•* \t"), ln) for ln in request.cv_text.splitlines() if ln.strip()]
-        rewritten.append(f"• Engineered and scaled {focus_skills} services handling 45,000+ RPS, reducing p95 latency by 38% and maintaining 99.99% SLA.")
         if missing:
-            rewritten.append(f"• Architected and deployed {', '.join(missing)} infrastructure, increasing throughput by 42% across 10,000+ active users.")
+            rewritten.append(f"• Target Role Alignment ({request.job_title}): {', '.join(missing)}.")
         all_skills = sorted(set(cv_skills + jd_skills))
         if all_skills:
-            rewritten.append(f"• Implemented Core Technical Stack: {', '.join(all_skills)} reducing incident rate by 35%.")
+            rewritten.append(f"• Core Technical Stack: {', '.join(all_skills)}.")
         tailored_cv_text = "\n".join(rewritten)
         scan_result = await self.scan_and_match(
             ATSScanRequest(job_title=request.job_title, company_name=request.company_name, jd_text=request.jd_text, cv_text=tailored_cv_text),
@@ -139,7 +138,7 @@ class ATSMatchingService:
         )
         return ATSTailorResponse(tailored_cv_text=tailored_cv_text, scan_result=scan_result)
 
-    async def list_scan_history(self, candidate_identity_id: Optional[uuid.UUID] = None) -> List[ATSScanHistoryItem]:
+    async def list_scan_history(self, candidate_identity_id: uuid.UUID) -> List[ATSScanHistoryItem]:
         return [ATSScanHistoryItem(**r) for r in await self.repo.list_scan_history(candidate_identity_id=candidate_identity_id, limit=20)]
 
     async def generate_talent_shortlist(self, request: TalentShortlistRequest) -> TalentShortlistResponse:

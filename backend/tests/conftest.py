@@ -112,3 +112,48 @@ async def test_candidate_b(db_session: AsyncSession):
 
     token = create_access_token({"sub": str(uid), "username": username, "email": email, "role": "candidate"})
     return {"id": uid, "profile_id": pid, "username": username, "email": email, "token": token}
+
+
+@pytest_asyncio.fixture
+async def test_admin(db_session: AsyncSession):
+    """Creates an admin identity (admin-only analytics and moderation routes)."""
+    uid = uuid.uuid4()
+    email = f"admin_{uuid.uuid4().hex[:6]}@test.com"
+    await db_session.execute(
+        text("INSERT INTO identities (id, email, password_hash, role, status) VALUES (:id, :email, 'hash', 'admin', 'active')"),
+        {"id": uid, "email": email},
+    )
+    await db_session.commit()
+    token = create_access_token({"sub": str(uid), "username": "admin", "email": email, "role": "admin"})
+    return {"id": uid, "email": email, "token": token, "headers": {"Authorization": f"Bearer {token}"}}
+
+
+@pytest_asyncio.fixture
+async def candidate_headers(test_candidate_a: dict) -> dict:
+    return {"Authorization": f"Bearer {test_candidate_a['token']}"}
+
+
+@pytest_asyncio.fixture
+async def test_expert(db_session: AsyncSession):
+    """An expert identity with an active expert_profiles row; use assign(order_id) to make them the reviewer."""
+    uid, eid = uuid.uuid4(), uuid.uuid4()
+    email = f"expert_{uuid.uuid4().hex[:6]}@test.com"
+    await db_session.execute(
+        text("INSERT INTO identities (id, email, password_hash, role, status) VALUES (:id, :email, 'hash', 'expert', 'active')"),
+        {"id": uid, "email": email},
+    )
+    await db_session.execute(
+        text("""INSERT INTO expert_profiles (id, identity_id, full_name, headline, bio, company, role_category)
+                VALUES (:eid, :uid, 'Test Expert', 'Staff Engineer', 'Reviews CVs', 'Test Co', 'backend')"""),
+        {"eid": eid, "uid": uid},
+    )
+    await db_session.commit()
+    token = create_access_token({"sub": str(uid), "username": "expert", "email": email, "role": "expert"})
+
+    async def assign(order_id: str) -> None:
+        await db_session.execute(
+            text("UPDATE cv_review_orders SET expert_id = :eid WHERE id = :oid"), {"eid": eid, "oid": uuid.UUID(order_id)}
+        )
+        await db_session.commit()
+
+    return {"id": uid, "expert_id": eid, "headers": {"Authorization": f"Bearer {token}"}, "assign": assign}

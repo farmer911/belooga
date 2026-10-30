@@ -67,7 +67,7 @@ async def test_user_posts_crud_idor_like_and_comments(
     # 5. Like & Comment via POST /v1/posts/{post_id}/like and /comments
     like_res = await client.post(f"/v1/posts/{post_id}/like", headers=headers_b)
     assert like_res.status_code == 200
-    assert like_res.json()["likes_count"] >= 2
+    assert like_res.json()["likes_count"] == 1  # only B liked it
 
     comment_res = await client.post(
         f"/v1/posts/{post_id}/comments",

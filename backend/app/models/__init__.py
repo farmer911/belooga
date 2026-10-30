@@ -60,6 +60,30 @@ from app.models.notifications import (
 from app.models.bookmarks import (
     CandidateBookmark,
 )
+from app.models.community import (
+    RecruiterPipelineItem,
+    ReverseBid,
+    CvRoast,
+    CvRoastVote,
+    SalaryCrawlRun,
+    CompanyProfile,
+    CompanyReview,
+    CompanyInterviewQuestion,
+    CareerPostingMeta,
+    BlogPost,
+    BlogPostLike,
+    BlogPostComment,
+    UserPost,
+    UserPostLike,
+    UserPostComment,
+    ExpertApplication,
+    CareerGoal,
+)
+from app.models.payments import (
+    PaymentOrder,
+    Wallet,
+    WalletTransaction,
+)
 
 __all__ = [
     "Base",
@@ -98,4 +122,24 @@ __all__ = [
     "Notification",
     "NotificationPreference",
     "CandidateBookmark",
+    "Wallet",
+    "WalletTransaction",
+    "PaymentOrder",
+    "RecruiterPipelineItem",
+    "ReverseBid",
+    "CvRoast",
+    "CvRoastVote",
+    "SalaryCrawlRun",
+    "CompanyProfile",
+    "CompanyReview",
+    "CompanyInterviewQuestion",
+    "CareerPostingMeta",
+    "BlogPost",
+    "BlogPostLike",
+    "BlogPostComment",
+    "UserPost",
+    "UserPostLike",
+    "UserPostComment",
+    "ExpertApplication",
+    "CareerGoal",
 ]

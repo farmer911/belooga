@@ -40,7 +40,8 @@ function SearchContent() {
   const [searchFallbackNotice, setSearchFallbackNotice] = useState<string | null>(null);
   const { bookmarks, isBookmarked, isPendingFor, toggleBookmark, removeBookmark } = useBookmarks();
 
-  useEffect(() => { setQuery(initialKey); }, [initialKey]);
+  const [syncedKey, setSyncedKey] = useState(initialKey);
+  if (syncedKey !== initialKey) { setSyncedKey(initialKey); setQuery(initialKey); } // URL ?key= changed (back/forward)
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query.trim()), 300);
     return () => clearTimeout(timer);

@@ -23,7 +23,7 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_20_high_attraction_growth_apis(
-    client: AsyncClient, test_candidate_a: dict
+    client: AsyncClient, test_candidate_a: dict, test_candidate_b: dict
 ):
     auth_headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
     # 1. Mock Interview Evaluator
@@ -121,7 +121,7 @@ async def test_20_high_attraction_growth_apis(
         headers=auth_headers,
     )
     assert roast_res.status_code == 200
-    assert roast_res.json()["upvotes"] >= 1
+    assert roast_res.json()["upvotes"] == 0  # a new roast has no votes yet
 
     book_res = await client.post(
         "/v1/growth/expert-mock-booking",
@@ -139,7 +139,7 @@ async def test_20_high_attraction_growth_apis(
 
     # 8. Company Interview Questions & Recruiter Reverse Offer Bid
     iq_post = await client.post(
-        "/v1/companies/vng-corporation/interview-questions",
+        "/v1/companies/vng-cloud/interview-questions",
         json={
             "role_title": "Principal Golang Engineer",
             "difficulty": "Hard",
@@ -150,13 +150,13 @@ async def test_20_high_attraction_growth_apis(
     )
     assert iq_post.status_code in (200, 201)
 
-    iq_get = await client.get("/v1/companies/vng-corporation/interview-questions")
+    iq_get = await client.get("/v1/companies/vng-cloud/interview-questions")
     assert iq_get.status_code == 200
     assert len(iq_get.json()) >= 2
 
     bid_res = await client.post(
         "/v1/recruiter/reverse-bids",
-        json={"candidate_username": "phucnguyen", "offered_salary_usd": 4200},
+        json={"candidate_username": test_candidate_b["username"], "offered_salary_usd": 4200},
         headers=auth_headers,
     )
     assert bid_res.status_code in (200, 201)

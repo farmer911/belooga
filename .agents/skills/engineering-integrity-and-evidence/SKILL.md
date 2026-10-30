@@ -60,7 +60,7 @@ description: Mandatory core engineering integrity protocol enforcing zero-halluc
 ## 4. Legacy Parity & Anti-Pollution (Sole Authoritative Source)
 
 1. **Literal Asset Provenance:**
-   - Always extract exact assets, class names, and layout styles directly from `$LEGACY_DIR` (configured in `.env.example`, default `../Beloga-CV`).
+   - Always extract exact assets, class names, and layout styles directly from the read-only in-repo `legacy/` (or `$LEGACY_DIR` if set to an upstream checkout).
    - If an asset is unavailable or corrupt, state explicitly: *"The asset `<path>` is missing from the repository."* Ask the user to provide it.
 2. **Zero Global CSS Pollution:**
    - NEVER assign dimensions (`height`, `width`), layout, or background styles to generic behavior/trigger classes (such as `.modal-trigger`, `.modal-instance`, `.modal-start`).

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import AuthenticatedUser, get_current_user_optional
+from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.cms import CmsService, UserPostsService
 from app.schemas.cms import (
     BlogCommentCreateRequest,
@@ -46,14 +46,14 @@ async def list_blog_posts(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    viewer = current_user.username if current_user else None
-    return await CmsService(db).list_blog_posts(post_type=type, viewer_username=viewer)
+    viewer = current_user.id if current_user else None
+    return await CmsService(db).list_blog_posts(post_type=type, viewer_id=viewer)
 
 
 @router.post("/blog/posts/", response_model=BlogPostResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 8: Public CMS & Moderation"])
 async def create_blog_post(
     payload: BlogPostCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CmsService(db).create_blog_post(payload=payload, current_user=current_user)
@@ -65,14 +65,14 @@ async def get_blog_post_detail(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    viewer = current_user.username if current_user else None
-    return await CmsService(db).get_blog_post_by_slug(slug, viewer_username=viewer)
+    viewer = current_user.id if current_user else None
+    return await CmsService(db).get_blog_post_by_slug(slug, viewer_id=viewer)
 
 
 @router.post("/blog/posts/{post_id}/like", response_model=BlogPostResponse, tags=["Domain 8: Public CMS & Moderation"])
 async def toggle_like_blog_post(
     post_id: str,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CmsService(db).toggle_like_blog_post(post_id=post_id, current_user=current_user)
@@ -82,7 +82,7 @@ async def toggle_like_blog_post(
 async def add_comment_blog_post(
     post_id: str,
     payload: BlogCommentCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CmsService(db).add_comment_blog_post(post_id=post_id, payload=payload, current_user=current_user)
@@ -107,7 +107,7 @@ async def list_careers(
 @router.post("/careers/", response_model=CareerPostingResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 8: Public CMS & Moderation"])
 async def create_career_posting(
     payload: CareerPostingCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CmsService(db).create_career_job(payload=payload, current_user=current_user)
@@ -137,7 +137,7 @@ async def list_career_jobs(
 @router.post("/career/jobs/", response_model=CareerPostingResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 8: Public CMS & Moderation"])
 async def create_career_job_alias(
     payload: CareerPostingCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CmsService(db).create_career_job(payload=payload, current_user=current_user)
@@ -157,9 +157,10 @@ async def apply_career_job(
 async def report_candidate_profile(
     user_id: uuid.UUID,
     payload: ReportProfileRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await CmsService(db).report_candidate_profile(user_id, payload)
+    return await CmsService(db).report_candidate_profile(user_id, payload, reporter_identity_id=current_user.id)
 
 
 @router.get("/posts/", response_model=List[UserPostItemDTO], tags=["Domain 8: Public CMS & Moderation"])
@@ -181,7 +182,7 @@ async def list_user_posts_by_username(
 @router.post("/posts/", response_model=UserPostItemDTO, status_code=status.HTTP_201_CREATED, tags=["Domain 8: Public CMS & Moderation"])
 async def create_user_post(
     payload: UserPostCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await UserPostsService(db).create_post(payload=payload, current_user=current_user)
@@ -191,7 +192,7 @@ async def create_user_post(
 async def update_user_post(
     post_id: str,
     payload: UserPostUpdateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await UserPostsService(db).update_post(post_id=post_id, payload=payload, current_user=current_user)
@@ -200,7 +201,7 @@ async def update_user_post(
 @router.delete("/posts/{post_id}", response_model=Dict[str, str], tags=["Domain 8: Public CMS & Moderation"])
 async def delete_user_post(
     post_id: str,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await UserPostsService(db).delete_post(post_id=post_id, current_user=current_user)
@@ -209,7 +210,7 @@ async def delete_user_post(
 @router.post("/posts/{post_id}/like", response_model=UserPostItemDTO, tags=["Domain 8: Public CMS & Moderation"])
 async def like_user_post(
     post_id: str,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await UserPostsService(db).like_post(post_id=post_id, current_user=current_user)
@@ -219,7 +220,7 @@ async def like_user_post(
 async def comment_user_post(
     post_id: str,
     payload: BlogCommentCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await UserPostsService(db).comment_post(post_id=post_id, payload=payload, current_user=current_user)

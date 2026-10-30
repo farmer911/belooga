@@ -30,7 +30,7 @@ export interface UserPostItem {
 interface QuickPostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  username?: string;
+  username: string;
   authorName?: string;
   editingPost?: UserPostItem | null;
 }
@@ -38,7 +38,7 @@ interface QuickPostModalProps {
 export function QuickPostModal({
   isOpen,
   onClose,
-  username = "phucnguyen",
+  username,
   authorName = "Belooga Member",
   editingPost = null,
 }: QuickPostModalProps) {
@@ -49,7 +49,10 @@ export function QuickPostModal({
   const [tagsText, setTagsText] = useState(editingPost?.tags?.join(", ") ?? "Python, FastAPI, React 19");
   const [link, setLink] = useState(editingPost?.attachment_link ?? "");
 
-  React.useEffect(() => {
+  // Reset the form when the edited post changes or the modal re-opens (adjusted during render, not in an effect).
+  const [syncedFor, setSyncedFor] = useState({ editingPost, isOpen });
+  if (syncedFor.editingPost !== editingPost || syncedFor.isOpen !== isOpen) {
+    setSyncedFor({ editingPost, isOpen });
     if (editingPost) {
       setTitle(editingPost.title);
       setCategory(editingPost.category);
@@ -61,7 +64,7 @@ export function QuickPostModal({
       setBody("");
       setLink("");
     }
-  }, [editingPost, isOpen]);
+  }
 
   const submitMutation = useMutation({
     mutationFn: async () => {

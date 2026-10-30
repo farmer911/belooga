@@ -1,9 +1,8 @@
 """Expert Reviewer Ranking & Leaderboard Engine Service (BEL-199 — Vertical Module: expert_review)."""
 
 from typing import Any, Dict, List, Optional
-import json
 import uuid
-from sqlalchemy import text
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import platform_cache
@@ -144,51 +143,27 @@ class ExpertLeaderboardService:
             item["rank"] = idx + 1
         return [RankedExpertItemDTO(**i) for i in items]
 
-    async def apply_expert(
-        self, identity_id: Optional[uuid.UUID], payload: ExpertApplicationRequest
-    ) -> RegisteredExpertApplicationDTO:
+    async def apply_expert(self, identity_id: uuid.UUID, payload: ExpertApplicationRequest) -> RegisteredExpertApplicationDTO:
         data = payload.model_dump()
+        if data["years_experience"] < 0 or data["turnaround_hours"] <= 0 or data["hourly_rate_vnd"] < 0:
+            raise HTTPException(status_code=422, detail="years_experience/hourly_rate_vnd must be >= 0 and turnaround_hours > 0.")
         exp = await self.repo.upsert_registered_expert(identity_id, data)
-        data["id"] = str(exp.id)
-        key_name = f"EXPERT_APP:{identity_id or 'default'}"
-        msg = json.dumps(data, ensure_ascii=False)
-        existing = (
-            await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :n LIMIT 1"), {"n": key_name})
-        ).fetchone()
-        if existing:
-            await self.db.execute(text("UPDATE contact_inquiries SET message = :m WHERE id = :id"), {"m": msg, "id": existing.id})
-        else:
-            await self.db.execute(
-                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :n, 'expert@belooga.internal', :m)"),
-                {"id": uuid.uuid4(), "n": key_name, "m": msg},
-            )
-        await self.db.commit()
+        saved = await self.repo.upsert_expert_application(identity_id, exp.id, data)
+        await NotificationService(self.db).dispatch_event(
+            identity_id=identity_id,
+            event_type="EXPERT_PROFILE_ACTIVATED",
+            title=f"Hồ sơ Chuyên gia {payload.full_name} đã kích hoạt!",
+            message=f"Bạn đã hiển thị trên Bảng xếp hạng Chuyên gia ({payload.role_title} @ {payload.company_name}).",
+            deep_link="/expert-review",
+            send_email=True,
+            category="system",
+            auto_commit=False,
+        )
+        await self.db.commit()  # expert profile + application + notification in one transaction
         await platform_cache.invalidate_prefix("expert_")
-        if identity_id:
-            await NotificationService(self.db).dispatch_event(
-                identity_id=identity_id,
-                event_type="EXPERT_PROFILE_ACTIVATED",
-                title=f"Hồ sơ Chuyên gia {payload.full_name} đã kích hoạt!",
-                message=f"Bạn đã hiển thị trên Bảng xếp hạng Chuyên gia ({payload.role_title} @ {payload.company_name}).",
-                deep_link="/expert-review",
-                send_email=True,
-                category="system",
-            )
-        return RegisteredExpertApplicationDTO(**data)
+        return RegisteredExpertApplicationDTO(**saved)
 
-    async def get_my_expert_application(
-        self, identity_id: Optional[uuid.UUID]
-    ) -> Optional[RegisteredExpertApplicationDTO]:
-        key_name = f"EXPERT_APP:{identity_id or 'default'}"
-        row = (
-            await self.db.execute(text("SELECT message FROM contact_inquiries WHERE name = :n LIMIT 1"), {"n": key_name})
-        ).fetchone()
-        if row and row.message:
-            return RegisteredExpertApplicationDTO(**json.loads(row.message))
-        any_row = (
-            await self.db.execute(text("SELECT message FROM contact_inquiries WHERE name LIKE 'EXPERT_APP:%' ORDER BY created_at DESC LIMIT 1"))
-        ).fetchone()
-        if any_row and any_row.message:
-            return RegisteredExpertApplicationDTO(**json.loads(any_row.message))
-        return None
-
+    async def get_my_expert_application(self, identity_id: uuid.UUID) -> Optional[RegisteredExpertApplicationDTO]:
+        """Only the caller's own application; None when they never applied (no fallback to other users)."""
+        row = await self.repo.get_expert_application(identity_id)
+        return RegisteredExpertApplicationDTO(**row) if row else None

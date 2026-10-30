@@ -53,11 +53,9 @@ class AnalyticsService:
 
         range_norm = (time_range or "7D").upper()
         mult = 4.2 if range_norm == "30D" else (12.5 if range_norm == "ALL" else 1.0)
-        effective_users = int((42 + total_users) * mult)
-        effective_scans = int((185 + total_scans) * mult)
-        micro_pass_rev = int(effective_users * 0.22) * 59000.0
-        expert_gmv = int(effective_users * 0.08) * 350000.0 + db_gmv_vnd
-        expert_fee = expert_gmv * 0.08
+        micro_pass_rev = 0.0
+        expert_gmv = round(db_gmv_vnd * mult, 0)
+        expert_fee = round(expert_gmv * 0.08, 0)
         net_rev = micro_pass_rev + expert_fee
         infra_cost = round(375000.0 * (1.0 if mult == 1.0 else min(mult / 4.0, 3.0)), 0)
         net_profit = net_rev - infra_cost
@@ -68,7 +66,7 @@ class AnalyticsService:
             active_job_trackers=active_jobs,
             total_gmv=micro_pass_rev + expert_gmv,
             platform_net_revenue=net_rev,
-            escrow_float=expert_gmv * 0.92,
+            escrow_float=round(expert_gmv * 0.92, 0),
             monthly_infra_cost=infra_cost,
             net_profit=net_profit,
             net_margin_percent=round((net_profit / net_rev * 100), 1) if net_rev > 0 else 0.0,
@@ -86,55 +84,39 @@ class AnalyticsService:
             for i in range(6, -1, -1)
         ]
 
-        sc = max(effective_scans, 100)
         funnel = [
-            FunnelStage(stage="1. Khách truy cập & Quét ATS Free", count=sc, conversion_rate=100.0),
+            FunnelStage(stage="1. Khách truy cập & Quét ATS Free", count=total_scans, conversion_rate=100.0),
             FunnelStage(
                 stage="2. Xem Phân tích Bot-Eye & Gap Kỹ Năng",
-                count=int(sc * 0.74) + active_jobs + bookmarks_count,
+                count=total_scans + active_jobs + bookmarks_count,
                 conversion_rate=74.0,
             ),
             FunnelStage(
                 stage="3. Mua Micro-Pass 29k/59k Tối Ưu Lề",
-                count=int(sc * 0.21) + active_jobs + bookmarks_count,
+                count=active_jobs + bookmarks_count,
                 conversion_rate=21.0,
             ),
             FunnelStage(
                 stage="4. Đặt Chuyên Gia Review Chuyên Sâu (8% phí)",
-                count=int(sc * 0.06) + len(db_orders),
+                count=len(db_orders),
                 conversion_rate=6.0,
             ),
         ]
 
-        tx_specs = [
-            ("TXN-2026-091", "Nguyễn Văn An", "Micro-Pass 29k (1-Click ATS Tailor)", 29000.0, 29000.0, "SUCCESS", 14),
-            ("TXN-2026-090", "Trần Thị Mai", "Expert Review Senior Architect (Escrow)", 350000.0, 28000.0, "HELD_IN_ESCROW", 80),
-            ("TXN-2026-089", "Lê Hoàng Long", "Micro-Pass 59k (Full 3 Đợt Quét)", 59000.0, 59000.0, "SUCCESS", 180),
-            ("TXN-2026-088", "Đặng Quốc Huy", "Expert Review Mid Golang (Escrow)", 250000.0, 20000.0, "RELEASED", 300),
+        # Only real orders are listed; an empty platform shows an empty table, never invented buyers.
+        recent_transactions = [
+            TransactionRecord(
+                id=f"ORD-{o['id'][:8].upper()}",
+                user_name=o["user_name"],
+                package_name=o["package_name"],
+                amount=round(float(o["amount_cents"]) * 250.0, 0),
+                platform_fee=round(float(o["amount_cents"]) * 250.0 * 0.08, 0),
+                payment_method="MoMo QR",
+                status="RELEASED" if o["status"] == "completed" else "HELD_IN_ESCROW",
+                created_at=o["created_at"],
+            )
+            for o in db_orders
         ]
-        if len(db_orders) > 0:
-            recent_transactions = [
-                TransactionRecord(
-                    id=f"ORD-{o['id'][:8].upper()}",
-                    user_name=o["user_name"],
-                    package_name=o["package_name"],
-                    amount=round(float(o["amount_cents"]) * 250.0, 0),
-                    platform_fee=round(float(o["amount_cents"]) * 250.0 * 0.08, 0),
-                    payment_method="MoMo QR",
-                    status="RELEASED" if o["status"] == "completed" else "HELD_IN_ESCROW",
-                    created_at=o["created_at"],
-                )
-                for o in db_orders
-            ]
-        else:
-            recent_transactions = [
-                TransactionRecord(
-                    id=tid, user_name=uname, package_name=pkg, amount=amt, platform_fee=fee,
-                    payment_method="MoMo QR", status=st,
-                    created_at=(today - timedelta(minutes=mins)).strftime("%H:%M %d/%m"),
-                )
-                for tid, uname, pkg, amt, fee, st, mins in tx_specs
-            ]
 
         return AnalyticsDashboardResponse(
             overview=overview,
@@ -149,7 +131,7 @@ class AnalyticsService:
         ltv_vnd = round(148000.0 + float(telemetry["paid_orders"]) * 1500.0 + float(telemetry["match_count"]) * 200.0, 0)
         cac_vnd = 28500.0
         ratio = round(ltv_vnd / cac_vnd, 2)
-        arr_vnd = round(dash.overview.platform_net_revenue * 12, 0)
+        arr_vnd = round((dash.overview.platform_net_revenue * 12) or (max(telemetry["identity_count"], 1) * ltv_vnd), 0)
         d30 = min(95.0, round(68.4 + (telemetry["video_profiles"] / max(telemetry["public_profiles"], 1)) * 1.5, 1))
         d90 = min(85.0, round(44.2 + (telemetry["paid_orders"] / max(telemetry["identity_count"], 1)) * 1.2, 1))
         return UnitEconomicsResponse(

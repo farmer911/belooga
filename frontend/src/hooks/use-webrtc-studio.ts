@@ -153,6 +153,24 @@ export function useWebRTCStudio(
     }
   }, [candidateName, selectedResolution, selectedRatio, selectedDeviceId, selectedAudioDeviceId, refreshDeviceList, prompter]);
 
+  const stopRecording = useCallback(() => {
+    isRecordingRef.current = false;
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    const fb = new Blob(
+      recordedChunksRef.current.length > 0 ? recordedChunksRef.current : [new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])],
+      { type: "video/webm" }
+    );
+    setRecordedBlob((curr) => curr || fb);
+    setRecordedVideoUrl((curr) => curr || URL.createObjectURL(fb));
+  }, []);
+
   const startRecording = useCallback(() => {
     let stream = mediaStream;
     const hasLiveTracks = stream && stream.getTracks().some((t) => t.readyState === "live");
@@ -189,37 +207,16 @@ export function useWebRTCStudio(
       };
       recorder.start(1000);
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      let elapsedSeconds = 0;
       recordingTimerRef.current = setInterval(() => {
-        setRecordingSeconds((prev) => {
-          if (prev >= 299) {
-            stopRecording();
-            return 300;
-          }
-          return prev + 1;
-        });
+        elapsedSeconds += 1;
+        setRecordingSeconds(elapsedSeconds);
+        if (elapsedSeconds >= 300) stopRecording();
       }, 1000);
     } catch (e) {
       console.warn("Fallback MediaRecorder:", e);
     }
-  }, [mediaStream, selectedResolution, selectedRatio, candidateName, prompter]);
-
-  const stopRecording = useCallback(() => {
-    isRecordingRef.current = false;
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-    const fb = new Blob(
-      recordedChunksRef.current.length > 0 ? recordedChunksRef.current : [new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])],
-      { type: "video/webm" }
-    );
-    setRecordedBlob((curr) => curr || fb);
-    setRecordedVideoUrl((curr) => curr || URL.createObjectURL(fb));
-  }, []);
+  }, [mediaStream, selectedResolution, selectedRatio, candidateName, prompter, stopRecording]);
 
   const closeStudio = useCallback(() => {
     isRecordingRef.current = false;

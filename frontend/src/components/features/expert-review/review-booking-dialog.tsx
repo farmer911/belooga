@@ -4,9 +4,9 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { CreditCard, Loader2, QrCode, Upload, CheckCircle2, Wallet } from "lucide-react";
+import { Loader2, QrCode, Upload, CheckCircle2, Wallet } from "lucide-react";
 import { ReviewPackage, ExpertProfile, ReviewOrder } from "@/hooks/use-expert-review";
-import { useWallet, formatVnd } from "@/hooks/use-wallet";
+import { useWallet, formatVnd, MomoPaymentDTO } from "@/hooks/use-wallet";
 import { apiClient, getApiErrorDetail } from "@/services/api-client";
 import { uploadResume } from "@/services/media-upload.service";
 import { extractCvFileContent } from "@/lib/cv-file-parser";
@@ -19,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth-store";
 import { reviewBookingSchema, ReviewBookingFormValues } from "@/lib/schemas";
-import Image from "next/image";
 import Link from "next/link";
 
 interface ReviewBookingDialogProps {
@@ -43,12 +42,12 @@ export function ReviewBookingDialog({
   open, onOpenChange, selectedPackage, selectedExpert, packages, onSubmitOrder, onCheckout,
 }: ReviewBookingDialogProps) {
   const { isAuthenticated, user } = useAuthStore();
-  const { availableBalanceVnd, payWithWallet, topupWallet, isToppingUp } = useWallet();
+  const { availableBalanceVnd, payWithWallet } = useWallet();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<"details" | "payment">("details");
   const activePackageSlug = selectedPackage?.slug || (packages[0]?.slug ?? "pro");
   const [resumeUrl, setResumeUrl] = useState<string>("/uploads/resumes/candidate_cv.pdf");
-  const [paymentMethod, setPaymentMethod] = useState<"wallet" | "momo_qr" | "card">("wallet");
+  const [paymentMethod, setPaymentMethod] = useState<"wallet" | "momo_qr">("wallet");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -60,6 +59,8 @@ export function ReviewBookingDialog({
   });
 
   const currentPkg = packages.find((p) => p.slug === activePackageSlug) || packages[0];
+  // Same conversion the backend uses to price the order (USD cents x 250 = VND).
+  const priceVnd = (currentPkg?.price_cents ?? 0) * 250;
 
   const uploadResumeMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -82,11 +83,14 @@ export function ReviewBookingDialog({
 
   const momoQrMutation = useMutation({
     mutationFn: async () =>
-      (await apiClient.post<{ order_id: string; qr_code_url: string }>("/v1/payments/momo/create-qr", {
+      (await apiClient.post<MomoPaymentDTO>("/v1/payments/momo/create-qr", {
         package_type: "EXPERT_REVIEW",
-        amount: Math.max(10000, (currentPkg?.price_cents || 4900) * 250),
+        review_order_id: createdOrderId,
         order_info: currentPkg?.name || "Expert CV Review",
       })).data,
+    onSuccess: (data) => {
+      window.open(data.pay_url, "_blank", "noopener,noreferrer");
+    },
   });
 
   const handleNextToPayment = handleSubmit(async (values) => {
@@ -104,7 +108,6 @@ export function ReviewBookingDialog({
       });
       setCreatedOrderId(order.id);
       setStep("payment");
-      momoQrMutation.mutate();
     } catch (err: unknown) {
       setErrorMsg(getApiErrorDetail(err, "Failed to create review booking order"));
     } finally {
@@ -116,11 +119,10 @@ export function ReviewBookingDialog({
     if (!createdOrderId) return;
     setIsSubmitting(true);
     setErrorMsg(null);
-    const vndAmount = Math.max(100000, (currentPkg?.price_cents || 4900) * 100);
     try {
       if (paymentMethod === "wallet") {
         await payWithWallet({
-          amount_vnd: vndAmount,
+          amount_vnd: priceVnd,
           target_type: "EXPERT_ESCROW_LOCK",
           order_id: createdOrderId,
           description: `Tạm giữ Escrow đơn chấm CV: ${currentPkg?.name || "Expert Review"}`,
@@ -134,7 +136,7 @@ export function ReviewBookingDialog({
         document.querySelector('[data-testid="candidate-orders-section"]')?.scrollIntoView({ behavior: "smooth" });
       }, 150);
     } catch (err: unknown) {
-      setErrorMsg(getApiErrorDetail(err, "Checkout payment failed"));
+      setErrorMsg(getApiErrorDetail(err, paymentMethod === "momo_qr" ? "MoMo chưa xác nhận thanh toán. Hãy hoàn tất trên MoMo rồi bấm lại." : "Checkout payment failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -163,20 +165,7 @@ export function ReviewBookingDialog({
           <div className="py-8 text-center space-y-4">
             <p className="text-sm text-typography-heading">Please login or create a candidate account to order an expert CV review.</p>
             <div className="flex justify-center gap-3">
-              <Link
-                href="/login"
-                onClick={(e) => {
-                  if (typeof window !== "undefined" && "sessionStorage" in window) {
-                    try {
-                      window.sessionStorage.setItem("belooga_return_to", "/expert-review");
-                    } catch (err: unknown) {
-                      e.preventDefault();
-                      setErrorMsg(getApiErrorDetail(err, "Trình duyệt chặn sessionStorage; chuyển hướng qua URL return_to."));
-                      window.location.assign("/login?return_to=%2Fexpert-review");
-                    }
-                  }
-                }}
-              >
+              <Link href="/login?next=%2Fexpert-review">
                 <Button variant="outline" className="border-brand-primary text-brand-primary">Login to Continue</Button>
               </Link>
               <Link href="/register"><Button className="bg-brand-primary text-white">Register</Button></Link>
@@ -250,35 +239,38 @@ export function ReviewBookingDialog({
                 <span className="font-semibold text-typography-main">Phương thức thanh toán (Escrow Bảo Đảm)</span>
                 <span className="font-mono text-brand-primary font-bold">Số dư ví: {formatVnd(availableBalanceVnd)}</span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button type="button" data-testid="select-pay-wallet" onClick={() => setPaymentMethod("wallet")} className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-1.5 ${paymentMethod === "wallet" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"}`}>
                   <Wallet className="h-4 w-4 text-brand-primary shrink-0" />
                   <span className="text-xs">Số Dư Ví</span>
                 </button>
-                <button type="button" data-testid="select-pay-momo" onClick={() => { setPaymentMethod("momo_qr"); if (!momoQrMutation.data) momoQrMutation.mutate(); }} className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-1.5 ${paymentMethod === "momo_qr" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"}`}>
+                <button type="button" data-testid="select-pay-momo" onClick={() => setPaymentMethod("momo_qr")} className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-1.5 ${paymentMethod === "momo_qr" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"}`}>
                   <QrCode className="h-4 w-4 text-brand-primary shrink-0" />
                   <span className="text-xs">MoMo QR</span>
                 </button>
-                <button type="button" data-testid="select-pay-card" onClick={() => setPaymentMethod("card")} className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer flex items-center gap-1.5 ${paymentMethod === "card" ? "border-brand-primary bg-teal-50/50 text-brand-dark font-semibold" : "border-surface-border bg-surface-card text-typography-heading"}`}>
-                  <CreditCard className="h-4 w-4 text-brand-primary shrink-0" />
-                  <span className="text-xs">Thẻ Quốc Tế</span>
-                </button>
               </div>
-              {paymentMethod === "wallet" && availableBalanceVnd < Math.max(100000, (currentPkg?.price_cents || 4900) * 100) && (
-                <Button type="button" size="sm" variant="outline" disabled={isToppingUp} onClick={() => topupWallet({ amount_vnd: 1000000, payment_method: "MoMo QR" })} className="w-full text-xs border-amber-300 text-amber-800 bg-amber-50">
-                  {isToppingUp ? "Đang nạp thêm..." : "Số dư ví chưa đủ — Bấm Nạp Nhanh +1.000.000 đ"}
-                </Button>
+              {paymentMethod === "wallet" && availableBalanceVnd < priceVnd && (
+                <Link href="/workspace/wallet" className="block text-center text-xs font-semibold text-amber-800 hover:underline">
+                  Số dư ví chưa đủ ({formatVnd(priceVnd)}) — Nạp thêm qua MoMo
+                </Link>
               )}
             </div>
 
             {paymentMethod === "momo_qr" && (
               <div className="p-3 rounded-xl bg-surface-page border border-surface-border text-center space-y-1.5">
-                {momoQrMutation.data?.qr_code_url ? (
-                  <Image unoptimized width={128} height={128} src={momoQrMutation.data.qr_code_url} alt="MoMo QR" className="w-32 h-32 object-contain mx-auto rounded bg-surface-card p-1 border border-surface-border" />
+                {momoQrMutation.data ? (
+                  <a href={momoQrMutation.data.pay_url} target="_blank" rel="noopener noreferrer" className="block text-xs font-semibold text-brand-primary hover:underline">
+                    Mở lại trang thanh toán MoMo ({formatVnd(momoQrMutation.data.amount)})
+                  </a>
                 ) : (
-                  <div className="text-xs text-typography-muted py-4">Đang tạo mã QR MoMo Escrow...</div>
+                  <Button type="button" size="sm" data-testid="btn-momo-pay" disabled={momoQrMutation.isPending || !createdOrderId} onClick={() => momoQrMutation.mutate()} className="w-full text-xs bg-pink-700 hover:bg-pink-800 text-white">
+                    {momoQrMutation.isPending ? "Đang tạo thanh toán MoMo..." : `Thanh toán ${formatVnd(priceVnd)} qua MoMo`}
+                  </Button>
                 )}
-                <div className="text-[11px] text-typography-muted">Quét mã VietQR / MoMo để ký quỹ bảo đảm hoàn tiền 100%</div>
+                {momoQrMutation.error && (
+                  <p role="alert" className="text-[11px] text-red-700">{getApiErrorDetail(momoQrMutation.error, "Không tạo được thanh toán MoMo.")}</p>
+                )}
+                <div className="text-[11px] text-typography-muted">Thanh toán trên MoMo, sau đó bấm Confirm Payment để xác nhận đơn.</div>
               </div>
             )}
 

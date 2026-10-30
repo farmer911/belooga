@@ -85,11 +85,10 @@ python3 scripts/lint-skills.py --quiet
 
 ## 6. Mobile App Automation Testing Pyramid & Clean APK Protocol (`mobile/`)
 
-1. **Tier 1 — In-Process Store, Schema & Singleflight Hook Suite (`cd mobile && bun test`):**
-   - Verifies `SecureStore` keychain hydration, singleflight 401 refresh rotation (`/v1/auth/refresh/`), ConnectRPC `/v1/rpc/*` profile multiplexing, and offline Kanban outbox queueing in <50ms without emulator boot overhead.
-2. **Tier 2 — Clean-First Native APK Build & Cryptographic Signature Gate (`bash mobile/scripts/build-apk.sh`):**
-   - **Mandatory Old-APK Purge:** Always deletes all prior `*.apk` and `*.idsig` files across `mobile/dist/` and `mobile/android/app/build/` (`find ... -name "*.apk" -delete`) before compiling so stale builds can never be installed by mistake.
-   - Bundles the React Native `0.88.0` TypeScript app into `assets/index.android.bundle`, compiles native Android SDK 36 resources (`aapt2`) and Java bytecode (`javac --release 11` -> `d8` `classes.dex`), aligns with `zipalign -p 4`, signs with `apksigner`, and verifies v2/v3 signatures (`apksigner verify --verbose`).
-3. **Tier 3 — Live Android Emulator UIAutomator2 & Maestro E2E (`bash mobile/scripts/e2e-mobile-adb.sh` & `mobile/e2e/maestro-flow.yaml`):**
-   - **Why ADB UIAutomator2 + Maestro over Appium:** Appium requires a heavy WebDriver HTTP daemon and Java bootstrap prone to socket flakiness. **ADB UIAutomator2 (`adb shell uiautomator dump`)** and **Maestro declarative YAML flows** inspect native Android `content-desc` / `resource-id` (`testID`) directly over ADB, compute exact view bounds `[x1,y1][x2,y2]`, dispatch native hardware taps (`adb shell input tap`), capture `.png` visual proof (`adb exec-out screencap -p`), and audit `adb logcat -d` for zero `FATAL EXCEPTION` crashes.
-   - **Emulator Loopback Invariant:** Android Emulators isolate `127.0.0.1` to the guest OS; always configure `adb reverse tcp:8080 tcp:8080`, `adb reverse tcp:8000 tcp:8000`, and `adb reverse tcp:8081 tcp:8081` before launching `com.belooga.mobile/.MainActivity`.
+1. **Tier 1 — Behavioural unit/component suite (`cd mobile && bun run typecheck && bun run lint && bun run test --ci`):**
+   - `jest-expo` + `@testing-library/react-native`: API client refresh/401 handling, zod schemas, login form validation, discovery list rendering, wallet top-up opens the MoMo `pay_url` and never credits locally. No source-grep tests.
+2. **Tier 2 — Clean-first APK build (`bash mobile/scripts/build-apk.sh`):**
+   - Purges old `*.apk`/`*.idsig`, runs `bunx expo prebuild --platform android`, builds with Gradle, verifies the signature with `apksigner verify`. Native `android/`/`ios/` folders are generated, never committed. EAS profiles live in `mobile/eas.json`.
+3. **Tier 3 — Maestro E2E on an emulator/device (`bash mobile/scripts/e2e-mobile-adb.sh` & `mobile/e2e/maestro-flow.yaml`):**
+   - Flows select elements by `testID`; credentials come from `E2E_EMAIL` / `E2E_PASSWORD`.
+   - **Emulator Loopback Invariant:** Android Emulators isolate `127.0.0.1` to the guest OS; always configure `adb reverse tcp:8080 tcp:8080`, `adb reverse tcp:8000 tcp:8000`, and `adb reverse tcp:8081 tcp:8081` before launching the app (`com.belooga.mobile`).

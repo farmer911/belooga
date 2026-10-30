@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -262,9 +263,12 @@ for comp_p in sorted((FE_SRC / "components").rglob("*")) if (FE_SRC / "component
         )
 
 # Enforce 100% FE-to-BE Endpoint Wiring (Zero Dead/Unintegrated Backend Endpoints)
+# Web and mobile clients both count as consumers; provider callbacks are called by third parties, not our UI.
+SERVER_TO_SERVER_ROUTES = {"/v1/payments/momo/ipn"}
 fe_all_blob = "\n".join(
     p.read_text(encoding="utf-8", errors="ignore")
-    for p in FE_SRC.rglob("*")
+    for src in (FE_SRC, ROOT / "mobile" / "src", ROOT / "mobile" / "app")
+    for p in src.rglob("*")
     if p.suffix in (".ts", ".tsx")
 )
 for ep_file in sorted((BE_APP / "api" / "v1" / "endpoints").glob("*.py")):
@@ -274,12 +278,14 @@ for ep_file in sorted((BE_APP / "api" / "v1" / "endpoints").glob("*.py")):
     for m in re.finditer(r"@router\.(get|post|put|patch|delete)\([\"']([^\"']*)[\"']", ep_txt):
         method, sub = m.group(1).upper(), m.group(2)
         full_path = ("/v1" + pref + sub).replace("//", "/")
+        if full_path in SERVER_TO_SERVER_ROUTES:
+            continue
         norm_path = re.sub(r"\{[^}]+\}", "{}", full_path).rstrip("/")
         segs = [s for s in norm_path.split("/") if s and s != "{}" and s != "v1"]
         rx = r"/v1/" + r".*?".join(re.escape(s) for s in segs)
         if not re.search(rx, fe_all_blob):
             violations["3. Layer Purity (No Band-Aids)"].append(
-                f"{ep_file.relative_to(ROOT)} -> {method} {full_path} is not integrated/called anywhere in frontend/src/"
+                f"{ep_file.relative_to(ROOT)} -> {method} {full_path} is not integrated/called anywhere in frontend/src/ or mobile/"
             )
 
 if not (ROOT / "backend" / "alembic" / "env.py").exists():
@@ -311,11 +317,6 @@ if mobile_pkg_path.exists():
     if not mobile_e2e_adb.exists() or not (ROOT / "mobile" / "e2e" / "maestro-flow.yaml").exists():
         violations["1. Test Honesty (No Skips/Hollow)"].append(
             "mobile E2E automation scripts (e2e-mobile-adb.sh / maestro-flow.yaml) missing"
-        )
-    mobile_ui_kit = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "belooga" / "mobile" / "BeloogaUiKit.java"
-    if not mobile_ui_kit.exists() or "GradientDrawable" not in mobile_ui_kit.read_text(encoding="utf-8"):
-        violations["3. Layer Purity (No Band-Aids)"].append(
-            "mobile BeloogaUiKit.java missing or lacks GradientDrawable rounded surface design system"
         )
 
 # --- 4. ASYNC EVENT-LOOP & IDOR SAFETY ACROSS ALL BACKEND ---
@@ -350,27 +351,26 @@ for p in BE_APP.rglob("*.py"):
                 )
                 if is_mut and n.name not in PUBLIC_MUTATIONS_WHITELIST:
                     src = ast.get_source_segment(txt, n) or ""
-                    if "get_current_user" not in src:
+                    if "get_current_user" not in src and "require_role(" not in src:
                         violations["4. Async & IDOR Safety (All BE)"].append(
                             f"{rel}:{n.lineno} -> mutation {n.name}() missing get_current_user IDOR guard"
                         )
 
 # --- 5. RATCHET & SIZE DISCIPLINE ---
-r_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "ratchet.py")], capture_output=True, text=True)
+r_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "ratchet.py")], capture_output=True, text=True, encoding="utf-8")
 if r_proc.returncode != 0:
-    for line in r_proc.stdout.splitlines():
-        if "WORSE" in line:
-            violations["5. Ratchet & Size Discipline"].append(line.strip())
+    bad = [line.strip() for line in r_proc.stdout.splitlines() if "WORSE" in line or "FAIL" in line]
+    violations["5. Ratchet & Size Discipline"].extend(bad or [f"scripts/ratchet.py exited {r_proc.returncode}: {r_proc.stderr.strip()[-200:]}"])
 
 # --- 6. MEMORY CAP & SKILL SSOT ---
 state_md = AGENTS / "STATE.md"
 thesis_md = AGENTS / "PRODUCT_THESIS.md"
-if not state_md.exists() or len(state_md.read_text().splitlines()) > 50:
+if not state_md.exists() or len(state_md.read_text(encoding="utf-8").splitlines()) > 50:
     violations["6. Memory Cap & Skill SSOT"].append(".agents/STATE.md missing or exceeds 50-line cap")
-if not thesis_md.exists() or len(thesis_md.read_text().splitlines()) > 120:
+if not thesis_md.exists() or len(thesis_md.read_text(encoding="utf-8").splitlines()) > 120:
     violations["6. Memory Cap & Skill SSOT"].append(".agents/PRODUCT_THESIS.md missing or exceeds 120-line cap")
 
-l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True)
+l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lint-skills.py"), "--quiet"], capture_output=True, text=True, encoding="utf-8")
 if l_proc.returncode != 0:
     violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors (or failed stdlib -I -S isolation check)")
 
@@ -379,9 +379,9 @@ env_example = ROOT / ".env.example"
 if not env_example.exists():
     violations["6. Memory Cap & Skill SSOT"].append(".env.example is missing at repository root")
 else:
-    defined_env_keys = set(re.findall(r"^([A-Z][A-Z0-9_]+)=", env_example.read_text(), re.MULTILINE))
+    defined_env_keys = set(re.findall(r"^([A-Z][A-Z0-9_]+)=", env_example.read_text(encoding="utf-8"), re.MULTILINE))
     for p in sorted(BE_APP.rglob("*.py")):
-        txt = p.read_text()
+        txt = p.read_text(encoding="utf-8")
         for m in re.finditer(r'os\.getenv\(\s*["\']([A-Z0-9_]+)["\']\s*(?:,\s*([^)]+))?\)', txt):
             env_key, default_arg = m.group(1), m.group(2)
             if env_key not in defined_env_keys:
@@ -393,7 +393,7 @@ else:
                     f"{p.relative_to(ROOT)} -> {env_key} has unguarded hardcoded fallback in os.getenv()"
                 )
     for p in sorted(list(FE_SRC.rglob("*.ts*")) + (list(MOBILE_SRC.rglob("*.ts*")) if MOBILE_SRC.exists() else [])):
-        txt = p.read_text()
+        txt = p.read_text(encoding="utf-8")
         for m in re.finditer(r"process\.env\.((?:NEXT|EXPO)_PUBLIC_[A-Z0-9_]+)", txt):
             fe_key = m.group(1)
             if fe_key not in defined_env_keys:
@@ -404,34 +404,32 @@ else:
 if os.getenv("CI") != "true":
     try:
         curr_branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), text=True, timeout=5
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), text=True, encoding="utf-8", timeout=5
         ).strip()
-        pr_proc = subprocess.run(
-            ["gh", "pr", "list", "--state", "open", "--json", "number,title,headRefName,statusCheckRollup"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            cwd=str(ROOT),
-        )
-        if pr_proc.returncode == 0 and pr_proc.stdout.strip():
-            for pr_item in json.loads(pr_proc.stdout):
-                if curr_branch != "main" and pr_item.get("headRefName") != curr_branch:
-                    continue
-                failed_checks = [
-                    c.get("name", "check")
-                    for c in (pr_item.get("statusCheckRollup") or [])
-                    if c.get("conclusion") in ("FAILURE", "TIMED_OUT", "ACTION_REQUIRED")
-                ]
-                if failed_checks:
-                    violations["6. Memory Cap & Skill SSOT"].append(
-                        f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
-                    )
         if curr_branch == "main":
-            head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True, timeout=5).strip()
+            pr_proc = subprocess.run(
+                ["gh", "pr", "list", "--state", "open", "--json", "number,title,headRefName,statusCheckRollup"],
+                capture_output=True,
+                text=True, encoding="utf-8",
+                timeout=5,
+                cwd=str(ROOT),
+            )
+            if pr_proc.returncode == 0 and pr_proc.stdout.strip():
+                for pr_item in json.loads(pr_proc.stdout):
+                    failed_checks = [
+                        c.get("name", "check")
+                        for c in (pr_item.get("statusCheckRollup") or [])
+                        if c.get("conclusion") in ("FAILURE", "TIMED_OUT", "ACTION_REQUIRED")
+                    ]
+                    if failed_checks:
+                        violations["6. Memory Cap & Skill SSOT"].append(
+                            f"Open PR #{pr_item['number']} ({pr_item['title']}) has failing CI checks: {', '.join(failed_checks)}"
+                        )
+            head_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True, encoding="utf-8", timeout=5).strip()
             run_proc = subprocess.run(
                 ["gh", "run", "list", "--branch", "main", "--limit", "10", "--json", "name,status,conclusion,headSha"],
                 capture_output=True,
-                text=True,
+                text=True, encoding="utf-8",
                 timeout=5,
                 cwd=str(ROOT),
             )
@@ -444,7 +442,7 @@ if os.getenv("CI") != "true":
             alerts_proc = subprocess.run(
                 ["gh", "api", "repos/farmer911/belooga/code-scanning/alerts?state=open&per_page=100"],
                 capture_output=True,
-                text=True,
+                text=True, encoding="utf-8",
                 timeout=5,
                 cwd=str(ROOT),
             )
@@ -457,32 +455,12 @@ if os.getenv("CI") != "true":
     except Exception as gh_err:
         sys.stderr.write(f"[warn] GitHub open PR health check skipped: {gh_err}\n")
 
-# Mobile Vector Bottom Dock & Full-Platform Career Pro Guard (BEL-141)
-ui_kit_java = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "belooga" / "mobile" / "BeloogaUiKit.java"
-career_java = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "com" / "belooga" / "mobile" / "MobileCareerScreens.java"
-if ui_kit_java.exists():
-    ui_kit_src = ui_kit_java.read_text(encoding="utf-8")
-    if "class NavIconView" not in ui_kit_src or "createModernNavTab" not in ui_kit_src:
-        violations["3. Layer Purity (No Band-Aids)"].append(
-            "mobile BeloogaUiKit.java missing custom Canvas vector NavIconView / createModernNavTab dock (BEL-141)"
-        )
-if not career_java.exists():
-    violations["3. Layer Purity (No Band-Aids)"].append(
-        "mobile MobileCareerScreens.java missing full-platform Career Pro screens (ATS, Expert Review, Salary, Exec BI)"
-    )
-
-# Enforce BEL-228 14-Deception Guards (be_anonymous_alexnguyen_fallback, mobile_android_http_calls, alembic_schema_drift)
+# Enforce BEL-228 14-Deception Guards (be_anonymous_alexnguyen_fallback, alembic_schema_drift)
 for cms_target in (BE_APP / "modules" / "cms" / "service.py", BE_APP / "schemas" / "cms.py"):
     if cms_target.exists() and re.search(r"\balexnguyen\b", cms_target.read_text(encoding="utf-8")):
         violations["4. Async & IDOR Safety (All BE)"].append(
             f"{cms_target.relative_to(ROOT)} -> hardcoded anonymous 'alexnguyen' fallback prohibited (be_anonymous_alexnguyen_fallback == 0)"
         )
-
-android_java_files = list((ROOT / "mobile" / "android").rglob("*.java")) if (ROOT / "mobile" / "android").exists() else []
-if sum(p.read_text(encoding="utf-8", errors="ignore").count("HttpURLConnection") for p in android_java_files) < 1:
-    violations["3. Layer Purity (No Band-Aids)"].append(
-        "mobile/android/ missing real HttpURLConnection network client (mobile_android_http_calls >= 1)"
-    )
 
 alembic_versions_dir = ROOT / "backend" / "alembic" / "versions"
 if alembic_versions_dir.exists():

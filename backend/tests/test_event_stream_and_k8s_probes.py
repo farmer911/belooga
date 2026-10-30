@@ -47,10 +47,10 @@ async def test_partitioned_event_stream_ordering_consumer_group_and_dlq():
 
 
 @pytest.mark.asyncio
-async def test_event_stream_api_endpoints_and_k8s_liveness_readiness_probes():
+async def test_event_stream_api_endpoints_and_k8s_liveness_readiness_probes(test_admin: dict):
     """Verify /v1/events/status, /v1/events/publish, /health/live, /health/ready, and k8s manifests."""
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://test", headers=test_admin["headers"]) as client:
         # 1. Kubernetes Liveness Probe (non-DB event-loop check)
         live_res = await client.get("/health/live")
         assert live_res.status_code == 200

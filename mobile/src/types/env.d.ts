@@ -1,26 +1,12 @@
-declare var process: {
-  env: Record<string, string | undefined>;
-};
+/// <reference types="expo/types" />
 
-interface ImportMeta {
-  dir: string;
+/** React Native's FormData uploads a local file from a `{ uri, name, type }` descriptor. */
+interface NativeFilePart {
+  uri: string;
+  name: string;
+  type: string;
 }
 
-declare module "bun:test" {
-  export function describe(name: string, fn: () => void): void;
-  export function it(name: string, fn: () => void | Promise<void>): void;
-  export function beforeEach(fn: () => void | Promise<void>): void;
-  export function afterEach(fn: () => void | Promise<void>): void;
-  export function expect<T>(actual: T): {
-    toBe(expected: unknown): void;
-    toEqual(expected: unknown): void;
-    toBeNull(): void;
-    toBeTruthy(): void;
-    toBeFalsy(): void;
-    toBeGreaterThan(expected: number): void;
-    toContain(expected: unknown): void;
-    rejects: {
-      toThrow(expected?: string | RegExp): Promise<void>;
-    };
-  };
+interface FormData {
+  append(name: string, value: NativeFilePart): void;
 }

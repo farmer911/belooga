@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import AuthenticatedUser, get_current_user_optional
+from app.core.security import AuthenticatedUser, get_current_user, require_role
 from app.modules.catalogs import CatalogsService, CompaniesService
 from app.schemas.catalogs import (
     CareerRoiResponse,
@@ -48,7 +48,7 @@ async def list_catalog_skills_slash(
 @router.post("/catalogs/skills", response_model=CatalogItemResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 7: Master Catalogs"])
 async def create_catalog_skill(
     payload: SkillCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CatalogsService(db).create_skill_catalog(name=payload.name, category=payload.category or "Engineering")
@@ -57,7 +57,7 @@ async def create_catalog_skill(
 @router.post("/catalogs/skills/", response_model=CatalogItemResponse, status_code=status.HTTP_201_CREATED, tags=["Domain 7: Master Catalogs"])
 async def create_catalog_skill_slash(
     payload: SkillCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await CatalogsService(db).create_skill_catalog(name=payload.name, category=payload.category or "Engineering")
@@ -111,7 +111,7 @@ async def get_salary_benchmark(
 @router.post("/catalogs/salary-benchmark/crawl", response_model=SalaryBenchmarkResponse, tags=["Domain 7: Master Catalogs"])
 async def trigger_salary_crawler(
     payload: Optional[SalaryCrawlRequest] = None,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_db),
 ):
     """Trigger automated IT salary crawler across live JDs and public sources."""
@@ -121,6 +121,7 @@ async def trigger_salary_crawler(
         tech_stack=req.tech_stack or "Golang",
         level=req.level or "Senior",
         location=req.location or req.city or "Ho Chi Minh",
+        triggered_by=current_user.id,
     )
 
 
@@ -174,10 +175,10 @@ async def search_companies_directory(
 @router.post("/companies/", response_model=CompanyProfileItemDTO, status_code=status.HTTP_201_CREATED, tags=["Domain 7: Master Catalogs"])
 async def create_company_profile(
     payload: CompanyProfileCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await CompaniesService(db).create_company(payload)
+    return await CompaniesService(db).create_company(payload, current_user)
 
 
 @router.get("/companies/{slug}", response_model=CompanyProfileItemDTO, tags=["Domain 7: Master Catalogs"])
@@ -192,20 +193,20 @@ async def get_company_profile(
 async def update_company_profile(
     slug: str,
     payload: CompanyProfileUpdateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await CompaniesService(db).update_company(slug, payload)
+    return await CompaniesService(db).update_company(slug, payload, current_user)
 
 
 @router.post("/companies/{slug}/reviews", response_model=CompanyProfileItemDTO, status_code=status.HTTP_201_CREATED, tags=["Domain 7: Master Catalogs"])
 async def add_company_review(
     slug: str,
     payload: CompanyReviewCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await CompaniesService(db).add_review(slug, payload)
+    return await CompaniesService(db).add_review(slug, payload, current_user)
 
 
 @router.get("/companies/{slug}/interview-questions", response_model=List[CompanyInterviewQuestionItemDTO], tags=["Domain 7: Master Catalogs"])
@@ -220,10 +221,10 @@ async def list_company_interview_questions(
 async def add_company_interview_question(
     slug: str,
     payload: CompanyInterviewQuestionCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await CompaniesService(db).add_interview_question(slug, payload)
+    return await CompaniesService(db).add_interview_question(slug, payload, current_user)
 
 
 

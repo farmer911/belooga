@@ -80,35 +80,35 @@ async def remove_candidate_bookmark(
 
 @router.get("/recruiter/pipeline", response_model=List[RecruiterPipelineItemDTO])
 async def list_recruiter_pipeline(
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await BookmarkService(db).list_pipeline(current_user.id if current_user else None)
+    return await BookmarkService(db).list_pipeline(current_user.id)
 
 
 @router.post("/recruiter/pipeline", response_model=RecruiterPipelineItemDTO, status_code=status.HTTP_201_CREATED)
 async def add_recruiter_pipeline_candidate(
     payload: RecruiterPipelineCreateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await BookmarkService(db).add_to_pipeline(current_user.id if current_user else None, payload)
+    return await BookmarkService(db).add_to_pipeline(current_user.id, payload)
 
 
 @router.patch("/recruiter/pipeline/{item_id}", response_model=RecruiterPipelineItemDTO)
 async def update_recruiter_pipeline_candidate(
     item_id: str,
     payload: RecruiterPipelineUpdateRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await BookmarkService(db).update_pipeline_item(current_user.id if current_user else None, item_id, payload)
+    return await BookmarkService(db).update_pipeline_item(current_user.id, item_id, payload)
 
 
 @router.post("/recruiter/compare", response_model=RecruiterCompareResponse)
 async def compare_recruiter_candidates(
     payload: RecruiterCompareRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await BookmarkService(db).compare_candidates(payload)
@@ -117,24 +117,27 @@ async def compare_recruiter_candidates(
 @router.post("/recruiter/invite", response_model=RecruiterPipelineItemDTO)
 async def invite_recruiter_candidate(
     payload: RecruiterInviteRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await BookmarkService(db).invite_candidate(current_user.id if current_user else None, payload)
+    return await BookmarkService(db).invite_candidate(current_user.id, payload)
 
 
 @router.get("/recruiter/reverse-bids", response_model=List[ReverseBidResponse])
-async def list_recruiter_reverse_bids(db: AsyncSession = Depends(get_db)):
-    return await GrowthService(db).list_reverse_bids()
+async def list_recruiter_reverse_bids(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await GrowthService(db).list_reverse_bids(current_user.id, current_user.username)
 
 
 @router.post("/recruiter/reverse-bids", response_model=ReverseBidResponse)
 async def submit_recruiter_reverse_bid(
     payload: ReverseBidRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).create_reverse_bid(payload)
+    return await GrowthService(db).create_reverse_bid(payload, current_user.id)
 
 
 @router.post("/growth/mock-interview", response_model=MockInterviewEvalResponse)
@@ -179,7 +182,7 @@ async def submit_skill_assessment(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).submit_skill_assessment(payload)
+    return await GrowthService(db).submit_skill_assessment(payload, current_user.id if current_user else None)
 
 
 @router.post("/growth/pitch-script", response_model=PitchScriptResponse)
@@ -197,16 +200,16 @@ async def auto_import_cv_to_profile(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).auto_import_cv(payload)
+    return await GrowthService(db).auto_import_cv(payload, current_user.id if current_user else None)
 
 
 @router.patch("/growth/stealth-mode", response_model=StealthModeResponse)
 async def update_stealth_mode(
     payload: StealthModeRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).update_stealth_mode(payload)
+    return await GrowthService(db).update_stealth_mode(payload, current_user.id)
 
 
 @router.get("/growth/hub", response_model=GrowthHubResponse)
@@ -222,10 +225,10 @@ async def list_referral_slots(db: AsyncSession = Depends(get_db)):
 @router.post("/growth/referrals", response_model=ReferralRequestResponse)
 async def create_referral_request(
     payload: ReferralRequestCreate,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).create_referral_request(payload)
+    return await GrowthService(db).create_referral_request(payload, current_user.id)
 
 
 @router.get("/growth/cv-roasts", response_model=List[CvRoastResponse])
@@ -236,19 +239,19 @@ async def list_anonymous_cv_roasts(db: AsyncSession = Depends(get_db)):
 @router.post("/growth/cv-roasts", response_model=CvRoastResponse)
 async def submit_anonymous_cv_roast(
     payload: CvRoastRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).submit_cv_roast(payload)
+    return await GrowthService(db).submit_cv_roast(payload, current_user.id)
 
 
 @router.post("/growth/cv-roasts/{roast_id}/vote", response_model=CvRoastResponse)
 async def vote_anonymous_cv_roast(
     roast_id: str,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).vote_cv_roast(roast_id)
+    return await GrowthService(db).vote_cv_roast(roast_id, current_user.id)
 
 
 @router.get("/growth/expert-mock-slots", response_model=List[ExpertMockSlotDTO])
@@ -259,10 +262,10 @@ async def list_expert_mock_slots(db: AsyncSession = Depends(get_db)):
 @router.post("/growth/expert-mock-booking", response_model=ExpertMockBookingResponse)
 async def book_expert_mock_interview(
     payload: ExpertMockBookingRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).book_expert_mock(payload)
+    return await GrowthService(db).book_expert_mock(payload, current_user.id)
 
 
 @router.get("/growth/rewards", response_model=List[WalletRewardItemDTO])
@@ -273,7 +276,7 @@ async def list_wallet_rewards(db: AsyncSession = Depends(get_db)):
 @router.post("/growth/claim-reward", response_model=ClaimRewardResponse)
 async def claim_wallet_cashback_reward(
     payload: ClaimRewardRequest,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).claim_reward(payload)
+    return await GrowthService(db).claim_reward(payload, current_user.id)

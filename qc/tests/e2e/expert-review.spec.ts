@@ -52,28 +52,22 @@ test.describe('Expert CV Review & Monetization Quality Gate', () => {
     // Assert Modal opens
     await expect(page.locator('h2:has-text("Book Expert CV Review")')).toBeVisible();
     await expect(page.locator('text=Please login or create a candidate account to order an expert CV review.')).toBeVisible();
-    await expect(page.locator('a[href="/login"]:has-text("Login to Continue")')).toBeVisible();
+    await expect(page.locator('a[href="/login?next=%2Fexpert-review"]:has-text("Login to Continue")')).toBeVisible();
   });
 
-  test('TC-EXREV-004: MoMo HMAC-SHA256 IPN webhook rejects tampered signature and accepts valid feedback', async ({ request }) => {
-    // 1. Create MoMo QR order
-    const qrRes = await request.post('http://localhost:8080/v1/payments/momo/create-qr', {
-      data: {
-        package_type: 'EXPERT_REVIEW',
-        amount: 499000,
-        order_info: 'Pro Deep-Dive Review',
-      },
+  test('TC-EXREV-004: MoMo IPN rejects forged signatures; payment creation requires a signed-in buyer', async ({ request }) => {
+    // 1. Creating a payment is not anonymous
+    const anonQr = await request.post('http://localhost:8080/v1/payments/momo/create-qr', {
+      data: { package_type: 'MICRO_PASS_29K', order_info: 'ATS pass' },
     });
-    expect(qrRes.status()).toBe(201);
-    const qrJson = await qrRes.json();
+    expect(anonQr.status()).toBe(401);
 
-    // 2. Tampered IPN signature must be rejected with HTTP 400
+    // 2. A forged MoMo IPN (AIO v2 body) is rejected before any order lookup
     const badIpnRes = await request.post('http://localhost:8080/v1/payments/momo/ipn', {
       data: {
-        order_id: qrJson.order_id,
-        trans_id: '999888777',
-        result_code: 0,
-        amount: 499000,
+        partnerCode: 'MOMO', orderId: 'BLG-E2E-FORGED', requestId: 'BLG-E2E-FORGED', amount: 29000,
+        orderInfo: 'ATS pass', orderType: 'momo_wallet', transId: 999888777, resultCode: 0,
+        message: 'Successful.', payType: 'qr', responseTime: 1730000000000, extraData: '',
         signature: 'invalid_tampered_signature_000000',
       },
     });

@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+from tests.payments_support import pay_review_order
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.notifications import NotificationService
@@ -100,6 +101,7 @@ async def test_notification_preferences_and_email_deeplink_engine(
 async def test_domain_event_triggers_create_notifications_and_email_deeplinks(
     client: AsyncClient,
     test_candidate_a: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """
     BEL-507: Verify that domain mutations (Auth password recovery, Expert CV Review order & checkout,
@@ -128,12 +130,7 @@ async def test_domain_event_triggers_create_notifications_and_email_deeplinks(
     assert ord_res.status_code == 201
     order_id = ord_res.json()["id"]
 
-    pay_res = await client.post(
-        f"/v1/expert-review/orders/{order_id}/checkout/",
-        json={"payment_method": "card"},
-        headers=headers_a,
-    )
-    assert pay_res.status_code == 200
+    await pay_review_order(client, test_candidate_a["token"], order_id, monkeypatch)
 
     # 3. Trigger Job Tracker move to INTERVIEW -> should emit JOB_INTERVIEW_STAGE
     job_res = await client.post(

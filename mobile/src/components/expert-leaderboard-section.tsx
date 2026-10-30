@@ -1,199 +1,139 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { View } from "react-native";
 import {
   EXPERT_LEADERBOARD_CATEGORIES,
   EXPERT_LEADERBOARD_SORT_MODES,
   type ExpertLeaderboardCategory,
   type ExpertLeaderboardSortMode,
+  bookExpertOrderInputSchema,
   useApplyExpertReviewerMutation,
   useBookMobileExpertOrderMutation,
   useMobileExpertLeaderboardQuery,
   useMyExpertProfileQuery,
-  useSubmitExpertOrderFeedbackMutation,
-} from '@/hooks/use-mobile-expert-leaderboard';
-import { ActionButton, BadgePill, BottomSheetDrawer, SurfaceCard } from '@/lib/native-runtime';
-import { getSemanticTokens } from '@/theme/tokens';
+} from "@/hooks/use-mobile-expert-leaderboard";
+import { Body, Button, Card, ErrorText, Field, H2, Pill, Row, Sheet, Well } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
 
-export function ExpertLeaderboardSection() {
-  const tokens = getSemanticTokens('neumorphic');
-  const [category, setCategory] = useState<ExpertLeaderboardCategory>('all');
-  const [sortBy, setSortBy] = useState<ExpertLeaderboardSortMode>('rank');
-  const [feedbackComment, setFeedbackComment] = useState('STAR bullets boosted my ATS score by +28 pts.');
-  const [applyOpen, setApplyOpen] = useState(false);
-  const [fullName, setFullName] = useState('Nguyen Minh Phuc');
-  const [roleTitle, setRoleTitle] = useState('Principal Distributed Systems Engineer');
-  const [companyName, setCompanyName] = useState('Grab / Belooga');
-  const [specialtiesRaw, setSpecialtiesRaw] = useState('Python, FastAPI, PostgreSQL 16');
-  const [bio, setBio] = useState('Hiring committee reviewer for Staff/Principal roles.');
-
-  const leaderboardQuery = useMobileExpertLeaderboardQuery({ category, sort_by: sortBy });
-  const myExpertQuery = useMyExpertProfileQuery();
+function BecomeExpertForm({ category, onDone }: { category: string; onDone: () => void }) {
+  const [form, setForm] = useState({
+    fullName: "",
+    roleTitle: "",
+    companyName: "",
+    years: "",
+    specialties: "",
+    linkedinUrl: "",
+    bio: "",
+  });
   const applyMutation = useApplyExpertReviewerMutation();
-  const bookMutation = useBookMobileExpertOrderMutation();
-  const feedbackMutation = useSubmitExpertOrderFeedbackMutation();
-
-  const items = leaderboardQuery.data?.items ?? [];
-
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: tokens.surface.elevated,
-    color: tokens.typography.main,
-    border: `1px solid ${tokens.surface.border}`,
-    borderRadius: 12,
-    padding: '10px 12px',
-  };
+  const update = (key: keyof typeof form) => (value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   return (
-    <div
-      data-testid="mobile-expert-leaderboard-section"
-      aria-label="mobile-expert-leaderboard-section"
-      style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
-    >
-      <SurfaceCard testID="mobile-expert-me-card" mode="dark">
-        <div
-          aria-label="mobile-expert-me-card"
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
-        >
-          <div>
-            <strong style={{ fontSize: 14, color: tokens.typography.heading }}>
-              {myExpertQuery.data
-                ? `Active Expert: ${myExpertQuery.data.full_name} (${myExpertQuery.data.company_name})`
-                : 'Become a Verified Expert Reviewer (299k VND/CV)'}
-            </strong>
-            <div style={{ fontSize: 12, color: tokens.typography.body }}>
-              {myExpertQuery.data
-                ? `SLA: ${myExpertQuery.data.turnaround_hours}h • Score: ${myExpertQuery.data.ranking_score}`
-                : 'Earn 299,000 VND per CV review directly into your Belooga Wallet.'}
-            </div>
-          </div>
-          <ActionButton
-            testID="mobile-become-expert-open-btn"
-            accessibilityLabel="mobile-become-expert-open-btn"
-            label="+ Đăng Ký Làm Chuyên Gia"
-            onPress={() => setApplyOpen((v) => !v)}
-          />
-        </div>
-      </SurfaceCard>
+    <Sheet testID="mobile-become-expert-form" title="Đăng Ký Làm Chuyên Gia Chấm CV">
+      <Field testID="become-expert-name-input" value={form.fullName} onChangeText={update("fullName")} placeholder="Full name" autoCapitalize="words" />
+      <Field testID="become-expert-role-input" value={form.roleTitle} onChangeText={update("roleTitle")} placeholder="Role title" />
+      <Field testID="become-expert-company-input" value={form.companyName} onChangeText={update("companyName")} placeholder="Company" />
+      <Field testID="become-expert-years-input" value={form.years} onChangeText={update("years")} placeholder="Years of experience" keyboardType="number-pad" />
+      <Field testID="become-expert-specialties-input" value={form.specialties} onChangeText={update("specialties")} placeholder="Specialties (comma separated)" />
+      <Field testID="become-expert-linkedin-input" value={form.linkedinUrl} onChangeText={update("linkedinUrl")} placeholder="LinkedIn URL" keyboardType="url" />
+      <Field testID="become-expert-bio-input" value={form.bio} onChangeText={update("bio")} placeholder="Mentoring bio" multiline />
+      <Button
+        testID="mobile-become-expert-submit-btn"
+        label={applyMutation.isPending ? "Submitting..." : "Hoàn Tất Đăng Ký"}
+        disabled={applyMutation.isPending}
+        onPress={() =>
+          applyMutation.mutate(
+            {
+              full_name: form.fullName,
+              role_title: form.roleTitle,
+              company_name: form.companyName,
+              years_experience: Number(form.years) || 1,
+              category: category === "all" ? "backend" : category,
+              specialties: form.specialties.split(",").map((s) => s.trim()).filter(Boolean),
+              turnaround_hours: 24,
+              hourly_rate_vnd: 299000,
+              linkedin_url: form.linkedinUrl.trim(),
+              bio: form.bio,
+            },
+            { onSuccess: onDone }
+          )
+        }
+      />
+      <ErrorText error={applyMutation.error} />
+    </Sheet>
+  );
+}
 
-      {applyOpen ? (
-        <BottomSheetDrawer
-          testID="mobile-become-expert-form"
-          title="Đăng Ký Làm Chuyên Gia Chấm CV (/v1/expert-review/apply)"
-        >
-          <input aria-label="become-expert-name-input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name..." style={inputStyle} />
-          <input aria-label="become-expert-role-input" value={roleTitle} onChange={(e) => setRoleTitle(e.target.value)} placeholder="Role Title..." style={inputStyle} />
-          <input aria-label="become-expert-company-input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Company Name..." style={inputStyle} />
-          <input aria-label="become-expert-specialties-input" value={specialtiesRaw} onChange={(e) => setSpecialtiesRaw(e.target.value)} placeholder="Specialties..." style={inputStyle} />
-          <input aria-label="become-expert-bio-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Mentoring bio..." style={inputStyle} />
-          <ActionButton
-            testID="mobile-become-expert-submit-btn"
-            accessibilityLabel="mobile-become-expert-submit-btn"
-            label="Hoàn Tất Đăng Ký Chuyên Gia"
-            onPress={() => {
-              applyMutation.mutate({
-                full_name: fullName,
-                role_title: roleTitle,
-                company_name: companyName,
-                years_experience: 10,
-                category: category === 'all' ? 'backend' : category,
-                specialties: specialtiesRaw.split(',').map((s) => s.trim()).filter(Boolean),
-                turnaround_hours: 24,
-                hourly_rate_vnd: 299000,
-                linkedin_url: 'https://linkedin.com/in/expert',
-                bio,
-              });
-              setApplyOpen(false);
-            }}
-          />
-        </BottomSheetDrawer>
+export function ExpertLeaderboardSection() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  const [category, setCategory] = useState<ExpertLeaderboardCategory>("all");
+  const [sortBy, setSortBy] = useState<ExpertLeaderboardSortMode>("rank");
+  const [applyOpen, setApplyOpen] = useState(false);
+  const leaderboardQuery = useMobileExpertLeaderboardQuery({ category, sort_by: sortBy });
+  const myExpertQuery = useMyExpertProfileQuery();
+  const bookMutation = useBookMobileExpertOrderMutation();
+  const items = leaderboardQuery.data?.items ?? [];
+
+  return (
+    <View testID="mobile-expert-leaderboard-section" style={{ gap: 12 }}>
+      {isAuthenticated ? (
+        <Well testID="mobile-expert-me-card">
+          {myExpertQuery.data ? (
+            <Body>
+              Active expert: {myExpertQuery.data.full_name} ({myExpertQuery.data.company_name}) • SLA{" "}
+              {myExpertQuery.data.turnaround_hours}h
+            </Body>
+          ) : (
+            <>
+              <Body>Become a verified expert reviewer (299k VND/CV).</Body>
+              <Button testID="mobile-become-expert-open-btn" label="+ Đăng Ký Làm Chuyên Gia" onPress={() => setApplyOpen((v) => !v)} />
+            </>
+          )}
+        </Well>
       ) : null}
+      {applyOpen ? <BecomeExpertForm category={category} onDone={() => setApplyOpen(false)} /> : null}
 
-      <SurfaceCard testID="expert-leaderboard-controls" mode="dark">
-        <strong style={{ fontSize: 15, color: tokens.typography.heading }}>
-          Expert Reviewer Ranking &amp; Leaderboard (/v1/expert-review/leaderboard)
-        </strong>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <Card testID="expert-leaderboard-controls">
+        <H2>Expert Reviewer Leaderboard</H2>
+        <Row>
           {EXPERT_LEADERBOARD_CATEGORIES.map((cat) => (
-            <ActionButton
-              key={cat}
-              testID={`mobile-expert-category-${cat}`}
-              accessibilityLabel={`mobile-expert-category-${cat}`}
-              label={cat.toUpperCase()}
-              variant={category === cat ? 'primary' : 'secondary'}
-              onPress={() => setCategory(cat)}
-            />
+            <Button key={cat} testID={`mobile-expert-category-${cat}`} label={cat.toUpperCase()} variant={category === cat ? "primary" : "secondary"} onPress={() => setCategory(cat)} />
           ))}
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        </Row>
+        <Row>
           {EXPERT_LEADERBOARD_SORT_MODES.map((mode) => (
-            <ActionButton
-              key={mode}
-              testID={`mobile-expert-sort-${mode}`}
-              accessibilityLabel={`mobile-expert-sort-${mode}`}
-              label={`Sort: ${mode}`}
-              variant={sortBy === mode ? 'accent' : 'secondary'}
-              onPress={() => setSortBy(mode)}
-            />
+            <Button key={mode} testID={`mobile-expert-sort-${mode}`} label={`Sort: ${mode}`} variant={sortBy === mode ? "primary" : "inset"} onPress={() => setSortBy(mode)} />
           ))}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {items.map((exp) => (
-            <div
-              key={exp.id}
-              data-testid={`mobile-expert-leaderboard-card-${exp.id}`}
-              aria-label={`mobile-expert-leaderboard-card-${exp.id}`}
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                backgroundColor: tokens.surface.elevated,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <strong style={{ color: tokens.typography.heading }}>
-                  #{exp.rank_position} {exp.name} — {exp.badge_title}
-                </strong>
-                <BadgePill label={`${exp.ranking_score} pts`} tone="brand" />
-              </div>
-              <span style={{ fontSize: 12, color: tokens.typography.body }}>{exp.title}</span>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <BadgePill testID={`expert-ats-lift-${exp.id}`} label={`+${exp.avg_ats_lift_points} ATS pts`} tone="success" />
-                <BadgePill testID={`expert-rating-${exp.id}`} label={`Rating ${exp.rating} (${exp.completed_reviews_count} CVs)`} tone="brand" />
-                <BadgePill testID={`expert-sla-${exp.id}`} label={`${exp.avg_turnaround_hours}h avg SLA`} tone="neutral" />
-                <BadgePill testID={`expert-callback-rate-${exp.id}`} label={`${exp.interview_callback_rate}% Interview Rate`} tone="warning" />
-              </div>
-              <ActionButton
+        </Row>
+        <ErrorText error={leaderboardQuery.error ?? bookMutation.error} />
+        {bookMutation.data ? (
+          <Body testID="mobile-expert-booking-status" tone="success">
+            Order {bookMutation.data.order_id}: {bookMutation.data.status}
+          </Body>
+        ) : null}
+        {items.map((exp) => (
+          <Well key={exp.id} testID={`mobile-expert-leaderboard-card-${exp.id}`}>
+            <H2>
+              #{exp.rank_position} {exp.name} — {exp.badge_title}
+            </H2>
+            <Body>{exp.title}</Body>
+            <Row>
+              <Pill label={`${exp.ranking_score} pts`} />
+              <Pill testID={`expert-ats-lift-${exp.id}`} label={`+${exp.avg_ats_lift_points} ATS pts`} tone="success" />
+              <Pill testID={`expert-rating-${exp.id}`} label={`Rating ${exp.rating} (${exp.completed_reviews_count} CVs)`} />
+              <Pill testID={`expert-sla-${exp.id}`} label={`${exp.avg_turnaround_hours}h avg SLA`} tone="neutral" />
+              <Pill testID={`expert-callback-rate-${exp.id}`} label={`${exp.interview_callback_rate}% interview rate`} tone="warning" />
+            </Row>
+            {isAuthenticated ? (
+              <Button
                 testID={`mobile-expert-book-btn-${exp.id}`}
-                accessibilityLabel={`mobile-expert-book-btn-${exp.id}`}
-                label={`1-Click Book Expert (${exp.price_vnd / 1000}k VND)`}
-                onPress={() =>
-                  bookMutation.mutate({
-                    expert_id: exp.id,
-                    package_id: 'pkg_senior',
-                    target_role: 'Staff Backend Engineer',
-                  })
-                }
+                label={`Book Expert (${exp.price_vnd / 1000}k VND)`}
+                disabled={bookMutation.isPending}
+                onPress={() => bookMutation.mutate(bookExpertOrderInputSchema.parse({ expert_id: exp.id }))}
               />
-            </div>
-          ))}
-        </div>
-      </SurfaceCard>
-
-      <BottomSheetDrawer testID="expert-order-feedback-form" title="Rate Completed Expert Review (#ord_8841)">
-        <input aria-label="expert-feedback-comment-input" value={feedbackComment} onChange={(e) => setFeedbackComment(e.target.value)} style={inputStyle} />
-        <ActionButton
-          testID="expert-order-feedback-submit-btn"
-          accessibilityLabel="expert-order-feedback-submit-btn"
-          label="Submit Rating & Recalculate Leaderboard"
-          onPress={() =>
-            feedbackMutation.mutate({
-              orderId: 'ord_8841',
-              input: { rating: 5, ats_lift_achieved: 28, comment: feedbackComment },
-            })
-          }
-        />
-      </BottomSheetDrawer>
-    </div>
+            ) : null}
+          </Well>
+        ))}
+      </Card>
+    </View>
   );
 }

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/services/api-client";
@@ -49,17 +50,19 @@ export function ReportProfileModal({
         reset();
       }, 2000);
     },
-    onError: () => {
-      setErrorMsg("Failed to submit report. Please try again.");
+    onError: (err: unknown) => {
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      setErrorMsg(status === 401 ? "Please sign in to report a profile." : "Failed to submit report. Please try again.");
     },
   });
 
   if (!isOpen) return null;
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = handleSubmit((values) => {
     if (!targetId) return;
     setErrorMsg(null);
-    await reportMutation.mutateAsync(values);
+    // mutate (not mutateAsync): failures are rendered via onError instead of escaping as unhandled rejections.
+    reportMutation.mutate(values);
   });
 
   return (

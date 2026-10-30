@@ -14,7 +14,7 @@ interface CVStudioPreviewProps {
   lineHeight: number;
   marginSize: number;
   snapOnePage: boolean;
-  username?: string;
+  username: string;
 }
 
 export function CVStudioPreview({
@@ -29,7 +29,7 @@ export function CVStudioPreview({
   const [zoom, setZoom] = useState<number>(100);
 
   const handlePrint = () => {
-    void downloadCandidatePdf(username || "alexnguyen");
+    void downloadCandidatePdf(username);
     if (typeof window !== "undefined" && typeof window.print === "function") {
       window.print();
     }

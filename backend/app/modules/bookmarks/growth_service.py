@@ -3,40 +3,22 @@
 import re
 import uuid
 from typing import List, Optional
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import invalidate_candidate_cache
 from app.modules.bookmarks.repository import BookmarkRepository
+from app.modules.notifications import NotificationService
+from app.modules.payments import PaymentService
 from app.schemas.bookmarks import (
-    CareerRoadmapResponse,
-    CareerRoadmapStepDTO,
-    ClaimRewardRequest,
-    ClaimRewardResponse,
-    CvAutoImportRequest,
-    CvAutoImportResponse,
-    CvRoastRequest,
-    CvRoastResponse,
-    ExpertMockBookingRequest,
-    ExpertMockBookingResponse,
-    ExpertMockSlotDTO,
-    GrowthHubResponse,
-    MockInterviewEvalRequest,
-    MockInterviewEvalResponse,
-    OutreachGeneratorRequest,
-    OutreachGeneratorResponse,
-    PitchScriptRequest,
-    PitchScriptResponse,
-    ReferralRequestCreate,
-    ReferralRequestResponse,
-    ReferralSlotItemDTO,
-    ReverseBidRequest,
-    ReverseBidResponse,
-    SalaryNegotiationRequest,
-    SalaryNegotiationResponse,
-    SkillAssessmentRequest,
-    SkillAssessmentResponse,
-    StealthModeRequest,
-    StealthModeResponse,
-    WalletRewardItemDTO,
+    CareerRoadmapResponse, CareerRoadmapStepDTO, ClaimRewardRequest, ClaimRewardResponse,
+    CvAutoImportRequest, CvAutoImportResponse, CvRoastRequest, CvRoastResponse,
+    ExpertMockBookingRequest, ExpertMockBookingResponse, ExpertMockSlotDTO, GrowthHubResponse,
+    MockInterviewEvalRequest, MockInterviewEvalResponse, OutreachGeneratorRequest, OutreachGeneratorResponse,
+    PitchScriptRequest, PitchScriptResponse, ReferralRequestCreate, ReferralRequestResponse,
+    ReferralSlotItemDTO, ReverseBidRequest, ReverseBidResponse, SalaryNegotiationRequest,
+    SalaryNegotiationResponse, SkillAssessmentRequest, SkillAssessmentResponse,
+    StealthModeRequest, StealthModeResponse, WalletRewardItemDTO,
 )
 
 TECH_SKILLS_DICT = [
@@ -118,12 +100,20 @@ class GrowthService:
         )
         return OutreachGeneratorResponse(cover_letter=cover, cold_dm=dm, cold_dm_script=dm)
 
-    async def submit_skill_assessment(self, payload: SkillAssessmentRequest) -> SkillAssessmentResponse:
+    async def submit_skill_assessment(
+        self, payload: SkillAssessmentRequest, identity_id: Optional[uuid.UUID] = None
+    ) -> SkillAssessmentResponse:
         total = max(1, payload.total_questions)
         pct = float(payload.score_pct) if payload.score_pct is not None else round(payload.correct_answers / total * 100.0, 1)
+        verified = pct >= 70.0
+        if verified and identity_id is not None:
+            uname = await self.repo.sync_candidate_headline_and_skills(identity_id, None, [payload.skill_name])
+            await self.db.commit()
+            if uname:
+                await invalidate_candidate_cache(uname)
         slug = re.sub(r"[^a-z0-9]+", "-", payload.skill_name.lower()).strip("-")
         return SkillAssessmentResponse(
-            skill_name=payload.skill_name, score_pct=pct, verified=pct >= 70.0, badge_slug=f"verified-{slug}",
+            skill_name=payload.skill_name, score_pct=pct, verified=verified, badge_slug=f"verified-{slug}",
         )
 
     async def generate_pitch_script(self, payload: PitchScriptRequest) -> PitchScriptResponse:
@@ -137,7 +127,9 @@ class GrowthService:
         )
         return PitchScriptResponse(duration_seconds=60, wpm_target=135, script_text=script)
 
-    async def auto_import_cv(self, payload: CvAutoImportRequest) -> CvAutoImportResponse:
+    async def auto_import_cv(
+        self, payload: CvAutoImportRequest, identity_id: Optional[uuid.UUID] = None
+    ) -> CvAutoImportResponse:
         raw = (payload.raw_cv_text or "").strip()
         lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
         full_name = lines[0] if lines and len(lines[0]) <= 60 else "Phúc Nguyễn"
@@ -145,12 +137,24 @@ class GrowthService:
         low = raw.lower()
         skills = [s for s in TECH_SKILLS_DICT if s.lower() in low] or ["Golang", "PostgreSQL", "Kubernetes", "FastAPI"]
         bullet_cnt = max(2, sum(1 for ln in lines if ln.startswith(("-", "•", "*")))) if lines else 6
+        if identity_id is not None:
+            uname = await self.repo.sync_candidate_headline_and_skills(identity_id, headline, skills)
+            await self.db.commit()
+            if uname:
+                await invalidate_candidate_cache(uname)
         return CvAutoImportResponse(
             full_name=full_name, headline=headline, extracted_skills=skills,
             experience_count=bullet_cnt, imported_count=bullet_cnt,
         )
 
-    async def update_stealth_mode(self, payload: StealthModeRequest) -> StealthModeResponse:
+    async def update_stealth_mode(
+        self, payload: StealthModeRequest, identity_id: Optional[uuid.UUID] = None
+    ) -> StealthModeResponse:
+        if identity_id is not None:
+            uname = await self.repo.set_profile_stealth_mode(identity_id, payload.stealth_enabled)
+            await self.db.commit()
+            if uname:
+                await invalidate_candidate_cache(uname)
         return StealthModeResponse(stealth_enabled=payload.stealth_enabled, blocked_companies=payload.blocked_companies)
 
     async def get_growth_hub(self) -> GrowthHubResponse:
@@ -175,47 +179,46 @@ class GrowthService:
             ),
         ]
 
-    async def create_referral_request(self, payload: ReferralRequestCreate) -> ReferralRequestResponse:
+    async def create_referral_request(
+        self, payload: ReferralRequestCreate, identity_id: Optional[uuid.UUID] = None
+    ) -> ReferralRequestResponse:
         sid = payload.slot_id or f"ref-{uuid.uuid4().hex[:6]}"
+        if identity_id is not None:
+            await NotificationService(self.db).dispatch_event(
+                identity_id=identity_id, event_type="REFERRAL_REQUESTED",
+                title=f"Referral Request Submitted ({sid})",
+                message=f"Your internal referral request ({sid}) has been logged.",
+                deep_link="/companies", send_email=False, category="system",
+            )
         return ReferralRequestResponse(id=sid, slot_id=sid, status="REQUESTED")
 
+    @staticmethod
+    def _roast_dto(row: dict) -> CvRoastResponse:
+        return CvRoastResponse(**row, upvotes=row["votes"])
+
     async def list_cv_roasts(self) -> List[CvRoastResponse]:
-        rows = await self.repo.list_growth_rows("CV_ROAST")
-        if not rows:
-            seed = {
-                "id": "roast-1", "alias": "Anonymous Senior Go #402", "target_role": "Staff Backend @ Fintech",
-                "summary": "7 năm Go/K8s nhưng mô tả dự án toàn liệt kê trách nhiệm, thiếu metrics P99/RPS.",
-                "votes": 24, "upvotes": 24, "ai_roast": "AI Roast: Hãy thay các câu liệt kê nhiệm vụ bằng % giảm độ trễ P99.",
-            }
-            await self.repo.upsert_growth_row("CV_ROAST", "roast-1", seed)
-            rows = [seed]
-        return [CvRoastResponse(**r) for r in rows]
+        return [self._roast_dto(r) for r in await self.repo.list_cv_roasts()]
 
-    async def submit_cv_roast(self, payload: CvRoastRequest) -> CvRoastResponse:
-        rid = f"roast-{uuid.uuid4().hex[:6]}"
+    async def submit_cv_roast(self, payload: CvRoastRequest, author_identity_id: uuid.UUID) -> CvRoastResponse:
         summary_txt = (payload.summary or payload.cv_snippet or "CV cần tối ưu hóa động từ STAR và định lượng kết quả.").strip()
-        item = {
-            "id": rid, "alias": payload.anonymous_handle or "Anonymous Candidate #808",
+        row = await self.repo.create_cv_roast({
+            "id": f"roast-{uuid.uuid4().hex[:10]}",
+            "author_identity_id": author_identity_id,
+            "alias": (payload.anonymous_handle or "Anonymous Candidate").strip()[:120],
             "target_role": payload.target_role or "Senior Backend Engineer",
-            "summary": summary_txt, "votes": 12, "upvotes": 12,
+            "summary": summary_txt,
             "ai_roast": "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng hoặc độ trễ P99 tiết kiệm được.",
-        }
-        await self.repo.upsert_growth_row("CV_ROAST", rid, item)
-        return CvRoastResponse(**item)
+            "votes": 0,
+        })
+        await self.db.commit()
+        return self._roast_dto(row)
 
-    async def vote_cv_roast(self, roast_id: str) -> CvRoastResponse:
-        roasts = await self.list_cv_roasts()
-        target = next((r.model_dump() for r in roasts if r.id == roast_id), None)
-        if not target:
-            target = {
-                "id": roast_id, "alias": "Anonymous Senior Go #402", "target_role": "Senior Engineer",
-                "summary": "CV Roast Community Post", "votes": 12, "upvotes": 12,
-                "ai_roast": "AI Roast: Hãy lượng hóa tác động bằng % tăng trưởng.",
-            }
-        target["votes"] = int(target.get("votes", 12)) + 1
-        target["upvotes"] = target["votes"]
-        await self.repo.upsert_growth_row("CV_ROAST", roast_id, target)
-        return CvRoastResponse(**target)
+    async def vote_cv_roast(self, roast_id: str, identity_id: uuid.UUID) -> CvRoastResponse:
+        row = await self.repo.vote_cv_roast(roast_id, identity_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="CV roast not found.")
+        await self.db.commit()
+        return self._roast_dto(row)
 
     async def list_expert_mock_slots(self) -> List[ExpertMockSlotDTO]:
         return [
@@ -223,8 +226,17 @@ class GrowthService:
             ExpertMockSlotDTO(id="exp-2", expert_name="Dr. Thảo Phạm (AI Lead)", role="LLM Systems & Behavioral Leadership", topic="Chủ Nhật, 10:00 ICT • 45 phút 1-on-1", price_vnd=690_000),
         ]
 
-    async def book_expert_mock(self, payload: ExpertMockBookingRequest) -> ExpertMockBookingResponse:
+    async def book_expert_mock(
+        self, payload: ExpertMockBookingRequest, identity_id: Optional[uuid.UUID] = None
+    ) -> ExpertMockBookingResponse:
         bid = f"mock-{uuid.uuid4().hex[:6]}"
+        if identity_id is not None:
+            await NotificationService(self.db).dispatch_event(
+                identity_id=identity_id, event_type="EXPERT_MOCK_BOOKED",
+                title=f"1-on-1 Mock Interview Confirmed ({bid})",
+                message=f"Slot {payload.slot_id or 'exp-1'} booked ({payload.topic or 'System Design'}).",
+                deep_link="/expert-review", send_email=False, category="order",
+            )
         return ExpertMockBookingResponse(booking_id=bid, status="CONFIRMED")
 
     async def list_rewards(self) -> List[WalletRewardItemDTO]:
@@ -233,30 +245,44 @@ class GrowthService:
             WalletRewardItemDTO(id="rew-2", title="Đạt điểm ATS >= 90/100 và xác thực 2 kỹ năng", bonus_vnd=100_000),
         ]
 
-    async def claim_reward(self, payload: ClaimRewardRequest) -> ClaimRewardResponse:
+    async def claim_reward(
+        self, payload: ClaimRewardRequest, identity_id: Optional[uuid.UUID] = None
+    ) -> ClaimRewardResponse:
         amt = 100000 if payload.reward_id == "rew-2" else 50000
+        if identity_id is not None:
+            await PaymentService.credit_reward_cashback(self.db, identity_id, payload.reward_id, amt)
         return ClaimRewardResponse(reward_id=payload.reward_id, credited_vnd=amt)
 
-    async def list_reverse_bids(self) -> List[ReverseBidResponse]:
-        rows = await self.repo.list_growth_rows("REVERSE_BID")
-        if not rows:
-            seed = {
-                "id": "bid-1", "username": "phucnguyen", "candidate_username": "phucnguyen",
-                "role": "Staff Distributed Systems Engineer", "salary_usd": 4200,
-                "salary_offer_usd": 4200, "offered_salary_usd": 4200, "status": "SENT",
-            }
-            await self.repo.upsert_growth_row("REVERSE_BID", "bid-1", seed)
-            rows = [seed]
-        return [ReverseBidResponse(**r) for r in rows]
+    @staticmethod
+    def _bid_dto(row: dict) -> ReverseBidResponse:
+        uname, usd = row["candidate_username"], row["salary_usd"]
+        return ReverseBidResponse(
+            id=row["id"], username=uname, candidate_username=uname, role=row["role"],
+            salary_usd=usd, salary_offer_usd=usd, offered_salary_usd=usd, status=row["status"],
+        )
 
-    async def create_reverse_bid(self, payload: ReverseBidRequest) -> ReverseBidResponse:
-        uname = (payload.username or payload.candidate_username or "phucnguyen").strip()
-        usd = int(payload.salary_usd or payload.offered_salary_usd or payload.salary_offer_usd or 3800)
-        bid_id = f"bid-{uuid.uuid4().hex[:6]}"
-        item = {
-            "id": bid_id, "username": uname, "candidate_username": uname,
+    async def list_reverse_bids(self, identity_id: uuid.UUID, username: str) -> List[ReverseBidResponse]:
+        """Bids the caller sent (recruiter) or received (candidate username)."""
+        return [self._bid_dto(r) for r in await self.repo.list_reverse_bids(identity_id, username)]
+
+    async def create_reverse_bid(self, payload: ReverseBidRequest, recruiter_identity_id: uuid.UUID) -> ReverseBidResponse:
+        uname = (payload.candidate_username or payload.username or "").strip().lstrip("@")
+        if not uname:
+            raise HTTPException(status_code=422, detail="candidate_username is required.")
+        usd = int(payload.salary_usd or payload.offered_salary_usd or payload.salary_offer_usd or 0)
+        if usd <= 0:
+            raise HTTPException(status_code=422, detail="salary_usd must be a positive amount.")
+        cand = await self.repo.get_visible_candidate(uname)
+        if not cand or cand.get("is_hidden"):
+            raise HTTPException(status_code=404, detail="Candidate profile not found or hidden.")
+        row = await self.repo.create_reverse_bid({
+            "id": f"bid-{uuid.uuid4().hex[:10]}",
+            "rid": recruiter_identity_id,
+            "candidate_username": cand["username"],
             "role": payload.role or "Staff Software Engineer",
-            "salary_usd": usd, "salary_offer_usd": usd, "offered_salary_usd": usd, "status": "SENT",
-        }
-        await self.repo.upsert_growth_row("REVERSE_BID", bid_id, item)
-        return ReverseBidResponse(**item)
+            "company_name": payload.company_name or "",
+            "salary_usd": usd,
+            "pitch_note": payload.pitch_note or "",
+        })
+        await self.db.commit()
+        return self._bid_dto(row)

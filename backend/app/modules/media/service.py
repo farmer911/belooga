@@ -8,28 +8,31 @@ import asyncio
 import json
 import logging
 import os
+import secrets
 import shutil
-import time
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 from fastapi import HTTPException, Response, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import invalidate_candidate_cache
+from app.core.config import get_settings
 from app.core.security import AuthenticatedUser, verify_profile_owner
 from app.modules.media.repository import MediaRepository
+from app.modules.media.uploads import IMAGE_TYPES, PDF_TYPES, VIDEO_TYPES, _require_type, _save_validated
 from app.modules.notifications import NotificationService
 from app.modules.profile import ProfileService
 from app.schemas.media import CVStudioDraftPayload, CompleteUploadRequest
 from app.services.media_transcoder import (
-    AVATARS_DIR, RESUMES_DIR, VIDEOS_DIR, assemble_chunks_async,
-    extract_poster_thumbnail, get_validated_upload_dir,
-    probe_video_duration, transcode_to_streaming_mp4, write_bytes_async,
+    AVATARS_DIR, RESUMES_DIR, SAFE_FILENAME_REGEX, VIDEOS_DIR, assemble_chunks_async,
+    dir_size_async, extract_poster_thumbnail, get_validated_upload_dir, nonempty_file_async,
+    probe_video_duration, read_head_async, save_upload_capped, transcode_to_streaming_mp4,
 )
 from app.services.pdf_generator import generate_pdf_resume_async
 
 logger = logging.getLogger(__name__)
-
 
 class MediaService:
     """Service layer managing video uploads, chunk reassembly, and asset persistence."""
@@ -51,12 +54,8 @@ class MediaService:
         self, username: str, file: UploadFile, current_user: AuthenticatedUser
     ) -> Dict[str, str]:
         profile, clean_username = await self._require_owned_profile(username, current_user)
-        ext = os.path.splitext(file.filename or "")[1].lower()
-        ext = ext if ext in (".jpg", ".jpeg", ".png", ".webp") else ".jpg"
-        safe_filename = f"{clean_username}_{int(time.time())}{ext}"
-        await write_bytes_async(os.path.join(AVATARS_DIR, safe_filename), await file.read())
-        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
-        avatar_url = f"{gateway_origin}/uploads/avatars/{safe_filename}"
+        safe_filename = await _save_validated(file, AVATARS_DIR, IMAGE_TYPES, get_settings().UPLOAD_MAX_AVATAR_BYTES)
+        avatar_url = f"{get_settings().public_api_url}/uploads/avatars/{safe_filename}"
         await self.media_repo.update_avatar_url(profile.id, avatar_url)
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
@@ -66,14 +65,30 @@ class MediaService:
         self, username: str, file: UploadFile, current_user: AuthenticatedUser
     ) -> Dict[str, str]:
         profile, clean_username = await self._require_owned_profile(username, current_user)
-        safe_filename = f"{clean_username}_resume_{int(time.time())}.pdf"
-        await write_bytes_async(os.path.join(RESUMES_DIR, safe_filename), await file.read())
-        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
-        resume_url = f"{gateway_origin}/uploads/resumes/{safe_filename}"
+        safe_filename = await _save_validated(file, RESUMES_DIR, PDF_TYPES, get_settings().UPLOAD_MAX_RESUME_BYTES)
+        # Private: served only by GET /v1/profile/{username}/resume/{filename} (owner/admin).
+        resume_url = f"{get_settings().public_api_url}/v1/profile/{clean_username}/resume/{safe_filename}"
         await self.media_repo.update_resume_url(profile.id, resume_url)
         await self.db.commit()
         await invalidate_candidate_cache(clean_username)
         return {"resume_url": resume_url, "filename": file.filename or safe_filename, "message": "Resume PDF uploaded successfully"}
+
+    async def download_resume(
+        self, username: str, filename: str, current_user: AuthenticatedUser
+    ) -> FileResponse:
+        """Owner/admin-only download of the uploaded resume (it may contain contact PII)."""
+        profile, clean_username = await self._require_owned_profile(username, current_user)
+        stored_name = os.path.basename(urlparse(profile.resume_url or "").path)
+        if not stored_name or stored_name != filename or not SAFE_FILENAME_REGEX.match(filename):
+            raise HTTPException(status_code=404, detail="Resume not found")
+        root = os.path.realpath(RESUMES_DIR)
+        path = os.path.realpath(os.path.join(root, filename))
+        if not path.startswith(root + os.sep) or not await nonempty_file_async(path):
+            raise HTTPException(status_code=404, detail="Resume not found")
+        return FileResponse(
+            path, media_type="application/pdf", filename=f"{clean_username}_resume.pdf",
+            headers={"Cache-Control": "private, no-store"},
+        )
 
     async def delete_resume(self, username: str, current_user: AuthenticatedUser) -> Dict[str, str]:
         profile, clean_username = await self._require_owned_profile(username, current_user)
@@ -111,8 +126,14 @@ class MediaService:
     ) -> Dict[str, Any]:
         verify_profile_owner(current_user, username)
         upload_dir = get_validated_upload_dir(upload_id, current_user.id)
+        if not 0 <= chunk_index < total_chunks:
+            raise HTTPException(status_code=400, detail="chunk_index must be within [0, total_chunks)")
+        settings = get_settings()
         await asyncio.to_thread(os.makedirs, upload_dir, exist_ok=True)
-        await write_bytes_async(os.path.join(upload_dir, f"chunk_{chunk_index:05d}"), await file.read())
+        remaining = settings.UPLOAD_MAX_VIDEO_BYTES - await dir_size_async(upload_dir)
+        await save_upload_capped(
+            file, os.path.join(upload_dir, f"chunk_{chunk_index:05d}"), min(settings.UPLOAD_MAX_CHUNK_BYTES, max(remaining, 0))
+        )
         return {
             "upload_id": upload_id, "chunk_index": chunk_index, "total_chunks": total_chunks,
             "status": "chunk_received", "message": f"Chunk {chunk_index + 1}/{total_chunks} received successfully",
@@ -130,9 +151,12 @@ class MediaService:
         if not profile:
             raise HTTPException(status_code=404, detail="Candidate not found")
 
-        owner_slug = profile.username.lower().strip()
-        timestamp = int(time.time())
-        raw_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_raw_{timestamp}.webm")
+        head = await read_head_async(os.path.join(upload_dir, "chunk_00000"))
+        if not head:
+            raise HTTPException(status_code=400, detail="Missing chunk index 0")
+        ext = _require_type(head, VIDEO_TYPES)
+        stem = secrets.token_hex(16)
+        raw_path = os.path.join(VIDEOS_DIR, f"{stem}_raw{ext}")
         try:
             await assemble_chunks_async(upload_dir, raw_path, payload.total_chunks)
         except FileNotFoundError as e:
@@ -142,14 +166,13 @@ class MediaService:
         except Exception as e:
             logger.warning("Error cleaning up temporary chunks directory: %s", type(e).__name__)
 
-        mp4_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_pitch_{timestamp}.mp4")
-        fallback_path = os.path.join(VIDEOS_DIR, f"{owner_slug}_pitch_{timestamp}.webm")
+        mp4_path = os.path.join(VIDEOS_DIR, f"{stem}_pitch.mp4")
+        fallback_path = os.path.join(VIDEOS_DIR, f"{stem}_pitch_src{ext}")
         final_path, final_filename = await transcode_to_streaming_mp4(raw_path, mp4_path, fallback_path)
-        poster_url = await extract_poster_thumbnail(final_path, os.path.join(VIDEOS_DIR, f"{owner_slug}_poster_{timestamp}.jpg"))
+        poster_url = await extract_poster_thumbnail(final_path, os.path.join(VIDEOS_DIR, f"{stem}_poster.jpg"))
         duration_sec = await probe_video_duration(final_path)
 
-        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
-        video_url = f"{gateway_origin}/uploads/videos/{final_filename}"
+        video_url = f"{get_settings().public_api_url}/uploads/videos/{final_filename}"
         await self.media_repo.update_video_pitch_url(profile.id, video_url)
         if poster_url:
             await self.media_repo.upsert_pitch_poster(profile.id, poster_url)

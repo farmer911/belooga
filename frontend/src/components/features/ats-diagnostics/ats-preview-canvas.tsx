@@ -81,7 +81,7 @@ export function ATSPreviewCanvas({ cvText, previewMode, setPreviewMode }: ATSPre
             </div>
 
             <div className="text-neutral-400 text-[11px] mb-2">
-              // Bot ATS loại bỏ toàn bộ đồ họa, màu sắc và chỉ đọc văn bản tuần tự như sau:
+              {"// Bot ATS loại bỏ toàn bộ đồ họa, màu sắc và chỉ đọc văn bản tuần tự như sau:"}
             </div>
 
             <pre className="text-emerald-300/90 whitespace-pre-wrap leading-relaxed bg-black/40 p-4 rounded-lg border border-neutral-700/60 text-[11px]">

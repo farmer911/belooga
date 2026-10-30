@@ -12,7 +12,9 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_360_degree_analytics_candidate_recruiter_and_expert(
     client: AsyncClient,
+    candidate_headers: dict,
 ):
+    client.headers.update(candidate_headers)
     # 1. Candidate analytics
     cand_res = await client.get("/v1/analytics/candidate")
     assert cand_res.status_code == 200

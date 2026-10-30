@@ -14,6 +14,7 @@ Usage:
 import ast
 import re
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -102,7 +103,8 @@ FRONTEND = {
 }
 
 BLOCK_RE = re.compile(r"<!-- AUTO:BEGIN -->.*?<!-- AUTO:END -->", re.S)
-rel = lambda p: str(p.relative_to(ROOT))
+rel = lambda p: p.relative_to(ROOT).as_posix()  # posix so Windows output matches CI
+posix_key = lambda p: p.relative_to(ROOT).parts  # case-sensitive order on every OS
 
 
 def find_module(dotted):
@@ -164,9 +166,9 @@ def backend_facts(skill_name, modules):
     ]
     out.append("")
     out.append("- Router: " + ", ".join(f"`{rel(EP_DIR / m)}`" for m in modules))
-    out.append("- Service: " + (", ".join(f"`{rel(s)}`" for s in sorted(services)) or "_none_"))
-    out.append("- Repository: " + (", ".join(f"`{rel(r)}`" for r in sorted(repos)) or "_none_"))
-    out.append("- Tests: " + (", ".join(f"`{rel(t)}`" for t in sorted(tests)) or "_none — add one_"))
+    out.append("- Service: " + (", ".join(f"`{rel(s)}`" for s in sorted(services, key=posix_key)) or "_none_"))
+    out.append("- Repository: " + (", ".join(f"`{rel(r)}`" for r in sorted(repos, key=posix_key)) or "_none_"))
+    out.append("- Tests: " + (", ".join(f"`{rel(t)}`" for t in sorted(tests, key=posix_key)) or "_none — add one_"))
     return out
 
 
@@ -219,8 +221,8 @@ def frontend_facts(pages):
                 seen.add(target)
                 queue.append(target)
 
-    out.append("- Components: " + (", ".join(f"`{rel(c)}`" for c in sorted(comps)) or "_inline_"))
-    out.append("- Hooks: " + (", ".join(f"`{rel(h)}`" for h in sorted(hooks)) or "_none_"))
+    out.append("- Components: " + (", ".join(f"`{rel(c)}`" for c in sorted(comps, key=posix_key)) or "_inline_"))
+    out.append("- Hooks: " + (", ".join(f"`{rel(h)}`" for h in sorted(hooks, key=posix_key)) or "_none_"))
     out.append("- data-testid: " + (", ".join(f"`{x}`" for x in sorted(tids)) or "_none — add before writing E2E_"))
     return out
 

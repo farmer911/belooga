@@ -1,8 +1,24 @@
 import { test, expect } from '@playwright/test';
 
+// The studio loads the signed-in user's saved draft; reset to the sample template so assertions are state-independent.
+async function openWithSample(page: import('@playwright/test').Page) {
+  await page.goto('/cv-studio');
+  await page.waitForLoadState('networkidle');
+  await page.click('button:has-text("Nạp Mẫu Chuẩn")');
+  await expect(page.locator('[data-testid="cv-preview-name"]')).toHaveText('NGUYỄN VĂN AN');
+}
+
 test.describe('Pro CV Studio (Dynamic UI Adjuster) Quality Gate', () => {
+  test.beforeEach(async ({ page }) => {
+    // Candidate session: the page requires a signed-in user (sets the HttpOnly refresh cookie)
+    const loginRes = await page.request.post('http://localhost:8080/v1/auth/login/', {
+      data: { email: 'alex@belooga.com', password: 'SecurePassword123!' },
+    });
+    expect(loginRes.status()).toBe(200);
+  });
+
   test('TC-CVSTUDIO-001: 3-column layout, sidebar, editor, and preview rendering', async ({ page }) => {
-    await page.goto('/cv-studio');
+    await openWithSample(page);
 
     // 1. Assert Header & Breadcrumb
     await expect(page.locator('text=Belooga Studio')).toBeVisible({ timeout: 7000 });
@@ -21,7 +37,7 @@ test.describe('Pro CV Studio (Dynamic UI Adjuster) Quality Gate', () => {
   });
 
   test('TC-CVSTUDIO-002: STAR editor input synchronization with live preview', async ({ page }) => {
-    await page.goto('/cv-studio');
+    await openWithSample(page);
 
     // Change Name in Editor
     const nameInput = page.locator('input[value="NGUYỄN VĂN AN"]');
@@ -38,7 +54,7 @@ test.describe('Pro CV Studio (Dynamic UI Adjuster) Quality Gate', () => {
   });
 
   test('TC-CVSTUDIO-003: Dynamic typography and auto-fit margin optimization', async ({ page }) => {
-    await page.goto('/cv-studio');
+    await openWithSample(page);
 
     // Assert One-Page Snap Indicator is initially on
     await expect(page.locator('[data-testid="snap-indicator"]')).toBeVisible();

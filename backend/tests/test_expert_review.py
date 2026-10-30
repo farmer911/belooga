@@ -2,11 +2,49 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import text
+from app.core.database import async_session_maker
+from tests.payments_support import pay_review_order
 
 
 @pytest.mark.asyncio
-async def test_list_experts_and_packages(client: AsyncClient):
-    """Verify public endpoints return seeded experts and review packages."""
+async def test_list_experts_and_packages(client: AsyncClient, test_candidate_a: dict):
+    """Verify public endpoints return seeded experts and review packages even if user-created experts exist first."""
+    headers_a = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+    await client.post(
+        "/v1/expert-review/apply",
+        json={
+            "full_name": "Test Preexisting Expert",
+            "role_title": "Staff Backend Engineer",
+            "company_name": "Acme Corp",
+            "years_experience": 9,
+            "category": "Backend & Systems",
+            "specialties": ["Python", "PostgreSQL"],
+            "turnaround_hours": 24,
+            "hourly_rate_vnd": 900000,
+            "linkedin_url": "https://linkedin.com/in/test-expert",
+            "bio": "Reviewed 100+ backend resumes.",
+        },
+        headers=headers_a,
+    )
+    async with async_session_maker() as db:
+        await db.execute(
+            text(
+                "DELETE FROM cv_review_feedbacks WHERE expert_id IN (SELECT id FROM expert_profiles WHERE full_name IN ('Sarah Jenkins', 'Alex Chen', 'Marcus Vance'))"
+            )
+        )
+        await db.execute(
+            text(
+                "UPDATE cv_review_orders SET expert_id = NULL WHERE expert_id IN (SELECT id FROM expert_profiles WHERE full_name IN ('Sarah Jenkins', 'Alex Chen', 'Marcus Vance'))"
+            )
+        )
+        await db.execute(
+            text(
+                "DELETE FROM expert_profiles WHERE full_name IN ('Sarah Jenkins', 'Alex Chen', 'Marcus Vance')"
+            )
+        )
+        await db.commit()
+
     # 1. List packages
     res_pkg = await client.get("/v1/expert-review/packages/")
     assert res_pkg.status_code == 200
@@ -22,8 +60,8 @@ async def test_list_experts_and_packages(client: AsyncClient):
     assert res_exp.status_code == 200
     experts = res_exp.json()
     assert len(experts) >= 3
-    names = [e["full_name"] for e in experts]
-    assert any("Sarah" in n or "Alex" in n for n in names)
+    names = {e["full_name"] for e in experts}
+    assert {"Sarah Jenkins", "Alex Chen", "Marcus Vance"} <= names
 
     # 3. Filter experts by category
     res_filtered = await client.get("/v1/expert-review/experts/?category=Frontend")
@@ -34,7 +72,8 @@ async def test_list_experts_and_packages(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_order_creation_checkout_and_idor_protection(
-    client: AsyncClient, test_candidate_a: dict, test_candidate_b: dict
+    client: AsyncClient, test_candidate_a: dict, test_candidate_b: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify order creation, checkout state transitions, and IDOR protection."""
     token_a = test_candidate_a["token"]
@@ -80,16 +119,19 @@ async def test_order_creation_checkout_and_idor_protection(
     )
     assert res_idor.status_code == 403
 
-    # 4. User A successfully checks out their order
+    # 4. Checkout cannot mark an order paid by itself; it confirms a real MoMo payment
+    unpaid = await client.post(
+        f"/v1/expert-review/orders/{order_id}/checkout/", json={"payment_method": "card"}, headers=headers_a
+    )
+    assert unpaid.status_code == 402
+    await pay_review_order(client, test_candidate_a["token"], order_id, monkeypatch)
     res_checkout = await client.post(
-        f"/v1/expert-review/orders/{order_id}/checkout/",
-        json={"payment_method": "stripe_card", "coupon_code": "BELOOGA10"},
-        headers=headers_a,
+        f"/v1/expert-review/orders/{order_id}/checkout/", json={"payment_method": "momo"}, headers=headers_a
     )
     assert res_checkout.status_code == 200
     paid_order = res_checkout.json()
     assert paid_order["order_status"] == "paid"
-    assert "stripe_card" in paid_order["payment_reference"]
+    assert paid_order["payment_reference"].startswith("BLG-")
 
     # 5. User A lists their orders
     res_my_orders = await client.get("/v1/expert-review/orders/my-orders/", headers=headers_a)

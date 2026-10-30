@@ -86,7 +86,9 @@ export function useATSDiagnostics() {
 
   const scanMutation = useMutation({
     mutationFn: async (payload: ATSScanPayload) => {
-      const [scanRes, shortlistRes, kitRes] = await Promise.all([
+      // The scan is the product; the recruiter shortlist (signed-in only) and interview kit are extras
+      // and must not fail the scan for anonymous visitors.
+      const [scanRes, shortlistRes, kitRes] = await Promise.allSettled([
         apiClient.post<ATSScanResult>("/v1/match/ats-scan", payload),
         apiClient.post<TalentShortlistResult>("/v1/match/talent-shortlist", {
           job_title: payload.job_title,
@@ -97,7 +99,12 @@ export function useATSDiagnostics() {
         }),
         apiClient.post<InterviewKitResult>("/v1/match/interview-kit", payload),
       ]);
-      return { scan: scanRes.data, shortlist: shortlistRes.data, kit: kitRes.data };
+      if (scanRes.status === "rejected") throw scanRes.reason;
+      return {
+        scan: scanRes.value.data,
+        shortlist: shortlistRes.status === "fulfilled" ? shortlistRes.value.data : null,
+        kit: kitRes.status === "fulfilled" ? kitRes.value.data : null,
+      };
     },
     onSuccess: (data) => {
       setError(null);

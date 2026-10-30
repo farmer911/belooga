@@ -61,6 +61,7 @@ flowchart LR
 ---
 
 ## 4. Self-Verification & Empirical Benchmarks
+Windows: use `backend/.venv/Scripts/python.exe` (and `-m pytest`) instead of `backend/.venv/bin/...`.
 ```bash
 backend/.venv/bin/pytest backend/tests/ -v
 backend/.venv/bin/python3 scripts/benchmark-gateway-cache.py

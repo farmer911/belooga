@@ -192,64 +192,41 @@ class ExpertReviewRepository:
                 new_cnt = prev_cnt + (0 if is_update else 1)
                 exp.total_reviews_count = max(new_cnt, 1)
                 exp.rating = round(((prev_rating * prev_cnt) + review_stars) / max(new_cnt, 1), 2)
-        order.order_status = "completed"
+        # Delivered feedback waits for the buyer to accept (/complete), which releases escrow.
+        order.order_status = "in_review"
         await self.db.commit()
         return await self.get_feedback_by_order_id(order.id) or existing
 
-    async def ensure_feedback_for_paid_order(self, order: CVReviewOrder) -> CVReviewFeedback:
-        existing = await self.get_feedback_by_order_id(order.id)
-        if existing:
-            return existing
-        return await self.upsert_order_feedback(
-            order=order,
-            score_overall=88,
-            score_ats_compatibility=92,
-            score_impact_action_verbs=85,
-            score_structure_formatting=89,
-            summary_verdict=(
-                f"Strong technical trajectory for {order.target_role}. Quantifying p95 latency and revenue impact "
-                "in your top two roles will elevate shortlist conversion."
-            ),
-            strengths=[
-                "Clear architectural progression and modern stack alignment.",
-                "Single-column ATS-safe formatting with zero parsing obstructions.",
-            ],
-            improvements=[
-                "Add baseline-to-target metrics (e.g., RPS, latency, cost savings) to 3 bullets.",
-                "Pair your top role with a 30-second Belooga Video Elevator Pitch.",
-            ],
-        )
-
     async def seed_packages_if_empty(self, pkg_seeds: list[tuple]) -> None:
         await self.db.execute(text("SELECT pg_advisory_xact_lock(9001)"))
-        if not await self.list_packages():
-            self.db.add_all([
-                CVReviewPackage(name=n, slug=s, description=d, price_cents=p, turn_around_hours=h, is_popular=pop, features=f)
-                for n, s, d, p, h, pop, f in pkg_seeds
-            ])
+        existing_slugs = {p.slug for p in await self.list_packages()}
+        missing = [
+            CVReviewPackage(name=n, slug=s, description=d, price_cents=p, turn_around_hours=h, is_popular=pop, features=f)
+            for n, s, d, p, h, pop, f in pkg_seeds if s not in existing_slugs
+        ]
+        if missing:
+            self.db.add_all(missing)
             await self.db.commit()
 
     async def seed_experts_if_empty(self, exp_seeds: list[tuple]) -> None:
         await self.db.execute(text("SELECT pg_advisory_xact_lock(9002)"))
-        if not await self.list_experts():
-            self.db.add_all([
-                ExpertProfile(full_name=fn, headline=hl, bio=b, avatar_url=av, company=co, role_category=rc, years_of_experience=yoe, rating=rt, total_reviews_count=cnt, turn_around_days=td, is_active=True)
-                for fn, hl, b, av, co, rc, yoe, rt, cnt, td in exp_seeds
-            ])
+        existing_names = {e.full_name for e in await self.list_experts()}
+        missing = [
+            ExpertProfile(full_name=fn, headline=hl, bio=b, avatar_url=av, company=co, role_category=rc, years_of_experience=yoe, rating=rt, total_reviews_count=cnt, turn_around_days=td, is_active=True)
+            for fn, hl, b, av, co, rc, yoe, rt, cnt, td in exp_seeds if fn not in existing_names
+        ]
+        if missing:
+            self.db.add_all(missing)
             await self.db.commit()
 
-    async def upsert_registered_expert(
-        self, identity_id: Optional[uuid.UUID], data: dict
-    ) -> ExpertProfile:
-        stmt = select(ExpertProfile).where(ExpertProfile.full_name == data["full_name"])
-        if identity_id:
-            stmt = select(ExpertProfile).where(
-                (ExpertProfile.identity_id == identity_id) | (ExpertProfile.full_name == data["full_name"])
-            )
-        existing = (await self.db.execute(stmt.limit(1))).scalar_one_or_none()
+    async def upsert_registered_expert(self, identity_id: uuid.UUID, data: dict) -> ExpertProfile:
+        """Create/refresh the caller's own expert profile. Matched by identity only (never by display name,
+        which would let one user take over another's profile). Flushes; the service commits."""
+        existing = (
+            await self.db.execute(select(ExpertProfile).where(ExpertProfile.identity_id == identity_id).limit(1))
+        ).scalar_one_or_none()
         turn_days = max(1, round(int(data.get("turnaround_hours", 24)) / 24))
         if existing:
-            existing.identity_id = identity_id or existing.identity_id
             existing.full_name = data["full_name"]
             existing.headline = data["role_title"]
             existing.company = data["company_name"]
@@ -258,8 +235,7 @@ class ExpertReviewRepository:
             existing.bio = data.get("bio") or existing.bio
             existing.turn_around_days = turn_days
             existing.is_active = True
-            await self.db.commit()
-            await self.db.refresh(existing)
+            await self.db.flush()
             return existing
         created = ExpertProfile(
             identity_id=identity_id,
@@ -271,12 +247,49 @@ class ExpertReviewRepository:
             role_category=data["category"],
             years_of_experience=int(data.get("years_experience", 6)),
             rating=5.0,
-            total_reviews_count=12,
+            total_reviews_count=0,
             turn_around_days=turn_days,
             is_active=True,
         )
         self.db.add(created)
-        await self.db.commit()
-        await self.db.refresh(created)
+        await self.db.flush()
         return created
 
+    _APP_COLS = """
+        COALESCE(expert_profile_id::text, identity_id::text) AS id, full_name, role_title, company_name, years_experience,
+        category, specialties, turnaround_hours, hourly_rate_vnd, linkedin_url, bio
+    """
+
+    async def upsert_expert_application(self, identity_id: uuid.UUID, expert_profile_id: uuid.UUID, data: dict) -> dict:
+        res = await self.db.execute(
+            text(f"""
+                INSERT INTO expert_applications (identity_id, expert_profile_id, full_name, role_title, company_name,
+                    years_experience, category, specialties, turnaround_hours, hourly_rate_vnd, linkedin_url, bio)
+                VALUES (:iid, :epid, :full_name, :role_title, :company_name, :years_experience, :category, :specialties,
+                    :turnaround_hours, :hourly_rate_vnd, :linkedin_url, :bio)
+                ON CONFLICT (identity_id) DO UPDATE SET
+                    expert_profile_id = EXCLUDED.expert_profile_id, full_name = EXCLUDED.full_name,
+                    role_title = EXCLUDED.role_title, company_name = EXCLUDED.company_name,
+                    years_experience = EXCLUDED.years_experience, category = EXCLUDED.category,
+                    specialties = EXCLUDED.specialties, turnaround_hours = EXCLUDED.turnaround_hours,
+                    hourly_rate_vnd = EXCLUDED.hourly_rate_vnd, linkedin_url = EXCLUDED.linkedin_url,
+                    bio = EXCLUDED.bio, updated_at = NOW()
+                RETURNING {self._APP_COLS}
+            """),
+            {
+                "iid": identity_id, "epid": expert_profile_id, "full_name": data["full_name"],
+                "role_title": data["role_title"], "company_name": data["company_name"],
+                "years_experience": data["years_experience"], "category": data["category"],
+                "specialties": list(data.get("specialties") or []), "turnaround_hours": data["turnaround_hours"],
+                "hourly_rate_vnd": data["hourly_rate_vnd"], "linkedin_url": data.get("linkedin_url") or "",
+                "bio": data.get("bio") or "",
+            },
+        )
+        return dict(res.mappings().one())
+
+    async def get_expert_application(self, identity_id: uuid.UUID) -> Optional[dict]:
+        res = await self.db.execute(
+            text(f"SELECT {self._APP_COLS} FROM expert_applications WHERE identity_id = :iid"), {"iid": identity_id}
+        )
+        row = res.mappings().first()
+        return dict(row) if row else None

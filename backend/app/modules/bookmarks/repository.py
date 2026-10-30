@@ -3,15 +3,16 @@
 Single-roundtrip PostgreSQL data access layer for `candidate_bookmarks` and recruiter pipeline items.
 """
 
-import json
 from typing import Any, Optional
 import uuid
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.bookmarks.growth_repository import GrowthRowsMixin
 
-class BookmarkRepository:
+
+class BookmarkRepository(GrowthRowsMixin):
     """Repository executing single-roundtrip SQL for recruiter candidate bookmarks and pipeline."""
 
     def __init__(self, db: AsyncSession):
@@ -171,93 +172,91 @@ class BookmarkRepository:
             "is_hidden": False,
         }
 
-    async def list_pipeline_rows(self, recruiter_key: str) -> list[dict[str, Any]]:
+    async def get_visible_candidates(self, usernames: list[str]) -> dict[str, dict[str, Any]]:
+        """Batch variant of get_visible_candidate (one roundtrip); hidden profiles are excluded. Keyed by lower(username)."""
         stmt = text(
             """
-            SELECT id, message FROM contact_inquiries
-            WHERE name LIKE :prefix
-            ORDER BY created_at DESC
+            SELECT cp.id, cp.identity_id, cp.username, cp.first_name, cp.last_name, cp.headline,
+                   COALESCE(ARRAY_AGG(ms.name) FILTER (WHERE ms.name IS NOT NULL), '{}') AS skills
+            FROM candidate_profiles cp
+            LEFT JOIN profile_skills cs ON cs.profile_id = cp.id
+            LEFT JOIN skills ms ON ms.id = cs.skill_id
+            WHERE LOWER(cp.username) = ANY(:unames) AND cp.is_hidden = FALSE
+            GROUP BY cp.id
             """
         )
-        rows = (await self.db.execute(stmt, {"prefix": f"RECRUITER_PIPE:{recruiter_key}:%"})).fetchall()
-        out: list[dict[str, Any]] = []
-        for r in rows:
-            try:
-                data = json.loads(r.message)
-                data["id"] = str(r.id)
-                out.append(data)
-            except Exception:
-                continue
-        return out
+        rows = (await self.db.execute(stmt, {"unames": [u.strip().lower() for u in usernames]})).fetchall()
+        return {
+            r.username.lower(): {
+                "id": str(r.id),
+                "identity_id": r.identity_id,
+                "username": r.username,
+                "full_name": f"{(r.first_name or '').strip()} {(r.last_name or '').strip()}".strip() or r.username,
+                "headline": r.headline or "Senior Software Engineer",
+                "skills": list(r.skills or []),
+            }
+            for r in rows
+        }
 
-    async def upsert_pipeline_row(self, recruiter_key: str, item: dict[str, Any]) -> dict[str, Any]:
-        key_name = f"RECRUITER_PIPE:{recruiter_key}:{item['username'].lower()}"
-        existing = (
-            await self.db.execute(text("SELECT id, message FROM contact_inquiries WHERE name = :n LIMIT 1"), {"n": key_name})
-        ).fetchone()
-        if existing:
-            item["id"] = str(existing.id)
-            await self.db.execute(
-                text("UPDATE contact_inquiries SET message = :m WHERE id = :id"),
-                {"m": json.dumps(item, ensure_ascii=False), "id": existing.id},
-            )
-        else:
-            new_id = uuid.uuid4()
-            item["id"] = str(new_id)
-            await self.db.execute(
-                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :n, 'recruiter@belooga.com', :m)"),
-                {"id": new_id, "n": key_name, "m": json.dumps(item, ensure_ascii=False)},
-            )
-        await self.db.commit()
-        return item
+    _PIPE_COLS = """
+        id::text AS id, candidate_username AS username, full_name, headline, target_role, stage, ats_score,
+        years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills, recruiter_rating,
+        evaluation_notes, contact_unlocked, interview_datetime
+    """
 
-    async def update_pipeline_by_id(self, item_id: str, updates: dict[str, Any]) -> Optional[dict[str, Any]]:
-        row = (
-            await self.db.execute(text("SELECT id, message FROM contact_inquiries WHERE CAST(id AS TEXT) = :id LIMIT 1"), {"id": item_id})
-        ).fetchone()
-        if not row:
-            return None
-        data = json.loads(row.message)
-        for k, v in updates.items():
-            if v is not None:
-                data[k] = v
-        data["id"] = str(row.id)
-        await self.db.execute(
-            text("UPDATE contact_inquiries SET message = :m WHERE id = :id"),
-            {"m": json.dumps(data, ensure_ascii=False), "id": row.id},
+    async def list_pipeline_rows(self, recruiter_identity_id: uuid.UUID) -> list[dict[str, Any]]:
+        res = await self.db.execute(
+            text(f"SELECT {self._PIPE_COLS} FROM recruiter_pipeline_items WHERE recruiter_identity_id = :rid ORDER BY created_at DESC"),
+            {"rid": recruiter_identity_id},
         )
-        await self.db.commit()
-        return data
+        return [dict(r) for r in res.mappings().all()]
 
-    async def list_growth_rows(self, prefix: str) -> list[dict[str, Any]]:
-        rows = (
-            await self.db.execute(
-                text("SELECT id, message FROM contact_inquiries WHERE name LIKE :p ORDER BY created_at DESC"),
-                {"p": f"{prefix}:%"},
-            )
-        ).fetchall()
-        out: list[dict[str, Any]] = []
-        for r in rows:
-            try:
-                out.append(json.loads(r.message))
-            except Exception:
-                continue
-        return out
+    async def upsert_pipeline_row(self, recruiter_identity_id: uuid.UUID, item: dict[str, Any]) -> dict[str, Any]:
+        """Insert or refresh the recruiter's card for this candidate (unique per recruiter + username). No commit."""
+        res = await self.db.execute(
+            text(f"""
+                INSERT INTO recruiter_pipeline_items (
+                    recruiter_identity_id, candidate_username, full_name, headline, target_role, stage, ats_score,
+                    years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills,
+                    recruiter_rating, evaluation_notes, contact_unlocked, interview_datetime
+                ) VALUES (
+                    :rid, :username, :full_name, :headline, :target_role, :stage, :ats_score,
+                    :years_experience, :expected_salary, :video_pitch_url, :matched_skills, :missing_skills,
+                    :recruiter_rating, :evaluation_notes, :contact_unlocked, :interview_datetime
+                )
+                ON CONFLICT (recruiter_identity_id, LOWER(candidate_username)) DO UPDATE SET
+                    full_name = EXCLUDED.full_name, headline = EXCLUDED.headline, target_role = EXCLUDED.target_role,
+                    stage = EXCLUDED.stage, ats_score = EXCLUDED.ats_score, years_experience = EXCLUDED.years_experience,
+                    expected_salary = EXCLUDED.expected_salary, video_pitch_url = EXCLUDED.video_pitch_url,
+                    matched_skills = EXCLUDED.matched_skills, missing_skills = EXCLUDED.missing_skills,
+                    recruiter_rating = EXCLUDED.recruiter_rating, evaluation_notes = EXCLUDED.evaluation_notes,
+                    contact_unlocked = recruiter_pipeline_items.contact_unlocked OR EXCLUDED.contact_unlocked,
+                    interview_datetime = COALESCE(EXCLUDED.interview_datetime, recruiter_pipeline_items.interview_datetime),
+                    updated_at = NOW()
+                RETURNING {self._PIPE_COLS}
+            """),
+            {"rid": recruiter_identity_id, **item},
+        )
+        return dict(res.mappings().one())
 
-    async def upsert_growth_row(self, prefix: str, item_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        key_name = f"{prefix}:{item_id}"
-        existing = (
-            await self.db.execute(text("SELECT id FROM contact_inquiries WHERE name = :n LIMIT 1"), {"n": key_name})
-        ).fetchone()
-        raw = json.dumps(data, ensure_ascii=False)
-        if existing:
-            await self.db.execute(text("UPDATE contact_inquiries SET message = :m WHERE id = :id"), {"m": raw, "id": existing.id})
-        else:
-            await self.db.execute(
-                text("INSERT INTO contact_inquiries (id, name, email, message) VALUES (:id, :n, 'growth@belooga.internal', :m)"),
-                {"id": uuid.uuid4(), "n": key_name, "m": raw},
-            )
-        await self.db.commit()
-        return data
+    async def update_pipeline_row(
+        self, recruiter_identity_id: uuid.UUID, item_id: uuid.UUID, updates: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
+        """Owner-scoped partial update; returns None when the row is missing or belongs to another recruiter."""
+        allowed = ("stage", "recruiter_rating", "evaluation_notes", "contact_unlocked", "interview_datetime")
+        fields = {k: v for k, v in updates.items() if k in allowed and v is not None}
+        set_sql = ", ".join(f"{k} = :{k}" for k in fields) or "stage = stage"
+        res = await self.db.execute(
+            text(f"""
+                UPDATE recruiter_pipeline_items SET {set_sql}, updated_at = NOW()
+                WHERE id = :id AND recruiter_identity_id = :rid
+                RETURNING {self._PIPE_COLS}
+            """),
+            {"id": item_id, "rid": recruiter_identity_id, **fields},
+        )
+        row = res.mappings().first()
+        return dict(row) if row else None
 
+    # --- Reverse bids & anonymous CV roasts (growth features) ---
 
+    _BID_COLS = "id, candidate_username, role, salary_usd, status"

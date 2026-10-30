@@ -1,0 +1,95 @@
+# Belooga Next.js frontend (standalone server from frontend/Dockerfile).
+# NEXT_PUBLIC_* values are baked in at image build time (deploy.yml build args).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: belooga-frontend
+  labels:
+    app: belooga-frontend
+    tier: web
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: belooga-frontend
+  template:
+    metadata:
+      labels:
+        app: belooga-frontend
+        tier: web
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          image: ghcr.io/farmer911/belooga-frontend:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: next-cache
+              mountPath: /app/.next/cache
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "192Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: next-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: belooga-frontend-svc
+spec:
+  selector:
+    app: belooga-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: belooga-frontend-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: belooga-frontend

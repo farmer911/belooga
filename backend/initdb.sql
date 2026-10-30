@@ -424,3 +424,270 @@ CREATE INDEX IF NOT EXISTS idx_candidate_bookmarks_recruiter_created
     ON candidate_bookmarks(recruiter_identity_id, created_at DESC);
 
 
+
+-- 25. Domain 13: Wallet ledger & MoMo payment orders (replaces JSON blobs in contact_inquiries)
+CREATE TABLE IF NOT EXISTS wallets (
+    identity_id UUID PRIMARY KEY REFERENCES identities(id) ON DELETE CASCADE,
+    available_balance_vnd BIGINT NOT NULL DEFAULT 0 CHECK (available_balance_vnd >= 0),
+    escrow_locked_vnd BIGINT NOT NULL DEFAULT 0 CHECK (escrow_locked_vnd >= 0),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    tx_type VARCHAR(32) NOT NULL CHECK (tx_type IN ('TOPUP', 'SYSTEM_PURCHASE', 'EXPERT_ESCROW_LOCK', 'EXPERT_ESCROW_RELEASE')),
+    amount_vnd BIGINT NOT NULL CHECK (amount_vnd > 0),
+    description VARCHAR(500) NOT NULL,
+    reference_id VARCHAR(255),
+    status VARCHAR(32) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_identity_created
+    ON wallet_transactions(identity_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS payment_orders (
+    order_id VARCHAR(64) PRIMARY KEY,
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    package_type VARCHAR(32) NOT NULL CHECK (package_type IN ('MICRO_PASS_29K', 'MICRO_PASS_59K', 'EXPERT_REVIEW', 'WALLET_TOPUP')),
+    amount_vnd BIGINT NOT NULL CHECK (amount_vnd > 0),
+    review_order_id UUID REFERENCES cv_review_orders(id) ON DELETE SET NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PAID', 'FAILED')),
+    trans_id VARCHAR(64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    paid_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_payment_orders_identity_created
+    ON payment_orders(identity_id, created_at DESC);
+
+-- 25. contact_inquiries key-value decomposition (Alembic 0009): first-class tables
+CREATE TABLE IF NOT EXISTS recruiter_pipeline_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recruiter_identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    candidate_username VARCHAR(100) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    headline VARCHAR(255) NOT NULL DEFAULT '',
+    target_role VARCHAR(255) NOT NULL DEFAULT '',
+    stage VARCHAR(32) NOT NULL DEFAULT 'SHORTLISTED'
+        CHECK (stage IN ('SHORTLISTED', 'PITCH_REVIEWED', 'INTERVIEW_INVITED', 'OFFER_SENT', 'HIRED')),
+    ats_score INTEGER NOT NULL DEFAULT 0 CHECK (ats_score BETWEEN 0 AND 100),
+    years_experience INTEGER NOT NULL DEFAULT 0 CHECK (years_experience >= 0),
+    expected_salary VARCHAR(100) NOT NULL DEFAULT '',
+    video_pitch_url VARCHAR(512) NOT NULL DEFAULT '',
+    matched_skills TEXT[] NOT NULL DEFAULT '{}',
+    missing_skills TEXT[] NOT NULL DEFAULT '{}',
+    recruiter_rating SMALLINT NOT NULL DEFAULT 4 CHECK (recruiter_rating BETWEEN 1 AND 5),
+    evaluation_notes TEXT NOT NULL DEFAULT '',
+    contact_unlocked BOOLEAN NOT NULL DEFAULT FALSE,
+    interview_datetime VARCHAR(64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_recruiter_pipeline_candidate
+    ON recruiter_pipeline_items (recruiter_identity_id, LOWER(candidate_username));
+CREATE INDEX IF NOT EXISTS idx_recruiter_pipeline_recruiter_created
+    ON recruiter_pipeline_items (recruiter_identity_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS reverse_bids (
+    id VARCHAR(64) PRIMARY KEY,
+    recruiter_identity_id UUID REFERENCES identities(id) ON DELETE CASCADE,
+    candidate_username VARCHAR(100) NOT NULL,
+    role VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL DEFAULT '',
+    salary_usd INTEGER NOT NULL CHECK (salary_usd > 0),
+    pitch_note TEXT NOT NULL DEFAULT '',
+    status VARCHAR(16) NOT NULL DEFAULT 'SENT' CHECK (status IN ('SENT', 'ACCEPTED', 'DECLINED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_reverse_bids_recruiter_created ON reverse_bids (recruiter_identity_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reverse_bids_candidate ON reverse_bids (LOWER(candidate_username));
+
+CREATE TABLE IF NOT EXISTS cv_roasts (
+    id VARCHAR(64) PRIMARY KEY,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    alias VARCHAR(120) NOT NULL,
+    target_role VARCHAR(255) NOT NULL,
+    summary TEXT NOT NULL,
+    ai_roast TEXT NOT NULL,
+    votes INTEGER NOT NULL DEFAULT 0 CHECK (votes >= 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cv_roasts_created ON cv_roasts (created_at DESC);
+
+CREATE TABLE IF NOT EXISTS cv_roast_votes (
+    roast_id VARCHAR(64) NOT NULL REFERENCES cv_roasts(id) ON DELETE CASCADE,
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (roast_id, identity_id)
+);
+
+CREATE TABLE IF NOT EXISTS salary_crawl_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    triggered_by_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    bonus_samples INTEGER NOT NULL CHECK (bonus_samples >= 0),
+    career_postings_scanned INTEGER NOT NULL DEFAULT 0 CHECK (career_postings_scanned >= 0),
+    crawled_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_salary_crawl_runs_crawled ON salary_crawl_runs (crawled_at DESC);
+
+CREATE TABLE IF NOT EXISTS company_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug VARCHAR(120) UNIQUE NOT NULL CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    owner_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    name VARCHAR(255) NOT NULL,
+    industry VARCHAR(120) NOT NULL DEFAULT '',
+    company_size VARCHAR(120) NOT NULL DEFAULT '',
+    location VARCHAR(255) NOT NULL DEFAULT '',
+    website VARCHAR(512) NOT NULL DEFAULT '',
+    avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0 CHECK (avg_rating BETWEEN 0 AND 5),
+    review_count INTEGER NOT NULL DEFAULT 0 CHECK (review_count >= 0),
+    avg_salary_usd INTEGER NOT NULL DEFAULT 0 CHECK (avg_salary_usd >= 0),
+    open_jobs_count INTEGER NOT NULL DEFAULT 0 CHECK (open_jobs_count >= 0),
+    hiring_now BOOLEAN NOT NULL DEFAULT TRUE,
+    description TEXT NOT NULL DEFAULT '',
+    tech_stack TEXT[] NOT NULL DEFAULT '{}',
+    benefits TEXT[] NOT NULL DEFAULT '{}',
+    open_jobs JSONB NOT NULL DEFAULT '[]'::jsonb,
+    alumni JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_company_profiles_owner ON company_profiles (owner_identity_id);
+
+CREATE TABLE IF NOT EXISTS company_reviews (
+    id VARCHAR(64) PRIMARY KEY,
+    company_id UUID NOT NULL REFERENCES company_profiles(id) ON DELETE CASCADE,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    author_role VARCHAR(255) NOT NULL DEFAULT '',
+    rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    title VARCHAR(300) NOT NULL,
+    comment TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_company_reviews_company_created ON company_reviews (company_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS company_interview_questions (
+    id VARCHAR(64) PRIMARY KEY,
+    company_id UUID NOT NULL REFERENCES company_profiles(id) ON DELETE CASCADE,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    role_title VARCHAR(255) NOT NULL DEFAULT '',
+    difficulty VARCHAR(32) NOT NULL DEFAULT 'Hard',
+    question_text TEXT NOT NULL CHECK (length(question_text) > 0),
+    sample_answer_hint TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_company_iq_company_created ON company_interview_questions (company_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS career_posting_meta (
+    career_posting_id UUID PRIMARY KEY REFERENCES career_postings(id) ON DELETE CASCADE,
+    company_name VARCHAR(255) NOT NULL DEFAULT 'Belooga',
+    company_logo_url TEXT,
+    company_website TEXT,
+    salary_range VARCHAR(100) NOT NULL DEFAULT 'Negotiable',
+    skills TEXT[] NOT NULL DEFAULT '{}',
+    is_partner BOOLEAN NOT NULL DEFAULT FALSE,
+    is_system_role BOOLEAN NOT NULL DEFAULT FALSE,
+    posted_by_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_career_posting_meta_poster ON career_posting_meta (posted_by_identity_id);
+
+CREATE TABLE IF NOT EXISTS blog_posts (
+    id VARCHAR(64) PRIMARY KEY,
+    slug VARCHAR(160) UNIQUE NOT NULL,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    author VARCHAR(255) NOT NULL,
+    author_username VARCHAR(100) NOT NULL,
+    author_headline VARCHAR(255) NOT NULL DEFAULT '',
+    author_avatar VARCHAR(512) NOT NULL DEFAULT '/images/avatar.jpg',
+    title VARCHAR(300) NOT NULL,
+    excerpt TEXT NOT NULL DEFAULT '',
+    date_label VARCHAR(64) NOT NULL DEFAULT '',
+    image VARCHAR(512) NOT NULL DEFAULT '/images/blog/blog-1.jpg',
+    post_type VARCHAR(16) NOT NULL DEFAULT 'USER_STATUS' CHECK (post_type IN ('EDITORIAL', 'USER_STATUS')),
+    category VARCHAR(120) NOT NULL DEFAULT 'Community Feed',
+    tags TEXT[] NOT NULL DEFAULT '{}',
+    ats_score_badge INTEGER CHECK (ats_score_badge BETWEEN 0 AND 100),
+    read_time_minutes INTEGER NOT NULL DEFAULT 2 CHECK (read_time_minutes > 0),
+    likes_count INTEGER NOT NULL DEFAULT 0 CHECK (likes_count >= 0),
+    content TEXT[] NOT NULL DEFAULT '{}',
+    key_takeaways TEXT[] NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_type_created ON blog_posts (post_type, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS blog_post_likes (
+    post_id VARCHAR(64) NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (post_id, identity_id)
+);
+
+CREATE TABLE IF NOT EXISTS blog_post_comments (
+    id VARCHAR(64) PRIMARY KEY,
+    post_id VARCHAR(64) NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    author_name VARCHAR(255) NOT NULL,
+    author_username VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 2000),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_blog_post_comments_post_created ON blog_post_comments (post_id, created_at);
+
+CREATE TABLE IF NOT EXISTS user_posts (
+    id VARCHAR(64) PRIMARY KEY,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE CASCADE,
+    username VARCHAR(100) NOT NULL,
+    author_name VARCHAR(255) NOT NULL,
+    title VARCHAR(300) NOT NULL,
+    category VARCHAR(120) NOT NULL DEFAULT 'Chia sẻ kiến thức',
+    body TEXT NOT NULL,
+    tags TEXT[] NOT NULL DEFAULT '{}',
+    attachment_link TEXT,
+    likes_count INTEGER NOT NULL DEFAULT 0 CHECK (likes_count >= 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_user_posts_username_created ON user_posts (LOWER(username), created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_posts_created ON user_posts (created_at DESC);
+
+CREATE TABLE IF NOT EXISTS user_post_likes (
+    post_id VARCHAR(64) NOT NULL REFERENCES user_posts(id) ON DELETE CASCADE,
+    identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (post_id, identity_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_post_comments (
+    id VARCHAR(64) PRIMARY KEY,
+    post_id VARCHAR(64) NOT NULL REFERENCES user_posts(id) ON DELETE CASCADE,
+    author_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL,
+    author_name VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 2000),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_user_post_comments_post_created ON user_post_comments (post_id, created_at);
+
+CREATE TABLE IF NOT EXISTS expert_applications (
+    identity_id UUID PRIMARY KEY REFERENCES identities(id) ON DELETE CASCADE,
+    expert_profile_id UUID REFERENCES expert_profiles(id) ON DELETE SET NULL,
+    full_name VARCHAR(255) NOT NULL,
+    role_title VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    years_experience INTEGER NOT NULL DEFAULT 0 CHECK (years_experience >= 0),
+    category VARCHAR(64) NOT NULL DEFAULT 'backend',
+    specialties TEXT[] NOT NULL DEFAULT '{}',
+    turnaround_hours INTEGER NOT NULL DEFAULT 24 CHECK (turnaround_hours > 0),
+    hourly_rate_vnd INTEGER NOT NULL DEFAULT 0 CHECK (hourly_rate_vnd >= 0),
+    linkedin_url TEXT NOT NULL DEFAULT '',
+    bio TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS career_goals (
+    identity_id UUID PRIMARY KEY REFERENCES identities(id) ON DELETE CASCADE,
+    target_role VARCHAR(255) NOT NULL,
+    target_salary VARCHAR(100) NOT NULL,
+    preferred_skills TEXT NOT NULL DEFAULT '',
+    location VARCHAR(255) NOT NULL DEFAULT '',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

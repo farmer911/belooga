@@ -51,6 +51,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `POST` | `/v1/profile/{username}/awards/order/` | `reorder_awards` | required |
 | `PATCH` | `/v1/profile/{username}/avatar/` | `upload_avatar` | required |
 | `PATCH` | `/v1/profile/{username}/resume/` | `upload_resume` | required |
+| `GET` | `/v1/profile/{username}/resume/{filename}` | `download_resume` | required |
 | `DELETE` | `/v1/profile/{username}/resume/` | `delete_resume` | required |
 | `GET` | `/v1/profile/{username}/pdf/` | `generate_candidate_pdf` | optional |
 | `POST` | `/v1/media/upload/chunk` | `upload_video_chunk` | required |
@@ -65,7 +66,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 | `PATCH` | `/v1/notifications/preferences/` | `update_notification_preferences` | required |
 
 - Router: `backend/app/api/v1/endpoints/auth.py`, `backend/app/api/v1/endpoints/profile.py`, `backend/app/api/v1/endpoints/timeline.py`, `backend/app/api/v1/endpoints/media.py`, `backend/app/api/v1/endpoints/notifications.py`
-- Service: `backend/app/modules/auth/service.py`, `backend/app/modules/media/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/profile/service.py`, `backend/app/modules/timeline/service.py`, `backend/app/services/media_transcoder.py`, `backend/app/services/pdf_generator.py`
+- Service: `backend/app/modules/auth/google_oauth.py`, `backend/app/modules/auth/service.py`, `backend/app/modules/media/service.py`, `backend/app/modules/media/uploads.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/profile/service.py`, `backend/app/modules/timeline/service.py`, `backend/app/services/media_transcoder.py`, `backend/app/services/pdf_generator.py`
 - Repository: `backend/app/modules/auth/repository.py`, `backend/app/modules/media/repository.py`, `backend/app/modules/notifications/repository.py`, `backend/app/modules/profile/repository.py`, `backend/app/modules/timeline/repository.py`
 - Tests: `backend/tests/test_auth_family_rotation.py`, `backend/tests/test_event_stream_and_k8s_probes.py`, `backend/tests/test_fullstack_seo_gateway.py`, `backend/tests/test_gateway_and_cache_optimization.py`, `backend/tests/test_idor_guards.py`, `backend/tests/test_media_traversal.py`, `backend/tests/test_notifications.py`, `backend/tests/test_production_readiness_suite.py`, `backend/tests/test_profile_privacy_and_pii.py`, `backend/tests/test_rpc_and_dossier_optimization.py`, `backend/tests/test_sql_and_flow_optimization.py`, `backend/tests/test_timeline_reorder.py`
 <!-- AUTO:END -->

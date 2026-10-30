@@ -1,49 +1,31 @@
 """Integration & Security Tests for BEL-520: Production Readiness Full Suite."""
 
-import hashlib
-import hmac
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.payments.service import MOMO_SECRET_KEY
+from tests.payments_support import configure_momo, pay_review_order, signed_ipn
 
 
 @pytest.mark.asyncio
-async def test_momo_hmac_signature_rejection_and_valid_verification(client: AsyncClient):
-    """Verify MoMo IPN rejects tampered HMAC signatures with 400 and accepts valid HMAC-SHA256."""
+async def test_momo_hmac_signature_rejection_and_valid_verification(
+    client: AsyncClient, test_candidate_a: dict, monkeypatch: pytest.MonkeyPatch
+):
+    """MoMo IPN rejects tampered HMAC signatures with 400 and accepts a valid HMAC-SHA256 signature."""
+    configure_momo(monkeypatch)
     res_create = await client.post(
         "/v1/payments/momo/create-qr",
-        json={"package_type": "MICRO_PASS_59K", "amount": 59000.0, "order_info": "ATS Full Pass"},
+        json={"package_type": "MICRO_PASS_59K", "order_info": "ATS Full Pass"},
+        headers={"Authorization": f"Bearer {test_candidate_a['token']}"},
     )
     assert res_create.status_code == 201
     order_id = res_create.json()["order_id"]
 
-    # 1. Tampered HMAC signature must be rejected with HTTP 400
-    bad_ipn = {
-        "order_id": order_id,
-        "trans_id": "MOMO_TX_BAD",
-        "result_code": 0,
-        "signature": "tampered_forged_signature_000",
-        "amount": 59000.0,
-    }
-    res_bad = await client.post("/v1/payments/momo/ipn", json=bad_ipn)
+    res_bad = await client.post("/v1/payments/momo/ipn", json={**signed_ipn(order_id, 59000), "signature": "f" * 64})
     assert res_bad.status_code == 400
-
-    # 2. Valid cryptographic HMAC-SHA256 signature must succeed
-    raw_msg = f"amount=59000.0&orderId={order_id}&transId=MOMO_TX_OK"
-    valid_sig = hmac.new(MOMO_SECRET_KEY.encode("utf-8"), raw_msg.encode("utf-8"), hashlib.sha256).hexdigest()
-    good_ipn = {
-        "order_id": order_id,
-        "trans_id": "MOMO_TX_OK",
-        "result_code": 0,
-        "signature": valid_sig,
-        "amount": 59000.0,
-    }
-    res_good = await client.post("/v1/payments/momo/ipn", json=good_ipn)
-    assert res_good.status_code == 200
-    assert res_good.json()["status"] == "PAID"
+    res_good = await client.post("/v1/payments/momo/ipn", json=signed_ipn(order_id, 59000))
+    assert res_good.status_code == 204
 
 
 @pytest.mark.asyncio
@@ -162,10 +144,15 @@ async def test_timeline_patch_and_awards_languages_interests_crud(
 
 @pytest.mark.asyncio
 async def test_expert_feedback_submission_and_analytics_db_revenue(
-    client: AsyncClient, test_candidate_a: dict
+    client: AsyncClient, test_candidate_a: dict,
+    test_admin: dict,
+    test_expert: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Verify Expert Feedback submission transitions order to completed and updates Analytics DB ledger."""
+    client.headers.update(test_admin["headers"])
     headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+    dash_before = (await client.get("/v1/analytics/dashboard")).json()
 
     # 1. Create and checkout an order
     c_ord = await client.post(
@@ -180,12 +167,8 @@ async def test_expert_feedback_submission_and_analytics_db_revenue(
     assert c_ord.status_code == 201
     order_id = c_ord.json()["id"]
 
-    chk = await client.post(
-        f"/v1/expert-review/orders/{order_id}/checkout/",
-        json={"payment_method": "momo_qr"},
-        headers=headers,
-    )
-    assert chk.status_code == 200
+    await pay_review_order(client, test_candidate_a["token"], order_id, monkeypatch)
+    await test_expert["assign"](order_id)
 
     # 2. Submit structured Expert Review Feedback
     fb_payload = {
@@ -197,22 +180,92 @@ async def test_expert_feedback_submission_and_analytics_db_revenue(
         "strengths": ["Quantified GPU cluster utilization gains", "Clean system architecture narrative"],
         "improvements": ["Highlight multi-region failover SLA in summary"],
     }
+    own = await client.post(f"/v1/expert-review/orders/{order_id}/feedback/", json=fb_payload, headers=headers)
+    assert own.status_code == 403  # buyers cannot review their own order
     sub_res = await client.post(
         f"/v1/expert-review/orders/{order_id}/feedback/",
         json=fb_payload,
-        headers=headers,
+        headers=test_expert["headers"],
     )
     assert sub_res.status_code == 200
     fb_data = sub_res.json()
     assert fb_data["score_overall"] == 96
     assert "vLLM throughput" in fb_data["summary_verdict"]
 
-    # 3. Verify order status is now completed
+    # 3. Buyer accepts the delivered review -> completed
+    accept = await client.post(f"/v1/expert-review/orders/{order_id}/complete", json={}, headers=headers)
+    assert accept.status_code == 200
     orders = (await client.get("/v1/expert-review/orders/my-orders/", headers=headers)).json()
     target_ord = next(o for o in orders if o["id"] == order_id)
     assert target_ord["order_status"] == "completed"
 
     # 4. Verify Executive Analytics Dashboard includes real DB revenue / order telemetry
     dash = (await client.get("/v1/analytics/dashboard")).json()
-    assert dash["overview"]["total_gmv"] > 0
+    assert dash["overview"]["total_gmv"] == dash_before["overview"]["total_gmv"] + 2475000.0
+    assert dash["overview"]["platform_net_revenue"] == round(dash["overview"]["total_gmv"] * 0.08, 2)
+    assert dash["funnel"][0]["count"] == dash["overview"]["total_scans"]
     assert len(dash["recent_transactions"]) >= 1
+
+    # 5. Verify Escrow Double-Entry Payout: buyer escrow_locked_vnd == 0, expert receives 92% (2,277,000 VND)
+    buyer_wallet = (await client.get("/v1/wallet/", headers=headers)).json()
+    assert buyer_wallet["escrow_locked_vnd"] == 0
+    assert any(t["tx_type"] == "EXPERT_ESCROW_RELEASE" and t["status"] == "RELEASED" for t in buyer_wallet["transactions"])
+
+    expert_wallet = (await client.get("/v1/wallet/", headers=test_expert["headers"])).json()
+    assert expert_wallet["available_balance_vnd"] == 2277000
+    assert any(t["tx_type"] == "EXPERT_ESCROW_RELEASE" and t["amount_vnd"] == 2277000 for t in expert_wallet["transactions"])
+
+
+@pytest.mark.asyncio
+async def test_growth_persistence_and_ats_ground_truth_tailoring(
+    client: AsyncClient, test_candidate_a: dict
+):
+    """Verify /v1/growth/* mutations persist in PostgreSQL and /v1/match/tailor-cv never fabricates fake RPS metrics."""
+    headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+
+    # 1. Claim reward must credit real wallet balance idempotently
+    w_before = (await client.get("/v1/wallet/", headers=headers)).json()["available_balance_vnd"]
+    claim1 = await client.post("/v1/growth/claim-reward", json={"reward_id": "rew-1"}, headers=headers)
+    assert claim1.status_code == 200
+    w_after = (await client.get("/v1/wallet/", headers=headers)).json()
+    assert w_after["available_balance_vnd"] == w_before + 50000
+    assert any(t["tx_type"] == "TOPUP" and t["reference_id"] == "REWARD:rew-1" and t["amount_vnd"] == 50000 for t in w_after["transactions"])
+
+    # Idempotent replay of same reward_id must not double-credit
+    await client.post("/v1/growth/claim-reward", json={"reward_id": "rew-1"}, headers=headers)
+    w_replay = (await client.get("/v1/wallet/", headers=headers)).json()
+    assert w_replay["available_balance_vnd"] == w_before + 50000
+
+    # 2. Stealth mode must persist is_hidden in candidate_profiles
+    await client.patch(
+        "/v1/growth/stealth-mode",
+        json={"stealth_enabled": True, "blocked_companies": ["Acme"]},
+        headers=headers,
+    )
+    pub_hidden = await client.get(f"/v1/profile/{test_candidate_a['username']}")
+    assert pub_hidden.status_code == 404
+
+    await client.patch(
+        "/v1/growth/stealth-mode",
+        json={"stealth_enabled": False, "blocked_companies": []},
+        headers=headers,
+    )
+    pub_visible = await client.get(f"/v1/profile/{test_candidate_a['username']}")
+    assert pub_visible.status_code == 200
+
+    # 3. ATS Tailor CV must not inject fabricated '45,000+ RPS' or '99.99% SLA' claims
+    tailor_res = await client.post(
+        "/v1/match/tailor-cv",
+        json={
+            "job_title": "Backend Engineer",
+            "company_name": "Acme",
+            "jd_text": "Looking for Golang, PostgreSQL, and Docker engineer.",
+            "cv_text": "Built internal CRUD services using Python and SQL.",
+        },
+        headers=headers,
+    )
+    assert tailor_res.status_code == 200
+    tailored_text = tailor_res.json()["tailored_cv_text"]
+    assert "45,000+ RPS" not in tailored_text
+    assert "99.99% SLA" not in tailored_text
+

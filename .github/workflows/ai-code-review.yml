@@ -6,29 +6,49 @@ on:
   push:
     branches: [ main, master ]
 
+# Least privilege: pushes only write the step summary; PRs may also comment.
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+  contents: read
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
 jobs:
-  ai-review:
-    name: AI Staff Code Review
+  ai-review-pr:
+    name: AI Staff Code Review (PR)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Checkout Code with History
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-
       - name: Run Belooga AI Reviewer Agent
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 scripts/ai-code-reviewer.py
+        run: python3 scripts/ai-code-reviewer.py
+
+  ai-review-push:
+    name: AI Staff Code Review (push, summary only)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Run Belooga AI Reviewer Agent
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 scripts/ai-code-reviewer.py

@@ -1,29 +1,51 @@
-import React from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ScreenShell } from "@/lib/native-runtime";
-import { useMobileAuthStore } from "@/store/auth-store";
+import React, { useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { restoreMobileSession } from "@/services/api-client";
+import { NEUMORPHIC_TOKENS } from "@/theme/tokens";
 
-export const mobileQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
+function SessionGate() {
+  const restore = useQuery({
+    queryKey: ["mobile", "session", "restore"],
+    queryFn: restoreMobileSession,
+    staleTime: Infinity,
+    retry: false,
+  });
 
-export interface RootLayoutProps {
-  children?: React.ReactNode;
-}
-
-export default function MobileRootLayout({ children }: RootLayoutProps) {
-  const isHydrated = useMobileAuthStore((s) => s.isHydrated);
+  if (restore.isPending) {
+    return (
+      <View
+        testID="mobile-hydrating-indicator"
+        style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: NEUMORPHIC_TOKENS.canvas }}
+      >
+        <ActivityIndicator color={NEUMORPHIC_TOKENS.primaryTeal} />
+      </View>
+    );
+  }
 
   return (
-    <QueryClientProvider client={mobileQueryClient}>
-      <ScreenShell testID="mobile-root-shell" mode="dark">
-        {isHydrated ? children : <div data-testid="mobile-hydrating-indicator">Loading Secure Vault...</div>}
-      </ScreenShell>
-    </QueryClientProvider>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: NEUMORPHIC_TOKENS.canvas } }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)/login" options={{ presentation: "modal" }} />
+      <Stack.Screen name="(auth)/register" options={{ presentation: "modal" }} />
+      <Stack.Screen name="candidate/[username]" options={{ headerShown: true, title: "Candidate" }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  const [queryClient] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 1 } } })
+  );
+  return (
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
+        <SessionGate />
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

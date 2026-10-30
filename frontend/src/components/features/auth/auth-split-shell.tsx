@@ -3,22 +3,38 @@
 import React from "react";
 import { AlertCircle } from "lucide-react";
 
-export const OAUTH_PROVIDERS = ["Google", "LinkedIn", "Facebook"] as const;
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
+export const OAUTH_STATE_KEY = "belooga_oauth_state";
 
-export function buildOAuthCallbackUrl(
-  provider: string,
-  emailValue: string,
-  includeReturnTo: boolean = false
-): string {
-  const slug = provider.toLowerCase();
-  const nextParam =
-    includeReturnTo && typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("next") ||
-        sessionStorage.getItem("belooga_return_to")
-      : null;
-  const emailParam = encodeURIComponent(emailValue.trim() || "alex@belooga.com");
-  const nextQuery = nextParam ? `&next=${encodeURIComponent(nextParam)}` : "";
-  return `/callback?provider=${slug}&code=oauth_${slug}_code&email=${emailParam}${nextQuery}`;
+/** Redirects to Google's consent screen; /callback verifies `state` and sends the code to the backend. */
+export function startGoogleSignIn(includeReturnTo: boolean = false): void {
+  const state = crypto.randomUUID();
+  sessionStorage.setItem(OAUTH_STATE_KEY, state);
+  const next = includeReturnTo ? new URLSearchParams(window.location.search).get("next") : null;
+  if (next) sessionStorage.setItem("belooga_return_to", next);
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: `${window.location.origin}/callback`,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+    prompt: "select_account",
+  });
+  window.location.assign(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+}
+
+export function GoogleSignInButton({ testId, includeReturnTo = false }: { testId: string; includeReturnTo?: boolean }) {
+  if (!GOOGLE_CLIENT_ID) return null;
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      onClick={() => startGoogleSignIn(includeReturnTo)}
+      className="w-full flex items-center justify-center py-2.5 px-4 border border-surface-border bg-surface-card rounded-lg text-xs font-semibold text-typography-heading hover:bg-surface-page transition-colors cursor-pointer"
+    >
+      Continue with Google
+    </button>
+  );
 }
 
 export interface AuthSplitShellProps {

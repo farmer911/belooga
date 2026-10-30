@@ -1,21 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useSyncExternalStore } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export function ThemeToggle() {
-  const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+// The <html class="dark"> flag is the source of truth; observe it instead of mirroring it into state.
+function subscribeToThemeClass(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => observer.disconnect();
+}
 
-  useEffect(() => {
-    setMounted(true);
-    const hasDark = document.documentElement.classList.contains("dark");
-    setIsDark(hasDark);
-  }, []);
+export function ThemeToggle() {
+  // null on the server and during hydration, so the placeholder renders until mounted.
+  const isDark = useSyncExternalStore(
+    subscribeToThemeClass,
+    () => document.documentElement.classList.contains("dark"),
+    () => null
+  );
 
   const toggleTheme = () => {
     const nextDark = !isDark;
-    setIsDark(nextDark);
     if (nextDark) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("belooga-theme", "dark");
@@ -25,7 +29,7 @@ export function ThemeToggle() {
     }
   };
 
-  if (!mounted) {
+  if (isDark === null) {
     return (
       <div
         className="w-9 h-9 rounded-lg border border-surface-border bg-surface-card opacity-50"

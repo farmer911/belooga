@@ -8,11 +8,14 @@ import asyncio
 import logging
 import os
 import re
+import shutil
 import subprocess
 from typing import Optional, Tuple
 import uuid
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
+
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +24,7 @@ DEFAULT_UPLOAD_BASE = (
     if os.path.exists("/app") and os.access("/app", os.W_OK)
     else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "uploads"))
 )
-UPLOAD_BASE = os.getenv("UPLOAD_DIR", DEFAULT_UPLOAD_BASE)
+UPLOAD_BASE = get_settings().UPLOAD_DIR or DEFAULT_UPLOAD_BASE
 AVATARS_DIR = os.path.join(UPLOAD_BASE, "avatars")
 RESUMES_DIR = os.path.join(UPLOAD_BASE, "resumes")
 VIDEOS_DIR = os.path.join(UPLOAD_BASE, "videos")
@@ -80,6 +83,66 @@ async def write_bytes_async(path: str, data: bytes) -> None:
     await asyncio.to_thread(_write_bytes_sync, path, data)
 
 
+class UploadTooLarge(Exception):
+    pass
+
+
+def _copy_capped_sync(src, dest_path: str, max_bytes: int) -> int:
+    src.seek(0)
+    total = 0
+    try:
+        with open(dest_path, "wb") as out:
+            while chunk := src.read(256 * 1024):
+                total += len(chunk)
+                if total > max_bytes:
+                    raise UploadTooLarge()
+                out.write(chunk)
+    except BaseException:
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+        raise
+    return total
+
+
+async def save_upload_capped(file: UploadFile, dest_path: str, max_bytes: int) -> int:
+    """Stream an UploadFile to disk in 256 KB blocks; 413 (and no file left) once max_bytes is exceeded."""
+    if file.size is not None and file.size > max_bytes:
+        raise HTTPException(status_code=413, detail=f"File too large (max {max_bytes // (1024 * 1024)} MB)")
+    try:
+        return await asyncio.to_thread(_copy_capped_sync, file.file, dest_path, max_bytes)
+    except UploadTooLarge:
+        raise HTTPException(status_code=413, detail=f"File too large (max {max_bytes // (1024 * 1024)} MB)")
+
+
+def _dir_size_sync(path: str) -> int:
+    return sum(e.stat().st_size for e in os.scandir(path) if e.is_file()) if os.path.isdir(path) else 0
+
+
+async def dir_size_async(path: str) -> int:
+    return await asyncio.to_thread(_dir_size_sync, path)
+
+
+def _read_head_sync(path: str, n: int) -> bytes:
+    with open(path, "rb") as f:
+        return f.read(n)
+
+
+async def read_head_async(path: str, n: int = 16) -> bytes:
+    """First n bytes of a file, b"" if it does not exist."""
+    try:
+        return await asyncio.to_thread(_read_head_sync, path, n)
+    except FileNotFoundError:
+        return b""
+
+
+def _nonempty_file_sync(path: str) -> bool:
+    return os.path.exists(path) and os.path.getsize(path) > 0
+
+
+async def nonempty_file_async(path: str) -> bool:
+    return await asyncio.to_thread(_nonempty_file_sync, path)
+
+
 def _assemble_chunks_sync(upload_dir: str, target_path: str, total_chunks: int) -> None:
     with open(target_path, "wb") as outfile:
         for idx in range(total_chunks):
@@ -88,7 +151,7 @@ def _assemble_chunks_sync(upload_dir: str, target_path: str, total_chunks: int) 
             if not os.path.exists(chunk_path):
                 raise FileNotFoundError(f"Missing chunk index {idx}")
             with open(chunk_path, "rb") as infile:
-                outfile.write(infile.read())
+                shutil.copyfileobj(infile, outfile)
 
 
 async def assemble_chunks_async(upload_dir: str, target_path: str, total_chunks: int) -> None:
@@ -119,7 +182,7 @@ async def transcode_to_streaming_mp4(raw_path: str, mp4_path: str, fallback_path
             ],
             timeout=45,
         )
-        if proc.returncode == 0 and os.path.exists(safe_mp4) and os.path.getsize(safe_mp4) > 0:
+        if proc.returncode == 0 and await nonempty_file_async(safe_mp4):
             transcode_success = True
     except Exception as e:
         logger.warning("Error during MP4 transcode: %s", type(e).__name__)
@@ -150,7 +213,7 @@ async def extract_poster_thumbnail(video_path: str, poster_path: str) -> Optiona
     except Exception as e:
         logger.warning("Error extracting frame at 0.5s: %s", type(e).__name__)
 
-    if not os.path.exists(safe_poster) or os.path.getsize(safe_poster) == 0:
+    if not await nonempty_file_async(safe_poster):
         try:
             await run_cmd_async(
                 ["ffmpeg", "-y", "-i", safe_video, "-vframes", "1", "-q:v", "2", "-update", "1", safe_poster],
@@ -159,9 +222,8 @@ async def extract_poster_thumbnail(video_path: str, poster_path: str) -> Optiona
         except Exception as e:
             logger.warning("Fallback frame extraction error: %s", type(e).__name__)
 
-    if os.path.exists(safe_poster) and os.path.getsize(safe_poster) > 0:
-        gateway_origin = os.getenv("PUBLIC_API_URL", "http://localhost:8080").rstrip("/")
-        return f"{gateway_origin}/uploads/videos/{os.path.basename(safe_poster)}"
+    if await nonempty_file_async(safe_poster):
+        return f"{get_settings().public_api_url}/uploads/videos/{os.path.basename(safe_poster)}"
     return "/images/home/matt-poster.png"
 
 

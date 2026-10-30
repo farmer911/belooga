@@ -21,15 +21,12 @@
 
 ## Available Stacks
 
-Supported stack rule sets in `data/stacks/`:
-
-`react`, `nextjs`, `vue`, `svelte`, `astro`, `swiftui`, `react-native`, `flutter`, `nuxtjs`, `nuxt-ui`, `html-tailwind`, `shadcn`, `jetpack-compose`, `threejs`, `angular`, `laravel`, `javafx`, `wpf`, `winui`, `avalonia`, `uno`, `uwp`
-
-**JavaFX / Desktop examples:**
+Stack rule sets vendored in this repo (`data/stacks/*.csv`): `react`, `nextjs`, `html-tailwind`, `shadcn`.
+`.agents/skills/ui-ux-pro-max/scripts/core.py` also lists upstream stacks (vue, flutter, javafx, ...) whose CSV files are not vendored; `--stack` with those errors with "Stack file not found". `scripts/lint-skills.py` rejects docs that use an unvendored `--stack`.
 
 ```bash
-python3 .agents/skills/ui-ux-pro-max/scripts/search.py "atlantafx primer enterprise theme" --stack javafx
-python3 .agents/skills/ui-ux-pro-max/scripts/search.py "enterprise tableview density permission" --stack javafx
+python3 .agents/skills/ui-ux-pro-max/scripts/search.py "app router cache" --stack nextjs
+python3 .agents/skills/ui-ux-pro-max/scripts/search.py "form validation" --stack shadcn
 ```
 
 ---

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api-client";
 
@@ -24,6 +25,15 @@ export interface UserWalletStateDTO {
   available_balance_vnd: number;
   escrow_locked_vnd: number;
   transactions: WalletTransactionDTO[];
+}
+
+export interface MomoPaymentDTO {
+  order_id: string;
+  pay_url: string;
+  qr_code_url?: string | null;
+  deeplink?: string | null;
+  amount: number;
+  message: string;
 }
 
 export function formatVnd(amount: number): string {
@@ -51,14 +61,14 @@ export function useWallet() {
     ]);
   };
 
+  // Top-up creates a MoMo order and sends the user to MoMo; the balance changes only after MoMo's IPN.
   const topupMutation = useMutation({
-    mutationFn: async (payload: { amount_vnd: number; payment_method?: string }) => {
-      const res = await apiClient.post<UserWalletStateDTO>("/v1/wallet/topup", payload);
+    mutationFn: async (payload: { amount_vnd: number }) => {
+      const res = await apiClient.post<MomoPaymentDTO>("/v1/wallet/topup", payload);
       return res.data;
     },
-    onSuccess: async (data) => {
-      queryClient.setQueryData(["user-wallet"], data);
-      await invalidateRelated();
+    onSuccess: (data) => {
+      window.location.assign(data.pay_url);
     },
   });
 
@@ -80,7 +90,7 @@ export function useWallet() {
 
   const releaseEscrowMutation = useMutation({
     mutationFn: async (payload: { order_id: string; amount_vnd: number; expert_name?: string }) => {
-      await apiClient.post(`/v1/expert-review/orders/${payload.order_id}/complete`, {});
+      await apiClient.post(`/v1/expert-review/orders/${encodeURIComponent(payload.order_id)}/complete`, {});
       const res = await apiClient.get<UserWalletStateDTO>("/v1/wallet/");
       return res.data;
     },
@@ -109,4 +119,31 @@ export function useWallet() {
     releaseEscrow: releaseEscrowMutation.mutateAsync,
     isReleasingEscrow: releaseEscrowMutation.isPending,
   };
+}
+
+const SAFE_MOMO_ORDER_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** MoMo redirects back with ?momo_order=<id>; the IPN credits the wallet, so poll the order until it settles. */
+export function useMomoReturnStatus() {
+  const queryClient = useQueryClient();
+  const [orderId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get("momo_order");
+    return raw && SAFE_MOMO_ORDER_ID_RE.test(raw) ? raw : null;
+  });
+  const { data } = useQuery<{ order_id: string; status: "PENDING" | "PAID" | "FAILED"; amount: number }>({
+    queryKey: ["momo-order-status", orderId],
+    enabled: Boolean(orderId),
+    queryFn: async () => {
+      if (!orderId || !SAFE_MOMO_ORDER_ID_RE.test(orderId)) {
+        throw new Error("Invalid MoMo order id");
+      }
+      const safeOrderId = encodeURIComponent(orderId);
+      const order = (await apiClient.get(`/v1/payments/momo/order-status/${safeOrderId}`)).data;
+      if (order.status === "PAID") await queryClient.invalidateQueries({ queryKey: ["user-wallet"] });
+      return order;
+    },
+    refetchInterval: (q) => (q.state.data?.status === "PENDING" ? 3000 : false),
+  });
+  return data;
 }

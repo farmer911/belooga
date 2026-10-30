@@ -16,7 +16,7 @@ import {
   TrackedJobItemDTO,
   trackedJobItemSchema,
 } from "@/lib/schemas";
-import { SecureStore } from "@/lib/native-runtime";
+import * as SecureStore from "expo-secure-store";
 import { mobileApiClient } from "@/services/api-client";
 
 export const MOBILE_TRACKER_OUTBOX_KEY = "belooga.mobile.tracker_offline_outbox";
@@ -30,6 +30,7 @@ export interface QueuedJobStatusMutation {
   queuedAt: number;
 }
 
+// ponytail: outbox lives in SecureStore (values ~2KB recommended); move to SQLite/AsyncStorage if queues grow past ~20 items.
 async function readOfflineOutbox(): Promise<QueuedJobStatusMutation[]> {
   const raw = await SecureStore.getItemAsync(MOBILE_TRACKER_OUTBOX_KEY);
   if (!raw) return [];

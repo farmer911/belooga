@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Wallet, ShieldCheck, ArrowUpRight, ArrowDownLeft, PlusCircle, CheckCircle2, Lock, Sparkles } from "lucide-react";
 import { apiClient } from "@/services/api-client";
-import { useWallet, formatVnd, WalletTxType, UserWalletStateDTO } from "@/hooks/use-wallet";
+import { useWallet, useMomoReturnStatus, formatVnd, WalletTxType, UserWalletStateDTO } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -24,14 +24,21 @@ export default function UserWalletPage() {
   const liveEscrowVnd = balanceSummary?.escrow_locked_vnd ?? escrowLockedVnd;
   const [selectedAmount, setSelectedAmount] = useState<number>(500000);
   const [txFilter, setTxFilter] = useState<"ALL" | WalletTxType>("ALL");
-  const [receiptMsg, setReceiptMsg] = useState<string | null>(null);
+  const returnedOrder = useMomoReturnStatus();
+  const receiptMsg =
+    returnedOrder?.status === "PAID"
+      ? `MoMo đã xác nhận: +${formatVnd(returnedOrder.amount)} vào Số dư khả dụng.`
+      : returnedOrder?.status === "FAILED"
+        ? "Giao dịch MoMo không thành công, số dư không thay đổi."
+        : returnedOrder
+          ? "Đang chờ MoMo xác nhận thanh toán..."
+          : null;
 
   const filteredTx = transactions.filter((t) => (txFilter === "ALL" ? true : t.tx_type === txFilter));
 
   const handleTopup = async () => {
     if (selectedAmount < 10000) return;
-    await topupWallet({ amount_vnd: selectedAmount, payment_method: "MoMo QR" });
-    setReceiptMsg(`Đã nạp thành công +${formatVnd(selectedAmount)} vào Số dư khả dụng Ví Belooga!`);
+    await topupWallet({ amount_vnd: selectedAmount });
   };
 
   const renderTxBadge = (type: WalletTxType) => {
@@ -160,7 +167,7 @@ export default function UserWalletPage() {
               className="bg-brand-primary hover:bg-brand-hover text-white text-xs font-semibold px-4 h-9 rounded-lg gap-1.5"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>{isToppingUp ? "Đang cộng số dư..." : `Nạp Ngay +${formatVnd(selectedAmount)}`}</span>
+              <span>{isToppingUp ? "Đang chuyển tới MoMo..." : `Nạp qua MoMo +${formatVnd(selectedAmount)}`}</span>
             </Button>
           </div>
 

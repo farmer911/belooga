@@ -4,8 +4,9 @@ import pytest
 from httpx import AsyncClient
 
 @pytest.mark.asyncio
-async def test_get_executive_analytics_dashboard(client: AsyncClient):
+async def test_get_executive_analytics_dashboard(client: AsyncClient, test_admin: dict):
     """Test retrieving platform executive analytics, financial metrics, and funnel."""
+    client.headers.update(test_admin["headers"])
     response = await client.get("/v1/analytics/dashboard")
     assert response.status_code == 200
     data = response.json()
@@ -38,16 +39,18 @@ async def test_get_executive_analytics_dashboard(client: AsyncClient):
     assert funnel[0]["stage"].startswith("1. Khách truy cập")
     assert funnel[0]["conversion_rate"] == 100.0
 
-    # 4. Assert Recent Transactions
+    # 4. Recent transactions come only from real orders (none invented when the platform is empty);
+    #    test_expert_feedback_submission_and_analytics_db_revenue covers a populated table.
     assert "recent_transactions" in data
     txns = data["recent_transactions"]
-    assert len(txns) > 0
-    assert txns[0]["payment_method"] == "MoMo QR"
+    assert isinstance(txns, list)
+    assert all(t["id"].startswith("ORD-") and t["payment_method"] == "MoMo QR" for t in txns)
 
 
 @pytest.mark.asyncio
-async def test_bi_star_schema_export_and_olap_cte_telemetry(client: AsyncClient):
+async def test_bi_star_schema_export_and_olap_cte_telemetry(client: AsyncClient, test_admin: dict):
     """Verify GET /v1/analytics/bi-export returns Power BI / DuckDB Star-Schema facts & dimensions from PostgreSQL OLAP CTEs."""
+    client.headers.update(test_admin["headers"])
     # Seed a real ATS scan so fact_ats_scans & dim_skills_demand reflect live DB rows
     scan_res = await client.post(
         "/v1/match/ats-scan",

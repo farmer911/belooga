@@ -20,7 +20,7 @@ def run_psql(sql: str, db: str = DB_NAME) -> str:
         "docker", "exec", "-i", "belooga-postgres",
         "psql", "-U", "belooga", "-d", db, "-v", "ON_ERROR_STOP=1", "-q", "-t", "-A",
     ]
-    res = subprocess.run(cmd, input=sql, text=True, capture_output=True)
+    res = subprocess.run(cmd, input=sql, text=True, encoding="utf-8", capture_output=True)
     if res.returncode != 0:
         raise RuntimeError(f"psql failed ({db}): {res.stderr}")
     return res.stdout.strip()

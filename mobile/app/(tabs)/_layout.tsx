@@ -1,140 +1,77 @@
 import React from "react";
-import { mobileRouter, NeumorphicButton, NeumorphicInsetWell, ScreenShell } from "@/lib/native-runtime";
-import { getSemanticTokens, NEUMORPHIC_TOKENS } from "@/theme/tokens";
+import { Text, View } from "react-native";
+import { router, Tabs } from "expo-router";
+import { useMobileNotificationsQuery } from "@/hooks/use-mobile-auth";
+import { useMobileWalletSummaryQuery } from "@/hooks/use-mobile-parity-part2";
+import { Button } from "@/lib/ui";
+import { useMobileAuthStore } from "@/store/auth-store";
+import { NEUMORPHIC_TOKENS as N } from "@/theme/tokens";
 
-export interface MobileTabDescriptor {
-  key: string;
-  title: string;
-  route: string;
-}
-
-export const MOBILE_TABS: readonly MobileTabDescriptor[] = [
-  { key: "discover", title: "Discover", route: "/(tabs)" },
-  { key: "studio", title: "Pitch Studio", route: "/(tabs)/studio" },
-  { key: "tracker", title: "Job Tracker", route: "/(tabs)/tracker" },
-  { key: "career", title: "Career Pro", route: "/(tabs)/career" },
-  { key: "profile", title: "Workspace", route: "/(tabs)/profile" },
+const MOBILE_TABS = [
+  { name: "index", key: "discover", title: "Discover" },
+  { name: "studio", key: "studio", title: "Studio" },
+  { name: "tracker", key: "tracker", title: "Tracker" },
+  { name: "career", key: "career", title: "Career" },
+  { name: "profile", key: "profile", title: "Workspace" },
 ] as const;
 
-export default function MobileTabsLayout({ children }: { children?: React.ReactNode }) {
-  const tokens = getSemanticTokens("neumorphic");
-  const currentPath = mobileRouter.getState().currentPath;
-
+function HeaderActions() {
+  const isAuthenticated = useMobileAuthStore((s) => s.isAuthenticated);
+  const wallet = useMobileWalletSummaryQuery();
+  const notifications = useMobileNotificationsQuery();
+  if (!isAuthenticated) {
+    return (
+      <View style={{ marginRight: 12 }}>
+        <Button testID="mobile-header-signin-btn" label="Sign In" onPress={() => router.push("/login")} />
+      </View>
+    );
+  }
+  const unread = (notifications.data ?? []).filter((n) => !n.is_read).length;
+  const balance = wallet.data ? `${Math.round(wallet.data.available_balance_vnd / 1000)}k` : "…";
   return (
-    <ScreenShell testID="mobile-tabs-layout" mode="neumorphic" style={{ minHeight: "100vh", justifyContent: "space-between" }}>
-      <header
-        data-testid="mobile-brand-header"
-        aria-label="mobile-top-app-header"
-        style={{
-          backgroundColor: NEUMORPHIC_TOKENS.extrudedCard,
-          borderBottom: `1px solid ${NEUMORPHIC_TOKENS.shadowDark}`,
-          boxShadow: NEUMORPHIC_TOKENS.dualExtrudedShadow,
-          padding: "12px 18px",
-          minHeight: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            data-testid="mobile-header-avatar-btn"
-            aria-label="mobile-header-avatar-btn"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 999,
-              backgroundColor: NEUMORPHIC_TOKENS.primaryTeal,
-              color: NEUMORPHIC_TOKENS.highlightBevel,
-              boxShadow: NEUMORPHIC_TOKENS.dualExtrudedShadow,
-              fontWeight: 800,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            B
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 16, color: tokens.typography.heading }}>
-              BELOOGA MOBILE
-            </div>
-            <div
-              data-testid="mobile-connection-status"
-              style={{ fontSize: 11, color: tokens.typography.body }}
-            >
-              Edge Gateway :8080 • Soft UI Neumorphic Vault
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <NeumorphicButton
-            testID="mobile-header-wallet-pill"
-            accessibilityLabel="mobile-header-wallet-pill"
-            label="Ví 1.5M+"
-            variant="inset"
-            style={{ borderRadius: 999, padding: "6px 12px" }}
-            onPress={() => mobileRouter.replace("/(tabs)/career")}
-          />
-          <NeumorphicButton
-            testID="mobile-header-notifications-btn"
-            accessibilityLabel="mobile-header-notifications-btn"
-            label="Alerts (3)"
-            variant="secondary"
-            style={{ borderRadius: 999, padding: "6px 12px" }}
-            onPress={() => mobileRouter.replace("/(tabs)/profile")}
-          />
-        </div>
-      </header>
+    <View style={{ flexDirection: "row", gap: 8, marginRight: 12 }}>
+      <Button
+        testID="mobile-header-wallet-pill"
+        label={`Ví ${balance}`}
+        variant="inset"
+        onPress={() => router.navigate("/career")}
+      />
+      <Button
+        testID="mobile-header-notifications-btn"
+        label={`Alerts (${unread})`}
+        variant="secondary"
+        onPress={() => router.navigate("/profile")}
+      />
+    </View>
+  );
+}
 
-      <main
-        data-testid="mobile-tabs-content"
-        style={{ flex: 1, padding: "18px", display: "flex", flexDirection: "column", gap: 16 }}
-      >
-        {children}
-      </main>
-
-      <nav
-        data-testid="mobile-bottom-tab-bar"
-        aria-label="mobile-bottom-nav-bar"
-        style={{
-          backgroundColor: NEUMORPHIC_TOKENS.extrudedCard,
-          borderTop: `1px solid ${NEUMORPHIC_TOKENS.highlightBevel}`,
-          borderLeft: `1px solid ${NEUMORPHIC_TOKENS.highlightBevel}`,
-          borderRight: `1px solid ${NEUMORPHIC_TOKENS.shadowDark}`,
-          borderBottom: `1px solid ${NEUMORPHIC_TOKENS.shadowDark}`,
-          borderRadius: 24,
-          margin: "0 12px 10px",
-          padding: "8px 10px",
-          minHeight: 68,
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          gap: 6,
-          boxShadow: NEUMORPHIC_TOKENS.dualExtrudedShadow,
-        }}
-      >
-        {MOBILE_TABS.map((tab) => {
-          const isActive = currentPath === tab.route;
-          return (
-            <NeumorphicInsetWell
-              key={tab.key}
-              style={{
-                padding: 2,
-                backgroundColor: isActive ? NEUMORPHIC_TOKENS.recessedWell : "transparent",
-                boxShadow: isActive ? NEUMORPHIC_TOKENS.insetRecessedShadow : "none",
-              }}
-            >
-              <NeumorphicButton
-                testID={`mobile-tab-${tab.key}`}
-                label={tab.title}
-                variant={isActive ? "primary" : "secondary"}
-                onPress={() => mobileRouter.replace(tab.route)}
-              />
-            </NeumorphicInsetWell>
-          );
-        })}
-      </nav>
-    </ScreenShell>
+export default function TabsLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerStyle: { backgroundColor: N.extrudedCard },
+        headerTitle: () => (
+          <Text testID="mobile-brand-header" style={{ fontWeight: "800", fontSize: 16, color: N.headingText }}>
+            BELOOGA
+          </Text>
+        ),
+        headerRight: () => <HeaderActions />,
+        tabBarActiveTintColor: N.primaryTeal,
+        tabBarInactiveTintColor: N.bodyText,
+        tabBarStyle: { backgroundColor: N.extrudedCard },
+        tabBarIconStyle: { display: "none" },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "700" },
+        sceneStyle: { backgroundColor: N.canvas },
+      }}
+    >
+      {MOBILE_TABS.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{ title: tab.title, tabBarButtonTestID: `mobile-tab-${tab.key}` }}
+        />
+      ))}
+    </Tabs>
   );
 }

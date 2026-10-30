@@ -64,16 +64,16 @@ interface BecomeExpertSectionProps {
 export function BecomeExpertSection({ onExpertRegistered }: BecomeExpertSectionProps) {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
-  const [fullName, setFullName] = useState("Nguyễn Minh Phúc");
-  const [roleTitle, setRoleTitle] = useState("Principal Full-Stack & Distributed Systems Architect");
-  const [companyName, setCompanyName] = useState("VNG Cloud & AI");
+  const [fullName, setFullName] = useState("");
+  const [roleTitle, setRoleTitle] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [yearsExp, setYearsExp] = useState(8);
   const [category, setCategory] = useState<"backend" | "frontend" | "ai" | "devops" | "management">("backend");
-  const [specialtiesText, setSpecialtiesText] = useState("Python, FastAPI, Golang, Distributed Systems, ATS Optimization");
+  const [specialtiesText, setSpecialtiesText] = useState("");
   const [slaHours, setSlaHours] = useState(24);
   const [rateVnd, setRateVnd] = useState(299000);
-  const [linkedinUrl, setLinkedinUrl] = useState("https://linkedin.com/in/phucnguyen");
-  const [bio, setBio] = useState("8+ năm kiến trúc hệ thống tải lớn và trực tiếp phỏng vấn >200 kỹ sư Backend/Full-Stack.");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [bio, setBio] = useState("");
 
   const { data: expertMe = null } = useQuery<RegisteredExpertApplication | null>({
     queryKey: ["expert-review-me"],

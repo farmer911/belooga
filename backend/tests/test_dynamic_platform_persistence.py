@@ -48,9 +48,11 @@ async def _seed_user_and_candidate(db_session: AsyncSession) -> tuple[Identity, 
 
 @pytest.mark.asyncio
 async def test_ats_scan_real_time_persistence_invalidates_market_pulse_and_analytics(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient, db_session: AsyncSession,
+    test_admin: dict,
 ):
     """Scanning a CV against a JD persists to PostgreSQL and immediately updates Market Pulse, Salary Benchmark & Analytics."""
+    client.headers.update(test_admin["headers"])
     _, token, _ = await _seed_user_and_candidate(db_session)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -106,9 +108,11 @@ async def test_ats_scan_real_time_persistence_invalidates_market_pulse_and_analy
 
 @pytest.mark.asyncio
 async def test_bookmarks_and_job_tracker_real_time_analytics_sync(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient, db_session: AsyncSession,
+    test_admin: dict,
 ):
     """Adding a shortlist bookmark and a Kanban tracked job immediately updates Executive Analytics KPIs & Funnel."""
+    client.headers.update(test_admin["headers"])
     _, token, cand_profile = await _seed_user_and_candidate(db_session)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -149,9 +153,11 @@ async def test_bookmarks_and_job_tracker_real_time_analytics_sync(
 
 @pytest.mark.asyncio
 async def test_connect_rpc_multiplexer_supports_bookmarks_and_locations(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient, db_session: AsyncSession,
+    test_admin: dict,
 ):
     """ConnectRPC /v1/rpc/batch supports bookmarks.list and catalogs.locations in 1 HTTP round-trip."""
+    client.headers.update(test_admin["headers"])
     _, token, cand_profile = await _seed_user_and_candidate(db_session)
     headers = {"Authorization": f"Bearer {token}"}
 

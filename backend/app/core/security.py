@@ -1,4 +1,3 @@
-import os
 import uuid
 import hashlib
 import secrets
@@ -12,21 +11,23 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
+from app.core.config import get_settings
 from app.core.database import get_db
 
 # Modern Argon2id password hash via pwdlib
 password_hash_helper = PasswordHash.recommended()
 
-ENV = os.getenv("ENVIRONMENT", "development").lower()
-SECRET_KEY = os.getenv("JWT_SECRET")
+_settings = get_settings()
+ENV = _settings.ENVIRONMENT.lower()
+SECRET_KEY = _settings.JWT_SECRET
 if not SECRET_KEY:
-    if ENV in ("production", "prod", "staging"):
+    if _settings.is_production:
         raise RuntimeError("FATAL SECURITY ERROR: JWT_SECRET environment variable is required in production!")
     SECRET_KEY = "dev_jwt_secret_key_change_in_production"
 
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
+ALGORITHM = _settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = _settings.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = _settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 http_bearer = HTTPBearer(auto_error=False)
 
@@ -134,6 +135,21 @@ async def get_current_user_optional(
         return await get_current_user(credentials=credentials, db=db)
     except HTTPException:
         return None
+
+
+def require_role(*roles: str):
+    """Dependency factory: authenticated user whose role is in `roles` (else 403)."""
+
+    async def _dep(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        if current_user.role not in roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: insufficient role")
+        return current_user
+
+    return _dep
+
+
+def is_owner_or_admin(current_user: AuthenticatedUser, owner_identity_id: Optional[uuid.UUID]) -> bool:
+    return current_user.role == "admin" or (owner_identity_id is not None and owner_identity_id == current_user.id)
 
 
 def verify_profile_owner(current_user: AuthenticatedUser, target_username: str) -> None:

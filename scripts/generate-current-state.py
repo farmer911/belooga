@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -31,7 +32,7 @@ OUTPUT_FILE = ROOT_DIR / "CURRENT_STATE.md"
 def get_git_info():
     try:
         commit = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], cwd=str(ROOT_DIR), text=True
+            ["git", "rev-parse", "--short", "HEAD"], cwd=str(ROOT_DIR), text=True, encoding="utf-8"
         ).strip()
     except Exception:
         commit = "unknown"
@@ -39,7 +40,7 @@ def get_git_info():
     try:
         # Ignore untracked review artifacts and the output file itself
         porcelain = subprocess.check_output(
-            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=str(ROOT_DIR), text=True
+            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=str(ROOT_DIR), text=True, encoding="utf-8"
         ).strip().splitlines()
         dirty_files = [
             f for f in porcelain 

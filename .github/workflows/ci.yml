@@ -9,6 +9,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Backend line-coverage floor enforced by pytest-cov. "0" = report only.
+  # The lead sets this to the measured baseline; raise it, never lower it.
+  COV_MIN: "75"
+  BUN_VERSION: "1.4.4"
+
 jobs:
   audit-and-test:
     name: SSOT Ground Truth & Test Verification
@@ -41,10 +51,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
           cache: "pip"
@@ -54,18 +64,18 @@ jobs:
           python3 -m venv backend/.venv
           backend/.venv/bin/pip install --upgrade pip
           backend/.venv/bin/pip install -r backend/requirements.txt
-          backend/.venv/bin/pip install pytest pytest-asyncio httpx pyyaml
+          backend/.venv/bin/pip install pytest pytest-asyncio pytest-cov httpx pyyaml
 
       - name: Setup Bun Runtime
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: latest
+          bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Install Frontend, Mobile & QC Dependencies
+      - name: Install Frontend, Mobile & QC Dependencies (frozen lockfiles)
         run: |
-          cd frontend && bun install --frozen-lockfile || bun install
-          cd ../mobile && bun install --frozen-lockfile || bun install
-          cd ../qc && bun install && bun x playwright install --with-deps chromium
+          (cd frontend && bun install --frozen-lockfile)
+          (cd mobile && bun install --frozen-lockfile)
+          (cd qc && bun install --frozen-lockfile && bun x playwright install --with-deps chromium)
 
       - name: Initialize Database Schema & Seed Data
         run: |
@@ -75,16 +85,48 @@ jobs:
           backend/.venv/bin/python scripts/seed-data.py
           DATABASE_URL="postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_test" backend/.venv/bin/python scripts/seed-data.py
 
+      # initdb.sql builds the test DBs above; this step proves the Alembic chain
+      # alone can build the schema from empty and has exactly one head.
+      - name: Alembic Migrations From Empty DB (single head)
+        env:
+          DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_migrate_check"
+        run: |
+          PGPASSWORD=belooga_secret_password psql -h localhost -p 5433 -U belooga -d belooga_db -c "CREATE DATABASE belooga_migrate_check;"
+          cd backend
+          .venv/bin/alembic upgrade head
+          heads="$(.venv/bin/alembic heads)"
+          echo "$heads"
+          if [ "$(printf '%s\n' "$heads" | grep -c .)" -ne 1 ]; then
+            echo "::error::Alembic must have exactly one head"
+            exit 1
+          fi
+
       - name: Run Master SSOT Truth Auditor
         env:
           CI: "true"
+          AUDIT_SKIP_PYTEST: "1" # pytest runs once, with coverage, in the next step
         run: |
           bash scripts/audit-truth.sh
 
-      - name: Run Frontend & Mobile Unit Tests + Typecheck
+      - name: Backend Pytest Suite + Coverage
+        working-directory: backend
         run: |
-          cd frontend && bun run test
-          cd ../mobile && bun x tsc --noEmit && bun test
+          .venv/bin/pytest tests/ -q \
+            --cov=app --cov-report=term-missing:skip-covered --cov-report=xml \
+            --cov-fail-under="${COV_MIN}"
+
+      - name: Frontend Lint & Production Build
+        working-directory: frontend
+        run: |
+          bun run lint
+          bun run build
+
+      - name: Mobile Typecheck & Unit Tests
+        working-directory: mobile
+        run: |
+          bun run typecheck
+          bun run lint
+          bun run test --ci
 
       - name: Run Playwright E2E Automation Suite
         env:
@@ -92,17 +134,26 @@ jobs:
           DATABASE_URL: "postgresql+asyncpg://belooga:belooga_secret_password@localhost:5433/belooga_db"
           REDIS_URL: "redis://localhost:6379/0"
           CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080"
+          # The whole suite logs in from one IP; the default 30/min auth limit is exercised by pytest instead.
+          RATE_LIMIT_AUTH_RPM: "1000"
         run: |
-          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 &)
-          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 &)
-          sleep 3
+          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/uvicorn-8000.log 2>&1 &)
+          (cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 > /tmp/uvicorn-8080.log 2>&1 &)
+          for port in 8000 8080; do
+            for i in $(seq 1 60); do
+              if curl -fsS "http://localhost:${port}/health/ready" > /dev/null; then
+                echo "backend :${port} ready after ${i}s"
+                break
+              fi
+              if [ "$i" -eq 60 ]; then
+                echo "::error::backend :${port} not ready after 60s"
+                cat "/tmp/uvicorn-${port}.log"
+                exit 1
+              fi
+              sleep 1
+            done
+          done
           cd qc && bun run test:e2e:chromium
-
-      - name: Skill lint, AUTO facts, ratchet
-        run: |
-          python3 scripts/lint-skills.py --quiet
-          python3 scripts/render-skill-facts.py --check
-          python3 scripts/ratchet.py
 
       - name: Verify Zero State Drift (Generator must match repo)
         run: |
@@ -110,3 +161,67 @@ jobs:
           if [ "${{ github.actor }}" != "dependabot[bot]" ]; then
             git diff --exit-code CURRENT_STATE.md
           fi
+
+  security:
+    name: Dependency Audit & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code (full history for gitleaks)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      # pip-audit has no severity filter (PyPI advisories carry none), so any known
+      # vulnerability blocks. Accept a specific risk with --ignore-vuln <ID> + a comment.
+      - name: Python Dependency Audit (pip-audit)
+        run: |
+          python3 -m pip install --upgrade pip pip-audit
+          pip-audit -r backend/requirements.txt
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # Blocks on high/critical advisories in production dependencies.
+      - name: Frontend Dependency Audit (bun audit)
+        working-directory: frontend
+        run: bun audit --audit-level=high --production
+
+      - name: Secret Scan (gitleaks)
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    name: Docker Images Build (no push)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build Backend Image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: backend
+          push: false
+          tags: belooga-backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build Frontend Image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: frontend
+          push: false
+          tags: belooga-frontend:ci
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend

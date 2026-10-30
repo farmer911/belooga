@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Share2, Zap, AlertTriangle, History, Upload, UserCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ function SharedScoreBadge() {
 
 export default function ATSDiagnosticsPage() {
   const user = useAuthStore((s) => s.user);
-  const activeUsername = user?.username || "alexnguyen";
+  const activeUsername = user?.username;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [jobTitle, setJobTitle] = useState(PRESET_VNG.job_title);
   const [companyName, setCompanyName] = useState(PRESET_VNG.company_name || "");
@@ -62,8 +63,8 @@ export default function ATSDiagnosticsPage() {
     if (extracted.text) { setCvText(extracted.text); await handleScan(extracted.text); }
   };
 
-  const handleLoadProfileCv = async () => {
-    const hydratedText = await loadProfileCv(activeUsername);
+  const handleLoadProfileCv = async (username: string) => {
+    const hydratedText = await loadProfileCv(username);
     if (hydratedText) { setCvText(hydratedText); await handleScan(hydratedText); }
   };
 
@@ -155,9 +156,13 @@ export default function ATSDiagnosticsPage() {
                 <span className="text-typography-heading font-medium">Nội dung CV của bạn (.pdf, .docx, .txt)</span>
                 <div className="flex items-center gap-1.5">
                   <input ref={fileInputRef} data-testid="ats-cv-file-input" type="file" accept=".pdf,.docx,.doc,.txt,.md" onChange={handleFileUpload} className="hidden" />
-                  <button type="button" data-testid="btn-load-profile-cv" disabled={isLoadingProfileCv} onClick={handleLoadProfileCv} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer disabled:opacity-50">
-                    <UserCheck className="w-3 h-3 text-brand-primary" /> {isLoadingProfileCv ? "Đang nạp..." : "Nạp CV Hồ Sơ"}
-                  </button>
+                  {activeUsername ? (
+                    <button type="button" data-testid="btn-load-profile-cv" disabled={isLoadingProfileCv} onClick={() => handleLoadProfileCv(activeUsername)} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer disabled:opacity-50">
+                      <UserCheck className="w-3 h-3 text-brand-primary" /> {isLoadingProfileCv ? "Đang nạp..." : "Nạp CV Hồ Sơ"}
+                    </button>
+                  ) : (
+                    <Link href="/login?next=%2Fats-diagnostics" data-testid="ats-sign-in-prompt" className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-brand-primary inline-flex items-center gap-1"><UserCheck className="w-3 h-3" /> Đăng nhập để nạp CV hồ sơ</Link>
+                  )}
                   <button type="button" data-testid="btn-upload-cv-file" disabled={isExtractingFile} onClick={() => fileInputRef.current?.click()} className="px-2 py-0.5 rounded bg-surface-page hover:bg-surface-divider border border-surface-border text-[10px] font-semibold text-typography-heading inline-flex items-center gap-1 cursor-pointer disabled:opacity-50">
                     <Upload className="w-3 h-3 text-brand-primary" /> {isExtractingFile ? "Đang đọc file..." : "Tải File CV"}
                   </button>

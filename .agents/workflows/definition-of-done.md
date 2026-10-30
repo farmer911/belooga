@@ -1,30 +1,35 @@
 ---
 name: definition-of-done
-description: Mandatory 6-step quality and knowledge-sync gate required before committing or reporting task completion.
+description: The single canonical Definition of Done - quality and knowledge-sync gates required before committing, opening a PR, or reporting task completion.
 ---
 
-# Workflow: Definition of Done (DoD)
+# Workflow: Definition of Done (DoD) - canonical
 
-Execute this workflow before declaring any feature or bug fix complete. Detailed contract: `.agents/skills/definition-of-done/SKILL.md`.
+This is the only DoD. `GEMINI.md`, `.agents/ROUTER.md`, the `definition-of-done` skill (architecture invariants + traps) and `scripts/pre-push-gate.sh` (automates Steps 1-3 locally) link here instead of restating it.
+
+> Windows: replace `backend/.venv/bin/` with `backend/.venv/Scripts/` (see `GEMINI.md` §1).
 
 ## Step 1: Synchronize Single Source of Truth & Skill Facts
 ```bash
 python3 scripts/generate-current-state.py --allow-dirty
 python3 scripts/render-skill-facts.py --write
 ```
-Ensure `CURRENT_STATE.md` and `<!-- AUTO:BEGIN -->` blocks in `.agents/skills/*/SKILL.md` reflect all endpoint, schema, and route changes.
+Ensure `CURRENT_STATE.md` and `<!-- AUTO:BEGIN -->` blocks in `.agents/skills/*/SKILL.md` reflect all endpoint, schema, and route changes. Record new traps/insights per `belooga-self-learn`.
 
 ## Step 2: Run Anti-Deception & Trust Benchmark
 ```bash
 python3 scripts/trust-benchmark.py
 ```
-Must achieve **100% Trust Score (0 violations across all 6 axes)**.
+Must achieve **100% Trust Score (0 violations across all 6 axes)**. It also runs `scripts/lint-skills.py --quiet` and `scripts/ratchet.py`.
 
-## Step 3: Run SSOT Ground Truth Auditor
+## Step 3: Run SSOT Ground Truth Auditor (+ targeted tests)
 ```bash
 bash scripts/audit-truth.sh
 ```
-All verification gates (DB schema, AST IDOR, async non-blocking, pytest, tsc, skill lint, ratchet) must report green.
+All gates (DB schema, AST IDOR, async non-blocking, backend pytest, frontend tsc + unit tests, skill lint, ratchet) must be green. Also run what your change touches:
+- Backend: `backend/.venv/bin/pytest backend/tests/ -v`
+- Frontend: `cd frontend && bun x tsc --noEmit && bun run lint`
+- E2E / UI: `cd qc && bun run test:e2e` and keep the `.png`/`.webm` evidence.
 
 ## Step 4: Lock In Ratchet Improvements (If Metrics Improved)
 ```bash
@@ -32,10 +37,9 @@ python3 scripts/ratchet.py
 ```
 If any metric prints `better`, lock in the lower baseline via `python3 scripts/ratchet.py --update`.
 
-## Step 5: Visual Verification (If UI was modified)
-- Inspect the affected route in browser.
-- Verify against legacy source at `$LEGACY_DIR` (default: `../Beloga-CV`).
-- Ensure zero class collision or global CSS pollution.
+## Step 5: Visual Verification & Independent Review
+- UI changed: follow `.agents/workflows/visual-verify.md` (live browser check against `legacy/`, no global CSS pollution).
+- Run the matching review skill (`be-code-review` / `fe-code-review`) on the diff.
 
 ## Step 6: Update `.agents/STATE.md`, Create Pull Request, Watch Remote CI & Verify Post-Merge Health
 ```bash
@@ -46,4 +50,4 @@ gh pr checks --watch
 gh pr merge --squash --delete-branch
 python3 scripts/trust-benchmark.py
 ```
-Mark completed items `[x]` in `.agents/STATE.md`, push to a feature/fix branch (never push directly to `main`), open a Pull Request, and wait until `gh pr checks --watch` reports 100% green before running `gh pr merge --squash --delete-branch`. After merging to `main`, wait for post-merge workflows (`CodeQL Security & Quality` and `Belooga SSOT & Integrity CI`) and run `python3 scripts/trust-benchmark.py` on `main` to verify 0 failing open PRs, 0 failing `main` workflows, and 0 open CodeQL alerts.
+Mark completed items `[x]` in `.agents/STATE.md`, push to a feature/fix branch (never push directly to `main`; install the local gate once with `git config core.hooksPath .githooks`), open a Pull Request, and wait until `gh pr checks --watch` reports 100% green before running `gh pr merge --squash --delete-branch`. After merging to `main`, wait for post-merge workflows (`CodeQL Security & Quality` and `Belooga SSOT & Integrity CI`) and run `python3 scripts/trust-benchmark.py` on `main` to verify 0 failing open PRs, 0 failing `main` workflows, and 0 open CodeQL alerts.

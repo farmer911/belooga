@@ -55,9 +55,11 @@ async def test_search_keyset_cursor_pagination_and_consistency(
 
 @pytest.mark.asyncio
 async def test_recruiter_talent_shortlist_ranking_and_video_boost(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient, db_session: AsyncSession,
+    candidate_headers: dict,
 ):
     """Verify POST /v1/match/talent-shortlist ranks candidates by skill coverage + video pitch readiness."""
+    client.headers.update(candidate_headers)
     suffix = uuid.uuid4().hex[:6]
     uid_top = uuid.uuid4()
     pid_top = uuid.uuid4()
@@ -118,8 +120,9 @@ async def test_recruiter_talent_shortlist_ranking_and_video_boost(
 
 
 @pytest.mark.asyncio
-async def test_recruiter_talent_shortlist_payload_guard(client: AsyncClient):
+async def test_recruiter_talent_shortlist_payload_guard(client: AsyncClient, candidate_headers: dict):
     """Verify POST /v1/match/talent-shortlist rejects oversized JD text (>50,000 chars) with 413."""
+    client.headers.update(candidate_headers)
     res = await client.post(
         "/v1/match/talent-shortlist",
         json={
@@ -228,8 +231,9 @@ async def test_career_upskill_roi_and_negotiation_simulator(client: AsyncClient)
 
 
 @pytest.mark.asyncio
-async def test_job_tracker_funnel_velocity_and_offer_probability(client: AsyncClient):
+async def test_job_tracker_funnel_velocity_and_offer_probability(client: AsyncClient, candidate_headers: dict):
     """Verify GET /v1/tracker/jobs/analytics computes Kanban stage counts, ATS average, and offer probability."""
+    client.headers.update(candidate_headers)
     res = await client.get("/v1/tracker/jobs/analytics")
     assert res.status_code == 200
     data = res.json()
@@ -255,8 +259,9 @@ async def test_expert_reviewer_smart_matchmaking(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_executive_unit_economics_and_cohort_retention(client: AsyncClient):
+async def test_executive_unit_economics_and_cohort_retention(client: AsyncClient, test_admin: dict):
     """Verify GET /v1/analytics/unit-economics returns LTV/CAC, payback days, and D30/D90 cohort retention."""
+    client.headers.update(test_admin["headers"])
     res = await client.get("/v1/analytics/unit-economics")
     assert res.status_code == 200
     data = res.json()

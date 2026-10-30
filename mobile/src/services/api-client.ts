@@ -1,8 +1,31 @@
-import { normalizeMobileUser, useMobileAuthStore } from "@/store/auth-store";
+import { Platform } from "react-native";
+import { normalizeMobileUser, readStoredRefreshToken, useMobileAuthStore } from "@/store/auth-store";
 import { tokenResponseSchema } from "@/lib/schemas";
 
-export const MOBILE_API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+/**
+ * Production builds must be given EXPO_PUBLIC_API_URL (inlined by Metro at bundle time).
+ * Dev builds fall back to the host machine: 10.0.2.2 from the Android emulator, localhost elsewhere.
+ */
+export function resolveApiBaseUrl(
+  configured: string | undefined,
+  isDev: boolean,
+  os: string
+): string {
+  const url = configured?.trim().replace(/\/+$/, "");
+  if (url) return url;
+  if (!isDev) {
+    throw new Error(
+      "EXPO_PUBLIC_API_URL is not set. Production builds refuse to fall back to a localhost API."
+    );
+  }
+  return os === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080";
+}
+
+export const MOBILE_API_BASE_URL = resolveApiBaseUrl(
+  process.env.EXPO_PUBLIC_API_URL,
+  __DEV__,
+  Platform.OS
+);
 
 export class MobileApiError extends Error {
   public readonly status: number;
@@ -18,128 +41,115 @@ export class MobileApiError extends Error {
 
 export interface MobileRequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  /** JSON-serialisable value, or FormData for multipart uploads. */
   body?: unknown;
   headers?: Record<string, string>;
   skipAuthRefresh?: boolean;
 }
 
-export type FetchTransport = typeof fetch;
-
-let customFetchTransport: FetchTransport | null = null;
 let inflightRefreshPromise: Promise<string | null> | null = null;
 
-export function setMobileFetchTransportForTesting(transport: FetchTransport | null): void {
-  customFetchTransport = transport;
-  inflightRefreshPromise = null;
-}
-
-function getTransport(): FetchTransport {
-  return customFetchTransport ?? fetch;
-}
-
 async function parseErrorDetail(response: Response): Promise<string> {
-  try {
-    const payload = (await response.json()) as { detail?: unknown; message?: unknown };
-    if (typeof payload.detail === "string" && payload.detail) return payload.detail;
-    if (typeof payload.message === "string" && payload.message) return payload.message;
-  } catch {
-    return `HTTP ${response.status}`;
-  }
+  // Non-JSON error bodies resolve to null and fall through to the status line.
+  const payload = (await response.json().catch(() => null)) as { detail?: unknown; message?: unknown } | null;
+  if (typeof payload?.detail === "string" && payload.detail) return payload.detail;
+  if (typeof payload?.message === "string" && payload.message) return payload.message;
   return `HTTP ${response.status}`;
 }
 
-async function rotateMobileSessionSingleflight(): Promise<string | null> {
+/**
+ * Exchanges the refresh token for a new access token. Concurrent callers share one request.
+ * The stored session is cleared only when the server rejects the refresh token; a network
+ * failure keeps it so the user is not logged out by a flaky connection.
+ */
+export function refreshMobileSession(): Promise<string | null> {
   if (inflightRefreshPromise) return inflightRefreshPromise;
 
   inflightRefreshPromise = (async () => {
-    const { refreshToken, setSessionTokens, clearSession } = useMobileAuthStore.getState();
-    if (!refreshToken) {
-      await clearSession();
-      return null;
-    }
+    const { refreshToken, setSession, clearSession } = useMobileAuthStore.getState();
+    if (!refreshToken) return null;
 
+    let response: Response;
     try {
-      const response = await getTransport()(`${MOBILE_API_BASE_URL}/v1/auth/refresh/`, {
+      response = await fetch(`${MOBILE_API_BASE_URL}/v1/auth/refresh/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Refresh-Token": refreshToken,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
-
-      if (!response.ok) {
-        await clearSession();
-        return null;
-      }
-
-      const rawData = await response.json();
-      const parsed = tokenResponseSchema.parse(rawData);
-      const userSummary = normalizeMobileUser(parsed.user);
-      await setSessionTokens(parsed.access_token, parsed.refresh_token ?? refreshToken, userSummary);
-      return parsed.access_token;
     } catch {
+      return null;
+    }
+
+    if (!response.ok) {
       await clearSession();
       return null;
-    } finally {
-      inflightRefreshPromise = null;
     }
-  })();
+    const parsed = tokenResponseSchema.safeParse(await response.json().catch(() => null));
+    if (!parsed.success) {
+      await clearSession();
+      return null;
+    }
+    await setSession(
+      parsed.data.access_token,
+      parsed.data.refresh_token ?? refreshToken,
+      normalizeMobileUser(parsed.data.user)
+    );
+    return parsed.data.access_token;
+  })().finally(() => {
+    inflightRefreshPromise = null;
+  });
 
   return inflightRefreshPromise;
 }
 
-export async function mobileRequest<T>(
-  path: string,
-  options: MobileRequestOptions = {}
-): Promise<T> {
-  const url = path.startsWith("http") ? path : `${MOBILE_API_BASE_URL}${path}`;
-  const method = options.method ?? "GET";
-  const token = useMobileAuthStore.getState().accessToken;
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers ?? {}),
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+/** App start: load the refresh token from SecureStore and trade it for an in-memory access token. */
+export async function restoreMobileSession(): Promise<boolean> {
+  const store = useMobileAuthStore.getState();
+  const stored = await readStoredRefreshToken();
+  if (stored) {
+    useMobileAuthStore.setState({ refreshToken: stored });
+    await refreshMobileSession();
   }
+  store.markHydrated();
+  return useMobileAuthStore.getState().isAuthenticated;
+}
 
-  const executeCall = async (overrideToken?: string): Promise<Response> => {
-    const callHeaders = { ...headers };
-    if (overrideToken) {
-      callHeaders.Authorization = `Bearer ${overrideToken}`;
-    }
-    return getTransport()(url, {
-      method,
-      headers: callHeaders,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+export async function mobileRequest<T>(path: string, options: MobileRequestOptions = {}): Promise<T> {
+  const url = path.startsWith("http") ? path : `${MOBILE_API_BASE_URL}${path}`;
+  const isMultipart = typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  const execute = (token: string | null): Promise<Response> => {
+    const headers: Record<string, string> = { ...(options.headers ?? {}) };
+    if (!isMultipart) headers["Content-Type"] = "application/json";
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return fetch(url, {
+      method: options.method ?? "GET",
+      headers,
+      body:
+        options.body === undefined
+          ? undefined
+          : isMultipart
+            ? (options.body as FormData)
+            : JSON.stringify(options.body),
     });
   };
 
-  let response = await executeCall();
+  let response = await execute(useMobileAuthStore.getState().accessToken);
 
   if (response.status === 401 && !options.skipAuthRefresh) {
-    const newAccessToken = await rotateMobileSessionSingleflight();
+    const newAccessToken = await refreshMobileSession();
     if (newAccessToken) {
-      response = await executeCall(newAccessToken);
+      response = await execute(newAccessToken);
     }
   }
 
   if (!response.ok) {
-    const detail = await parseErrorDetail(response);
-    throw new MobileApiError(response.status, detail);
+    throw new MobileApiError(response.status, await parseErrorDetail(response));
   }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
+  if (response.status === 204) return undefined as T;
 
   const rawText = await response.text();
-  if (!rawText) {
-    return undefined as T;
-  }
-  return JSON.parse(rawText) as T;
+  return (rawText ? JSON.parse(rawText) : undefined) as T;
 }
 
 export const mobileApiClient = {
@@ -147,10 +157,7 @@ export const mobileApiClient = {
     mobileRequest<T>(path, { method: "GET", headers }),
   post: <T>(path: string, body?: unknown, skipAuthRefresh = false) =>
     mobileRequest<T>(path, { method: "POST", body, skipAuthRefresh }),
-  put: <T>(path: string, body?: unknown) =>
-    mobileRequest<T>(path, { method: "PUT", body }),
-  patch: <T>(path: string, body?: unknown) =>
-    mobileRequest<T>(path, { method: "PATCH", body }),
-  delete: <T>(path: string) =>
-    mobileRequest<T>(path, { method: "DELETE" }),
+  put: <T>(path: string, body?: unknown) => mobileRequest<T>(path, { method: "PUT", body }),
+  patch: <T>(path: string, body?: unknown) => mobileRequest<T>(path, { method: "PATCH", body }),
+  delete: <T>(path: string) => mobileRequest<T>(path, { method: "DELETE" }),
 };

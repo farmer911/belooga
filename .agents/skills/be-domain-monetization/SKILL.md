@@ -12,8 +12,8 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 |---|---|---|---|
 | `GET` | `/v1/expert-review/experts/` | `list_experts` | public |
 | `GET` | `/v1/expert-review/leaderboard` | `get_expert_leaderboard` | public |
-| `POST` | `/v1/expert-review/apply` | `apply_become_expert_reviewer` | optional |
-| `GET` | `/v1/expert-review/me` | `get_my_expert_reviewer_profile` | optional |
+| `POST` | `/v1/expert-review/apply` | `apply_become_expert_reviewer` | required |
+| `GET` | `/v1/expert-review/me` | `get_my_expert_reviewer_profile` | required |
 | `GET` | `/v1/expert-review/packages/` | `list_packages` | public |
 | `GET` | `/v1/expert-review/recommend` | `recommend_expert_reviewer` | public |
 | `POST` | `/v1/expert-review/orders/` | `create_review_order` | required |
@@ -22,21 +22,20 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/expert-review/orders/me` | `list_candidate_orders_me` | required |
 | `GET` | `/v1/expert-review/orders/{order_id}/feedback/` | `get_order_feedback` | required |
 | `POST` | `/v1/expert-review/orders/{order_id}/feedback/` | `submit_order_feedback` | required |
-| `POST` | `/v1/expert-review/orders/{order_id}/simulate-delivery` | `simulate_expert_review_delivery` | required |
 | `POST` | `/v1/expert-review/orders/{order_id}/complete` | `complete_expert_review_order` | required |
 | `POST` | `/v1/match/ats-scan` | `scan_and_match_cv_jd` | optional |
-| `POST` | `/v1/match/tailor-cv` | `tailor_cv` | optional |
-| `GET` | `/v1/match/history` | `list_ats_scan_history` | optional |
-| `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | optional |
+| `POST` | `/v1/match/tailor-cv` | `tailor_cv` | required |
+| `GET` | `/v1/match/history` | `list_ats_scan_history` | required |
+| `POST` | `/v1/match/talent-shortlist` | `generate_recruiter_talent_shortlist` | required |
 | `GET` | `/v1/match/market-pulse` | `get_talent_market_pulse` | public |
 | `POST` | `/v1/match/interview-kit` | `generate_interview_kit_and_pitch_script` | optional |
 | `POST` | `/v1/match/extract-cv-file` | `extract_cv_file_text` | optional |
-| `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | optional |
+| `GET` | `/v1/tracker/jobs/` | `list_tracked_jobs` | required |
 | `GET` | `/v1/tracker/search-market-jobs` | `search_market_jobs` | public |
-| `GET` | `/v1/tracker/goals` | `get_career_goal` | optional |
-| `POST` | `/v1/tracker/goals` | `save_career_goal` | optional |
-| `POST` | `/v1/tracker/goals/{goal_id}/ai-match` | `ai_match_career_goal` | optional |
-| `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | optional |
+| `GET` | `/v1/tracker/goals` | `get_career_goal` | required |
+| `POST` | `/v1/tracker/goals` | `save_career_goal` | required |
+| `POST` | `/v1/tracker/goals/{goal_id}/ai-match` | `ai_match_career_goal` | required |
+| `GET` | `/v1/tracker/jobs/analytics` | `get_job_pipeline_analytics` | required |
 | `POST` | `/v1/tracker/jobs/` | `create_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}` | `update_tracked_job` | required |
 | `PATCH` | `/v1/tracker/jobs/{job_id}/status` | `update_job_status` | required |
@@ -47,13 +46,13 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 | `GET` | `/v1/analytics/expert` | `get_expert_analytics` | public |
 | `GET` | `/v1/analytics/unit-economics` | `get_executive_unit_economics` | public |
 | `GET` | `/v1/analytics/bi-export` | `export_bi_star_schema` | public |
-| `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | public |
+| `POST` | `/v1/payments/momo/create-qr` | `create_momo_payment_qr` | required |
 | `POST` | `/v1/payments/momo/ipn` | `momo_ipn_webhook` | public |
-| `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | public |
-| `GET` | `/v1/wallet/` | `get_user_wallet_state` | optional |
-| `GET` | `/v1/wallet/balance` | `get_user_wallet_balance` | optional |
-| `POST` | `/v1/wallet/topup` | `topup_user_wallet` | optional |
-| `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | optional |
+| `GET` | `/v1/payments/momo/order-status/{order_id}` | `check_order_status` | required |
+| `GET` | `/v1/wallet/` | `get_user_wallet_state` | required |
+| `GET` | `/v1/wallet/balance` | `get_user_wallet_balance` | required |
+| `POST` | `/v1/wallet/topup` | `topup_user_wallet` | required |
+| `POST` | `/v1/wallet/pay` | `pay_with_user_wallet` | required |
 
 - Router: `backend/app/api/v1/endpoints/expert_review.py`, `backend/app/api/v1/endpoints/ats_matching.py`, `backend/app/api/v1/endpoints/job_tracker.py`, `backend/app/api/v1/endpoints/analytics.py`, `backend/app/api/v1/endpoints/payments.py`
 - Service: `backend/app/modules/analytics/service.py`, `backend/app/modules/ats_matching/service.py`, `backend/app/modules/expert_review/service.py`, `backend/app/modules/job_tracker/service.py`, `backend/app/modules/notifications/service.py`, `backend/app/modules/payments/service.py`
@@ -70,7 +69,7 @@ description: Backend Monetization, Career Intelligence & Analytics in expert_rev
 ## Known Traps
 - **Router Prefixes & Static Path Precedence:** Mounted under `/v1/expert-review/*`, `/v1/match/*`, `/v1/tracker/*`, `/v1/analytics/*`, and `/v1/payments/momo/*`. Always place `/jobs/analytics` above `/jobs/{job_id}`.
 - **Sanitizing `to_tsquery` Tokens:** Always strip non-alphanumeric symbols (`C++`, `C#`, `.NET`) before joining tokens with `|` for PostgreSQL `to_tsquery`.
-- **Concurrent Lazy Seeding Race (`expert_review/repository.py`):** Always guard `seed_packages_if_empty` and `seed_experts_if_empty` with `SELECT pg_advisory_xact_lock(...)` and deduplicate `list_experts` by `full_name` so concurrent requests on a cold DB never insert duplicate rows.
+- **Concurrent Lazy Seeding Race (`expert_review/repository.py`):** Always guard `seed_packages_if_empty` and `seed_experts_if_empty` with `SELECT pg_advisory_xact_lock(...)`, insert missing seed slugs/names by set difference (never `if not await self.list_experts()`, which skips canonical seeds when user-created experts exist first), and deduplicate `list_experts` by `full_name`.
 - **Real PostgreSQL Persistence & Alembic Parity (`BEL-228`):** Every repository method must execute real SQL queries against PostgreSQL and keep `backend/alembic/versions/` synchronized (`alembic_schema_drift == 0`).
 
 ## Self-Verification
