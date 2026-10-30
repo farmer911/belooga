@@ -3,7 +3,8 @@
 Belooga AI PM Manager Agent (Powered by Gemini)
 Ingests high-level ideas, cross-references live AST and PostgreSQL schema
 from CURRENT_STATE.md and GEMINI.md, formulates technical specifications,
-and automatically creates linked Backend, Frontend, and QC tasks on GitHub.
+and automatically creates linked Design, Backend, Frontend, Mobile, and Architect
+tasks on GitHub and places them in the Kanban Belooga Todo column.
 """
 
 import json
@@ -18,10 +19,11 @@ from gemini_client import generate
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CURRENT_STATE_MD = ROOT_DIR / "CURRENT_STATE.md"
 GEMINI_MD = ROOT_DIR / "GEMINI.md"
-# Hard cap: the issue text is untrusted LLM input, so one idea can never fan out into an
-# unbounded number of status:todo tickets that coding agents will pick up.
 MAX_TASKS = 8
-ROLES = {"backend", "frontend", "qc"}
+ROLES = {"design", "backend", "frontend", "mobile", "architect"}
+KANBAN_PROJECT_ID = "PVT_kwHOAeXQP84BoMSn"
+KANBAN_STATUS_FIELD_ID = "PVTSSF_lAHOAeXQP84BoMSnzhmthEM"
+KANBAN_TODO_OPTION_ID = "b5bd229a"
 
 
 def get_issue_details(issue_number: int) -> dict:
@@ -35,16 +37,39 @@ def get_issue_details(issue_number: int) -> dict:
         return {}
 
 
+def add_issue_to_kanban_todo(issue_url: str) -> None:
+    """Register newly created issue on Kanban Belooga Project #1 in the Todo column."""
+    try:
+        add_out = subprocess.check_output(
+            ["gh", "project", "item-add", "1", "--owner", "farmer911", "--url", issue_url, "--format", "json"],
+            cwd=str(ROOT_DIR), text=True, encoding="utf-8",
+        )
+        item_id = json.loads(add_out).get("id")
+        if item_id:
+            subprocess.check_call(
+                [
+                    "gh", "project", "item-edit",
+                    "--id", item_id,
+                    "--project-id", KANBAN_PROJECT_ID,
+                    "--field-id", KANBAN_STATUS_FIELD_ID,
+                    "--single-select-option-id", KANBAN_TODO_OPTION_ID,
+                ],
+                cwd=str(ROOT_DIR),
+            )
+    except Exception as e:
+        print(f"[!] Warning: Could not add issue to Kanban Belooga board: {e}")
+
+
 def create_github_task_issue(title: str, body: str, labels: list[str]) -> int:
-    """Create a new GitHub Task Issue using gh CLI."""
+    """Create a new GitHub Task Issue using gh CLI and add it to the Kanban Todo column."""
     cmd = ["gh", "issue", "create", "--title", title, "--body", body]
     for lbl in labels:
         cmd.extend(["--label", lbl])
     try:
         out = subprocess.check_output(cmd, cwd=str(ROOT_DIR), text=True, encoding="utf-8").strip()
-        # Output is issue URL e.g. https://github.com/farmer911/belooga/issues/12
         match = re.search(r"/issues/(\d+)", out)
         if match:
+            add_issue_to_kanban_todo(out)
             return int(match.group(1))
         return 0
     except Exception as e:
@@ -79,7 +104,6 @@ def main():
         else:
             raw_idea = " ".join(sys.argv[1:])
 
-    # If triggered via GitHub Actions event
     event_path = os.getenv("GITHUB_EVENT_PATH", "")
     if not issue_num and event_path and os.path.exists(event_path):
         try:
@@ -93,7 +117,6 @@ def main():
         print("Usage: python3 scripts/ai-pm-manager.py <issue_number | 'idea string'>")
         sys.exit(1)
 
-    issue_data = {}
     if issue_num:
         print(f"[*] Fetching Issue #{issue_num} from GitHub...")
         issue_data = get_issue_details(issue_num)
@@ -126,29 +149,30 @@ Details:
 
 ### STRICT LANGUAGE REQUIREMENT (NON-NEGOTIABLE)
 ALL generated outputs (summaries, PRDs, task titles, user stories, acceptance criteria, and task bodies) MUST BE 100% IN PROFESSIONAL TECHNICAL ENGLISH.
-Even if the user's input idea or title is in Vietnamese or another language, you must translate, synthesize, and write ALL ticket titles and content strictly in English. Never use Vietnamese in any ticket title or body.
 
 ### YOUR TASK
 1. Assess feasibility, data architecture, and existing API reuse.
 2. Formulate a technical architecture specification (PRD) in English.
-3. Decompose the feature into strictly 2 to 3 discrete engineering tasks in English:
-   - Backend Task (FastAPI endpoint, PostgreSQL migration/schema, IDOR guard, TDD Pytest)
-   - Frontend Task (Next.js App Router UI, state management, API integration, Tailwind styling)
-   - (Optional) QC Task (Playwright test scenario)
+3. Decompose the feature into discrete tasks in dependency order (Design -> Backend -> Frontend / Mobile -> Architect). Do NOT create standalone QC Todo tickets (QC works on the Testing column after PR merge).
 
-You MUST respond strictly with valid JSON conforming to this schema (do not wrap in extra prose, output ONLY the JSON object):
+You MUST respond strictly with valid JSON conforming to this schema:
 {{
   "summary": "2-3 sentence executive summary of the feature and architecture in English",
   "spec_markdown": "Full PRD with User Stories, Architectural Decisions, Endpoints to touch, Tables to modify or create, and Acceptance Criteria in English",
   "tasks": [
     {{
+      "role": "design",
+      "title": "[BEL-xxx] [Design]: Brief descriptive English title",
+      "body": "Detailed UX/UI token & layout specification in English."
+    }},
+    {{
       "role": "backend",
-      "title": "[BE]: Brief descriptive English title",
+      "title": "[BEL-xxx] [BE]: Brief descriptive English title",
       "body": "Detailed backend implementation plan in English citing specific files, endpoints, schema changes, and test files."
     }},
     {{
       "role": "frontend",
-      "title": "[FE]: Brief descriptive English title",
+      "title": "[BEL-xxx] [FE]: Brief descriptive English title",
       "body": "Detailed frontend implementation plan in English citing specific page files, UI components, states, and data fetching."
     }}
   ]
@@ -162,7 +186,6 @@ You MUST respond strictly with valid JSON conforming to this schema (do not wrap
         print(f"[!] Gemini call failed: {e}")
         sys.exit(1)
 
-    # Extract JSON object reliably
     clean_json = raw_response.strip()
     match = re.search(r"\{.*\}", clean_json, re.DOTALL)
     if match:
@@ -189,7 +212,7 @@ You MUST respond strictly with valid JSON conforming to this schema (do not wrap
         role = str(t.get("role", "backend")).lower()
         title = str(t.get("title", f"[{role.upper()}] Task"))[:120]
         body = str(t.get("body", ""))
-        
+
         full_body = f"""### 📋 Context & Parent Idea
 Originating from {parent_ref}: **{idea_title}**
 
@@ -201,16 +224,17 @@ Originating from {parent_ref}: **{idea_title}**
 """
         role_label = f"role:{role}" if role in ROLES else "type:task"
         labels = ["type:task", "status:todo", role_label]
-        
+
         print(f"[*] Creating GitHub Task: {title}...")
         tid = create_github_task_issue(title, full_body, labels)
         if tid:
             created_task_ids.append(tid)
-            print(f"    [+] Created Task #{tid}")
+            print(f"    [+] Created Task #{tid} (placed in Kanban Todo column)")
 
-    # Post spec summary on parent issue if applicable
     if issue_num:
-        task_links = "\n".join([f"- Task #{tid}: Assigned to {tasks[idx].get('role', 'eng').upper()}" for idx, tid in enumerate(created_task_ids)])
+        task_links = "\n".join(
+            [f"- Task #{tid}: Assigned to {tasks[idx].get('role', 'eng').upper()}" for idx, tid in enumerate(created_task_ids)]
+        )
         comment_body = f"""## 🤖 Belooga PM Agent Analysis & Decomposition Complete
 
 ### 📌 Architecture Summary
@@ -227,21 +251,20 @@ Originating from {parent_ref}: **{idea_title}**
 </details>
 
 ---
-*Status updated to `status:in-progress`. Work can now be dispatched to FE/BE agents.*
+*Status updated to `status:in-progress`. Work can now be dispatched to isolated agent worktrees.*
 """
         print(f"[*] Updating Parent Issue #{issue_num} with PRD and task references...")
         post_issue_comment(issue_num, comment_body)
-        # Update label
         try:
             subprocess.check_call(
                 ["gh", "issue", "edit", str(issue_num), "--remove-label", "status:todo", "--add-label", "status:in-progress"],
-                cwd=str(ROOT_DIR)
+                cwd=str(ROOT_DIR),
             )
         except Exception as e:
             sys.stderr.write(f"[warn] GitHub label update skipped: {e}\n")
 
     print("\n" + "=" * 60)
-    print("✓ All tasks generated and synced to GitHub successfully!")
+    print("✓ All tasks generated and synced to GitHub Kanban successfully!")
     print("=" * 60)
 
 

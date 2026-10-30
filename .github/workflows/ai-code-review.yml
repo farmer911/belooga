@@ -6,7 +6,6 @@ on:
   push:
     branches: [ main, master ]
 
-# Least privilege: pushes only write the step summary; PRs may also comment.
 permissions:
   contents: read
 
@@ -15,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ai-review-pr:
-    name: AI Staff Code Review (PR)
+  ai-review-backend:
+    name: Backend AI Review Agent (PR)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -29,11 +28,33 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-      - name: Run Belooga AI Reviewer Agent
+      - name: Run Backend AI Reviewer Agent (be-code-review)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 scripts/ai-code-reviewer.py
+          REVIEW_DOMAIN: backend
+        run: python3 scripts/ai-code-reviewer.py backend
+
+  ai-review-frontend:
+    name: Frontend AI Review Agent (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Run Frontend AI Reviewer Agent (fe-code-review)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW_DOMAIN: frontend
+        run: python3 scripts/ai-code-reviewer.py frontend
 
   ai-review-push:
     name: AI Staff Code Review (push, summary only)
@@ -51,4 +72,4 @@ jobs:
       - name: Run Belooga AI Reviewer Agent
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python3 scripts/ai-code-reviewer.py
+        run: python3 scripts/ai-code-reviewer.py all

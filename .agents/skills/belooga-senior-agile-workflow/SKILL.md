@@ -9,10 +9,11 @@ description: Standard operating procedure for autonomous AI coding agents acting
 
 ```mermaid
 flowchart LR
-    PM["PM ('PM start')\nEpic & Tickets -> Todo"] --> D["Design (#BEL-xxx)\nTodo -> In Progress -> Testing"]
-    D --> DEV["BE / FE / mobile\nTodo -> In Progress -> Testing"]
-    DEV --> QC["QC (Works on Testing column)\nTesting -> Done (or back to In Progress)"]
-    QC --> ARCH["Architect ('Architect start')\nPost-Done Audit, Perf, Skill Benchmark & Reverse Tickets"]
+    PM["PM ('PM start')\nEpic & Tickets -> Todo"] --> WT["Design / BE / FE / mobile\nIsolated git worktree (.claude/worktrees/BEL-xxx)"]
+    WT --> PR["Open PR -> Parallel Gate:\n• BE AI Review Agent (be-code-review)\n• FE AI Review Agent (fe-code-review)\n• Fast Build & Unit CI"]
+    PR --> MERGE["Review OK -> Merge to main\n& Move Ticket to Testing"]
+    MERGE --> POST["Post-Merge Parallel Tracks on main:\n1. Automation E2E Suite (Playwright/Maestro)\n2. QC Manual Verification (Testing -> Done)"]
+    POST --> ARCH["Architect ('Architect start')\nPost-Done Audit, Skill Benchmark & Reverse Tickets"]
 ```
 
 ---
