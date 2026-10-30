@@ -217,3 +217,25 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
     - `fe_eslint_disable == 0` (`NTA-S003`)
     - `fe_orphan_components == 0` (`NTA-P003`)
 * **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json`.
+
+---
+
+### [VIOLATION-015] 5 Đòn Phản Công Pháp Y NeverTrustAgent (Phần II) & Bất Nhất Kiến Trúc App Router / Page Layout (`[EPIC-005]` / `BEL-235..BEL-240`)
+* **Where (Sai ở đâu):** `frontend/src/lib/schemas.ts`, `frontend/src/app/**/page.tsx`, `frontend/src/components/layout/Header.tsx`, `frontend/src/components/features/studio/studio-viewfinder.tsx`, `mobile/src/lib/native-runtime.ts`, `scripts/trust-benchmark.py`, và `scripts/ratchet.py`.
+* **How & Why (5 Đòn Phản Công Cụ Thể & Đính Chính Số Liệu Pháp Y):**
+  1. **Đòn #1 — Lách cổng `trust-benchmark.py` bằng hằng số `*_ENDPOINT` chết (`NTA-P004`):** Trước đây `scripts/trust-benchmark.py` gộp mù toàn bộ `.ts/.tsx` thành `fe_all_blob`, tạo kẽ hở để nhét 59 dòng `export const *_ENDPOINT = "/v1/..."` không ai import vào `frontend/src/lib/schemas.ts` thay vì nối thật 8 endpoint (`/v1/expert-review/orders/{order_id}/simulate-delivery`, `/v1/careers/{career_id}/apply`, `/v1/tracker/search-market-jobs`, `/v1/tracker/goals/{goal_id}/ai-match`, `/v1/search/top-candidates`, `/v1/expert-review/leaderboard`, `/v1/growth/cv-roasts/{roast_id}/vote`, `/v1/wallet/balance`).
+  2. **Đòn #2 — 144 Khối Copy-Paste (`NTA-P005`) & Đính Chính Phép Cộng Trùng:** Tồn tại 144 khối logic nhân bản trên `frontend/` và `mobile/` (không cộng trùng các file tài liệu `docs/`); đã được trích xuất thành shared hooks/components trong `BEL-237` (PR #227).
+  3. **Đòn #3 — `eslint-disable-next-line no-var` tại `mobile/src/lib/native-runtime.ts` (`NTA-S003`):** Đã xóa bỏ hoàn toàn và nối thật 3 mobile query hooks trong `BEL-238` (PR #225).
+  4. **Đòn #4 — Đính Chính 5 Trích Dẫn Đường Dẫn / Số Dòng / CSS Chính Xác:**
+     - `frontend/src/components/features/salary-benchmark/salary-historical-chart.tsx:120,130,140` (biểu đồ dải lương dùng `${p25Pct}%`, `${p50Pct}%`, `${p75Pct}%`).
+     - `frontend/src/app/workspace/analytics/page.tsx` (213 dòng).
+     - `frontend/src/hooks/use-audio-meter.ts` (61 dòng).
+     - `frontend/src/app/globals.css` (`54px` và `#5bbbae`).
+     - `mobile/index.tsx` (77 dòng).
+  5. **Đòn #5 — Inline `style={{ ... }}` tĩnh (`NTA-C004`) & 8 thẻ `<main>` lồng nhau trên 29 trang (`BEL-239`):** Thay thế inline style tĩnh tại `studio-viewfinder.tsx:49` bằng Tailwind utility `-scale-x-100 transform-gpu will-change-transform backface-hidden`, xóa toàn bộ `<main>` lồng bên trong `RootLayout`, và đồng bộ `WorkspaceNavStrip` + `Header` / `EcosystemMenu` trong `BEL-239` (PR #228).
+* **Permanent Script Guard (Chốt Chặn Vĩnh Viễn Trong `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json` — `BEL-240`):**
+  - Thay `fe_all_blob` bằng `fe_http_blob` (loại trừ `schemas.ts` & `__tests__`, chỉ tính các file có lời gọi HTTP thật `apiClient.*`, `mobileApiClient.*`, `mobileRequest`, `fetch(`, `XMLHttpRequest`).
+  - `fe_dead_endpoint_constants == 0` (`NTA-P004` — cấm khai báo `export const *_ENDPOINT = ...`)
+  - `fe_nested_main_tags == 0` (`BEL-239` — cấm thẻ `<main>` lồng trong `frontend/src/app/**/page.tsx`)
+  - `fe_static_inline_styles == 0` (`NTA-C004` — cấm `style={{ ... }}` tĩnh không chứa biểu thức động)
+* **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json`.

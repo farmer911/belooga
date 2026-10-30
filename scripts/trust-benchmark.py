@@ -224,6 +224,21 @@ for p in ui_files:
             violations["3. Layer Purity (No Band-Aids)"].append(
                 f"{rel} -> eslint-disable suppression prohibited (NTA-S003 / fe_eslint_disable == 0)"
             )
+        if re.search(r"export\s+const\s+[A-Z0-9_]+_ENDPOINT\s*=", txt):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> dead *_ENDPOINT constant declaration prohibited (NTA-P004 / fe_dead_endpoint_constants == 0)"
+            )
+        if "frontend/src/" in rel.as_posix():
+            for style_m in re.finditer(r"style=\{\{([^{}]+)\}\}", txt):
+                inner_style = style_m.group(1)
+                if "${" not in inner_style and not re.search(r":\s*[a-zA-Z_][a-zA-Z0-9_.]*", inner_style):
+                    violations["3. Layer Purity (No Band-Aids)"].append(
+                        f"{rel} -> static inline style={{...}} prohibited (NTA-C004 / fe_static_inline_styles == 0)"
+                    )
+        if p.name == "page.tsx" and "frontend/src/app/" in rel.as_posix() and re.search(r"<main\b", txt):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> nested <main> tag inside App Router page.tsx prohibited (fe_nested_main_tags == 0)"
+            )
     mock_fallback_hits = re.findall(
         r"\b(?:FALLBACK_POSTS|FALLBACK_CAREER_JOBS|FALLBACK_CANDIDATE_ANALYTICS"
         r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
@@ -263,13 +278,17 @@ for comp_p in sorted((FE_SRC / "components").rglob("*")) if (FE_SRC / "component
         )
 
 # Enforce 100% FE-to-BE Endpoint Wiring (Zero Dead/Unintegrated Backend Endpoints)
-# Web and mobile clients both count as consumers; provider callbacks are called by third parties, not our UI.
+# Web and mobile clients both count as consumers; only files performing real HTTP calls count (schemas.ts / dead consts excluded).
 SERVER_TO_SERVER_ROUTES = {"/v1/payments/momo/ipn"}
-fe_all_blob = "\n".join(
-    p.read_text(encoding="utf-8", errors="ignore")
+HTTP_CALL_RX = re.compile(r"\b(?:apiClient|mobileApiClient)\.(?:get|post|put|patch|delete)\b|\bmobileRequest\b|\bfetch\s*\(|\bXMLHttpRequest\b|/v1/profile/\$\{username\}/pdf/")
+fe_http_blob = "\n".join(
+    txt
     for src in (FE_SRC, ROOT / "mobile" / "src", ROOT / "mobile" / "app")
     for p in src.rglob("*")
     if p.suffix in (".ts", ".tsx")
+    and "__tests__" not in p.parts
+    and p.name != "schemas.ts"
+    and HTTP_CALL_RX.search(txt := p.read_text(encoding="utf-8", errors="ignore"))
 )
 for ep_file in sorted((BE_APP / "api" / "v1" / "endpoints").glob("*.py")):
     ep_txt = ep_file.read_text(encoding="utf-8")
@@ -283,7 +302,7 @@ for ep_file in sorted((BE_APP / "api" / "v1" / "endpoints").glob("*.py")):
         norm_path = re.sub(r"\{[^}]+\}", "{}", full_path).rstrip("/")
         segs = [s for s in norm_path.split("/") if s and s != "{}" and s != "v1"]
         rx = r"/v1/" + r".*?".join(re.escape(s) for s in segs)
-        if not re.search(rx, fe_all_blob):
+        if not re.search(rx, fe_http_blob):
             violations["3. Layer Purity (No Band-Aids)"].append(
                 f"{ep_file.relative_to(ROOT)} -> {method} {full_path} is not integrated/called anywhere in frontend/src/ or mobile/"
             )

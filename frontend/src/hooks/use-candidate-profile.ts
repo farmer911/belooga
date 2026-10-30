@@ -99,7 +99,7 @@ export function useCandidateProfile(username: string) {
 
   const setProfile = useCallback(
     (updater: SetStateAction<CandidateProfile | null>) => {
-      queryClient.setQueryData<CandidateProfile | null>(queryKey, (prev = null) =>
+      queryClient.setQueryData<CandidateProfile | null>(["candidate-profile", username], (prev = null) =>
         typeof updater === "function" ? updater(prev) : updater
       );
     },
@@ -111,7 +111,7 @@ export function useCandidateProfile(username: string) {
       field: K,
       updater: SetStateAction<NonNullable<CandidateProfile[K]>>
     ) => {
-      queryClient.setQueryData<CandidateProfile | null>(queryKey, (prev = null) => {
+      queryClient.setQueryData<CandidateProfile | null>(["candidate-profile", username], (prev = null) => {
         if (!prev) return prev;
         const current = (prev[field] ?? []) as NonNullable<CandidateProfile[K]>;
         const next = typeof updater === "function" ? updater(current) : updater;

@@ -116,9 +116,10 @@ export function useVideoPlayer(initialDuration = 30): UseVideoPlayerReturn {
   const onEnded = useCallback(() => setIsPlaying(false), []);
 
   useEffect(() => {
+    const videoEl = videoRef.current;
     return () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
+      if (videoEl) {
+        videoEl.pause();
       }
     };
   }, []);

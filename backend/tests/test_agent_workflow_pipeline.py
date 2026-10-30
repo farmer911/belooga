@@ -78,3 +78,21 @@ def test_ai_pm_manager_enforces_canonical_kanban_roles_and_board_ids():
     assert pm.ROLES == {"design", "backend", "frontend", "mobile", "architect"}
     assert pm.KANBAN_PROJECT_ID == "PVT_kwHOAeXQP84BoMSn"
     assert pm.KANBAN_TODO_OPTION_ID == "b5bd229a"
+
+
+def test_architect_counter_audit_gates_locked_in_ratchet_and_trust_benchmark():
+    """BEL-240: Verify NTA-P004 dead endpoint constants, NTA-C004 static inline styles, and nested <main> are locked at 0."""
+    import subprocess
+
+    proc = subprocess.run(
+        [sys.executable, "-I", "-S", str(ROOT_DIR / "scripts" / "ratchet.py")],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert proc.returncode == 0
+    assert "WORSE" not in proc.stdout
+    assert "FAIL" not in proc.stdout
+
+

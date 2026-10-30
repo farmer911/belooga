@@ -52,13 +52,17 @@ export function WebRTCStudioModal({
     formatTimer,
   } = useWebRTCStudio(isOpen, candidateName, username, onUploadSuccess);
 
+  const prevOpenRef = React.useRef<boolean | null>(null);
+
   React.useEffect(() => {
+    if (prevOpenRef.current === isOpen) return;
+    prevOpenRef.current = isOpen;
     if (isOpen) {
       startStudio();
     } else {
       closeStudio();
     }
-  }, [isOpen]);
+  }, [isOpen, startStudio, closeStudio]);
 
   if (!isOpen) return null;
 
