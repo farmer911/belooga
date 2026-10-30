@@ -199,20 +199,24 @@ class ExpertReviewRepository:
 
     async def seed_packages_if_empty(self, pkg_seeds: list[tuple]) -> None:
         await self.db.execute(text("SELECT pg_advisory_xact_lock(9001)"))
-        if not await self.list_packages():
-            self.db.add_all([
-                CVReviewPackage(name=n, slug=s, description=d, price_cents=p, turn_around_hours=h, is_popular=pop, features=f)
-                for n, s, d, p, h, pop, f in pkg_seeds
-            ])
+        existing_slugs = {p.slug for p in await self.list_packages()}
+        missing = [
+            CVReviewPackage(name=n, slug=s, description=d, price_cents=p, turn_around_hours=h, is_popular=pop, features=f)
+            for n, s, d, p, h, pop, f in pkg_seeds if s not in existing_slugs
+        ]
+        if missing:
+            self.db.add_all(missing)
             await self.db.commit()
 
     async def seed_experts_if_empty(self, exp_seeds: list[tuple]) -> None:
         await self.db.execute(text("SELECT pg_advisory_xact_lock(9002)"))
-        if not await self.list_experts():
-            self.db.add_all([
-                ExpertProfile(full_name=fn, headline=hl, bio=b, avatar_url=av, company=co, role_category=rc, years_of_experience=yoe, rating=rt, total_reviews_count=cnt, turn_around_days=td, is_active=True)
-                for fn, hl, b, av, co, rc, yoe, rt, cnt, td in exp_seeds
-            ])
+        existing_names = {e.full_name for e in await self.list_experts()}
+        missing = [
+            ExpertProfile(full_name=fn, headline=hl, bio=b, avatar_url=av, company=co, role_category=rc, years_of_experience=yoe, rating=rt, total_reviews_count=cnt, turn_around_days=td, is_active=True)
+            for fn, hl, b, av, co, rc, yoe, rt, cnt, td in exp_seeds if fn not in existing_names
+        ]
+        if missing:
+            self.db.add_all(missing)
             await self.db.commit()
 
     async def upsert_registered_expert(self, identity_id: uuid.UUID, data: dict) -> ExpertProfile:

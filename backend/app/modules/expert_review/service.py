@@ -180,8 +180,9 @@ class ExpertReviewService:
         full_order = await self.repo.get_order_by_id(order_id)
         amount_vnd = int((full_order.amount_paid_cents or 1960) * 250)
         exp_name = full_order.expert.full_name if full_order.expert else "Senior Expert"
+        exp_identity_id = full_order.expert.identity_id if full_order.expert else None
         await PaymentService.release_escrow_for_order(
-            self.db, str(order.candidate_identity_id), str(order_id), amount_vnd, exp_name
+            self.db, str(order.candidate_identity_id), str(order_id), amount_vnd, exp_name, exp_identity_id
         )
         await platform_cache.invalidate_prefix("expert_")
         await platform_cache.invalidate_prefix("analytics:")

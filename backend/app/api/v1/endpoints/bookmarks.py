@@ -182,7 +182,7 @@ async def submit_skill_assessment(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).submit_skill_assessment(payload)
+    return await GrowthService(db).submit_skill_assessment(payload, current_user.id if current_user else None)
 
 
 @router.post("/growth/pitch-script", response_model=PitchScriptResponse)
@@ -200,7 +200,7 @@ async def auto_import_cv_to_profile(
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).auto_import_cv(payload)
+    return await GrowthService(db).auto_import_cv(payload, current_user.id if current_user else None)
 
 
 @router.patch("/growth/stealth-mode", response_model=StealthModeResponse)
@@ -209,7 +209,7 @@ async def update_stealth_mode(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).update_stealth_mode(payload)
+    return await GrowthService(db).update_stealth_mode(payload, current_user.id)
 
 
 @router.get("/growth/hub", response_model=GrowthHubResponse)
@@ -228,7 +228,7 @@ async def create_referral_request(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).create_referral_request(payload)
+    return await GrowthService(db).create_referral_request(payload, current_user.id)
 
 
 @router.get("/growth/cv-roasts", response_model=List[CvRoastResponse])
@@ -265,7 +265,7 @@ async def book_expert_mock_interview(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).book_expert_mock(payload)
+    return await GrowthService(db).book_expert_mock(payload, current_user.id)
 
 
 @router.get("/growth/rewards", response_model=List[WalletRewardItemDTO])
@@ -279,4 +279,4 @@ async def claim_wallet_cashback_reward(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await GrowthService(db).claim_reward(payload)
+    return await GrowthService(db).claim_reward(payload, current_user.id)

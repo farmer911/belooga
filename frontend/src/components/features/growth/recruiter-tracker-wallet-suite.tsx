@@ -219,6 +219,7 @@ export function TrackerCalendarAndPulseSuite() {
 }
 
 export function WalletRewardsCashbackCard() {
+  const queryClient = useQueryClient();
   const [claimedIds, setClaimedIds] = useState<string[]>([]);
 
   const { data: rewards = [] } = useQuery<WalletRewardItem[]>({
@@ -236,6 +237,7 @@ export function WalletRewardsCashbackCard() {
     },
     onSuccess: (id) => {
       setClaimedIds((p) => [...p, id]);
+      queryClient.invalidateQueries({ queryKey: ["user-wallet"] });
     },
   });
 

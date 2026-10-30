@@ -152,6 +152,7 @@ async def test_expert_feedback_submission_and_analytics_db_revenue(
     """Verify Expert Feedback submission transitions order to completed and updates Analytics DB ledger."""
     client.headers.update(test_admin["headers"])
     headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+    dash_before = (await client.get("/v1/analytics/dashboard")).json()
 
     # 1. Create and checkout an order
     c_ord = await client.post(
@@ -200,5 +201,71 @@ async def test_expert_feedback_submission_and_analytics_db_revenue(
 
     # 4. Verify Executive Analytics Dashboard includes real DB revenue / order telemetry
     dash = (await client.get("/v1/analytics/dashboard")).json()
-    assert dash["overview"]["total_gmv"] > 0
+    assert dash["overview"]["total_gmv"] == dash_before["overview"]["total_gmv"] + 2475000.0
+    assert dash["overview"]["platform_net_revenue"] == round(dash["overview"]["total_gmv"] * 0.08, 2)
+    assert dash["funnel"][0]["count"] == dash["overview"]["total_scans"]
     assert len(dash["recent_transactions"]) >= 1
+
+    # 5. Verify Escrow Double-Entry Payout: buyer escrow_locked_vnd == 0, expert receives 92% (2,277,000 VND)
+    buyer_wallet = (await client.get("/v1/wallet/", headers=headers)).json()
+    assert buyer_wallet["escrow_locked_vnd"] == 0
+    assert any(t["tx_type"] == "EXPERT_ESCROW_RELEASE" and t["status"] == "RELEASED" for t in buyer_wallet["transactions"])
+
+    expert_wallet = (await client.get("/v1/wallet/", headers=test_expert["headers"])).json()
+    assert expert_wallet["available_balance_vnd"] == 2277000
+    assert any(t["tx_type"] == "EXPERT_ESCROW_RELEASE" and t["amount_vnd"] == 2277000 for t in expert_wallet["transactions"])
+
+
+@pytest.mark.asyncio
+async def test_growth_persistence_and_ats_ground_truth_tailoring(
+    client: AsyncClient, test_candidate_a: dict
+):
+    """Verify /v1/growth/* mutations persist in PostgreSQL and /v1/match/tailor-cv never fabricates fake RPS metrics."""
+    headers = {"Authorization": f"Bearer {test_candidate_a['token']}"}
+
+    # 1. Claim reward must credit real wallet balance idempotently
+    w_before = (await client.get("/v1/wallet/", headers=headers)).json()["available_balance_vnd"]
+    claim1 = await client.post("/v1/growth/claim-reward", json={"reward_id": "rew-1"}, headers=headers)
+    assert claim1.status_code == 200
+    w_after = (await client.get("/v1/wallet/", headers=headers)).json()
+    assert w_after["available_balance_vnd"] == w_before + 50000
+    assert any(t["tx_type"] == "TOPUP" and t["reference_id"] == "REWARD:rew-1" and t["amount_vnd"] == 50000 for t in w_after["transactions"])
+
+    # Idempotent replay of same reward_id must not double-credit
+    await client.post("/v1/growth/claim-reward", json={"reward_id": "rew-1"}, headers=headers)
+    w_replay = (await client.get("/v1/wallet/", headers=headers)).json()
+    assert w_replay["available_balance_vnd"] == w_before + 50000
+
+    # 2. Stealth mode must persist is_hidden in candidate_profiles
+    await client.patch(
+        "/v1/growth/stealth-mode",
+        json={"stealth_enabled": True, "blocked_companies": ["Acme"]},
+        headers=headers,
+    )
+    pub_hidden = await client.get(f"/v1/profile/{test_candidate_a['username']}")
+    assert pub_hidden.status_code == 404
+
+    await client.patch(
+        "/v1/growth/stealth-mode",
+        json={"stealth_enabled": False, "blocked_companies": []},
+        headers=headers,
+    )
+    pub_visible = await client.get(f"/v1/profile/{test_candidate_a['username']}")
+    assert pub_visible.status_code == 200
+
+    # 3. ATS Tailor CV must not inject fabricated '45,000+ RPS' or '99.99% SLA' claims
+    tailor_res = await client.post(
+        "/v1/match/tailor-cv",
+        json={
+            "job_title": "Backend Engineer",
+            "company_name": "Acme",
+            "jd_text": "Looking for Golang, PostgreSQL, and Docker engineer.",
+            "cv_text": "Built internal CRUD services using Python and SQL.",
+        },
+        headers=headers,
+    )
+    assert tailor_res.status_code == 200
+    tailored_text = tailor_res.json()["tailored_cv_text"]
+    assert "45,000+ RPS" not in tailored_text
+    assert "99.99% SLA" not in tailored_text
+

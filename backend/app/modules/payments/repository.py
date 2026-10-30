@@ -137,3 +137,13 @@ class PaymentRepository:
             {"uid": identity_id, "lim": limit},
         )).mappings().all()
         return [dict(r) for r in rows]
+
+    async def has_claimed_reward(self, identity_id: uuid.UUID, reference_id: str) -> bool:
+        res = await self.db.execute(
+            text("""
+                SELECT 1 FROM wallet_transactions
+                WHERE identity_id = :uid AND tx_type = 'TOPUP' AND reference_id = :ref LIMIT 1
+            """),
+            {"uid": identity_id, "ref": reference_id},
+        )
+        return res.scalar_one_or_none() is not None

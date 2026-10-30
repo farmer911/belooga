@@ -73,3 +73,56 @@ class GrowthRowsMixin:
         )
         row = res.mappings().first()
         return dict(row) if row else None
+
+    async def set_profile_stealth_mode(self, identity_id: uuid.UUID, stealth_enabled: bool) -> Optional[str]:
+        res = await self.db.execute(
+            text("""
+                UPDATE candidate_profiles
+                SET is_hidden = :hid, updated_at = NOW()
+                WHERE identity_id = :iid
+                RETURNING username
+            """),
+            {"iid": identity_id, "hid": stealth_enabled},
+        )
+        return res.scalar_one_or_none()
+
+    async def sync_candidate_headline_and_skills(
+        self, identity_id: uuid.UUID, headline: Optional[str], skills: list[str]
+    ) -> Optional[str]:
+        prof = (
+            await self.db.execute(
+                text("""
+                    UPDATE candidate_profiles
+                    SET headline = COALESCE(:hl, headline), updated_at = NOW()
+                    WHERE identity_id = :iid
+                    RETURNING id, username
+                """),
+                {"iid": identity_id, "hl": (headline or "")[:255] or None},
+            )
+        ).mappings().first()
+        if not prof:
+            return None
+        for sk in skills[:12]:
+            clean = sk.strip()
+            if not clean:
+                continue
+            sid = (
+                await self.db.execute(
+                    text("""
+                        INSERT INTO skills (id, name)
+                        VALUES (:sid, :name)
+                        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                        RETURNING id
+                    """),
+                    {"sid": uuid.uuid4(), "name": clean},
+                )
+            ).scalar_one()
+            await self.db.execute(
+                text("""
+                    INSERT INTO profile_skills (profile_id, skill_id)
+                    VALUES (:pid, :sid)
+                    ON CONFLICT DO NOTHING
+                """),
+                {"pid": prof["id"], "sid": sid},
+            )
+        return str(prof["username"])

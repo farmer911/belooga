@@ -5,12 +5,8 @@ against MOMO_SECRET_KEY; prices for packages are decided server-side.
 """
 
 from datetime import datetime, timezone
-import hashlib
-import hmac
-import os
+import hashlib, hmac, os, uuid
 from typing import Any, Optional
-import uuid
-
 from fastapi import HTTPException, status
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,14 +15,8 @@ from app.core.cache import platform_cache
 from app.modules.notifications import NotificationService
 from app.modules.payments.repository import PaymentRepository
 from app.schemas.payments import (
-    MomoCreatePaymentRequest,
-    MomoCreatePaymentResponse,
-    MomoIpnRequest,
-    OrderStatusResponse,
-    UserWalletStateResponse,
-    WalletPayRequest,
-    WalletTopupRequest,
-    WalletTransactionDTO,
+    MomoCreatePaymentRequest, MomoCreatePaymentResponse, MomoIpnRequest, OrderStatusResponse,
+    UserWalletStateResponse, WalletPayRequest, WalletTopupRequest, WalletTransactionDTO,
 )
 
 PACKAGE_PRICES_VND = {"MICRO_PASS_29K": 29_000, "MICRO_PASS_59K": 59_000}
@@ -60,8 +50,7 @@ def sign_momo(raw: str) -> str:
 
 def momo_ipn_raw_signature(fields: dict[str, Any]) -> str:
     """Raw string MoMo signs for an IPN: accessKey first, then the IPN fields in alphabetical order."""
-    parts = [f"accessKey={os.getenv('MOMO_ACCESS_KEY', '')}"]
-    parts += [f"{k}={fields.get(k, '')}" for k in IPN_SIGNATURE_FIELDS]
+    parts = [f"accessKey={os.getenv('MOMO_ACCESS_KEY', '')}"] + [f"{k}={fields.get(k, '')}" for k in IPN_SIGNATURE_FIELDS]
     return "&".join(parts)
 
 
@@ -88,21 +77,15 @@ async def _request_momo_payment(order_id: str, amount_vnd: int, order_info: str)
     body: dict[str, Any] = {
         "partnerCode": partner_code, "requestId": order_id, "amount": amount_vnd, "orderId": order_id,
         "orderInfo": order_info, "redirectUrl": f"{frontend}/workspace/wallet?momo_order={order_id}",
-        "ipnUrl": f"{public_api}/v1/payments/momo/ipn", "requestType": "captureWallet", "extraData": "",
-        "lang": "vi",
+        "ipnUrl": f"{public_api}/v1/payments/momo/ipn", "requestType": "captureWallet", "extraData": "", "lang": "vi",
     }
-    raw = "&".join(
-        f"{k}={v}" for k, v in sorted({**body, "accessKey": access_key}.items()) if k != "lang"
-    )
+    raw = "&".join(f"{k}={v}" for k, v in sorted({**body, "accessKey": access_key}.items()) if k != "lang")
     body["signature"] = sign_momo(raw)
     async with httpx.AsyncClient(timeout=15) as client:
         res = await client.post(os.getenv("MOMO_ENDPOINT", MOMO_DEFAULT_ENDPOINT), json=body)
     data = res.json() if res.headers.get("content-type", "").startswith("application/json") else {}
     if res.status_code != 200 or data.get("resultCode") != 0 or not data.get("payUrl"):
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"MoMo rejected the payment request: {data.get('message') or res.status_code}",
-        )
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"MoMo rejected the payment request: {data.get('message') or res.status_code}")
     return data
 
 
@@ -170,6 +153,13 @@ class PaymentService:
                 payload.orderId, "COMPLETED",
             )
         elif order["package_type"] == "EXPERT_REVIEW" and order["review_order_id"]:
+            await repo.lock_wallet(order["identity_id"])
+            await repo.apply_wallet_delta(order["identity_id"], 0, order["amount_vnd"])
+            await repo.add_transaction(
+                order["identity_id"], "EXPERT_ESCROW_LOCK", order["amount_vnd"],
+                f"Tạm khóa Escrow đơn chấm CV #{str(order['review_order_id'])[:8]} qua MoMo",
+                str(order["review_order_id"]), "LOCKED_IN_ESCROW",
+            )
             await repo.mark_review_order(order["review_order_id"], "paid", f"{payload.orderId}:{payload.transId}")
         await db.commit()
         if order["package_type"] == "EXPERT_REVIEW" and order["review_order_id"]:
@@ -260,24 +250,48 @@ class PaymentService:
 
     @staticmethod
     async def release_escrow_for_order(
-        db: AsyncSession, wallet_key: str, order_id: str, amount_vnd: int = 0, expert_name: str = "Senior Reviewer"
+        db: AsyncSession, wallet_key: str, order_id: str, amount_vnd: int = 0,
+        expert_name: str = "Senior Reviewer", expert_identity_id: Optional[uuid.UUID] = None,
     ) -> UserWalletStateResponse:
-        """Release the escrow locked for `order_id`; orders paid directly via MoMo have no escrow and are a no-op."""
+        """Release buyer's escrow lock and credit 92% net payout to the assigned expert's wallet (8% platform fee)."""
         _ = amount_vnd  # the locked ledger entry is the source of truth for the amount
         identity_id = _identity(wallet_key)
         repo = PaymentRepository(db)
         await repo.lock_wallet(identity_id)
         lock = await repo.find_escrow_lock(identity_id, order_id)
         if lock:
-            await repo.apply_wallet_delta(identity_id, 0, -int(lock["amount_vnd"]))
+            gross_vnd = int(lock["amount_vnd"])
+            payout_vnd = int(round(gross_vnd * 0.92))
+            await repo.apply_wallet_delta(identity_id, 0, -gross_vnd)
             await repo.set_transaction_status(lock["id"], "RELEASED")
             await repo.add_transaction(
-                identity_id, "EXPERT_ESCROW_RELEASE", int(lock["amount_vnd"]),
+                identity_id, "EXPERT_ESCROW_RELEASE", gross_vnd,
                 f"Nghiệm thu & Giải ngân Escrow cho Expert {expert_name} (Đơn #{order_id[:8]})", order_id, "RELEASED",
             )
+            if expert_identity_id is not None:
+                await repo.lock_wallet(expert_identity_id)
+                await repo.apply_wallet_delta(expert_identity_id, payout_vnd, 0)
+                await repo.add_transaction(
+                    expert_identity_id, "EXPERT_ESCROW_RELEASE", payout_vnd,
+                    f"Nhận 92% giải ngân Escrow đơn #{order_id[:8]} (đã khấu trừ 8% phí nền tảng)", order_id, "RELEASED",
+                )
         await db.commit()
         await platform_cache.invalidate_prefix("analytics:")
         return await PaymentService.get_wallet(db, str(identity_id))
+
+    @staticmethod
+    async def credit_reward_cashback(
+        db: AsyncSession, identity_id: uuid.UUID, reward_id: str, amount_vnd: int
+    ) -> None:
+        ref = f"REWARD:{reward_id}"
+        repo = PaymentRepository(db)
+        await repo.lock_wallet(identity_id)
+        if not await repo.has_claimed_reward(identity_id, ref):
+            await repo.apply_wallet_delta(identity_id, amount_vnd, 0)
+            await repo.add_transaction(
+                identity_id, "TOPUP", amount_vnd, f"Nhận thưởng Cashback ({reward_id})", ref, "COMPLETED"
+            )
+        await db.commit()
 
 
 __all__ = ["PaymentService", "MOMO_SECRET_KEY", "sign_momo", "momo_ipn_raw_signature", "get_momo_secret_key"]
