@@ -232,21 +232,17 @@ def main():
     partitions = partition_diff_by_domain(full_diff)
     project_rules = read_project_rules()
 
-    domains_to_run = (
-        [requested_domain]
-        if requested_domain in ("backend", "frontend", "mobile")
-        else [d for d in ("backend", "frontend", "mobile") if partitions.get(d, "").strip()]
-    )
-
-    if not domains_to_run:
-        if requested_domain in ("backend", "frontend", "mobile"):
+    if requested_domain in ("backend", "frontend", "mobile"):
+        if not partitions.get(requested_domain, "").strip():
             print(f"[*] No {requested_domain} changes in this PR. Skipping {requested_domain} review agent.")
             sys.exit(0)
-        domains_to_run = ["other"]
+        domains_to_run = [requested_domain]
+    else:
+        domains_to_run = [d for d in ("backend", "frontend", "mobile") if partitions.get(d, "").strip()] or ["other"]
 
     blocking = False
     for dom in domains_to_run:
-        dom_diff = partitions.get(dom, "") or full_diff
+        dom_diff = partitions.get(dom, "") if dom in ("backend", "frontend", "mobile") else full_diff
         if not dom_diff.strip():
             continue
         print(f"[*] Running Dedicated {dom.upper()} AI Code Review Agent...")

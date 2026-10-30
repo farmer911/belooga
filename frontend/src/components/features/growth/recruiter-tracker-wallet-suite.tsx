@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Video, DollarSign, CalendarCheck2, Calculator, Gift, BellRing, CheckCircle2 } from "lucide-react";
 import { apiClient } from "@/services/api-client";
-import { useWallet, formatVnd } from "@/hooks/use-wallet";
+import { formatVnd } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 
 interface ExpertMockSlot { id: string; expert_name: string; role: string; topic: string; price_vnd: number; }
