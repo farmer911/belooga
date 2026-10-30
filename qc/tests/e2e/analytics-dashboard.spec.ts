@@ -1,12 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Executive Analytics & Monetization Terminal Quality Gate', () => {
+  let adminToken = '';
+
   test.beforeEach(async ({ page }) => {
     // Admin session: the page requires a signed-in user (sets the HttpOnly refresh cookie)
     const loginRes = await page.request.post('http://localhost:8080/v1/auth/login/', {
       data: { email: 'admin@belooga.com', password: 'AdminSecret123!' },
     });
     expect(loginRes.status()).toBe(200);
+    const body = await loginRes.json();
+    adminToken = body.access_token;
   });
 
   test('TC-ANALYTICS-001: Analytics dashboard landing, header, and breadcrumb rendering', async ({ page }) => {
@@ -38,6 +42,16 @@ test.describe('Executive Analytics & Monetization Terminal Quality Gate', () => 
   });
 
   test('TC-ANALYTICS-003: Revenue chart, PLG funnel, and MoMo transactions table', async ({ page }) => {
+    const orderRes = await page.request.post('http://localhost:8080/v1/expert-review/orders/', {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      data: {
+        package_slug: 'pro',
+        resume_url: '/uploads/resumes/alex_cv.pdf',
+        target_role: 'Staff Full-Stack Engineer',
+      },
+    });
+    expect(orderRes.status()).toBe(201);
+
     await page.goto('/admin/analytics');
 
     // Assert Chart Title
