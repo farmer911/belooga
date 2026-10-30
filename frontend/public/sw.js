@@ -127,7 +127,7 @@ self.addEventListener("fetch", (event) => {
             cache.put(request, response.clone());
           }
           return response;
-        } catch (err) {
+        } catch {
           return cached || Response.error();
         }
       })
@@ -153,7 +153,7 @@ async function flushOfflineOutbox() {
       } else {
         remainingQueue.push(item);
       }
-    } catch (_err) {
+    } catch {
       remainingQueue.push(item);
     }
   }
@@ -237,7 +237,7 @@ self.addEventListener("push", (event) => {
   if (event.data) {
     try {
       payload = { ...payload, ...event.data.json() };
-    } catch (_e) {
+    } catch {
       payload.body = event.data.text();
     }
   }

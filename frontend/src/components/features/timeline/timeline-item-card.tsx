@@ -24,8 +24,6 @@ export interface TimelineItemCardProps {
 }
 
 export const TimelineItemCard = React.memo(function TimelineItemCard({
-  id,
-  index,
   title,
   companyName,
   fromYear = 2022,

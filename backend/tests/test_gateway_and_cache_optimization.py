@@ -171,13 +171,14 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
             "email": "dist-gateway@belooga.com",
             "message": "Verifying Redis-backed cross-replica idempotency replay.",
         }
-        first = await client.post("/v1/contact/", json=payload, headers={"Idempotency-Key": idem_key})
+        idem_ip = f"198.51.100.{uuid.uuid4().int % 200 + 10}"
+        first = await client.post("/v1/contact/", json=payload, headers={"Idempotency-Key": idem_key, "X-Forwarded-For": idem_ip})
         assert first.status_code in (200, 201)
         assert first.headers.get("X-Idempotency-Replayed") == "false"
 
         # Simulate landing on a second K8s replica with empty L1 memory
         gw_mod.clear_gateway_l1_state()
-        second = await client.post("/v1/contact/", json=payload, headers={"Idempotency-Key": idem_key})
+        second = await client.post("/v1/contact/", json=payload, headers={"Idempotency-Key": idem_key, "X-Forwarded-For": idem_ip})
         assert second.status_code == first.status_code
         assert second.headers.get("X-Idempotency-Replayed") == "true"
         assert second.headers.get("X-Idempotency-Backend") == "redis"
@@ -200,7 +201,8 @@ async def test_distributed_redis_gateway_rate_limit_idempotency_and_k8s_ingress(
         assert r3.status_code == 429
 
         # 3. Verify /v1/gateway/status reports distributed Redis state & K8s Ingress / client gateway wiring
-        status_res = await client.get("/v1/gateway/status")
+        status_ip = f"203.0.113.{uuid.uuid4().int % 200 + 10}"
+        status_res = await client.get("/v1/gateway/status", headers={"X-Forwarded-For": status_ip})
         assert status_res.status_code == 200
         status_body = status_res.json()
         assert status_body.get("state_backend") == "redis-distributed-l1-fallback"

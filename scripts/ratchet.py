@@ -37,8 +37,20 @@ def count(pattern, paths):
 
 fe_src = files(FE, {".ts", ".tsx"}) + files(MOBILE_SRC, {".ts", ".tsx"}) + files(MOBILE_APP, {".ts", ".tsx"})
 fe_prod_src = [p for p in fe_src if "__tests__" not in p.parts]
+fe_web_prod_src = [p for p in files(FE, {".ts", ".tsx"}) if "__tests__" not in p.parts]
 be_src = files(BE, {".py"})
 pages = [p for p in fe_src if p.name == "page.tsx"]
+fe_app_pages = [p for p in files(FE / "app", {".tsx"}) if p.name == "page.tsx"]
+
+
+def count_static_inline_styles(txt: str) -> int:
+    hits = 0
+    for m in re.finditer(r"style=\{\{([^{}]+)\}\}", txt):
+        inner = m.group(1)
+        if "${" not in inner and not re.search(r":\s*[a-zA-Z_][a-zA-Z0-9_.]*", inner):
+            hits += 1
+    return hits
+
 
 
 def count_empty_catches(txt: str) -> int:
@@ -151,6 +163,9 @@ current = {
     "fe_blind_unknown_casts": count(r"\bas\s+unknown\s+as\b", fe_prod_src),
     "fe_eslint_disable": count(r"eslint-disable", fe_prod_src),
     "fe_orphan_components": orphan_comp_count,
+    "fe_dead_endpoint_constants": count(r"export\s+const\s+[A-Z0-9_]+_ENDPOINT\s*=", fe_prod_src),
+    "fe_nested_main_tags": count(r"<main\b", fe_app_pages),
+    "fe_static_inline_styles": sum(count_static_inline_styles(p.read_text(encoding="utf-8", errors="ignore")) for p in fe_web_prod_src),
     "be_anonymous_alexnguyen_fallback": count(
         r"\balexnguyen\b",
         [BE / "modules" / "cms" / "service.py", BE / "schemas" / "cms.py"],

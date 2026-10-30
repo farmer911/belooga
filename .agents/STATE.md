@@ -1,23 +1,16 @@
-# Active State Scratchpad (<= 50 lines)
+# Active Working Memory (.agents/STATE.md)
 
-> Per-task working memory. Overwrite (do not append) when starting a new ticket.
+🎯 Đang làm ticket: [BEL-240] (#224) — Sửa Lỗ Hổng Grep Mù Ở trust-benchmark.py, Khóa Cổng NTA-P004/P005/S003/C004 & Quét Toàn Bộ Project | Role: Architect | Cột: Testing
 
-- **Active Ticket:** `[BEL-246]` Multi-Agent Worktree, Split FE/BE Review Agents & Post-Merge Parallel QC/Automation Pipeline
-- **Branch / Worktree:** `feature/BEL-246-multi-agent-worktree-ci-pipeline`
-- **Objective & Hypothesis:**
-  1. **`scripts/ai-pm-manager.py`:** Support `ROLES = {"design", "backend", "frontend", "mobile", "architect"}` (no standalone `qc` Todo ticket) and automatically add created issues to `Kanban Belooga` Project #1 (`Todo` column `b5bd229a`).
-  2. **`scripts/agent-dispatch.py`:** Create isolated per-ticket `git worktree` (`.claude/worktrees/BEL-<id>-<slug>`), symlink shared `.venv`/`node_modules`, and move both Issue Label (`status:in-progress`) and Project Board column (`ef71cae9`).
-  3. **`scripts/ai-code-reviewer.py` & `.github/workflows/ai-code-review.yml`:** Split review by changed paths into dedicated **Backend Review Agent** (`be-code-review/SKILL.md`), **Frontend Review Agent** (`fe-code-review/SKILL.md`), and **Mobile Review Agent**, and exit `1` on `CHANGES REQUESTED 🛑`.
-  4. **`.github/workflows/ci.yml`, `deploy.yml` & `scripts/watch-kanban.sh`:** On PR, run fast build/unit/audit + split FE/BE Review Agents; on `push` to `main` (post-merge), trigger parallel `automation-e2e` (Playwright/Maestro) and `qc-manual-dispatch` (`Testing` column notification), gating production release on both.
-- **Pre-Mortem Risks:**
-  - Keep all Python scripts clean of unused imports and bare `except:` so `scripts/trust-benchmark.py` stays 100%.
-- **Target Files:**
-  - `scripts/{agent-dispatch.py,ai-code-reviewer.py,ai-pm-manager.py,watch-kanban.sh}`
-  - `.github/workflows/{ai-code-review.yml,ci.yml,deploy.yml}`
-  - `.agents/skills/belooga-senior-agile-workflow/SKILL.md`
-  - `backend/tests/test_agent_workflow_pipeline.py`
-- **Execution Checklist:**
-  - [x] Write RED tests in `backend/tests/test_agent_workflow_pipeline.py` & verify RED
-  - [x] Upgrade `agent-dispatch.py`, `ai-code-reviewer.py`, `ai-pm-manager.py`, `watch-kanban.sh` (GREEN)
-  - [x] Upgrade `.github/workflows/{ai-code-review.yml,ci.yml,deploy.yml}` & `SKILL.md`
-  - [ ] Run DoD gates, open PR, watch CI green & merge
+## Hypothesis & Architectural Audit Scope
+1. `scripts/trust-benchmark.py` replaced blind `fe_all_blob` with `fe_http_blob` (excluding `schemas.ts` & `__tests__`, requiring real HTTP client invocations).
+2. `scripts/ratchet.py` & `.agents/ratchet.json` locked `fe_dead_endpoint_constants: 0`, `fe_nested_main_tags: 0`, and `fe_static_inline_styles: 0` (`NTA-C004`).
+3. Fixed 5 frontend/SW lint warnings (`timeline-item-card.tsx`, `use-video-player.ts`, `use-candidate-profile.ts`, `webrtc-studio-modal.tsx`, `sw.js`).
+4. Recorded `[VIOLATION-015]` in `docs/VIOLATIONS_REGISTER.md` and synchronized `CURRENT_STATE.md`.
+
+## Execution Checklist
+- [x] Full-project forensic scan (`backend/`, `frontend/`, `mobile/`, `qc/`, `scripts/`, GitHub Issues/PRs)
+- [x] RED: Add failing test in `backend/tests/test_agent_workflow_pipeline.py` for new `ratchet.py` & `trust-benchmark.py` gates
+- [x] GREEN: Upgrade `scripts/trust-benchmark.py`, `scripts/ratchet.py`, `.agents/ratchet.json`, and fix 5 FE/SW lint warnings
+- [x] Record `[VIOLATION-015]` in `docs/VIOLATIONS_REGISTER.md` & sync `CURRENT_STATE.md` / skills
+- [x] Open PR, pass all CI checks, squash-merge to `main`, and sync GitHub Issues & `Kanban Belooga` board
