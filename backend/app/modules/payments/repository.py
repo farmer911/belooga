@@ -29,10 +29,12 @@ class PaymentRepository:
         )
 
     async def get_order(self, order_id: str, for_update: bool = False) -> Optional[dict[str, Any]]:
-        lock = " FOR UPDATE" if for_update else ""
-        row = (await self.db.execute(
-            text(f"SELECT * FROM payment_orders WHERE order_id = :oid{lock}"), {"oid": order_id}
-        )).mappings().first()
+        sql = (
+            text("SELECT * FROM payment_orders WHERE order_id = :oid FOR UPDATE")
+            if for_update
+            else text("SELECT * FROM payment_orders WHERE order_id = :oid")
+        )
+        row = (await self.db.execute(sql, {"oid": order_id})).mappings().first()
         return dict(row) if row else None
 
     async def set_order_status(self, order_id: str, new_status: str, trans_id: Optional[str]) -> None:
@@ -47,14 +49,12 @@ class PaymentRepository:
         )
 
     async def get_review_order(self, review_order_id: uuid.UUID, for_update: bool = False) -> Optional[dict[str, Any]]:
-        lock = " FOR UPDATE" if for_update else ""
-        row = (await self.db.execute(
-            text(f"""
-                SELECT id, candidate_identity_id, order_status, amount_paid_cents
-                FROM cv_review_orders WHERE id = :rid{lock}
-            """),
-            {"rid": review_order_id},
-        )).mappings().first()
+        sql = (
+            text("SELECT id, candidate_identity_id, order_status, amount_paid_cents FROM cv_review_orders WHERE id = :rid FOR UPDATE")
+            if for_update
+            else text("SELECT id, candidate_identity_id, order_status, amount_paid_cents FROM cv_review_orders WHERE id = :rid")
+        )
+        row = (await self.db.execute(sql, {"rid": review_order_id})).mappings().first()
         return dict(row) if row else None
 
     async def mark_review_order(self, review_order_id: uuid.UUID, new_status: str, payment_reference: str) -> None:

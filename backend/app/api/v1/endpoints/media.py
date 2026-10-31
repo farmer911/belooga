@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 UPLOAD_ID_REGEX = re.compile(r"^upload_\d+_[a-zA-Z0-9]+$")
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.media import MediaService
 from app.schemas.media import CVStudioDraftPayload, ChunkUploadResponse, CompleteUploadRequest
@@ -47,7 +47,7 @@ async def download_resume(
     username: str,
     filename: str,
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ) -> Response:
     """Owner/admin-only download of the uploaded resume PDF (no longer served from /uploads)."""
     return await MediaService(db).download_resume(username, filename, current_user)
@@ -66,7 +66,7 @@ async def delete_resume(
 async def generate_candidate_pdf(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ) -> Response:
     return await MediaService(db).generate_candidate_pdf(username, current_user)
 
@@ -103,7 +103,7 @@ async def complete_chunked_video_upload(
 @router.get("/profile/{username}/video-status/", response_model=Dict[str, Any], tags=["Domain 4: Media & Uploads"])
 async def get_video_transcoding_status(
     username: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await MediaService(db).get_video_transcoding_status(username)
 
@@ -112,7 +112,7 @@ async def get_video_transcoding_status(
 async def get_cv_studio_draft(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await MediaService(db).get_cv_studio_draft(username, current_user)
 

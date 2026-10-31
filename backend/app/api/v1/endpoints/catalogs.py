@@ -40,7 +40,7 @@ async def list_catalog_skills(
 @router.get("/catalogs/skills/", response_model=List[CatalogItemResponse], tags=["Domain 7: Master Catalogs"])
 async def list_catalog_skills_slash(
     q: Optional[str] = Query("", description="Filter skills by keyword"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CatalogsService(db).list_skill_catalog(q=q or "")
 
@@ -66,7 +66,7 @@ async def create_catalog_skill_slash(
 @router.get("/catalogs/locations/", response_model=List[Dict[str, str]], tags=["Domain 7: Master Catalogs"])
 async def list_catalog_locations(
     name: str = Query("", description="Location prefix"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CatalogsService(db).suggest_locations(name)
 
@@ -74,7 +74,7 @@ async def list_catalog_locations(
 @router.get("/profile/company/", response_model=List[Dict[str, str]], tags=["Domain 7: Master Catalogs"])
 async def suggest_companies(
     name: str = Query("", description="Company prefix"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CatalogsService(db).suggest_companies(name)
 
@@ -82,7 +82,7 @@ async def suggest_companies(
 @router.get("/profile/school/", response_model=List[Dict[str, str]], tags=["Domain 7: Master Catalogs"])
 async def suggest_schools(
     name: str = Query("", description="School prefix"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CatalogsService(db).suggest_schools(name)
 
@@ -90,7 +90,7 @@ async def suggest_schools(
 @router.get("/profile/location/", response_model=List[Dict[str, str]], tags=["Domain 7: Master Catalogs"])
 async def suggest_locations(
     name: str = Query("", description="Location prefix"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CatalogsService(db).suggest_locations(name)
 
@@ -102,7 +102,7 @@ async def get_salary_benchmark(
     level: str = Query("Senior", description="Experience level: Junior, Mid, Senior, Lead"),
     location: str = Query("Ho Chi Minh", description="Work location"),
     year: str = Query("all", description="Historical filter year: 2024 | 2025 | 2026 | all"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Programmatic SEO & Market Radar Engine delegating to CatalogsService."""
     return await CatalogsService(db).get_salary_benchmark(role, tech_stack, level, location, year=year)
@@ -130,7 +130,7 @@ async def get_career_upskill_roi(
     tech_stack: str = Query("Golang", description="Primary tech stack"),
     level: str = Query("Senior", description="Experience level"),
     location: str = Query("Ho Chi Minh", description="Work location"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Calculate Career Upskill ROI & Salary Negotiation Leverage Script."""
     return await CatalogsService(db).get_career_roi(tech_stack, level, location)
@@ -146,7 +146,7 @@ async def list_companies_directory(
     min_rating: float = Query(0.0),
     hiring_only: bool = Query(False),
     sort_by: str = Query("rating"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CompaniesService(db).search_companies(
         q=q, tech_stack=tech_stack, industry=industry, location=location,
@@ -164,7 +164,7 @@ async def search_companies_directory(
     min_rating: float = Query(0.0),
     hiring_only: bool = Query(False),
     sort_by: str = Query("rating"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CompaniesService(db).search_companies(
         q=q, tech_stack=tech_stack, industry=industry, location=location,
@@ -184,7 +184,7 @@ async def create_company_profile(
 @router.get("/companies/{slug}", response_model=CompanyProfileItemDTO, tags=["Domain 7: Master Catalogs"])
 async def get_company_profile(
     slug: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CompaniesService(db).get_company(slug)
 
@@ -212,7 +212,7 @@ async def add_company_review(
 @router.get("/companies/{slug}/interview-questions", response_model=List[CompanyInterviewQuestionItemDTO], tags=["Domain 7: Master Catalogs"])
 async def list_company_interview_questions(
     slug: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CompaniesService(db).list_interview_questions(slug)
 

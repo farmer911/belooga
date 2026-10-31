@@ -558,6 +558,35 @@ if alembic_versions_dir.exists():
                     f"{model_file.relative_to(ROOT)} -> table '{tbl_name}' missing from backend/alembic/versions/ (alembic_schema_drift == 0)"
                 )
 
+# BEL-248: Enforce System Design Primer & Primer 3-Tier Token SSOT Platform-Wide
+for ep_p in sorted((BE_APP / "api" / "v1" / "endpoints").glob("*.py")):
+    if ep_p.name != "__init__.py" and "get_read_db" not in ep_p.read_text(encoding="utf-8"):
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            f"{ep_p.relative_to(ROOT)} -> read-only GET endpoints must route via get_read_db (BEL-248)"
+        )
+
+for mod_p in sorted((BE_APP / "modules").rglob("*.py")):
+    if re.search(r'text\(\s*f["\']', mod_p.read_text(encoding="utf-8")):
+        violations["4. Async & IDOR Safety (All BE)"].append(
+            f"{mod_p.relative_to(ROOT)} -> dynamic f-string SQL text(f'...') prohibited; use static parameterized SQL (BEL-248)"
+        )
+
+for canvas_rel in ("frontend/src/components/common/audio-visualizer-meter.tsx", "frontend/src/lib/studio-preview.ts"):
+    cp = ROOT / canvas_rel
+    if cp.exists() and re.search(r"#[0-9a-fA-F]{3,8}\b", cp.read_text(encoding="utf-8")):
+        violations["3. Layer Purity (No Band-Aids)"].append(
+            f"{canvas_rel} -> raw #hex literal prohibited; import DESIGN_TOKENS from @/lib/design-tokens (BEL-248)"
+        )
+
+for qc_folder in ("qc/tests", "qc/scripts"):
+    qf = ROOT / qc_folder
+    if qf.exists():
+        for qp in sorted(qf.rglob("*.ts")):
+            if "waitForTimeout(" in qp.read_text(encoding="utf-8"):
+                violations["1. Test Honesty (No Skips/Hollow)"].append(
+                    f"{qp.relative_to(ROOT)} -> waitForTimeout() prohibited; use web-first Playwright assertions (BEL-248)"
+                )
+
 # --- RENDER VISUAL BENCHMARK SCORECARD ---
 print("=" * 78)
 print("  BELOOGA ANTI-DECEPTION & PRODUCTION TRUST BENCHMARK (SUPERVISOR GATE)")

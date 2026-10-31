@@ -273,12 +273,19 @@ platform_cache = AsyncTieredCache(namespace="belooga_v1", l1_max_size=4096)
 
 
 async def invalidate_candidate_cache(username: str) -> None:
-    """Unified cross-module cache invalidation for candidate profile, trust, trajectory, and search."""
+    """Unified cross-module cache invalidation for candidate profile, trust, trajectory, shortlist, pulse, sitemap, and search."""
     clean = username.lower().strip()
-    await platform_cache.invalidate_prefix(f"pub_profile:{clean}")
-    await platform_cache.invalidate_prefix(f"trust:{clean}")
-    await platform_cache.invalidate_prefix(f"trajectory:{clean}")
-    await platform_cache.invalidate_prefix("search:")
-    await platform_cache.invalidate_prefix("suggest:")
-    await platform_cache.invalidate_prefix("bookmarks:")
+    for prefix in (
+        f"pub_profile:{clean}",
+        f"trust:{clean}",
+        f"trajectory:{clean}",
+        "search:",
+        "suggest:",
+        "bookmarks:",
+        "shortlist:",
+        "market:pulse",
+        "cms:seo_sitemap",
+        "analytics:",
+    ):
+        await platform_cache.invalidate_prefix(prefix)
 

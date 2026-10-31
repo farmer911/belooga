@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Mic, MicOff } from "lucide-react";
+import { DESIGN_TOKENS } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 
 interface WindowWithWebkitAudio extends Window {
@@ -111,9 +112,9 @@ export function AudioVisualizerMeter({
       // Update mic icon color via DOM ref without triggering React re-render
       if (iconRef.current) {
         if (level > 8) {
-          iconRef.current.style.color = "#34d399"; // emerald-400
+          iconRef.current.style.color = DESIGN_TOKENS.base.status.emerald400;
         } else {
-          iconRef.current.style.color = "#94a3b8"; // slate-400
+          iconRef.current.style.color = DESIGN_TOKENS.semantic.dark.typography.muted;
         }
       }
 
@@ -140,11 +141,11 @@ export function AudioVisualizerMeter({
 
         if (isActiveBar) {
           if (i >= barCount - 1) {
-            ctx.fillStyle = "#ef4444"; // Red peak
+            ctx.fillStyle = DESIGN_TOKENS.base.status.red500;
           } else if (i >= barCount - 2) {
-            ctx.fillStyle = "#fbbf24"; // Amber warning
+            ctx.fillStyle = DESIGN_TOKENS.base.status.amber400;
           } else {
-            ctx.fillStyle = "#34d399"; // Emerald active
+            ctx.fillStyle = DESIGN_TOKENS.base.status.emerald400;
           }
         } else {
           ctx.fillStyle = "rgba(100, 116, 139, 0.35)"; // Slate idle

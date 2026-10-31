@@ -177,16 +177,15 @@ class CmsRepository(UserPostsMixin):
     """
 
     async def list_blog_posts(self, post_type: Optional[str], viewer_id: Optional[uuid.UUID]) -> List[Dict[str, Any]]:
-        where = "WHERE b.post_type = :pt" if post_type else ""
         res = await self.db.execute(
-            text(f"{self._BLOG_SQL} {where} ORDER BY b.created_at DESC"),
-            {"viewer": viewer_id, **({"pt": post_type} if post_type else {})},
+            text(self._BLOG_SQL + " WHERE (CAST(:pt AS text) IS NULL OR b.post_type = CAST(:pt AS text)) ORDER BY b.created_at DESC"),
+            {"viewer": viewer_id, "pt": post_type},
         )
         return [dict(r) for r in res.mappings().all()]
 
     async def get_blog_post(self, slug_or_id: str, viewer_id: Optional[uuid.UUID]) -> Optional[Dict[str, Any]]:
         res = await self.db.execute(
-            text(f"{self._BLOG_SQL} WHERE b.slug = :k OR b.id = :k LIMIT 1"),
+            text(self._BLOG_SQL + " WHERE b.slug = :k OR b.id = :k LIMIT 1"),
             {"viewer": viewer_id, "k": slug_or_id.strip()},
         )
         row = res.mappings().first()

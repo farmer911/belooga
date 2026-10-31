@@ -73,10 +73,7 @@ class ATSMatchingRepository:
                     clean_tokens.append(tok)
 
         ts_expr = " | ".join(clean_tokens[:12]) if clean_tokens else "engineer | developer"
-        video_clause = "AND p.video_pitch_url IS NOT NULL" if require_video_pitch else ""
-        loc_clause = "AND p.location ILIKE :loc" if location_filter else ""
-
-        query = text(f"""
+        query = text("""
             WITH matched_pool AS MATERIALIZED (
                 SELECT p.id, p.username, p.first_name, p.last_name, p.headline, p.bio,
                        p.location, p.seeking_status, p.avatar_url, p.video_pitch_url,
@@ -85,8 +82,8 @@ class ATSMatchingRepository:
                 FROM candidate_profiles p
                 WHERE p.is_hidden = FALSE
                   AND p.search_vector @@ to_tsquery('english', :ts_q)
-                  {video_clause}
-                  {loc_clause}
+                  AND (NOT CAST(:req_video AS boolean) OR p.video_pitch_url IS NOT NULL)
+                  AND (CAST(:loc AS text) IS NULL OR p.location ILIKE CAST(:loc AS text))
                 LIMIT 250
             )
             SELECT id, username, first_name, last_name, headline, bio,
@@ -107,9 +104,12 @@ class ATSMatchingRepository:
                 created_at DESC
             LIMIT :limit
         """)
-        params: Dict[str, Any] = {"ts_q": ts_expr, "limit": limit}
-        if location_filter:
-            params["loc"] = f"%{location_filter.strip()}%"
+        params: Dict[str, Any] = {
+            "ts_q": ts_expr,
+            "limit": limit,
+            "req_video": bool(require_video_pitch),
+            "loc": f"%{location_filter.strip()}%" if location_filter else None,
+        }
 
         res = await self.db.execute(query, params)
         rows = [dict(r._mapping) for r in res.fetchall()]

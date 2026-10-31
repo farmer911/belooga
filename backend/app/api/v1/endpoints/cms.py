@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.cms import CmsService, UserPostsService
 from app.schemas.cms import (
@@ -44,7 +44,7 @@ async def get_faqs():
 async def list_blog_posts(
     type: Optional[str] = Query(None, description="Filter by post type: all | user | editorial"),
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     viewer = current_user.id if current_user else None
     return await CmsService(db).list_blog_posts(post_type=type, viewer_id=viewer)
@@ -63,7 +63,7 @@ async def create_blog_post(
 async def get_blog_post_detail(
     slug: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     viewer = current_user.id if current_user else None
     return await CmsService(db).get_blog_post_by_slug(slug, viewer_id=viewer)
@@ -89,7 +89,7 @@ async def add_comment_blog_post(
 
 
 @router.get("/seo/sitemap-data", response_model=Dict[str, Any], tags=["Domain 8: Public CMS & Moderation"])
-async def get_seo_sitemap_data(db: AsyncSession = Depends(get_db)):
+async def get_seo_sitemap_data(db: AsyncSession = Depends(get_read_db)):
     return await CmsService(db).get_seo_sitemap_data()
 
 
@@ -99,7 +99,7 @@ async def list_careers(
     department: Optional[str] = Query(None, description="Filter by department"),
     location: Optional[str] = Query(None, description="Filter by location"),
     q: Optional[str] = Query(None, description="Search keyword across title, company, skills"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CmsService(db).list_career_jobs(company=company, department=department, location=location, q=q)
 
@@ -129,7 +129,7 @@ async def list_career_jobs(
     department: Optional[str] = Query(None),
     location: Optional[str] = Query(None),
     q: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CmsService(db).list_career_jobs(company=company, department=department, location=location, q=q)
 
@@ -166,7 +166,7 @@ async def report_candidate_profile(
 @router.get("/posts/", response_model=List[UserPostItemDTO], tags=["Domain 8: Public CMS & Moderation"])
 async def list_user_posts(
     username: Optional[str] = Query(None, description="Filter by author username"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await UserPostsService(db).list_posts(username=username)
 
@@ -174,7 +174,7 @@ async def list_user_posts(
 @router.get("/posts/user/{username}", response_model=List[UserPostItemDTO], tags=["Domain 8: Public CMS & Moderation"])
 async def list_user_posts_by_username(
     username: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await UserPostsService(db).list_posts(username=username)
 

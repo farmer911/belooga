@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.modules.job_tracker import JobTrackerService
 from app.schemas.job_tracker import (
@@ -31,7 +31,7 @@ async def list_tracked_jobs(
     min_score: int = Query(0, ge=0, le=100, description="Minimum ATS match score"),
     sort_by: str = Query("created_at", description="Sort by: created_at | match_score | interview_date"),
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """List the authenticated candidate's tracked jobs."""
     candidate_id = current_user.id
@@ -46,7 +46,7 @@ async def search_market_jobs(
     q: Optional[str] = Query(None, description="Search market jobs by keyword"),
     skills: Optional[str] = Query(None, description="Comma-separated skills filter"),
     location: Optional[str] = Query(None, description="Location filter"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Search curated and live market jobs for 1-click Kanban addition."""
     return await JobTrackerService(db).search_market_jobs(q=q, skills=skills, location=location)
@@ -55,7 +55,7 @@ async def search_market_jobs(
 @router.get("/goals", response_model=CareerGoalResponse)
 async def get_career_goal(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Retrieve persisted Career Goal for the candidate."""
     candidate_id = current_user.id
@@ -90,7 +90,7 @@ async def ai_match_career_goal(
 @router.get("/jobs/analytics", response_model=JobPipelineAnalyticsResponse)
 async def get_job_pipeline_analytics(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Calculate Kanban funnel velocity, average ATS match score, and offer probability."""
     candidate_id = current_user.id

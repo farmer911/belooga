@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.schemas.profile import (
     InterestAdd,
@@ -29,7 +29,7 @@ router = APIRouter()
 async def get_candidate_public_profile(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await ProfileService(db).get_candidate_public_profile(username, current_user)
 
@@ -38,7 +38,7 @@ async def get_candidate_public_profile(
 async def get_candidate_trust_score(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await ProfileService(db).get_candidate_trust_score(username, current_user)
 

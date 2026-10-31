@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.bookmarks import BookmarkService, GrowthService
 from app.schemas.bookmarks import (
@@ -53,7 +53,7 @@ router = APIRouter(tags=["Domain 6: Talent Discovery & Search"])
 @router.get("/bookmarks/", response_model=List[CandidateBookmarkItemDTO])
 async def list_candidate_bookmarks(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await BookmarkService(db).list_bookmarks(current_user.id)
 
@@ -81,7 +81,7 @@ async def remove_candidate_bookmark(
 @router.get("/recruiter/pipeline", response_model=List[RecruiterPipelineItemDTO])
 async def list_recruiter_pipeline(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await BookmarkService(db).list_pipeline(current_user.id)
 
@@ -126,7 +126,7 @@ async def invite_recruiter_candidate(
 @router.get("/recruiter/reverse-bids", response_model=List[ReverseBidResponse])
 async def list_recruiter_reverse_bids(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await GrowthService(db).list_reverse_bids(current_user.id, current_user.username)
 
@@ -162,7 +162,7 @@ async def generate_salary_negotiation(
 async def get_career_roadmap(
     role: Optional[str] = Query(None),
     track: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await GrowthService(db).get_career_roadmap(role=role, track=track)
 
@@ -213,12 +213,12 @@ async def update_stealth_mode(
 
 
 @router.get("/growth/hub", response_model=GrowthHubResponse)
-async def get_growth_hub(db: AsyncSession = Depends(get_db)):
+async def get_growth_hub(db: AsyncSession = Depends(get_read_db)):
     return await GrowthService(db).get_growth_hub()
 
 
 @router.get("/growth/referrals", response_model=List[ReferralSlotItemDTO])
-async def list_referral_slots(db: AsyncSession = Depends(get_db)):
+async def list_referral_slots(db: AsyncSession = Depends(get_read_db)):
     return await GrowthService(db).list_referral_slots()
 
 
@@ -232,7 +232,7 @@ async def create_referral_request(
 
 
 @router.get("/growth/cv-roasts", response_model=List[CvRoastResponse])
-async def list_anonymous_cv_roasts(db: AsyncSession = Depends(get_db)):
+async def list_anonymous_cv_roasts(db: AsyncSession = Depends(get_read_db)):
     return await GrowthService(db).list_cv_roasts()
 
 
@@ -255,7 +255,7 @@ async def vote_anonymous_cv_roast(
 
 
 @router.get("/growth/expert-mock-slots", response_model=List[ExpertMockSlotDTO])
-async def list_expert_mock_slots(db: AsyncSession = Depends(get_db)):
+async def list_expert_mock_slots(db: AsyncSession = Depends(get_read_db)):
     return await GrowthService(db).list_expert_mock_slots()
 
 
@@ -269,7 +269,7 @@ async def book_expert_mock_interview(
 
 
 @router.get("/growth/rewards", response_model=List[WalletRewardItemDTO])
-async def list_wallet_rewards(db: AsyncSession = Depends(get_db)):
+async def list_wallet_rewards(db: AsyncSession = Depends(get_read_db)):
     return await GrowthService(db).list_rewards()
 
 

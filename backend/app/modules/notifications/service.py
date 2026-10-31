@@ -84,8 +84,20 @@ class NotificationService:
         self.repo = NotificationRepository(db)
 
     async def get_preferences(self, identity_id: uuid.UUID) -> NotificationPreferenceDTO:
-        pref = await self.repo.get_or_create_preferences(identity_id)
-        await self.db.commit()
+        from sqlalchemy import select
+        from app.models.notifications import NotificationPreference
+
+        res = await self.db.execute(select(NotificationPreference).where(NotificationPreference.identity_id == identity_id))
+        pref = res.scalar_one_or_none()
+        if not pref:
+            return NotificationPreferenceDTO(
+                identity_id=identity_id,
+                email_security_alerts=True,
+                email_order_updates=True,
+                email_career_matches=True,
+                in_app_enabled=True,
+                updated_at=datetime.now(timezone.utc),
+            )
         return NotificationPreferenceDTO.model_validate(pref)
 
     async def update_preferences(

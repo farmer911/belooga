@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.schemas.timeline import (
     AwardCertificationCreate,
@@ -33,7 +33,7 @@ router = APIRouter()
 
 
 @router.get("/profile/{username}/career-trajectory", response_model=CareerTrajectoryResponse, tags=["Domain 3: Timeline CRUD & Reordering"])
-async def get_candidate_career_trajectory(username: str, db: AsyncSession = Depends(get_db)):
+async def get_candidate_career_trajectory(username: str, db: AsyncSession = Depends(get_read_db)):
     """Compute candidate seniority level, trajectory velocity, and promotion readiness score."""
     return await TimelineService(db).get_career_trajectory(username)
 
@@ -44,7 +44,7 @@ async def get_candidate_career_trajectory(username: str, db: AsyncSession = Depe
 async def list_job_experiences(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await TimelineService(db).list_job_experiences(username, current_user)
 
@@ -96,7 +96,7 @@ async def reorder_job_experiences(
 async def list_education_experiences(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await TimelineService(db).list_education_experiences(username, current_user)
 
@@ -148,7 +148,7 @@ async def reorder_education_experiences(
 async def list_awards(
     username: str,
     current_user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await TimelineService(db).list_awards(username, current_user)
 
