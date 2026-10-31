@@ -77,6 +77,7 @@ description: Backend Core Candidate Domains (Auth & Session Rotation, Candidate 
 3. **Timeline Locking & Career Trajectory (`timeline.py`):** Reorder endpoints must lock all candidate rows via `with_for_update()`, validate 1-to-1 ID set equality (400 on mismatch), and `await db.commit()`. `GET /v1/profile/{username}/career-trajectory` enforces `is_hidden` privacy (`404`) and caches promotion readiness telemetry via `platform_cache` (`trajectory:{username}`, 60s TTL).
 4. **Non-Blocking Media & Path Safety (`media.py`):** Run all disk I/O, chunk assembly, and ReportLab `doc.build()` inside `asyncio.to_thread`. Reject `..` path traversal in upload IDs with 400.
 5. **Candidate Trust & Recruiter Readiness Score (`GET /v1/profile/{username}/trust-score`):** Enforces `is_hidden` privacy guard (`404` for non-owners), caches 4-pillar readiness telemetry via `AsyncTieredCache` (`profile_cache`, 45s TTL), and invalidates `trust:{username}` on profile or skill mutations.
+6. **System Design Primer — Read-Replica Routing, Cross-Pod Cache Invalidation & Static SQL (`BEL-248`):** Route read-only `GET` handlers in `auth.py`, `profile.py`, `timeline.py`, `media.py`, and `notifications.py` via `Depends(get_read_db)`, call `await invalidate_candidate_cache(username)` after profile/skill/timeline mutations so Redis Pub/Sub purges L1 caches across pods, and never use dynamic f-string SQL `text(f"...")`.
 
 
 ## Known Traps

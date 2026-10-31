@@ -96,11 +96,12 @@ description: Backend Talent Discovery, Master Catalogs & Public CMS in search.py
 1. **ADR-005 Strict Index Search & Keyset Pagination (`search.py`):** Full-text search must query `search_vector @@ plainto_tsquery('english', :q)` with `ts_rank_cd` and filter `is_hidden = FALSE`. Support `cursor` keyset pagination (`(created_at, id) < (:cursor_ts, :cursor_id)`) backed by partial B-Tree index `idx_candidate_profiles_visible_created`. Never combine `search_vector @@` with `OR ILIKE`.
 2. **Master Taxonomies, Career ROI, Trending Insights & Singleflight Cache (`catalogs.py`, `search.py`, `app/core/cache.py`):** Normalize lookup queries (trim + lowercase), compute deterministic salary percentiles and upskill compensation deltas (`GET /v1/catalogs/salary-benchmark`, `GET /v1/catalogs/career-roi`), expose trending search telemetry (`GET /v1/profile/search/trending/`), and wrap hot DB read paths (`search_candidates`, `search_suggestions`, `list_skills`, `get_trending_search_insights`) in `platform_cache.get_or_set` to prevent cache-stampede DB overload at 10k–25k CCU.
 3. **CMS & Abuse Reports (`cms.py`):** Profile abuse reports (`POST /v1/profile/{user_id}/report/`) must validate a UUID `user_id`, not a username string.
+4. **System Design Primer — Read-Replica Routing, Cross-Pod Cache Invalidation & Static SQL (`BEL-248`):** Route read-only `GET` handlers in `search.py`, `catalogs.py`, `cms.py`, `bookmarks.py`, `companies.py`, `posts.py`, `recruiter.py`, and `growth.py` via `Depends(get_read_db)`, invalidate `search:`, `cms:seo_sitemap`, and candidate caches via `invalidate_candidate_cache`, and use static parameterized SQL (`(:key IS NULL OR ...)` — zero `text(f"...")`).
 
 
 ## Known Traps
 - **Autocomplete vs. Search:** Prefix/substring `ILIKE` is permitted only inside `/v1/profile/search/suggest/` using the concatenated `gin_trgm_ops` expression index `idx_candidate_profiles_autocomplete_trgm`, never in main candidate search.
-- **Dependency Injection (C-06):** Always inject `AsyncSession` via FastAPI `Depends(get_db)` in `CmsService` and `CatalogsService`.
+- **Dependency Injection (C-06):** Always inject `AsyncSession` via FastAPI `Depends(get_read_db)` for read-only handlers and `Depends(get_db)` for mutations in `CmsService` and `CatalogsService`.
 - **No Anonymous `"alexnguyen"` Fallback (`BEL-228`):** Never hardcode `"alexnguyen"` as a default username in `backend/app/modules/cms/service.py` or `backend/app/schemas/cms.py` when `current_user` is `None` (`be_anonymous_alexnguyen_fallback == 0`).
 
 ## Self-Verification

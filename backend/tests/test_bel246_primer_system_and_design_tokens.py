@@ -110,6 +110,41 @@ def test_be_fe_qc_review_agents_and_skills_enforce_primer_contracts():
     assert "get_read_db" in qc_skill
     assert "Rationalization Prevention" in qc_skill
 
+    # Verify all remaining role, supervisor, DoD, and FE/BE domain skills enforce Primer contracts
+    for fe_skill_name in (
+        "ui-ux-pro-max",
+        "belooga-frontend-engineering",
+        "fe-domain-public",
+        "fe-domain-workspace",
+        "fe-domain-career-tools",
+    ):
+        txt = (ROOT / ".agents" / "skills" / fe_skill_name / "SKILL.md").read_text(encoding="utf-8")
+        assert "tokens/design-tokens.json" in txt, f"{fe_skill_name} missing tokens/design-tokens.json"
+        assert "sync-design-tokens.py" in txt, f"{fe_skill_name} missing sync-design-tokens.py"
+
+    for be_skill_name in (
+        "belooga-backend-engineering",
+        "be-domain-core",
+        "be-domain-discovery",
+        "be-domain-monetization",
+    ):
+        txt = (ROOT / ".agents" / "skills" / be_skill_name / "SKILL.md").read_text(encoding="utf-8")
+        assert "get_read_db" in txt, f"{be_skill_name} missing get_read_db"
+        assert "invalidate_candidate_cache" in txt or "platform_cache" in txt, f"{be_skill_name} missing cache contract"
+
+    for orch_skill_name in (
+        "belooga-senior-agile-workflow",
+        "belooga-supervisor",
+        "definition-of-done",
+    ):
+        txt = (ROOT / ".agents" / "skills" / orch_skill_name / "SKILL.md").read_text(encoding="utf-8")
+        assert "tokens/design-tokens.json" in txt, f"{orch_skill_name} missing tokens/design-tokens.json"
+        assert "sync-design-tokens.py" in txt, f"{orch_skill_name} missing sync-design-tokens.py"
+        assert "get_read_db" in txt, f"{orch_skill_name} missing get_read_db"
+
+    dod_wf = (ROOT / ".agents" / "workflows" / "definition-of-done.md").read_text(encoding="utf-8")
+    assert "sync-design-tokens.py" in dod_wf, "workflows/definition-of-done.md missing sync-design-tokens.py"
+
 
 @pytest.mark.asyncio
 async def test_bel248_platform_wide_primer_and_token_compliance(client: AsyncClient):

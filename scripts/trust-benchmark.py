@@ -587,6 +587,16 @@ for qc_folder in ("qc/tests", "qc/scripts"):
                     f"{qp.relative_to(ROOT)} -> waitForTimeout() prohibited; use web-first Playwright assertions (BEL-248)"
                 )
 
+for _fe_sk in ("ui-ux-pro-max", "belooga-frontend-engineering", "fe-code-review", "fe-domain-public", "fe-domain-workspace", "fe-domain-career-tools"):
+    _sk_p = AGENTS / "skills" / _fe_sk / "SKILL.md"
+    if _sk_p.exists() and ("tokens/design-tokens.json" not in _sk_p.read_text(encoding="utf-8") or "sync-design-tokens.py" not in _sk_p.read_text(encoding="utf-8")):
+        violations["6. Memory Cap & Skill SSOT"].append(f"{_sk_p.relative_to(ROOT)} missing Primer 3-Tier Design Token SSOT contract")
+
+for _be_sk in ("belooga-backend-engineering", "be-code-review", "be-domain-core", "be-domain-discovery", "be-domain-monetization"):
+    _sk_p = AGENTS / "skills" / _be_sk / "SKILL.md"
+    if _sk_p.exists() and "get_read_db" not in _sk_p.read_text(encoding="utf-8"):
+        violations["6. Memory Cap & Skill SSOT"].append(f"{_sk_p.relative_to(ROOT)} missing System Design Primer get_read_db contract")
+
 # --- RENDER VISUAL BENCHMARK SCORECARD ---
 print("=" * 78)
 print("  BELOOGA ANTI-DECEPTION & PRODUCTION TRUST BENCHMARK (SUPERVISOR GATE)")

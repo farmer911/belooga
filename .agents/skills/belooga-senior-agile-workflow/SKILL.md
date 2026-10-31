@@ -68,8 +68,8 @@ When the user says **`"PM start"`** (or gives ANY feature/bug/update request to 
 2. **Epic & Ticket Chain Creation:**
    - Create Parent Epic `[EPIC-xxx]` (`Epic,type:epic,status:in-progress`) containing full Business Thesis (`.agents/PRODUCT_THESIS.md`), DB/API Contracts (`CURRENT_STATE.md`), and ISO Ticket Chain.
    - Create role tickets (`[BEL-xxx]`) in strict dependency order:
-     * `Design` (`Design,role:design,status:todo,type:task`) — runs first to lock UX layout, `@theme` semantic tokens (`fe_arbitrary_hex == 0`), `lucide-react` icons (`fe_structural_emoji == 0`), and `375px` parity.
-     * `BE` (`BE,role:backend,status:todo,type:task`), `FE` (`FE,role:frontend,status:todo,type:task`), `mobile` (`mobile,role:mobile,status:todo,type:task`) — linked to the Epic and Design spec.
+     * `Design` (`Design,role:design,status:todo,type:task`) — runs first to lock UX layout, W3C 3-tier Primer tokens in `tokens/design-tokens.json` (`python3 scripts/sync-design-tokens.py --check`, `fe_arbitrary_hex == 0`), `lucide-react` icons (`fe_structural_emoji == 0`), and `375px` parity.
+     * `BE` (`BE,role:backend,status:todo,type:task`), `FE` (`FE,role:frontend,status:todo,type:task`), `mobile` (`mobile,role:mobile,status:todo,type:task`) — linked to the Epic, System Design Primer (`get_read_db`, `invalidate_candidate_cache`, zero `text(f"...")`), and Design spec.
      * `Architect` (`Architect,role:architect,status:todo,type:task`) — triggered after all implementation tickets reach `Done`.
    - Attach every created issue to `Kanban Belooga` (`gh project item-add 1 --owner farmer911 ...`) and set initial column to `Todo` (`b5bd229a`).
 
@@ -84,10 +84,10 @@ When the user says **`"Architect start"`**:
    - **Mandatory Reverse Ticket Creation (Bắt Buộc Tạo Ticket Cho Team Fix):** Whenever Architect discovers ANY bug, missing endpoint, or deception/cheating behavior during an audit, Architect **MUST NEVER just write a report and close the ticket**. Architect **MUST immediately run `gh issue create`** to create concrete `[BEL-xxx]` reverse tickets in the **`Todo`** column (`b5bd229a` / `status:todo`) assigned to `BE`, `FE`, `mobile`, `Design`, or `QC` for every single defect found.
    - **Mandatory Skill & Benchmark Upgrade (Cập Nhật Skill Để Không Tái Phạm):** Every time a bug or deception pattern is found, Architect **MUST** update the corresponding domain `SKILL.md` (`belooga-frontend-engineering`, `belooga-backend-engineering`, `belooga-qc-engineering`, `fe-domain-*`, `be-domain-*`), `docs/VIOLATIONS_REGISTER.md`, and `scripts/trust-benchmark.py` so the violation is permanently blocked in CI and agents never repeat it.
    - **Performance & Ponytail Refactor:** Optimize BE (indexes, 0 N+1, p95 `< 30ms`, Singleflight cache) and FE/Mobile (`@tanstack/react-query` cache invalidation, `<= 300` lines/file).
-   - **Skill Upgrade & Mandatory Benchmark:** Whenever updating `.agents/skills/*/SKILL.md`, `.agents/PRODUCT_THESIS.md`, or `.agents/ratchet.json`, MUST run and record:
+   - **Skill Upgrade & Mandatory Benchmark:** Whenever updating `.agents/skills/*/SKILL.md`, `.agents/PRODUCT_THESIS.md`, `tokens/design-tokens.json`, or `.agents/ratchet.json`, MUST run and record:
      ```bash
      python3 scripts/generate-current-state.py && python3 scripts/render-skill-facts.py --write
-     python3 scripts/lint-skills.py --quiet && python3 scripts/trust-benchmark.py
+     python3 scripts/sync-design-tokens.py --check && python3 scripts/lint-skills.py --quiet && python3 scripts/trust-benchmark.py
      ```
 
 ---

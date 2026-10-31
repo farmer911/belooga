@@ -26,6 +26,9 @@ description: Enterprise Definition of Done (DoD) contract, automatic SSOT/skill 
 3. **File Size & Memory Cap Invariants:**
    - Source files in `backend/app/` must remain <= 300 lines (`be_files_over_300_lines = 0`), and `frontend/src/` must never exceed `.agents/ratchet.json`.
    - `.agents/STATE.md` must stay <= 50 lines; `.agents/PRODUCT_THESIS.md` must stay <= 120 lines.
+4. **System Design Primer & Primer 3-Tier Design Token SSOT (`BEL-248`):**
+   - Backend read-only `GET` handlers in `backend/app/api/v1/endpoints/` must route via `get_read_db`, mutations must invalidate `platform_cache` via `invalidate_candidate_cache`, and repositories must use static parameterized SQL (zero `text(f"...")`).
+   - Frontend (`frontend/src/`) and Mobile (`mobile/src/`) must stay 100% synchronized with `tokens/design-tokens.json` (`python3 scripts/sync-design-tokens.py --check`).
 
 ---
 

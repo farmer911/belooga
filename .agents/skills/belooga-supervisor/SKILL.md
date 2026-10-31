@@ -44,6 +44,7 @@ flowchart LR
    - Tick `[x]` as steps complete so context survives session compaction. Never create scattered plan files that rot in `docs/`.
 3. **Stage 3 — High-Velocity Experimentation, Empirical Benchmark & Default Ponytail:**
    - Apply `ponytail` by default without asking permission: if 200 lines can be written in 50 lines (reusing existing helpers, stdlib, PostgreSQL 16 native `json_agg`/CTEs) while preserving `Gateway -> Router -> Service -> Repository` layering and type safety, **refactor immediately**.
+   - Enforce System Design Primer (`get_read_db` read-replica routing, `invalidate_candidate_cache` cross-pod Pub/Sub invalidation, zero `text(f"...")` SQL interpolation) and Primer 3-Tier Design Token SSOT (`tokens/design-tokens.json` verified via `python3 scripts/sync-design-tokens.py --check`).
    - Never write band-aid code (empty `catch`, hardcoded fallbacks, layer-bypassing SQL in routers, or hollow tests).
 4. **Stage 4 — Refinement, 5-Step Self-Learn & Anti-Deception Benchmark:**
    - Compare actual test/benchmark results against Stage 2 predictions.
