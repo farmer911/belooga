@@ -35,11 +35,17 @@ CACHEABLE_PUBLIC_PREFIXES = (
 
 _token_buckets: OrderedDict[str, Tuple[float, float]] = OrderedDict()
 _idempotency_store: OrderedDict[str, Tuple[float, int, List[Tuple[bytes, bytes]], bytes]] = OrderedDict()
-_redis_state: Dict[str, Any] = {"client": None, "loop": None, "disabled_until": 0.0}
+_redis_state: Dict[str, Any] = {"client": None, "loop": None, "disabled_until": 0.0, "tripped": False}
 _gateway_stats: Dict[str, int] = {
     "total_requests": 0, "rate_limited_429": 0, "payload_rejected_413": 0,
     "idempotency_replays": 0, "etag_304_hits": 0, "redis_distributed_ops": 0,
 }
+
+def get_gateway_circuit_state() -> str:
+    """Return 'CLOSED' | 'OPEN' | 'HALF_OPEN' for the Gateway Redis circuit breaker."""
+    if not _redis_state.get("tripped"):
+        return "CLOSED"
+    return "OPEN" if time.monotonic() < float(_redis_state["disabled_until"]) else "HALF_OPEN"
 
 def clear_gateway_l1_state() -> None:
     """Clear process-local L1 rate-limit and idempotency caches (used to test cross-replica Redis state)."""
@@ -71,6 +77,7 @@ async def _get_gateway_redis() -> Optional[aioredis.Redis]:
 
 def _redis_failed(what: str, exc: Exception) -> None:
     logger.warning("Gateway Redis %s failed, falling back to per-pod state for 10s: %s", what, type(exc).__name__)
+    _redis_state["tripped"] = True
     _redis_state["disabled_until"] = time.monotonic() + 10.0
 
 

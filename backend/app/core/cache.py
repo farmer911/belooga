@@ -25,6 +25,7 @@ class AsyncTieredCache:
         self._inflight: Dict[str, asyncio.Future[Any]] = {}
         self._redis: Optional[aioredis.Redis] = None
         self._redis_disabled_until: float = 0.0
+        self._circuit_tripped: bool = False
         self._metrics: Dict[str, int] = {
             "l1_hits": 0,
             "l2_hits": 0,
@@ -32,10 +33,33 @@ class AsyncTieredCache:
             "misses": 0,
             "coalesced_requests": 0,
             "invalidations": 0,
+            "pubsub_invalidations_received": 0,
         }
 
     def _full_key(self, key: str) -> str:
         return f"{self.namespace}:{key}"
+
+    def _trip_circuit(self, cooldown_seconds: float = 10.0) -> None:
+        self._circuit_tripped = True
+        self._redis_disabled_until = time.monotonic() + cooldown_seconds
+
+    def _close_circuit(self) -> None:
+        self._circuit_tripped = False
+        self._redis_disabled_until = 0.0
+
+    @property
+    def circuit_state(self) -> str:
+        if not self._circuit_tripped:
+            return "CLOSED"
+        return "OPEN" if time.monotonic() < self._redis_disabled_until else "HALF_OPEN"
+
+    def apply_remote_invalidation(self, target_prefix: str) -> int:
+        """Apply cross-pod L1 cache invalidation event received from Redis Pub/Sub."""
+        self._metrics["pubsub_invalidations_received"] += 1
+        keys_to_drop = [k for k in self._l1 if k.startswith(target_prefix)]
+        for k in keys_to_drop:
+            self._l1.pop(k, None)
+        return len(keys_to_drop)
 
     def get_stats(self) -> Dict[str, Any]:
         total_lookups = (
@@ -58,6 +82,7 @@ class AsyncTieredCache:
             "l1_max_size": self.l1_max_size,
             "inflight_keys": len(self._inflight),
             "hit_ratio_pct": hit_ratio,
+            "circuit_state": self.circuit_state,
         }
 
     async def _get_redis(self) -> Optional[aioredis.Redis]:
@@ -78,7 +103,7 @@ class AsyncTieredCache:
                     socket_timeout=0.5,
                 )
             except Exception as exc:
-                self._redis_disabled_until = now + 15.0
+                self._trip_circuit(15.0)
                 logger.warning("Redis init failed, using L1-only cache for 15s: %s", type(exc).__name__)
                 return None
         return self._redis
@@ -139,6 +164,7 @@ class AsyncTieredCache:
             if check_l2 and r_client is not None:
                 try:
                     raw = await r_client.get(full_key)
+                    self._close_circuit()
                     if raw is not None:
                         loaded = json.loads(raw)
                         effective_l1 = min(ttl_seconds, l1_ttl_seconds or 15)
@@ -148,7 +174,7 @@ class AsyncTieredCache:
                             fut.set_result(loaded)
                         return loaded
                 except Exception as exc:
-                    self._redis_disabled_until = time.monotonic() + 10.0
+                    self._trip_circuit(10.0)
                     logger.warning("Redis read failed, falling back to loader (L2 off 10s): %s", type(exc).__name__)
 
             result = await loader()
@@ -158,8 +184,9 @@ class AsyncTieredCache:
             if r_client is not None:
                 try:
                     await r_client.setex(full_key, ttl_seconds, json.dumps(result, default=str))
+                    self._close_circuit()
                 except Exception as exc:
-                    self._redis_disabled_until = time.monotonic() + 10.0
+                    self._trip_circuit(10.0)
                     logger.warning("Redis write failed (L2 off 10s): %s", type(exc).__name__)
 
             if not fut.done():
@@ -235,7 +262,10 @@ class AsyncTieredCache:
                         await r_client.delete(*keys)
                     if cursor == 0:
                         break
+                await r_client.publish(f"{self.namespace}:inval", target)
+                self._close_circuit()
             except Exception as exc:
+                self._trip_circuit(10.0)
                 logger.warning("Redis prefix invalidation failed; other pods may serve stale L2 entries until TTL: %s", type(exc).__name__)
 
 
