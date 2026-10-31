@@ -383,7 +383,12 @@ async def seed(db_url: str):
             "CREATE INDEX IF NOT EXISTS idx_candidate_bookmarks_recruiter_created ON candidate_bookmarks (recruiter_identity_id, created_at DESC)",
         ):
             await conn.execute(text(idx_sql))
-        await conn.execute(text("DELETE FROM identities WHERE email LIKE '%@test.com'"))
+        await conn.execute(
+            text(
+                "DELETE FROM identities WHERE email LIKE '%@test.com' "
+                "OR email LIKE '%@belooga.test' OR email LIKE '%@example.com'"
+            )
+        )
         # 1. Admin Identity
         admin_pass_hash = get_password_hash("AdminSecret123!")
         res = await conn.execute(

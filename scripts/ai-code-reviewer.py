@@ -70,7 +70,7 @@ def partition_diff_by_domain(diff_text: str) -> dict[str, str]:
         rel_path = m.group(2) if m else ""
         if rel_path.startswith(("backend/", "scripts/")):
             buckets["backend"].append(chunk)
-        elif rel_path.startswith("frontend/"):
+        elif rel_path.startswith(("frontend/", "tokens/")):
             buckets["frontend"].append(chunk)
         elif rel_path.startswith("mobile/"):
             buckets["mobile"].append(chunk)
@@ -98,7 +98,9 @@ def read_domain_review_rules(domain: str) -> str:
         return (
             "name: mobile-code-review\n"
             "- Enforce Expo SDK 58 + React Native 0.88 TypeScript strictness, @tanstack/react-query, "
-            "expo-secure-store for tokens, and zero mock/fallback arrays."
+            "expo-secure-store for tokens, centralized MOBILE_API_ENDPOINTS, zero *-partN filenames, "
+            "mobile_unused_hooks == 0, Primer 3-Tier Design Token SSOT parity with tokens/design-tokens.json "
+            "and mobile/src/theme/tokens.ts, and zero mock/fallback arrays."
         )
     return read_project_rules()
 
