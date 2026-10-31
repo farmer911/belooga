@@ -6,12 +6,17 @@ branded PDF document using ReportLab in a non-blocking background thread.
 
 import asyncio
 import io
+import json
+from pathlib import Path
 from typing import Any, Dict, List
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
+
+_TOKENS_PATH = Path(__file__).resolve().parents[3] / "tokens" / "design-tokens.json"
+PDF_DESIGN_TOKENS: Dict[str, Dict[str, str]] = json.loads(_TOKENS_PATH.read_text(encoding="utf-8"))["semantic"]["light"]
 
 
 def _build_pdf_sync(
@@ -22,6 +27,14 @@ def _build_pdf_sync(
     clean_username: str,
     is_owner: bool = False,
 ) -> bytes:
+    brand_dark = PDF_DESIGN_TOKENS["brand"]["dark"]
+    brand_primary = PDF_DESIGN_TOKENS["brand"]["primary"]
+    text_main = PDF_DESIGN_TOKENS["typography"]["main"]
+    text_heading = PDF_DESIGN_TOKENS["typography"]["heading"]
+    text_body = PDF_DESIGN_TOKENS["typography"]["body"]
+    text_muted = PDF_DESIGN_TOKENS["typography"]["muted"]
+    surface_border = PDF_DESIGN_TOKENS["surface"]["border"]
+
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         pdf_buffer,
@@ -40,7 +53,7 @@ def _build_pdf_sync(
         fontName="Helvetica-Bold",
         fontSize=24,
         leading=28,
-        textColor=colors.HexColor("#21655e"),
+        textColor=colors.HexColor(brand_dark),
     )
     headline_style = ParagraphStyle(
         "Headline",
@@ -48,7 +61,7 @@ def _build_pdf_sync(
         fontName="Helvetica-Bold",
         fontSize=13,
         leading=16,
-        textColor=colors.HexColor("#5bbbae"),
+        textColor=colors.HexColor(brand_primary),
     )
     meta_style = ParagraphStyle(
         "Meta",
@@ -56,7 +69,7 @@ def _build_pdf_sync(
         fontName="Helvetica",
         fontSize=9,
         leading=12,
-        textColor=colors.HexColor("#666666"),
+        textColor=colors.HexColor(text_body),
     )
     section_title = ParagraphStyle(
         "SectionTitle",
@@ -64,7 +77,7 @@ def _build_pdf_sync(
         fontName="Helvetica-Bold",
         fontSize=12,
         leading=15,
-        textColor=colors.HexColor("#252525"),
+        textColor=colors.HexColor(text_main),
         spaceAfter=6,
     )
     body_style = ParagraphStyle(
@@ -73,7 +86,7 @@ def _build_pdf_sync(
         fontName="Helvetica",
         fontSize=10,
         leading=14,
-        textColor=colors.HexColor("#444444"),
+        textColor=colors.HexColor(text_heading),
     )
     bold_item = ParagraphStyle(
         "BoldItem",
@@ -81,7 +94,7 @@ def _build_pdf_sync(
         fontName="Helvetica-Bold",
         fontSize=10,
         leading=13,
-        textColor=colors.HexColor("#252525"),
+        textColor=colors.HexColor(text_main),
     )
 
     elements = []
@@ -102,7 +115,7 @@ def _build_pdf_sync(
     contact_line = "  |  ".join(contact_parts)
     elements.append(Paragraph(contact_line, meta_style))
     elements.append(Spacer(1, 10))
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#5bbbae"), spaceAfter=14))
+    elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor(brand_primary), spaceAfter=14))
 
     # 2. Executive Bio
     if row.bio:
@@ -115,7 +128,7 @@ def _build_pdf_sync(
     if jobs:
         for job in jobs:
             dates = f"{job['from_date_year']} — {'Present' if job['currently_work_here'] else (job['to_date_year'] or 'Present')}"
-            elements.append(Paragraph(f"<b>{job['title']}</b>  |  <font color='#5bbbae'>{job['company_name']}</font>  <font color='#888888'>({dates})</font>", bold_item))
+            elements.append(Paragraph(f"<b>{job['title']}</b>  |  <font color='{brand_primary}'>{job['company_name']}</font>  <font color='{text_muted}'>({dates})</font>", bold_item))
             if job["description"]:
                 elements.append(Spacer(1, 2))
                 elements.append(Paragraph(job["description"], body_style))
@@ -132,7 +145,7 @@ def _build_pdf_sync(
         for edu in education:
             dates = f"{edu['from_date_year']} — {edu['to_date_year'] or 'Present'}"
             gpa_text = f" (GPA: {edu['gpa']})" if edu["gpa"] else ""
-            elements.append(Paragraph(f"<b>{edu['school_name']}</b> — {edu['degree_name']}{gpa_text}  <font color='#888888'>({dates})</font>", bold_item))
+            elements.append(Paragraph(f"<b>{edu['school_name']}</b> — {edu['degree_name']}{gpa_text}  <font color='{text_muted}'>({dates})</font>", bold_item))
             elements.append(Spacer(1, 6))
     else:
         elements.append(Paragraph("No academic credentials listed.", meta_style))
@@ -149,7 +162,7 @@ def _build_pdf_sync(
     elements.append(Spacer(1, 16))
 
     # 6. Verification Footer
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#d1d6da"), spaceAfter=8))
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor(surface_border), spaceAfter=8))
     elements.append(Paragraph("Official candidate profile verified via Belooga Talent Discovery & Video Elevator Pitch Platform © 2026", meta_style))
 
     doc.build(elements)

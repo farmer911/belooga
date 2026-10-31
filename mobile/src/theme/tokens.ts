@@ -140,3 +140,23 @@ export const MOBILE_THEME_TOKENS: Record<ThemeMode, SemanticPalette> = {
 export function getSemanticTokens(mode: ThemeMode = "neumorphic"): SemanticPalette {
   return MOBILE_THEME_TOKENS[mode];
 }
+
+export const COMPONENT_TOKENS = {
+  videoPlayButton: {
+    sizePx: 54,
+    background: "#ffffff",
+    iconColor: "#5bbbae",
+  },
+  card: {
+    radiusPx: 20,
+    paddingPx: 16,
+  },
+  button: {
+    minHeightPx: 44,
+    radiusPx: 14,
+  },
+  pill: {
+    radiusPx: 999,
+  },
+} as const;
+

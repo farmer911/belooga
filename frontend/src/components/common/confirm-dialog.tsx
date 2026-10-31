@@ -64,7 +64,7 @@ export function ConfirmDialog({
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
               isDestructive
-                ? "bg-red-100 text-red-600"
+                ? "bg-status-danger/15 text-status-danger"
                 : "bg-brand-overlay text-brand-dark"
             )}
           >

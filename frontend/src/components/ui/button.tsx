@@ -16,11 +16,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       default: "bg-brand-primary text-white hover:bg-brand-hover",
-      secondary: "bg-brand-blue text-white hover:bg-blue-600",
+      secondary: "bg-brand-blue text-white hover:bg-brand-blue/90",
       outline:
         "border border-brand-primary text-brand-primary hover:bg-brand-primary/10",
       ghost: "hover:bg-surface-divider text-typography-heading",
-      destructive: "bg-red-500 text-white hover:bg-red-600",
+      destructive: "bg-status-danger text-white hover:bg-status-danger/90",
     };
 
     const sizeStyles = {

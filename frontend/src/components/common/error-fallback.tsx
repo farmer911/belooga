@@ -14,13 +14,13 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
   return (
     <div role="alert" className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full text-center space-y-4">
-        <AlertTriangle className="mx-auto h-10 w-10 text-amber-500" aria-hidden="true" />
+        <AlertTriangle className="mx-auto h-10 w-10 text-status-warning" aria-hidden="true" />
         <h1 className="text-2xl font-bold tracking-tight text-typography-main">Something went wrong</h1>
         <p className="text-sm text-typography-muted">
           An unexpected error occurred while loading this page. Please try again.
         </p>
         {process.env.NODE_ENV === "development" && error.message && (
-          <pre className="text-left text-xs whitespace-pre-wrap rounded-lg border border-surface-border bg-surface-card p-3 text-red-600">
+          <pre className="text-left text-xs whitespace-pre-wrap rounded-lg border border-surface-border bg-surface-card p-3 text-status-danger">
             {error.message}
           </pre>
         )}

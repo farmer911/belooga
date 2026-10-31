@@ -48,7 +48,7 @@ export function ThemeToggle() {
       className="w-9 h-9 flex items-center justify-center rounded-lg border border-surface-border bg-surface-card hover:bg-surface-page text-typography-heading hover:text-brand-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer shadow-xs"
     >
       {isDark ? (
-        <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
+        <Sun className="w-4 h-4 text-status-warning" aria-hidden="true" />
       ) : (
         <Moon className="w-4 h-4 text-typography-heading" aria-hidden="true" />
       )}

@@ -37,7 +37,7 @@ export function FormField({
             className="block text-xs font-semibold uppercase tracking-wider text-typography-heading"
           >
             {label}
-            {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+            {required && <span className="text-status-danger ml-1" aria-hidden="true">*</span>}
           </label>
           {optional && (
             <span className="text-xs text-typography-muted font-normal">
@@ -72,7 +72,7 @@ export function FormField({
       {error ? (
         <p
           id={errorId}
-          className="flex items-center gap-1.5 text-xs font-medium text-red-600 mt-1"
+          className="flex items-center gap-1.5 text-xs font-medium text-status-danger mt-1"
           role="alert"
         >
           <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
