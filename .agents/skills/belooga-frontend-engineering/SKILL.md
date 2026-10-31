@@ -47,8 +47,9 @@ flowchart LR
 
 ---
 
-## 4. Production Design System & Responsive Standards (`src/app/globals.css`)
-- **Zero Arbitrary Hex Invariant (`fe_arbitrary_hex == 0`):** NEVER write raw hex classes (`bg-[#5bbbae]`, `text-[#252525]`). Always bind to Tailwind v4 `@theme` semantic tokens (`bg-brand-primary`, `bg-surface-page`, `bg-surface-card`, `border-surface-border`, `text-typography-main`, `text-typography-heading`, `text-typography-body`, `text-typography-muted`).
+## 4. Production Design System & Primer 3-Tier Token Standards (`tokens/design-tokens.json` & `src/app/globals.css`)
+- **Primer 3-Tier Design Token SSOT (`tokens/design-tokens.json`):** Tier 1 (`base`) -> Tier 2 (`semantic`: `light`, `dark`, `neumorphic` with `surface`, `brand`, `typography`, `status`) -> Tier 3 (`component`) is synchronized across `frontend/src/app/globals.css`, `frontend/src/lib/design-tokens.ts`, and `mobile/src/theme/tokens.ts`, verified by `python3 scripts/sync-design-tokens.py --check`.
+- **Zero Arbitrary Hex Invariant (`fe_arbitrary_hex == 0`):** NEVER write raw hex classes (`bg-[#5bbbae]`, `text-[#252525]`). Always bind to Tailwind v4 `@theme` semantic tokens (`bg-brand-primary`, `bg-surface-page`, `bg-surface-card`, `border-surface-border`, `text-typography-main`, `text-typography-heading`, `text-typography-body`, `text-typography-muted`, `text-status-success`, `text-status-warning`, `text-status-danger`, `text-status-info`).
 - **Dark-Mode Surface Rule:** Never hardcode `bg-white` on cards, dialogs, inputs, badges, or page shells; use `bg-surface-card` or `bg-surface-page`.
 - **Zero Structural Emoji Rule (`fe_structural_emoji == 0`):** Never render Unicode emojis in JSX components; always use `lucide-react` SVG icons (`w-4 h-4`, `aria-hidden="true"`).
 - **4-Viewport Responsive Contract:** Zero horizontal overflow across Mobile (`375px`, `data-testid="mobile-menu-toggle"` & `data-testid="mobile-nav-drawer"`), Tablet (`768px`), Laptop (`1024px`), and Desktop (`1440px`).
