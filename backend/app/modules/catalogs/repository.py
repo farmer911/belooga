@@ -12,33 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.catalogs.companies_repository import CompanyDirectoryMixin
 
-DEFAULT_COMPANY_SEEDS = [
-    ("Stripe Inc.", "/images/logo.svg"),
-    ("Airbnb", "/images/logo.svg"),
-    ("Google", "/images/logo.svg"),
-    ("Meta", "/images/logo.svg"),
-    ("Apple", "/images/logo.svg"),
-    ("Belooga", "/images/logo-big.png"),
-]
-
-DEFAULT_SCHOOL_SEEDS = [
-    ("Stanford University", "/images/logo.svg"),
-    ("MIT", "/images/logo.svg"),
-    ("UC Berkeley", "/images/logo.svg"),
-    ("Harvard University", "/images/logo.svg"),
-    ("Carnegie Mellon University", "/images/logo.svg"),
-]
-
-DEFAULT_LOCATION_SEEDS = [
-    ("San Francisco", "CA", "USA"),
-    ("New York", "NY", "USA"),
-    ("Austin", "TX", "USA"),
-    ("Seattle", "WA", "USA"),
-    ("Ho Chi Minh", None, "Vietnam"),
-    ("Ha Noi", None, "Vietnam"),
-    ("Remote", None, "Worldwide"),
-]
-
 
 class CatalogsRepository(CompanyDirectoryMixin):
     """Repository handling master taxonomy lookups across PostgreSQL catalog tables."""
@@ -47,31 +20,36 @@ class CatalogsRepository(CompanyDirectoryMixin):
         self.db = db
 
     async def list_skills(self, limit: int = 100) -> List[str]:
-        query = text("SELECT id, name FROM skills ORDER BY name ASC LIMIT :limit")
+        query = text("""
+            SELECT id, name FROM skills
+            ORDER BY (SELECT COUNT(*) FROM profile_skills ps WHERE ps.skill_id = skills.id) DESC, name ASC
+            LIMIT :limit
+        """)
         res = await self.db.execute(query, {"limit": limit})
         return [r[1] for r in res.fetchall()]
 
     async def list_skill_items(self, q: str = "", limit: int = 100) -> List[Dict[str, str]]:
-        seed_names = [
-            "Golang", "Python", "React", "Next.js", "TypeScript", "Kubernetes",
-            "PostgreSQL", "AWS", "Docker", "System Design", "AI/LLM", "FastAPI",
-        ]
         clean_q = (q or "").strip()
         if clean_q:
             res = await self.db.execute(
-                text("SELECT id, name FROM skills WHERE name ILIKE :q ORDER BY name ASC LIMIT :limit"),
+                text("""
+                    SELECT id, name FROM skills
+                    WHERE name ILIKE :q
+                    ORDER BY (SELECT COUNT(*) FROM profile_skills ps WHERE ps.skill_id = skills.id) DESC, name ASC
+                    LIMIT :limit
+                """),
                 {"q": f"%{clean_q}%", "limit": limit},
             )
         else:
-            res = await self.db.execute(text("SELECT id, name FROM skills ORDER BY name ASC LIMIT :limit"), {"limit": limit})
-        db_items = [{"id": str(r.id), "name": r.name, "category": "Engineering"} for r in res.fetchall()]
-        by_lower = {i["name"].lower(): i for i in db_items}
-        prioritized: List[Dict[str, str]] = []
-        for sname in seed_names:
-            if not clean_q or clean_q.lower() in sname.lower():
-                sid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.skill.{sname.lower()}"))
-                prioritized.append(by_lower.pop(sname.lower(), {"id": sid, "name": sname, "category": "Engineering"}))
-        return (prioritized + list(by_lower.values()))[:limit]
+            res = await self.db.execute(
+                text("""
+                    SELECT id, name FROM skills
+                    ORDER BY (SELECT COUNT(*) FROM profile_skills ps WHERE ps.skill_id = skills.id) DESC, name ASC
+                    LIMIT :limit
+                """),
+                {"limit": limit},
+            )
+        return [{"id": str(r.id), "name": r.name, "category": "Engineering"} for r in res.fetchall()]
 
     async def create_or_get_skill(self, name: str, category: str = "Engineering") -> Dict[str, str]:
         clean_name = name.strip()
@@ -90,21 +68,7 @@ class CatalogsRepository(CompanyDirectoryMixin):
         await self.db.commit()
         return {"id": str(new_id), "name": clean_name, "category": category or "Engineering"}
 
-    async def _seed_catalog(self, lock_key: int, insert_sql: str, rows: List[tuple]) -> None:
-        """Idempotent catalog seed: one INSERT ... SELECT unnest(...) instead of one roundtrip per row."""
-        await self.db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": lock_key})
-        await self.db.execute(text(insert_sql), {f"c{i}": list(col) for i, col in enumerate(zip(*rows))})
-        await self.db.commit()
-
-    async def seed_companies_if_empty(self) -> None:
-        await self._seed_catalog(
-            9001,
-            "INSERT INTO catalog_companies (id, name, logo_url) SELECT * FROM unnest(CAST(:c0 AS uuid[]), CAST(:c1 AS text[]), CAST(:c2 AS text[])) ON CONFLICT DO NOTHING",
-            [(uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.company.{n.lower()}"), n, logo) for n, logo in DEFAULT_COMPANY_SEEDS],
-        )
-
     async def suggest_companies(self, name: str = "", limit: int = 20) -> List[Dict[str, str]]:
-        await self.seed_companies_if_empty()
         pattern = f"%{name.strip()}%"
         query = text("""
             SELECT name, COALESCE(logo_url, '/images/logo.svg') AS logo_url
@@ -116,15 +80,7 @@ class CatalogsRepository(CompanyDirectoryMixin):
         res = await self.db.execute(query, {"pattern": pattern, "limit": limit})
         return [{"name": r.name, "logo_url": r.logo_url} for r in res.fetchall()]
 
-    async def seed_schools_if_empty(self) -> None:
-        await self._seed_catalog(
-            9002,
-            "INSERT INTO catalog_schools (id, name, logo_url) SELECT * FROM unnest(CAST(:c0 AS uuid[]), CAST(:c1 AS text[]), CAST(:c2 AS text[])) ON CONFLICT DO NOTHING",
-            [(uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.school.{n.lower()}"), n, logo) for n, logo in DEFAULT_SCHOOL_SEEDS],
-        )
-
     async def suggest_schools(self, name: str = "", limit: int = 20) -> List[Dict[str, str]]:
-        await self.seed_schools_if_empty()
         pattern = f"%{name.strip()}%"
         query = text("""
             SELECT name, COALESCE(logo_url, '/images/logo.svg') AS logo_url
@@ -136,15 +92,7 @@ class CatalogsRepository(CompanyDirectoryMixin):
         res = await self.db.execute(query, {"pattern": pattern, "limit": limit})
         return [{"name": r.name, "logo_url": r.logo_url} for r in res.fetchall()]
 
-    async def seed_locations_if_empty(self) -> None:
-        await self._seed_catalog(
-            9003,
-            "INSERT INTO catalog_locations (id, name, state, country) SELECT * FROM unnest(CAST(:c0 AS uuid[]), CAST(:c1 AS text[]), CAST(:c2 AS text[]), CAST(:c3 AS text[])) ON CONFLICT DO NOTHING",
-            [(uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.location.{c}.{co}"), c, st, co) for c, st, co in DEFAULT_LOCATION_SEEDS],
-        )
-
     async def suggest_locations(self, name: str = "", limit: int = 20) -> List[Dict[str, str]]:
-        await self.seed_locations_if_empty()
         pattern = f"%{name.strip()}%"
         query = text("""
             SELECT name, state, country

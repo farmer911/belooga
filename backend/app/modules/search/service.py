@@ -191,83 +191,62 @@ class SearchService:
         actively_looking_only: bool = False,
         limit: int = 12,
     ) -> List[Dict[str, Any]]:
-        curated: List[Dict[str, Any]] = [
-            {
-                "rank": 1, "username": "phucnguyen", "full_name": "Nguyễn Minh Phúc",
-                "headline": "Principal Distributed Systems & Golang Architect", "category": "backend",
-                "location": "Ho Chi Minh", "potential_score": 98, "badge_tier": "TOP_1_PCT",
-                "highlight_reason": "96% ATS Benchmark • Verified 60s Video Pitch • 7+ yrs High-Scale 25k CCU Architecture",
-                "skills": ["Golang", "Python", "FastAPI", "PostgreSQL"],
-                "actively_looking": True, "has_video_pitch": True, "video_pitch_url": "/videos/pitch-phuc.mp4",
-            },
-            {
-                "rank": 2, "username": "huypham", "full_name": "Phạm Gia Huy",
-                "headline": "Senior AI Infrastructure & PyTorch Engineer", "category": "ai",
-                "location": "Ha Noi", "potential_score": 95, "badge_tier": "TOP_1_PCT",
-                "highlight_reason": "Top 1% AI/LLM Pipeline & Async FastAPI • Verified Video Pitch",
-                "skills": ["Python", "PyTorch", "FastAPI", "Kubernetes"],
-                "actively_looking": True, "has_video_pitch": True, "video_pitch_url": "/videos/pitch-huy.mp4",
-            },
-            {
-                "rank": 3, "username": "maivo", "full_name": "Võ Thị Mai",
-                "headline": "Staff Frontend React 19 & Design Systems Lead", "category": "frontend",
-                "location": "Remote", "potential_score": 93, "badge_tier": "RISING_STAR",
-                "highlight_reason": "React 19 App Router & Tailwind v4 Design System Lead • 92% ATS Match",
-                "skills": ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-                "actively_looking": True, "has_video_pitch": True, "video_pitch_url": "/videos/pitch-mai.mp4",
-            },
-            {
-                "rank": 4, "username": "khoatran", "full_name": "Trần Đăng Khoa",
-                "headline": "Lead React Native & Expo Mobile Architect", "category": "mobile",
-                "location": "Ho Chi Minh", "potential_score": 91, "badge_tier": "TOP_5_PCT",
-                "highlight_reason": "Expo SDK 58 Clean-APK Pipeline & Native UIAutomator2 E2E Specialist",
-                "skills": ["React Native", "TypeScript", "Expo", "Android"],
-                "actively_looking": False, "has_video_pitch": True, "video_pitch_url": "/videos/pitch-khoa.mp4",
-            },
-            {
-                "rank": 5, "username": "linhle", "full_name": "Lê Hoàng Linh",
-                "headline": "Principal Cloud Native & Kubernetes SRE", "category": "devops",
-                "location": "Da Nang / Remote", "potential_score": 90, "badge_tier": "TOP_5_PCT",
-                "highlight_reason": "Zero-Downtime K8s HPA & Nginx Distributed Redis Gateway",
-                "skills": ["Kubernetes", "Docker", "Golang", "AWS"],
-                "actively_looking": True, "has_video_pitch": True, "video_pitch_url": "/videos/pitch-linh.mp4",
-            },
-        ]
-        rows = await self.search_repo.search_candidates_fulltext("", 20, 0)
-        seen = {c["username"].lower() for c in curated}
+        rows = await self.search_repo.search_candidates_fulltext("", 40, 0)
+        pids = [str(r["id"]) for r in rows if r.get("id")]
+        skills_map = await self.search_repo.get_skills_for_profiles(pids)
+        ranked: List[Dict[str, Any]] = []
+        seen: set[str] = set()
         for r in rows:
-            uname = str(r.get("username") or "")
-            if not uname or uname.lower() in seen or uname.lower() in ("hidden_jane", "alexnguyen"):
+            uname = str(r.get("username") or "").strip()
+            if not uname or uname.lower() in seen:
                 continue
-            curated.append({
-                "rank": len(curated) + 1,
+            seen.add(uname.lower())
+            pid = str(r.get("id") or "")
+            cand_skills = skills_map.get(pid) or ["Golang", "Python", "FastAPI", "PostgreSQL"]
+            headline = str(r.get("headline") or "Senior Software Engineer")
+            hl_low = f"{headline} {' '.join(cand_skills)}".lower()
+            if "pytorch" in hl_low or "ai " in hl_low:
+                cat = "ai"
+            elif "mobile" in hl_low or "expo" in hl_low or "react native" in hl_low:
+                cat = "mobile"
+            elif "sre" in hl_low or "cloud native" in hl_low:
+                cat = "devops"
+            elif "frontend" in hl_low or "design system" in hl_low:
+                cat = "frontend"
+            else:
+                cat = "backend"
+            has_video = bool(r.get("video_pitch_url"))
+            is_active = (r.get("seeking_status") or "Actively Looking") == "Actively Looking"
+            score = min(98, 86 + len(cand_skills) * 2 + (4 if has_video else 0) + (2 if is_active else 0))
+            tier = "TOP_1_PCT" if score >= 95 else ("TOP_5_PCT" if score >= 91 else "RISING_STAR")
+            ranked.append({
+                "rank": len(ranked) + 1,
                 "username": uname,
                 "full_name": f"{r.get('first_name', '')} {r.get('last_name', '')}".strip() or uname,
-                "headline": r.get("headline") or "Senior Software Engineer",
-                "category": "backend",
-                "location": r.get("location") or "Ho Chi Minh",
-                "potential_score": 89,
-                "badge_tier": "RISING_STAR",
-                "highlight_reason": "Verified Candidate Profile & Strong Technical Track Record",
-                "skills": ["Golang", "Python", "FastAPI", "PostgreSQL"],
-                "actively_looking": True,
-                "has_video_pitch": bool(r.get("video_pitch_url", True)),
+                "headline": headline,
+                "category": cat,
+                "location": r.get("location") or "Remote",
+                "potential_score": score,
+                "badge_tier": tier,
+                "highlight_reason": f"Verified Candidate Profile • {', '.join(cand_skills[:3])}",
+                "skills": cand_skills,
+                "actively_looking": is_active,
+                "has_video_pitch": has_video,
                 "video_pitch_url": r.get("video_pitch_url") or "/videos/pitch.mp4",
             })
-            seen.add(uname.lower())
         if actively_looking_only:
-            curated = [c for c in curated if c["actively_looking"]]
+            ranked = [c for c in ranked if c["actively_looking"]]
         if category and category.strip().lower() not in ("all", ""):
             cat_low = category.strip().lower()
-            curated = [c for c in curated if c["category"].lower() == cat_low]
+            ranked = [c for c in ranked if c["category"].lower() == cat_low]
         if skill and skill.strip():
             sk_low = skill.strip().lower()
-            curated = [c for c in curated if any(sk_low in s.lower() for s in c["skills"])]
+            ranked = [c for c in ranked if any(sk_low in s.lower() for s in c["skills"])]
         if location and location.strip():
             loc_low = location.strip().lower()
-            curated = [c for c in curated if loc_low in c["location"].lower()]
-        curated.sort(key=lambda x: x["potential_score"], reverse=True)
-        for idx, item in enumerate(curated):
+            ranked = [c for c in ranked if loc_low in c["location"].lower()]
+        ranked.sort(key=lambda x: (x["potential_score"], x["has_video_pitch"]), reverse=True)
+        for idx, item in enumerate(ranked):
             item["rank"] = idx + 1
-        return curated[:limit]
+        return ranked[:limit]
 

@@ -7,7 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Loader2, QrCode, Upload, CheckCircle2, Wallet } from "lucide-react";
 import { ReviewPackage, ExpertProfile, ReviewOrder } from "@/hooks/use-expert-review";
 import { useWallet, formatVnd, MomoPaymentDTO } from "@/hooks/use-wallet";
-import { apiClient, getApiErrorDetail } from "@/services/api-client";
+import { apiClient, API_ENDPOINTS, getApiErrorDetail } from "@/services/api-client";
 import { uploadResume } from "@/services/media-upload.service";
 import { extractCvFileContent } from "@/lib/cv-file-parser";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -55,7 +55,7 @@ export function ReviewBookingDialog({
 
   const { register, handleSubmit, formState: { errors } } = useForm<ReviewBookingFormValues>({
     resolver: zodResolver(reviewBookingSchema),
-    defaultValues: { targetRole: "Senior Fullstack Engineer", targetCompanies: "Google, Stripe, Scale AI", candidateNotes: "" },
+    defaultValues: { targetRole: "", targetCompanies: "", candidateNotes: "" },
   });
 
   const currentPkg = packages.find((p) => p.slug === activePackageSlug) || packages[0];
@@ -83,7 +83,7 @@ export function ReviewBookingDialog({
 
   const momoQrMutation = useMutation({
     mutationFn: async () =>
-      (await apiClient.post<MomoPaymentDTO>("/v1/payments/momo/create-qr", {
+      (await apiClient.post<MomoPaymentDTO>(API_ENDPOINTS.PAYMENTS.MOMO_CREATE_QR, {
         package_type: "EXPERT_REVIEW",
         review_order_id: createdOrderId,
         order_info: currentPkg?.name || "Expert CV Review",

@@ -2,8 +2,6 @@
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
-from app.core.database import async_session_maker
 from tests.payments_support import pay_review_order
 
 
@@ -27,23 +25,6 @@ async def test_list_experts_and_packages(client: AsyncClient, test_candidate_a: 
         },
         headers=headers_a,
     )
-    async with async_session_maker() as db:
-        await db.execute(
-            text(
-                "DELETE FROM cv_review_feedbacks WHERE expert_id IN (SELECT id FROM expert_profiles WHERE full_name IN ('Sarah Jenkins', 'Alex Chen', 'Marcus Vance'))"
-            )
-        )
-        await db.execute(
-            text(
-                "UPDATE cv_review_orders SET expert_id = NULL WHERE expert_id IN (SELECT id FROM expert_profiles WHERE full_name IN ('Sarah Jenkins', 'Alex Chen', 'Marcus Vance'))"
-            )
-        )
-        await db.execute(
-            text(
-                "DELETE FROM expert_profiles WHERE full_name IN ('Sarah Jenkins', 'Alex Chen', 'Marcus Vance')"
-            )
-        )
-        await db.commit()
 
     # 1. List packages
     res_pkg = await client.get("/v1/expert-review/packages/")

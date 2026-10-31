@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import { z } from "zod";
-import { mobileApiClient } from "@/services/api-client";
+import { MOBILE_API_ENDPOINTS, mobileApiClient } from "@/services/api-client";
 
 export const expertPackageSchema = z.object({
   id: z.string().min(1),
@@ -72,7 +72,7 @@ export async function createMobileMomoPaymentQr(input: {
   packageName: string;
   amountVnd: number;
 }): Promise<MomoQrResponseDTO> {
-  const raw = await mobileApiClient.post<unknown>("/v1/payments/momo/create-qr", {
+  const raw = await mobileApiClient.post<unknown>(MOBILE_API_ENDPOINTS.PAYMENTS_MOMO_CREATE_QR, {
     package_type: "EXPERT_REVIEW",
     amount: input.amountVnd,
     order_info: input.packageName,

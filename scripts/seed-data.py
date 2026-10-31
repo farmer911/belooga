@@ -443,13 +443,19 @@ async def seed(db_url: str):
         print(f"  [+] Candidate alexnguyen seeded (Profile ID: {alex_prof_id})")
 
         # 3. Seed Skills & Profile Skills
-        skills = ["React", "FastAPI", "PostgreSQL", "TypeScript", "Docker", "Product Design"]
-        for s in skills:
+        all_skills = [
+            "Golang", "Python", "React", "Next.js", "TypeScript", "Kubernetes",
+            "PostgreSQL", "AWS", "Docker", "System Design", "AI/LLM", "FastAPI",
+            "Product Design", "PyTorch", "Tailwind CSS", "React Native", "Expo", "Android", "Kafka", "Redis",
+        ]
+        for s in all_skills:
             s_id = uuid.uuid4()
             await conn.execute(
                 text("INSERT INTO skills (id, name) VALUES (:id, :name) ON CONFLICT (name) DO NOTHING"),
                 {"id": s_id, "name": s}
             )
+        skills = ["React", "FastAPI", "PostgreSQL", "TypeScript", "Docker", "Product Design"]
+        for s in skills:
             # Link to alexnguyen
             await conn.execute(
                 text("""
@@ -591,11 +597,181 @@ async def seed(db_url: str):
                 text("INSERT INTO catalog_schools (name, logo_url) VALUES (:n, '/images/logo.svg') ON CONFLICT (name) DO NOTHING"),
                 {"n": s_name},
             )
-        print("  [+] Master catalogs (companies & schools) seeded")
+        for loc_name, loc_st, loc_co in [
+            ("San Francisco", "CA", "USA"),
+            ("New York", "NY", "USA"),
+            ("Austin", "TX", "USA"),
+            ("Seattle", "WA", "USA"),
+            ("Ho Chi Minh", None, "Vietnam"),
+            ("Ha Noi", None, "Vietnam"),
+            ("Remote", None, "Worldwide"),
+        ]:
+            loc_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.location.{loc_name}.{loc_co}")
+            await conn.execute(
+                text("INSERT INTO catalog_locations (id, name, state, country) VALUES (:id, :n, :st, :co) ON CONFLICT DO NOTHING"),
+                {"id": loc_id, "n": loc_name, "st": loc_st, "co": loc_co},
+            )
+        print("  [+] Master catalogs (companies, schools, locations) seeded")
 
         # 9. Demo content for company directory / community feed / CV roasts
         await seed_demo_content(conn)
-        print("  [+] Demo companies, blog posts, user posts and CV roasts seeded")
+
+        # 9b. Seed Company Interview Questions
+        for iq_id, iq_role, iq_diff, iq_text, iq_hint in [
+            ("iq-1", "Principal Golang Engineer", "Hard", "Thiết kế cơ chế chống Double-Spend cho ví điện tử ở mức 20,000 TPS?", "Sử dụng Idempotency Key + pg_advisory_xact_lock + Outbox Ledger."),
+            ("iq-2", "Senior AI Infrastructure", "Medium", "Tối ưu độ trễ RAG hybrid search trên PostgreSQL 16 như thế nào?", "Kết hợp GIN TSVECTOR + pg_trgm pre-filter trước khi rerank."),
+        ]:
+            await conn.execute(
+                text("""
+                    INSERT INTO company_interview_questions (id, company_id, role_title, difficulty, question_text, sample_answer_hint)
+                    SELECT :id, id, :role, :diff, :qtxt, :hint FROM company_profiles WHERE slug = 'vng-cloud'
+                    ON CONFLICT DO NOTHING
+                """),
+                {"id": iq_id, "role": iq_role, "diff": iq_diff, "qtxt": iq_text, "hint": iq_hint},
+            )
+
+        # 9c. Seed CV Review Packages & Expert Profiles
+        for p_name, p_slug, p_desc, p_price, p_hours, p_pop, p_feat in [
+            ("Essential Review", "essential", "Comprehensive ATS audit, keyword gap analysis, and bullet-point impact assessment.", 2900, 48, False, ["Full ATS Compatibility Scan & Score", "Keyword optimization for target job descriptions", "Grammar, formatting & brevity overhaul", "48-hour delivery guarantee"]),
+            ("Pro Deep-Dive", "pro", "Line-by-line rewrite suggestions, metric quantification, and 10-minute async video walkthrough.", 5900, 48, True, ["Everything in Essential Review", "Line-by-line bullet rewriting for high impact", "10-min Loom video walkthrough by Senior Leader", "Quantifiable metrics & XYZ-formula alignment", "1 round of follow-up Q&A messaging"]),
+            ("Elite 1-on-1 Fast-Track", "elite", "Everything in Pro plus 30-min live technical mock screen and direct referral consideration.", 9900, 24, False, ["Everything in Pro Deep-Dive", "Expedited 24-hour turnaround", "30-minute live 1-on-1 coaching session", "Mock interview calibration & pitch review", "Direct top-tier candidate pool spotlight"]),
+        ]:
+            await conn.execute(
+                text("""
+                    INSERT INTO cv_review_packages (id, name, slug, description, price_cents, turn_around_hours, is_popular, features)
+                    VALUES (:id, :n, :s, :d, :p, :h, :pop, CAST(:f AS jsonb))
+                    ON CONFLICT (slug) DO NOTHING
+                """),
+                {"id": uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.pkg.{p_slug}"), "n": p_name, "s": p_slug, "d": p_desc, "p": p_price, "h": p_hours, "pop": p_pop, "f": json.dumps(p_feat)},
+            )
+
+        existing_expert_names = {r[0] for r in (await conn.execute(text("SELECT full_name FROM expert_profiles"))).all()}
+        for fn, hl, bio, av, co, rc, yoe, rt, cnt, td in [
+            ("Sarah Jenkins", "Staff Software Engineer @ Stripe", "10+ years scaling payment infrastructures. Interviewed 300+ backend and distributed system candidates.", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80", "Stripe", "Backend & Systems", 11, 4.98, 142, 2),
+            ("Alex Chen", "Head of Frontend Engineering @ Figma, ex-Uber", "Specializing in React, Next.js architecture, and Design Systems. Passionate about helping engineers stand out.", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80", "Figma", "Frontend & Web", 9, 4.95, 98, 2),
+            ("Marcus Vance", "AI Research Engineering Lead @ OpenAI", "LLM fine-tuning and ML infra lead. Reviewed 200+ ML and AI resumes for Silicon Valley research labs.", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80", "OpenAI", "AI & Machine Learning", 12, 5.00, 76, 1),
+            ("Dr. Trần Minh Quân", "Principal Distributed Systems Architect", "High-scale payment ledger & Golang microservices architect.", "/images/avatar.jpg", "Grab Financial Group", "Backend & Systems", 12, 4.98, 186, 1),
+            ("Lê Hoàng Nam", "Staff AI & LLM Infrastructure Lead", "PyTorch distributed training and RAG inference specialist.", "/images/avatar.jpg", "Shopee & Sea AI Lab", "AI & Machine Learning", 10, 4.95, 142, 1),
+        ]:
+            if fn in existing_expert_names:
+                continue
+            await conn.execute(
+                text("""
+                    INSERT INTO expert_profiles (id, full_name, headline, bio, avatar_url, company, role_category, years_of_experience, rating, total_reviews_count, turn_around_days, is_active)
+                    VALUES (:id, :fn, :hl, :bio, :av, :co, :rc, :yoe, :rt, :cnt, :td, TRUE)
+                    ON CONFLICT (id) DO NOTHING
+                """),
+                {"id": uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.exp.{fn}"), "fn": fn, "hl": hl, "bio": bio, "av": av, "co": co, "rc": rc, "yoe": yoe, "rt": rt, "cnt": cnt, "td": td},
+            )
+
+        # 9d. Seed Career Postings & Market Jobs
+        for title, comp, dept, loc, sal, sks, is_part, desc in [
+            ("Staff Full-Stack Engineer", "Belooga", "Engineering", "Remote / San Francisco", "$4,500 - $6,500 / month", ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"], False, "Build high-throughput async services and sleek Next.js interfaces."),
+            ("Lead Product Designer", "Belooga", "Design", "San Francisco, CA", "$4,000 - $5,800 / month", ["Figma", "Design Systems", "UX Research"], False, "Craft intuitive candidate workspaces and seamless WebRTC video studios."),
+            ("Head of Talent Partnerships", "Belooga", "Operations", "New York, NY", "$4,200 - $6,000 / month", ["B2B Sales", "Talent Acquisition", "Partnerships"], False, "Expand employer networks across top high-growth tech companies."),
+            ("Principal Golang & Payment Core Architect", "Grab Financial Group", "Engineering", "Ho Chi Minh", "65M - 95M VNĐ", ["Golang", "PostgreSQL", "Kubernetes", "Kafka"], True, "Architect ultra-high-throughput payment ledger systems."),
+            ("Senior Golang Microservices Engineer", "VNG Digital Business", "Engineering", "Ho Chi Minh", "55M - 75M VNĐ", ["Golang", "Kafka", "Kubernetes"], True, "Scale distributed microservices handling 30k+ RPS."),
+            ("Lead Distributed Systems Engineer", "Shopee Vietnam", "Engineering", "Ho Chi Minh / Hybrid", "65M - 90M VNĐ", ["Golang", "Redis", "PostgreSQL"], True, "Lead high-concurrency e-commerce backend infrastructure."),
+        ]:
+            pid = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.career.{comp}.{title}")
+            await conn.execute(
+                text("""
+                    INSERT INTO career_postings (id, title, department, location, description, is_active)
+                    VALUES (:id, :title, :dept, :loc, :desc, TRUE)
+                    ON CONFLICT (id) DO NOTHING
+                """),
+                {"id": pid, "title": title, "dept": dept, "loc": loc, "desc": desc},
+            )
+            await conn.execute(
+                text("""
+                    INSERT INTO career_posting_meta (career_posting_id, company_name, salary_range, skills, is_partner, is_system_role)
+                    VALUES (:id, :comp, :sal, :sks, :part, :sys_role)
+                    ON CONFLICT (career_posting_id) DO NOTHING
+                """),
+                {"id": pid, "comp": comp, "sal": sal, "sks": sks, "part": is_part, "sys_role": not is_part},
+            )
+
+        # 9e. Seed Top Candidates (phucnguyen, huypham, maivo)
+        for uname, fn, ln, hl, loc, sks in [
+            ("phucnguyen", "Phúc", "Nguyễn", "Principal Distributed Systems & Golang Architect", "Ho Chi Minh", ["Golang", "Python", "FastAPI", "PostgreSQL", "Kubernetes"]),
+            ("huypham", "Huy", "Phạm", "Senior AI Infrastructure & PyTorch Engineer", "Ha Noi", ["Python", "PyTorch", "FastAPI", "Kubernetes"]),
+            ("maivo", "Mai", "Võ", "Staff Frontend React 19 & Design Systems Lead", "Remote", ["React", "TypeScript", "Next.js", "Tailwind CSS"]),
+        ]:
+            res_u = await conn.execute(
+                text("""
+                    INSERT INTO identities (email, password_hash, role, status)
+                    VALUES (:email, :pw, 'candidate', 'active')
+                    ON CONFLICT (email) DO UPDATE SET status = 'active'
+                    RETURNING id
+                """),
+                {"email": f"{uname}@belooga.com", "pw": alex_pass_hash},
+            )
+            uid = res_u.scalar()
+            res_p = await conn.execute(
+                text("""
+                    INSERT INTO candidate_profiles (
+                        identity_id, username, first_name, last_name, headline, bio,
+                        location, employment_status, seeking_status, avatar_url, video_pitch_url, is_hidden, is_fresh
+                    )
+                    VALUES (:id, :u, :fn, :ln, :hl, :bio, :loc, 'Full-Time', 'Actively Looking', '/images/avatar.jpg', '/videos/pitch.mp4', FALSE, FALSE)
+                    ON CONFLICT (username) DO UPDATE SET headline = :hl, is_hidden = FALSE
+                    RETURNING id
+                """),
+                {"id": uid, "u": uname, "fn": fn, "ln": ln, "hl": hl, "bio": hl, "loc": loc},
+            )
+            cpid = res_p.scalar()
+            for sk in sks:
+                await conn.execute(
+                    text("""
+                        INSERT INTO profile_skills (profile_id, skill_id)
+                        SELECT :pid, id FROM skills WHERE name = :name
+                        ON CONFLICT DO NOTHING
+                    """),
+                    {"pid": cpid, "name": sk},
+                )
+
+        # 9f. Seed Baseline Analytics Orders & ATS Scan History for alexnguyen
+        pro_pkg_id = (await conn.execute(text("SELECT id FROM cv_review_packages WHERE slug = 'pro' LIMIT 1"))).scalar()
+        ess_pkg_id = (await conn.execute(text("SELECT id FROM cv_review_packages WHERE slug = 'essential' LIMIT 1"))).scalar()
+        sarah_exp_id = (await conn.execute(text("SELECT id FROM expert_profiles WHERE full_name = 'Sarah Jenkins' LIMIT 1"))).scalar()
+        for ord_key, pkg_uid, cents, days_ago in [
+            ("seed-order-15d", pro_pkg_id, 5900, 15),
+            ("seed-order-2d", ess_pkg_id, 2900, 2),
+        ]:
+            if not pkg_uid:
+                continue
+            oid = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.{ord_key}")
+            await conn.execute(
+                text("""
+                    INSERT INTO cv_review_orders (id, candidate_identity_id, expert_id, package_id, resume_url, target_role, amount_paid_cents, order_status, payment_reference, created_at)
+                    VALUES (:id, :cid, :eid, :pid, '/uploads/resumes/alex_cv.pdf', 'Staff Backend Engineer', :cents, 'completed', 'BLG-SEED', NOW() - make_interval(days => :days))
+                    ON CONFLICT (id) DO NOTHING
+                """),
+                {"id": oid, "cid": alex_id, "eid": sarah_exp_id, "pid": pkg_uid, "cents": cents, "days": days_ago},
+            )
+        for scan_key, jtitle, score in [
+            ("seed-scan-1", "Senior Backend Engineer", 86),
+            ("seed-scan-2", "Staff Platform Engineer", 92),
+        ]:
+            jd_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.jd.{scan_key}")
+            m_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"belooga.match.{scan_key}")
+            await conn.execute(
+                text("""
+                    INSERT INTO job_descriptions (id, company_name, job_title, raw_text, skills_extracted)
+                    VALUES (:id, 'Belooga Cloud', :jt, 'Golang, PostgreSQL, Kubernetes', '["Golang", "PostgreSQL", "Kubernetes"]'::jsonb)
+                    ON CONFLICT (id) DO NOTHING
+                """),
+                {"id": jd_id, "jt": jtitle},
+            )
+            await conn.execute(
+                text("""
+                    INSERT INTO resume_jd_matches (id, candidate_identity_id, job_description_id, ats_score, matched_skills, missing_skills, star_analysis, parse_warnings)
+                    VALUES (:id, :cid, :jid, :sc, '["Golang", "PostgreSQL"]'::jsonb, '["Kubernetes"]'::jsonb, '[]'::jsonb, '[]'::jsonb)
+                    ON CONFLICT (id) DO NOTHING
+                """),
+                {"id": m_id, "cid": alex_id, "jid": jd_id, "sc": score},
+            )
+        print("  [+] Demo companies, blog posts, user posts, CV roasts, experts, career postings, and baseline analytics seeded")
 
 
     print("[*] Database seeded successfully!")

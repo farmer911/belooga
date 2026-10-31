@@ -178,7 +178,7 @@ function SearchContent() {
           )}
         </div>
 
-        <TopCandidatesLeaderboard variant="leaderboard" />
+        {!initialKey && <TopCandidatesLeaderboard variant="leaderboard" />}
 
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs text-typography-muted">

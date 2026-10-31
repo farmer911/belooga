@@ -107,9 +107,21 @@ MOCK_FALLBACK_PAT = (
     r"|FALLBACK_RECRUITER_ANALYTICS|FALLBACK_EXPERT_ANALYTICS|FALLBACK_EXECUTIVE_BI_ANALYTICS"
     r"|FALLBACK_MARKET_JOBS|INITIAL_RECRUITER_PIPELINE|DEFAULT_USER_POSTS"
     r"|DEFAULT_RANKED_EXPERTS|DEFAULT_TOP_CANDIDATES|DEFAULT_REFERRALS"
-    r"|DEFAULT_QUESTIONS|DEFAULT_ROADMAP)\b"
+    r"|DEFAULT_QUESTIONS|DEFAULT_ROADMAP|CURATED_MARKET_JOBS|SAMPLE_INTERVIEW_QUESTIONS"
+    r"|DEFAULT_CAREER_JOBS|DEFAULT_COMPANY_SEEDS|DEFAULT_SCHOOL_SEEDS|DEFAULT_LOCATION_SEEDS"
+    r"|SAMPLE_CV_DATA|PRESET_VNG|PRESET_SHOPEE)\b"
     r"|//\s*Fallback to local"
 )
+
+mobile_hook_files = files(MOBILE_SRC / "hooks", {".ts", ".tsx"})
+mobile_non_test_files = [p for p in files(MOBILE_SRC, {".ts", ".tsx"}) + files(MOBILE_APP, {".ts", ".tsx"}) if "__tests__" not in p.parts]
+mobile_unused_hooks_count = 0
+for hf in mobile_hook_files:
+    hf_txt = hf.read_text(encoding="utf-8", errors="ignore")
+    other_mobile_blob = "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in mobile_non_test_files if p != hf)
+    for hook_name in re.findall(r"export\s+(?:function|const)\s+(use[A-Z][A-Za-z0-9_]*)\b", hf_txt):
+        if not re.search(rf"\b{hook_name}\b", other_mobile_blob):
+            mobile_unused_hooks_count += 1
 
 SILENT_CATCH_MUTATION_PAT = (
     r"//\s*Optimistic social feed fallback"
@@ -166,6 +178,7 @@ current = {
     "fe_dead_endpoint_constants": count(r"export\s+const\s+[A-Z0-9_]+_ENDPOINT\s*=", fe_prod_src),
     "fe_nested_main_tags": count(r"<main\b", fe_app_pages),
     "fe_static_inline_styles": sum(count_static_inline_styles(p.read_text(encoding="utf-8", errors="ignore")) for p in fe_web_prod_src),
+    "mobile_unused_hooks": mobile_unused_hooks_count,
     "be_anonymous_alexnguyen_fallback": count(
         r"\balexnguyen\b",
         [BE / "modules" / "cms" / "service.py", BE / "schemas" / "cms.py"],

@@ -1,6 +1,6 @@
 import { ATSScanPayload } from "@/hooks/use-ats-diagnostics";
 
-export const PRESET_VNG: ATSScanPayload = {
+export const ATS_TEMPLATE_BACKEND: ATSScanPayload = {
   job_title: "Senior Golang Backend Engineer",
   company_name: "VNG Corporation",
   jd_text: `We are seeking a Senior Golang Backend Engineer to join our high-scale payments platform.
@@ -32,7 +32,7 @@ B.S. in Computer Science - Hanoi University of Science and Technology (GPA: 3.5/
 Skills: Golang, Python, Docker, PostgreSQL, Redis, REST API, Git, Linux`,
 };
 
-export const PRESET_SHOPEE: ATSScanPayload = {
+export const ATS_TEMPLATE_FRONTEND: ATSScanPayload = {
   job_title: "Lead Frontend Engineer",
   company_name: "Shopee Vietnam",
   jd_text: `Shopee is looking for a Lead Frontend Engineer to architect high-performance e-commerce interfaces.

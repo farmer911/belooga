@@ -25,13 +25,6 @@ from app.schemas.payments import WalletPayRequest
 
 VALID_STATUSES = {"TARGETING", "TAILORED", "APPLIED", "INTERVIEW", "OFFER"}
 
-CURATED_MARKET_JOBS: List[Dict[str, Any]] = [
-    {"id": "mkt-vng-go", "company_name": "VNG Digital Business", "position_title": "Senior Golang Microservices Engineer", "location": "Ho Chi Minh", "salary_range": "55M - 75M VNĐ", "match_score": 94, "skills": ["Golang", "Kafka", "Kubernetes"]},
-    {"id": "mkt-shopee-be", "company_name": "Shopee Vietnam", "position_title": "Lead Distributed Systems Engineer", "location": "Ho Chi Minh / Hybrid", "salary_range": "65M - 90M VNĐ", "match_score": 91, "skills": ["Golang", "Redis", "PostgreSQL"]},
-    {"id": "mkt-momo-ai", "company_name": "M_Service (MoMo)", "position_title": "Staff AI & Payment Platform Engineer", "location": "Ho Chi Minh", "salary_range": "60M - 85M VNĐ", "match_score": 89, "skills": ["Python", "FastAPI", "PostgreSQL"]},
-    {"id": "mkt-fpt-fe", "company_name": "FPT Smart Cloud", "position_title": "Senior Full-Stack Next.js / TypeScript", "location": "Ha Noi / Remote", "salary_range": "42M - 58M VNĐ", "match_score": 86, "skills": ["React", "Next.js", "TypeScript"]},
-]
-
 
 class JobTrackerService:
     def __init__(self, db: AsyncSession):
@@ -73,7 +66,7 @@ class JobTrackerService:
     async def search_market_jobs(
         self, q: Optional[str] = None, skills: Optional[str] = None, location: Optional[str] = None
     ) -> List[MarketJobItemDTO]:
-        pool = [dict(j) for j in CURATED_MARKET_JOBS]
+        pool = await self.repo.list_market_jobs()
         if q and q.strip():
             ql = q.strip().lower()
             pool = [
@@ -131,10 +124,19 @@ class JobTrackerService:
         )
         role_title = (request.target_role or "Senior Backend Engineer").strip()
         skills_str = (request.preferred_skills or "Golang, PostgreSQL, Kubernetes").strip()
-        sal_str = (request.expected_salary or "55.000.000 VNĐ").strip()
+        sal_str = (request.expected_salary or "Negotiable").strip()
+        pool = await self.repo.list_market_jobs()
+        req_skills = [s.strip().lower() for s in skills_str.split(",") if s.strip()]
+        ranked = sorted(
+            pool,
+            key=lambda j: sum(1 for r in req_skills if r in " ".join(j["skills"]).lower() or r in j["position_title"].lower()),
+            reverse=True,
+        )
+        first_company = ranked[0]["company_name"] if ranked else "Enterprise Partner"
+        second_company = ranked[1]["company_name"] if len(ranked) > 1 else "Cloud Platform Partner"
         j1 = await self.add_tracked_job(
             TrackedJobCreateRequest(
-                company_name="Grab Financial Group", position_title=f"{role_title} (AI Matched)",
+                company_name=first_company, position_title=f"{role_title} (AI Matched)",
                 status="TARGETING", expected_salary=sal_str, match_score=95,
                 notes=f"AI Job Radar khớp tự động theo kỹ năng: {skills_str}",
             ),
@@ -143,7 +145,7 @@ class JobTrackerService:
         )
         j2 = await self.add_tracked_job(
             TrackedJobCreateRequest(
-                company_name="ZaloPay / Zion", position_title=f"Staff {role_title.split(' ')[0]} Architect (AI Matched)",
+                company_name=second_company, position_title=f"Staff {role_title.split(' ')[0]} Architect (AI Matched)",
                 status="TARGETING", expected_salary=sal_str, match_score=92,
                 notes="AI Job Radar đề xuất ưu tiên phỏng vấn",
             ),

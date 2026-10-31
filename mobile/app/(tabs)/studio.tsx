@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as DocumentPicker from "expo-document-picker";
 import { router, useIsFocused } from "expo-router";
-import { loadMobileProfileCvText } from "@/hooks/use-mobile-parity-part2";
+import { loadMobileProfileCvText } from "@/hooks/use-mobile-wallet-and-community";
 import {
   createValidMobileUploadId,
   extractMobileCvFile,

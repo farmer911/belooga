@@ -33,10 +33,12 @@ class AnalyticsService:
         self.repo = AnalyticsRepository(db)
 
     async def get_dashboard(self, time_range: str = "7D") -> AnalyticsDashboardResponse:
+        range_norm = (time_range or "7D").upper()
+        days_window = 7 if range_norm == "7D" else (30 if range_norm == "30D" else None)
         if os.getenv("ENVIRONMENT") == "testing":
             total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
             bookmarks_count = await self.repo.get_bookmarks_count()
-            db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
+            db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger(days_window)
         else:
             counts = await platform_cache.get_or_set(
                 "analytics:platform_counts",
@@ -49,15 +51,13 @@ class AnalyticsService:
                 loader=lambda: self.repo.get_bookmarks_count(),
             )
             total_users, total_scans, active_jobs = counts[0], counts[1], counts[2]
-            db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
+            db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger(days_window)
 
-        range_norm = (time_range or "7D").upper()
-        mult = 4.2 if range_norm == "30D" else (12.5 if range_norm == "ALL" else 1.0)
         micro_pass_rev = 0.0
-        expert_gmv = round(db_gmv_vnd * mult, 0)
+        expert_gmv = round(db_gmv_vnd, 0)
         expert_fee = round(expert_gmv * 0.08, 0)
         net_rev = micro_pass_rev + expert_fee
-        infra_cost = round(375000.0 * (1.0 if mult == 1.0 else min(mult / 4.0, 3.0)), 0)
+        infra_cost = 375000.0
         net_profit = net_rev - infra_cost
 
         overview = OverviewMetrics(
@@ -190,28 +190,24 @@ class AnalyticsService:
         )
 
     async def get_candidate_analytics(self) -> CandidateAnalyticsResponse:
-        _, total_scans, active_jobs = await self.repo.get_platform_counts()
+        total_users, total_scans, active_jobs = await self.repo.get_platform_counts()
         bookmarks = await self.repo.get_bookmarks_count()
-        applied = max(active_jobs, 18)
-        interviewing = max(int(applied * 0.39), 7)
-        offer = max(int(applied * 0.11), 2)
+        history_rows = await self.repo.get_recent_ats_history(limit=4)
+        applied = max(active_jobs, 1)
+        interviewing = max(int(applied * 0.4), 1)
+        offer = max(int(applied * 0.15), 1)
         return CandidateAnalyticsResponse(
-            profile_views_count=148 + total_scans * 4,
-            search_appearances_count=412 + total_scans * 9,
-            recruiter_shortlist_count=11 + bookmarks,
-            interview_invites_count=4 + (bookmarks // 2),
-            ats_score_history=[
-                ATSScoreHistoryPoint(date="2026-09-25", score=62, target_role="Senior Backend Engineer"),
-                ATSScoreHistoryPoint(date="2026-10-05", score=74, target_role="Senior Backend Engineer"),
-                ATSScoreHistoryPoint(date="2026-10-15", score=86, target_role="Staff Platform Engineer"),
-                ATSScoreHistoryPoint(date="2026-10-22", score=92, target_role="Staff Platform Engineer"),
-            ],
+            profile_views_count=max(total_users, 1) + total_scans,
+            search_appearances_count=max(total_users, 1) * 2 + total_scans * 2,
+            recruiter_shortlist_count=bookmarks,
+            interview_invites_count=max(bookmarks, 1),
+            ats_score_history=[ATSScoreHistoryPoint(**r) for r in history_rows],
             application_funnel=CandidateApplicationFunnel(
-                saved_count=applied + 6,
+                saved_count=applied + 1,
                 applied_count=applied,
                 interviewing_count=interviewing,
                 offer_count=offer,
-                rejected_count=4,
+                rejected_count=0,
                 conversion_to_interview_pct=round(interviewing / applied * 100, 1),
                 conversion_to_offer_pct=round(offer / applied * 100, 1),
             ),
@@ -225,25 +221,30 @@ class AnalyticsService:
 
     async def get_recruiter_analytics(self) -> RecruiterAnalyticsResponse:
         bookmarks = await self.repo.get_bookmarks_count()
-        total_shortlisted = 48 + bookmarks
+        open_roles = await self.repo.get_open_career_roles_count()
+        total_shortlisted = max(bookmarks, 1)
+        screening = max(int(total_shortlisted * 0.65), 1)
+        interviewing = max(int(total_shortlisted * 0.35), 1)
+        offer_ext = max(int(total_shortlisted * 0.15), 1)
+        hired = max(int(total_shortlisted * 0.1), 1)
         return RecruiterAnalyticsResponse(
-            open_roles_count=6,
+            open_roles_count=max(open_roles, 1),
             active_pipeline_candidates=total_shortlisted,
             avg_time_to_shortlist_hours=14.2,
             interview_acceptance_rate_pct=84.5,
             stage_funnel=[
                 RecruiterStageFunnelPoint(stage="Shortlisted", count=total_shortlisted, conversion_pct=100.0),
-                RecruiterStageFunnelPoint(stage="Screening", count=31, conversion_pct=64.6),
-                RecruiterStageFunnelPoint(stage="Interviewing", count=16, conversion_pct=33.3),
-                RecruiterStageFunnelPoint(stage="Offer Extended", count=5, conversion_pct=10.4),
-                RecruiterStageFunnelPoint(stage="Hired", count=4, conversion_pct=8.3),
+                RecruiterStageFunnelPoint(stage="Screening", count=screening, conversion_pct=65.0),
+                RecruiterStageFunnelPoint(stage="Interviewing", count=interviewing, conversion_pct=35.0),
+                RecruiterStageFunnelPoint(stage="Offer Extended", count=offer_ext, conversion_pct=15.0),
+                RecruiterStageFunnelPoint(stage="Hired", count=hired, conversion_pct=10.0),
             ],
         )
 
     async def get_expert_analytics(self) -> ExpertAnalyticsResponse:
-        db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger()
-        completed = 38 + len(db_orders)
-        gross = int(13300000 + db_gmv_vnd)
+        db_gmv_vnd, db_orders = await self.repo.get_paid_orders_ledger(days_window=None)
+        completed = len(db_orders)
+        gross = int(db_gmv_vnd)
         return ExpertAnalyticsResponse(
             completed_reviews_count=completed,
             avg_rating=4.95,

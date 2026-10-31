@@ -12,6 +12,7 @@
   "fe_dead_endpoint_constants": 0,
   "fe_nested_main_tags": 0,
   "fe_static_inline_styles": 0,
+  "mobile_unused_hooks": 0,
   "be_anonymous_alexnguyen_fallback": 0,
   "alembic_schema_drift": 0,
   "fe_max_page_lines": 237,

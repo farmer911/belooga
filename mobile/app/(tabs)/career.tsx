@@ -18,7 +18,7 @@ import {
   useMobileWalletSummaryQuery,
   useTopUpMobileWalletMutation,
   useTriggerMobileSalaryCrawlMutation,
-} from "@/hooks/use-mobile-parity-part2";
+} from "@/hooks/use-mobile-wallet-and-community";
 import { Body, Button, Card, ErrorText, Field, H1, H2, Pill, Row, Screen, Well } from "@/lib/ui";
 import { useMobileAuthStore } from "@/store/auth-store";
 

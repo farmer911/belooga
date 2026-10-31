@@ -2,7 +2,7 @@ import React from "react";
 import { Text, View } from "react-native";
 import { router, Tabs } from "expo-router";
 import { useMobileNotificationsQuery } from "@/hooks/use-mobile-auth";
-import { useMobileWalletSummaryQuery } from "@/hooks/use-mobile-parity-part2";
+import { useMobileWalletSummaryQuery } from "@/hooks/use-mobile-wallet-and-community";
 import { Button } from "@/lib/ui";
 import { useMobileAuthStore } from "@/store/auth-store";
 import { NEUMORPHIC_TOKENS as N } from "@/theme/tokens";

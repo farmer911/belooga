@@ -127,3 +127,31 @@ class JobTrackerRepository:
         self._enforce_owner(job, candidate_identity_id)
         await self.db.delete(job)
         await self.db.commit()
+
+    async def list_market_jobs(self) -> List[Dict[str, Any]]:
+        res = await self.db.execute(
+            text("""
+                SELECT CAST(p.id AS text) AS id,
+                       COALESCE(m.company_name, 'Belooga') AS company_name,
+                       p.title AS position_title,
+                       p.location,
+                       COALESCE(m.salary_range, 'Negotiable') AS salary_range,
+                       COALESCE(m.skills, '{}') AS skills
+                FROM career_postings p
+                LEFT JOIN career_posting_meta m ON m.career_posting_id = p.id
+                WHERE p.is_active = TRUE
+                ORDER BY p.created_at DESC
+            """)
+        )
+        out: List[Dict[str, Any]] = []
+        for idx, r in enumerate(res.mappings().all()):
+            out.append({
+                "id": str(r["id"]),
+                "company_name": str(r["company_name"]),
+                "position_title": str(r["position_title"]),
+                "location": str(r["location"]),
+                "salary_range": str(r["salary_range"]),
+                "match_score": max(82, 95 - idx * 2),
+                "skills": list(r["skills"] or []),
+            })
+        return out

@@ -280,7 +280,7 @@ for comp_p in sorted((FE_SRC / "components").rglob("*")) if (FE_SRC / "component
 # Enforce 100% FE-to-BE Endpoint Wiring (Zero Dead/Unintegrated Backend Endpoints)
 # Web and mobile clients both count as consumers; only files performing real HTTP calls count (schemas.ts / dead consts excluded).
 SERVER_TO_SERVER_ROUTES = {"/v1/payments/momo/ipn"}
-HTTP_CALL_RX = re.compile(r"\b(?:apiClient|mobileApiClient)\.(?:get|post|put|patch|delete)\b|\bmobileRequest\b|\bfetch\s*\(|\bXMLHttpRequest\b|/v1/profile/\$\{username\}/pdf/")
+HTTP_CALL_RX = re.compile(r"\b(?:apiClient|mobileApiClient|axios)\.(?:get|post|put|patch|delete|create)\b|\bmobileRequest\b|\bfetch\s*\(|\bXMLHttpRequest\b|/v1/profile/\$\{username\}/pdf/")
 fe_http_blob = "\n".join(
     txt
     for src in (FE_SRC, ROOT / "mobile" / "src", ROOT / "mobile" / "app")
@@ -474,7 +474,69 @@ if os.getenv("CI") != "true":
     except Exception as gh_err:
         sys.stderr.write(f"[warn] GitHub open PR health check skipped: {gh_err}\n")
 
-# Enforce BEL-228 14-Deception Guards (be_anonymous_alexnguyen_fallback, alembic_schema_drift)
+# Enforce BEL-228 14-Deception Guards & BEL-241..245 Zero Hardcoded Personas / Seed Arrays / -partN Files
+BANNED_RUNTIME_SEED_CONSTANTS = (
+    "CURATED_MARKET_JOBS",
+    "DEFAULT_RANKED_EXPERTS",
+    "SAMPLE_INTERVIEW_QUESTIONS",
+    "DEFAULT_CAREER_JOBS",
+    "DEFAULT_COMPANY_SEEDS",
+    "DEFAULT_SCHOOL_SEEDS",
+    "DEFAULT_LOCATION_SEEDS",
+    "SAMPLE_CV_DATA",
+    "PRESET_VNG",
+    "PRESET_SHOPEE",
+)
+BANNED_BE_DEMO_LITERALS = (
+    "VNG Corporation",
+    "VNG Cloud",
+    "Shopee Vietnam",
+    "Grab Financial Group",
+    "ZaloPay / Zion",
+    "phucnguyen",
+    "Phúc Nguyễn",
+    "NGUYỄN VĂN AN",
+    "hidden_jane",
+    "alexnguyen",
+    "Dr. Trần Minh Quân",
+    "52.000.000 VNĐ",
+    "55.000.000 VNĐ",
+    "65.000.000 VNĐ",
+    "2026-10-25 14:00 ICT",
+    "Anonymous Senior Go #402",
+)
+for scan_root in (BE_APP, FE_SRC, MOBILE_SRC, MOBILE_APP):
+    if not scan_root.exists():
+        continue
+    for p in sorted(scan_root.rglob("*")):
+        if not p.is_file() or p.suffix not in (".py", ".ts", ".tsx"):
+            continue
+        rel = p.relative_to(ROOT)
+        if re.search(r"-part\d+\.(py|ts|tsx)$", p.name):
+            violations["3. Layer Purity (No Band-Aids)"].append(
+                f"{rel} -> temporary *-partN filename prohibited (BEL-243)"
+            )
+        txt = p.read_text(encoding="utf-8", errors="ignore")
+        for cname in BANNED_RUNTIME_SEED_CONSTANTS:
+            if re.search(rf"\b{cname}\b", txt):
+                violations["3. Layer Purity (No Band-Aids)"].append(
+                    f"{rel} -> banned runtime seed constant '{cname}' prohibited (BEL-244/245)"
+                )
+
+for be_scan_dir in (BE_APP / "schemas", BE_APP / "modules"):
+    if not be_scan_dir.exists():
+        continue
+    for p in sorted(be_scan_dir.rglob("*.py")):
+        rel = p.relative_to(ROOT)
+        tree = ast.parse(p.read_text(encoding="utf-8"), filename=str(rel))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                for banned_lit in BANNED_BE_DEMO_LITERALS:
+                    if banned_lit in node.value:
+                        violations["3. Layer Purity (No Band-Aids)"].append(
+                            f"{rel}:{node.lineno} -> hardcoded demo literal {banned_lit!r} prohibited in BE schema/service (BEL-244)"
+                        )
+
 for cms_target in (BE_APP / "modules" / "cms" / "service.py", BE_APP / "schemas" / "cms.py"):
     if cms_target.exists() and re.search(r"\balexnguyen\b", cms_target.read_text(encoding="utf-8")):
         violations["4. Async & IDOR Safety (All BE)"].append(

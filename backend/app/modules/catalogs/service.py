@@ -12,12 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cache import platform_cache
 from app.modules.catalogs.repository import CatalogsRepository
 
-DEFAULT_SKILLS = [
-    "React", "TypeScript", "Python", "FastAPI", "PostgreSQL",
-    "Next.js", "Docker", "Figma", "Product Design", "Tailwind CSS",
-    "Node.js", "GraphQL", "Kubernetes", "AWS", "Product Management",
-]
-
 
 class CatalogsService:
     """Service layer managing master taxonomies and salary market intelligence."""
@@ -28,8 +22,7 @@ class CatalogsService:
 
     async def list_skills(self) -> List[str]:
         async def _load() -> List[str]:
-            skills = await self.catalogs_repo.list_skills(limit=100)
-            return skills if skills else DEFAULT_SKILLS
+            return await self.catalogs_repo.list_skills(limit=100)
 
         if os.getenv("ENVIRONMENT") == "testing":
             return await _load()
