@@ -31,6 +31,7 @@ description: Frontend Public Discovery, Recruiter Profile & CMS Pages in page.ts
 
 3. **Public Profile Read-Only, Trust & Trajectory Invariants:** `/public/[username]` must never expose editing controls or DnD handles to non-owners, renders `data-testid="profile-trust-score-card"` and `data-testid="career-trajectory-badge"` via `@tanstack/react-query` (`enabled: Boolean(profile)`), and posts abuse reports to `POST /v1/profile/{user_id}/report/`.
 4. **Careers, Help, Contact & Blog Conversion Controls:** `/careers` renders `data-testid="careers-openings-list"`, `data-testid="careers-ats-check-link"`, and `data-testid="careers-apply-modal"`. `/help` renders `data-testid="help-faq-filter-bar"` and `data-testid="help-faq-accordion"`. `/contact-us` renders `data-testid="contact-topic-pills"` and `data-testid="contact-form"` posting to `POST /v1/contact/`. `/blog/[slug]` renders `data-testid="blog-career-tools-cta"`.
+5. **Primer 3-Tier Design Token SSOT (`tokens/design-tokens.json`):** All theme variables and component geometry must originate in `tokens/design-tokens.json` (`base` -> `semantic` -> `component`) and remain synchronized across `frontend/src/app/globals.css`, `frontend/src/lib/design-tokens.ts`, and `mobile/src/theme/tokens.ts` (`python3 scripts/sync-design-tokens.py --check`, `fe_arbitrary_hex == 0`).
 
 ## Known Traps
 - **Hidden Profile Timeline & Trust Leak (C-01):** Do not fetch timeline lists or trust scores on public views until the main profile query resolves (`enabled: Boolean(profile)`).
@@ -41,6 +42,6 @@ description: Frontend Public Discovery, Recruiter Profile & CMS Pages in page.ts
 ```bash
 cd frontend && bun x tsc --noEmit
 cd qc && bun run test:e2e -- tests/e2e/public-routes.spec.ts tests/e2e/search.spec.ts
-python3 scripts/lint-skills.py --quiet
+python3 scripts/sync-design-tokens.py --check && python3 scripts/lint-skills.py --quiet
 ```
 

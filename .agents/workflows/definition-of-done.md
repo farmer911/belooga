@@ -9,12 +9,13 @@ This is the only DoD. `GEMINI.md`, `.agents/ROUTER.md`, the `definition-of-done`
 
 > Windows: replace `backend/.venv/bin/` with `backend/.venv/Scripts/` (see `GEMINI.md` §1).
 
-## Step 1: Synchronize Single Source of Truth & Skill Facts
+## Step 1: Synchronize Single Source of Truth, Design Tokens & Skill Facts
 ```bash
 python3 scripts/generate-current-state.py --allow-dirty
 python3 scripts/render-skill-facts.py --write
+python3 scripts/sync-design-tokens.py --check
 ```
-Ensure `CURRENT_STATE.md` and `<!-- AUTO:BEGIN -->` blocks in `.agents/skills/*/SKILL.md` reflect all endpoint, schema, and route changes. Record new traps/insights per `belooga-self-learn`.
+Ensure `CURRENT_STATE.md`, `tokens/design-tokens.json` parity, and `<!-- AUTO:BEGIN -->` blocks in `.agents/skills/*/SKILL.md` reflect all endpoint, schema, token, and route changes. Record new traps/insights per `belooga-self-learn`.
 
 ## Step 2: Run Anti-Deception & Trust Benchmark
 ```bash

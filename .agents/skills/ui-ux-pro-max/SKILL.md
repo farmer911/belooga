@@ -109,8 +109,8 @@ python3 .agents/skills/ui-ux-pro-max/scripts/search.py "responsive navbar" --sta
 
 ---
 
-## Detailed References
+## Detailed References & Primer 3-Tier Design Token SSOT (`tokens/design-tokens.json`)
 
-For full domain listings, stack catalogs, output formatting, and pre-delivery checks:
+- **Mandatory W3C 3-Tier Primer Design Token SSOT:** Every Design (`role:design`), Frontend (`frontend/`), and Mobile (`mobile/`) change must treat `tokens/design-tokens.json` (`base` -> `semantic` [`light`, `dark`, `neumorphic`] -> `component`) as the single source of truth, synchronized across `frontend/src/app/globals.css`, `frontend/src/lib/design-tokens.ts`, and `mobile/src/theme/tokens.ts` via `python3 scripts/sync-design-tokens.py --check` (`fe_arbitrary_hex == 0`, zero raw `#hex` in Canvas/WebGL).
 - See `.agents/skills/ui-ux-pro-max/references/search-reference.md` for full domain tables and query strategies.
 - See `.agents/skills/ui-ux-pro-max/references/ui-rules-and-checklist.md` for iconography standards, contrast requirements, and pre-delivery checklist.

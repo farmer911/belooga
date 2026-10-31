@@ -27,6 +27,7 @@ Section details for workspace organisms live in `references/` (`header-and-bio.m
 2. **In-Memory Auth Tokens:** Store access tokens strictly in Zustand memory (`auth-store.ts`), never in `localStorage` or `sessionStorage`.
 3. **Hardware Cleanup & Zero Blind Catch (`BEL-230` / `BEL-234`):** Closing WebRTC studio must stop every `MediaStreamTrack` and check `if (audioCtx.state !== "closed") { void audioCtx.close(); }` without `.catch(() => {})`. Check `MediaRecorder.isTypeSupported(mimeType)` before instantiation, guard `if (mediaRecorderRef.current.state !== "inactive") { mediaRecorderRef.current.stop(); }`, track `isRecognitionActiveRef.current` in `use-teleprompter.ts`, and render `<SkillBadge />` with a stable `key` in `skills-card.tsx`.
 4. **Workspace Trust & Readiness Copilot (`user/[username]/page.tsx`):** Render `data-testid="workspace-trust-copilot-card"` via `@tanstack/react-query` (`queryKey` bound to `skills.length` and `experiences.length`, `enabled: Boolean(profile)`) so candidate edits immediately refresh their recruiter readiness tier and next boost action.
+5. **Primer 3-Tier Design Token SSOT (`tokens/design-tokens.json`):** Workspace, Auth, and Canvas/WebGL views (`frontend/src/components/common/audio-visualizer-meter.tsx`, `frontend/src/lib/studio-preview.ts`) must read tokens from `tokens/design-tokens.json` via `frontend/src/lib/design-tokens.ts` (`DESIGN_TOKENS`) with zero raw `#hex` literals, verified by `python3 scripts/sync-design-tokens.py --check`.
 
 
 ## Known Traps
@@ -38,5 +39,5 @@ Section details for workspace organisms live in `references/` (`header-and-bio.m
 ```bash
 cd frontend && bun x tsc --noEmit
 cd qc && bun run test:e2e -- tests/e2e/workspace.spec.ts tests/e2e/auth-flow.spec.ts
-python3 scripts/lint-skills.py --quiet
+python3 scripts/sync-design-tokens.py --check && python3 scripts/lint-skills.py --quiet
 ```

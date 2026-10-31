@@ -27,6 +27,7 @@ description: Frontend Career Acceleration, Monetization & Executive Analytics Pa
 2. **MoMo Polling Cleanup:** `momo-checkout-dialog.tsx` must halt status polling immediately when the dialog closes or order status reaches `PAID`.
 3. **Kanban & CV Studio Integrity:** Preserve the 5 Kanban columns (`TARGETING`, `TAILORED`, `APPLIED`, `INTERVIEW`, `OFFER`), Funnel Velocity & Offer Probability banner (`data-testid="job-tracker-velocity-banner"`), Live CV Studio ATS Readability & STAR Density Bar (`data-testid="cv-studio-ats-density-bar"`), and A4 print preview dimensions in `cv-studio-preview.tsx`.
 4. **Career Intelligence & SaaS Telemetry Selectors:** Preserve `data-testid="career-upskill-roi-card"` in `salary-benchmark/page.tsx`, `data-testid="smart-expert-matcher-banner"` in `(public)/expert-review/page.tsx`, and `data-testid="unit-economics-banner"` + `data-testid="bi-star-schema-panel"` in `admin/analytics/page.tsx`.
+5. **Primer 3-Tier Design Token SSOT (`tokens/design-tokens.json`):** All Career Tools, Kanban, and Analytics components (including Canvas/SVG charts in `ats-preview-canvas.tsx` accessing `DESIGN_TOKENS` from `frontend/src/lib/design-tokens.ts`) must derive colors and geometry from `tokens/design-tokens.json` (`python3 scripts/sync-design-tokens.py --check`, `fe_arbitrary_hex == 0`).
 
 
 ## Known Traps
@@ -38,5 +39,5 @@ description: Frontend Career Acceleration, Monetization & Executive Analytics Pa
 ```bash
 cd frontend && bun x tsc --noEmit
 cd qc && bun run test:e2e -- tests/e2e/ats-diagnostics.spec.ts tests/e2e/cv-studio.spec.ts tests/e2e/expert-review.spec.ts tests/e2e/job-tracker-kanban.spec.ts tests/e2e/salary-benchmark.spec.ts tests/e2e/analytics-dashboard.spec.ts
-python3 scripts/lint-skills.py --quiet
+python3 scripts/sync-design-tokens.py --check && python3 scripts/lint-skills.py --quiet
 ```
