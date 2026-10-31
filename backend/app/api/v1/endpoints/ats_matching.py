@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, get_current_user_optional
 from app.modules.ats_matching import ATSMatchingService
 from app.schemas.ats_matching import (
@@ -50,7 +50,7 @@ async def tailor_cv(
 @router.get("/history", response_model=List[ATSScanHistoryItem])
 async def list_ats_scan_history(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """List the caller's own recent ATS scans."""
     candidate_id = current_user.id
@@ -72,7 +72,7 @@ async def generate_recruiter_talent_shortlist(
 
 @router.get("/market-pulse", response_model=TalentMarketPulseResponse)
 async def get_talent_market_pulse(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Return real-time talent pool scarcity index, video pitch adoption rate, and hiring velocity telemetry."""
     service = ATSMatchingService(db)

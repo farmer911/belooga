@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.modules.payments import PaymentService
 from app.schemas.payments import (
@@ -40,7 +40,7 @@ async def momo_ipn_webhook(payload: MomoIpnRequest, db: AsyncSession = Depends(g
 async def check_order_status(
     order_id: str,
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Poll the caller's own order status for the payment dialog."""
     return await PaymentService.get_order_status(db, current_user.id, order_id)
@@ -49,7 +49,7 @@ async def check_order_status(
 @router.get("/wallet/", response_model=UserWalletStateResponse)
 async def get_user_wallet_state(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Return available balance, escrow locked balance, and transaction ledger for the current user."""
     return await PaymentService.get_wallet(db, str(current_user.id))
@@ -58,7 +58,7 @@ async def get_user_wallet_state(
 @router.get("/wallet/balance", response_model=UserWalletStateResponse)
 async def get_user_wallet_balance(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     """Mobile Wallet balance & ledger summary endpoint (BEL-225 parity)."""
     return await PaymentService.get_wallet(db, str(current_user.id))

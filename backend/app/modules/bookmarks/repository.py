@@ -198,15 +198,14 @@ class BookmarkRepository(GrowthRowsMixin):
             for r in rows
         }
 
-    _PIPE_COLS = """
-        id::text AS id, candidate_username AS username, full_name, headline, target_role, stage, ats_score,
-        years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills, recruiter_rating,
-        evaluation_notes, contact_unlocked, interview_datetime
-    """
-
     async def list_pipeline_rows(self, recruiter_identity_id: uuid.UUID) -> list[dict[str, Any]]:
         res = await self.db.execute(
-            text(f"SELECT {self._PIPE_COLS} FROM recruiter_pipeline_items WHERE recruiter_identity_id = :rid ORDER BY created_at DESC"),
+            text("""
+                SELECT id::text AS id, candidate_username AS username, full_name, headline, target_role, stage, ats_score,
+                       years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills, recruiter_rating,
+                       evaluation_notes, contact_unlocked, interview_datetime
+                FROM recruiter_pipeline_items WHERE recruiter_identity_id = :rid ORDER BY created_at DESC
+            """),
             {"rid": recruiter_identity_id},
         )
         return [dict(r) for r in res.mappings().all()]
@@ -214,7 +213,7 @@ class BookmarkRepository(GrowthRowsMixin):
     async def upsert_pipeline_row(self, recruiter_identity_id: uuid.UUID, item: dict[str, Any]) -> dict[str, Any]:
         """Insert or refresh the recruiter's card for this candidate (unique per recruiter + username). No commit."""
         res = await self.db.execute(
-            text(f"""
+            text("""
                 INSERT INTO recruiter_pipeline_items (
                     recruiter_identity_id, candidate_username, full_name, headline, target_role, stage, ats_score,
                     years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills,
@@ -233,7 +232,9 @@ class BookmarkRepository(GrowthRowsMixin):
                     contact_unlocked = recruiter_pipeline_items.contact_unlocked OR EXCLUDED.contact_unlocked,
                     interview_datetime = COALESCE(EXCLUDED.interview_datetime, recruiter_pipeline_items.interview_datetime),
                     updated_at = NOW()
-                RETURNING {self._PIPE_COLS}
+                RETURNING id::text AS id, candidate_username AS username, full_name, headline, target_role, stage, ats_score,
+                    years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills, recruiter_rating,
+                    evaluation_notes, contact_unlocked, interview_datetime
             """),
             {"rid": recruiter_identity_id, **item},
         )
@@ -244,15 +245,22 @@ class BookmarkRepository(GrowthRowsMixin):
     ) -> Optional[dict[str, Any]]:
         """Owner-scoped partial update; returns None when the row is missing or belongs to another recruiter."""
         allowed = ("stage", "recruiter_rating", "evaluation_notes", "contact_unlocked", "interview_datetime")
-        fields = {k: v for k, v in updates.items() if k in allowed and v is not None}
-        set_sql = ", ".join(f"{k} = :{k}" for k in fields) or "stage = stage"
+        params = {"id": item_id, "rid": recruiter_identity_id, **{k: updates.get(k) for k in allowed}}
         res = await self.db.execute(
-            text(f"""
-                UPDATE recruiter_pipeline_items SET {set_sql}, updated_at = NOW()
+            text("""
+                UPDATE recruiter_pipeline_items
+                SET stage = COALESCE(CAST(:stage AS VARCHAR), stage),
+                    recruiter_rating = COALESCE(CAST(:recruiter_rating AS INTEGER), recruiter_rating),
+                    evaluation_notes = COALESCE(CAST(:evaluation_notes AS TEXT), evaluation_notes),
+                    contact_unlocked = COALESCE(CAST(:contact_unlocked AS BOOLEAN), contact_unlocked),
+                    interview_datetime = COALESCE(CAST(:interview_datetime AS VARCHAR), interview_datetime),
+                    updated_at = NOW()
                 WHERE id = :id AND recruiter_identity_id = :rid
-                RETURNING {self._PIPE_COLS}
+                RETURNING id::text AS id, candidate_username AS username, full_name, headline, target_role, stage, ats_score,
+                    years_experience, expected_salary, video_pitch_url, matched_skills, missing_skills, recruiter_rating,
+                    evaluation_notes, contact_unlocked, interview_datetime
             """),
-            {"id": item_id, "rid": recruiter_identity_id, **fields},
+            params,
         )
         row = res.mappings().first()
         return dict(row) if row else None

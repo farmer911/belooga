@@ -20,7 +20,7 @@ os.environ["JWT_SECRET"] = "test_jwt_secret_key_safe_for_testing_12345"
 
 from sqlalchemy.pool import NullPool
 from app.main import app
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import create_access_token
 
 
@@ -40,6 +40,7 @@ async def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_read_db] = override_get_db
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)

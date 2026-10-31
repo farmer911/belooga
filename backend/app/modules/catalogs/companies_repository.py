@@ -28,9 +28,16 @@ class CompanyDirectoryMixin:
         """Insert a new company; False when the slug is already taken (never overwrites someone else's company)."""
         cols = ("slug", "owner_identity_id", *self.COMPANY_WRITABLE)
         res = await self.db.execute(
-            text(f"""
-                INSERT INTO company_profiles ({", ".join(cols)}, open_jobs)
-                VALUES ({", ".join(":" + c for c in cols)}, CAST(:open_jobs AS jsonb))
+            text("""
+                INSERT INTO company_profiles (
+                    slug, owner_identity_id, name, industry, company_size, location, website,
+                    avg_rating, review_count, avg_salary_usd, open_jobs_count, hiring_now,
+                    description, tech_stack, benefits, open_jobs
+                ) VALUES (
+                    :slug, :owner_identity_id, :name, :industry, :company_size, :location, :website,
+                    :avg_rating, :review_count, :avg_salary_usd, :open_jobs_count, :hiring_now,
+                    :description, :tech_stack, :benefits, CAST(:open_jobs AS jsonb)
+                )
                 ON CONFLICT (slug) DO NOTHING
                 RETURNING id
             """),
@@ -41,12 +48,28 @@ class CompanyDirectoryMixin:
         return inserted
 
     async def update_company(self, slug: str, updates: Dict[str, Any]) -> None:
-        fields = {k: v for k, v in updates.items() if k in self.COMPANY_WRITABLE}
-        if not fields:
+        fields = {k: updates.get(k) for k in self.COMPANY_WRITABLE}
+        if not any(v is not None for v in fields.values()):
             return
-        set_sql = ", ".join(f"{k} = :{k}" for k in fields)
         await self.db.execute(
-            text(f"UPDATE company_profiles SET {set_sql}, updated_at = NOW() WHERE slug = :slug"),
+            text("""
+                UPDATE company_profiles
+                SET name = COALESCE(:name, name),
+                    industry = COALESCE(:industry, industry),
+                    company_size = COALESCE(:company_size, company_size),
+                    location = COALESCE(:location, location),
+                    website = COALESCE(:website, website),
+                    avg_rating = COALESCE(:avg_rating, avg_rating),
+                    review_count = COALESCE(:review_count, review_count),
+                    avg_salary_usd = COALESCE(:avg_salary_usd, avg_salary_usd),
+                    open_jobs_count = COALESCE(:open_jobs_count, open_jobs_count),
+                    hiring_now = COALESCE(:hiring_now, hiring_now),
+                    description = COALESCE(:description, description),
+                    tech_stack = COALESCE(:tech_stack, tech_stack),
+                    benefits = COALESCE(:benefits, benefits),
+                    updated_at = NOW()
+                WHERE slug = :slug
+            """),
             {**fields, "slug": slug},
         )
         await self.db.commit()
@@ -66,12 +89,10 @@ class CompanyDirectoryMixin:
         )
         await self.db.commit()
 
-    _IQ_COLS = "q.id, q.role_title, q.difficulty, q.question_text, q.question_text AS question, q.sample_answer_hint"
-
     async def list_interview_questions(self, slug: str) -> List[Dict[str, Any]]:
         res = await self.db.execute(
-            text(f"""
-                SELECT {self._IQ_COLS}
+            text("""
+                SELECT q.id, q.role_title, q.difficulty, q.question_text, q.question_text AS question, q.sample_answer_hint
                 FROM company_interview_questions q JOIN company_profiles c ON c.id = q.company_id
                 WHERE c.slug = :slug ORDER BY q.created_at DESC
             """),
@@ -81,10 +102,10 @@ class CompanyDirectoryMixin:
 
     async def add_interview_question(self, company_id: uuid.UUID, author_identity_id: uuid.UUID, item: Dict[str, Any]) -> Dict[str, Any]:
         res = await self.db.execute(
-            text(f"""
+            text("""
                 INSERT INTO company_interview_questions AS q (id, company_id, author_identity_id, role_title, difficulty, question_text, sample_answer_hint)
                 VALUES (:id, :cid, :aid, :role_title, :difficulty, :question_text, :sample_answer_hint)
-                RETURNING {self._IQ_COLS}
+                RETURNING q.id, q.role_title, q.difficulty, q.question_text, q.question_text AS question, q.sample_answer_hint
             """),
             {**item, "cid": company_id, "aid": author_identity_id},
         )

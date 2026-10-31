@@ -4,7 +4,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.modules.notifications import NotificationService
 from app.schemas.notifications import (
@@ -45,7 +45,7 @@ async def mark_all_notifications_read(
 @router.get("/notifications/preferences/", response_model=NotificationPreferenceDTO, tags=["Domain 12: Notifications & Email Outbox"])
 async def get_notification_preferences(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await NotificationService(db).get_preferences(current_user.id)
 

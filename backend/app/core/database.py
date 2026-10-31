@@ -1,5 +1,4 @@
 from typing import AsyncGenerator
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
@@ -58,11 +57,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def get_read_db(primary_db: AsyncSession = Depends(get_db)) -> AsyncGenerator[AsyncSession, None]:
-    """Yield a read-replica session when DATABASE_READ_URL is configured; otherwise reuse primary/test session."""
-    if read_session_maker is async_session_maker or get_settings().ENVIRONMENT == "testing":
-        yield primary_db
-        return
+async def get_read_db() -> AsyncGenerator[AsyncSession, None]:
+    """Yield a read-replica session when DATABASE_READ_URL is configured; otherwise use primary pool."""
     async with read_session_maker() as session:
         try:
             yield session

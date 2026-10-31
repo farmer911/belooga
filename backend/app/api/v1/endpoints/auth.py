@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -41,7 +41,7 @@ def _extract_refresh_token(request: Request, payload: Optional[RefreshTokenReque
 @router.get("/users/exists/email/", response_model=CheckAvailabilityResponse, tags=["Domain 1: Identity & Sessions"])
 async def check_email_exists(
     email: str = Query(..., description="Email address to check"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await AuthService(db).check_email_availability(email)
 
@@ -49,7 +49,7 @@ async def check_email_exists(
 @router.get("/users/exists/username/", response_model=CheckAvailabilityResponse, tags=["Domain 1: Identity & Sessions"])
 async def check_username_exists(
     username: str = Query(..., description="Username to check"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await AuthService(db).check_username_availability(username)
 
@@ -85,7 +85,7 @@ async def refresh_tokens(
 @router.get("/auth/me/", response_model=UserProfileDTO, tags=["Domain 1: Identity & Sessions"])
 async def get_current_session_user(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await AuthService(db).get_current_session_user(current_user.id)
 

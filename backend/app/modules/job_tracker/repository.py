@@ -60,24 +60,23 @@ class JobTrackerRepository:
             await self.db.refresh(job)
         return job
 
-    _GOAL_COLS = "target_role, target_salary, preferred_skills, location, updated_at"
-
     async def get_career_goal(self, candidate_identity_id: uuid.UUID) -> Optional[Dict[str, Any]]:
         res = await self.db.execute(
-            text(f"SELECT {self._GOAL_COLS} FROM career_goals WHERE identity_id = :iid"), {"iid": candidate_identity_id}
+            text("SELECT target_role, target_salary, preferred_skills, location, updated_at FROM career_goals WHERE identity_id = :iid"),
+            {"iid": candidate_identity_id},
         )
         row = res.mappings().first()
         return dict(row) if row else None
 
     async def upsert_career_goal(self, candidate_identity_id: uuid.UUID, goal: Dict[str, Any]) -> Dict[str, Any]:
         res = await self.db.execute(
-            text(f"""
+            text("""
                 INSERT INTO career_goals (identity_id, target_role, target_salary, preferred_skills, location, updated_at)
                 VALUES (:iid, :target_role, :target_salary, :preferred_skills, :location, NOW())
                 ON CONFLICT (identity_id) DO UPDATE SET
                     target_role = EXCLUDED.target_role, target_salary = EXCLUDED.target_salary,
                     preferred_skills = EXCLUDED.preferred_skills, location = EXCLUDED.location, updated_at = NOW()
-                RETURNING {self._GOAL_COLS}
+                RETURNING target_role, target_salary, preferred_skills, location, updated_at
             """),
             {"iid": candidate_identity_id, **goal},
         )

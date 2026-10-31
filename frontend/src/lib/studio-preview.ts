@@ -1,3 +1,5 @@
+import { DESIGN_TOKENS } from "@/lib/design-tokens";
+
 /**
  * Synthetic dynamic studio feed for WebRTC canvas preview when camera is denied/unavailable
  */
@@ -52,9 +54,9 @@ export function createStudioPreviewStream(
 
     // Studio background gradient
     const grad = ctx.createLinearGradient(0, 0, width, height);
-    grad.addColorStop(0, "#070b12");
-    grad.addColorStop(0.5, "#0f172a");
-    grad.addColorStop(1, "#070b12");
+    grad.addColorStop(0, DESIGN_TOKENS.semantic.dark.surface.page);
+    grad.addColorStop(0.5, DESIGN_TOKENS.semantic.dark.surface.card);
+    grad.addColorStop(1, DESIGN_TOKENS.semantic.dark.surface.page);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
@@ -89,10 +91,10 @@ export function createStudioPreviewStream(
 
     ctx.beginPath();
     ctx.arc(cx, headY, headRadius, 0, Math.PI * 2);
-    ctx.fillStyle = "#1e293b";
+    ctx.fillStyle = DESIGN_TOKENS.semantic.dark.surface.border;
     ctx.fill();
     ctx.lineWidth = 3;
-    ctx.strokeStyle = "#5bbbae";
+    ctx.strokeStyle = DESIGN_TOKENS.base.brand.teal500;
     ctx.stroke();
 
     // Shoulders silhouette
@@ -102,14 +104,14 @@ export function createStudioPreviewStream(
 
     ctx.beginPath();
     ctx.ellipse(cx, shoulderY, shoulderW, shoulderH, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = DESIGN_TOKENS.semantic.dark.surface.card;
     ctx.fill();
     ctx.lineWidth = 3;
-    ctx.strokeStyle = "#5bbbae";
+    ctx.strokeStyle = DESIGN_TOKENS.base.brand.teal500;
     ctx.stroke();
 
     // Candidate initials
-    ctx.fillStyle = "#5bbbae";
+    ctx.fillStyle = DESIGN_TOKENS.base.brand.teal500;
     ctx.font = `bold ${Math.round(headRadius * 0.55)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -118,7 +120,7 @@ export function createStudioPreviewStream(
 
     // Waveform at bottom
     ctx.lineWidth = 3;
-    ctx.strokeStyle = "#5bbbae";
+    ctx.strokeStyle = DESIGN_TOKENS.base.brand.teal500;
     ctx.beginPath();
     const waveStartX = Math.max(30, cx - width * 0.28);
     const waveEndX = Math.min(width - 30, cx + width * 0.28);
@@ -139,11 +141,11 @@ export function createStudioPreviewStream(
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    ctx.fillStyle = "#22c55e";
+    ctx.fillStyle = DESIGN_TOKENS.base.status.emerald500;
     ctx.beginPath();
     ctx.arc(42, 44, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = DESIGN_TOKENS.base.neutral.white;
     ctx.font = "600 13px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(`STUDIO PRO HQ (${ratio})`, 56, 49);

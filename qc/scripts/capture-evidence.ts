@@ -27,7 +27,7 @@ async function captureEvidence() {
   const studioBtn = page.locator('[data-testid="record-pitch-studio-btn"]');
   await studioBtn.click();
   await page.waitForSelector('[data-testid="studio-live-cam"]');
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="studio-record-btn"]');
 
   // Capture Live Camera Feed in Studio
   await page.screenshot({
@@ -37,7 +37,7 @@ async function captureEvidence() {
 
   // 3. Start Recording
   await page.locator('[data-testid="studio-record-btn"]').click();
-  await page.waitForTimeout(2000);
+  await page.waitForSelector('[data-testid="studio-stop-btn"]');
 
   // Capture Recording in Progress
   await page.screenshot({
@@ -48,7 +48,6 @@ async function captureEvidence() {
   // 4. Stop Recording & Review
   await page.locator('[data-testid="studio-stop-btn"]').click();
   await page.waitForSelector('[data-testid="studio-save-btn"]');
-  await page.waitForTimeout(500);
 
   // Capture Review Preview & Save Button
   await page.screenshot({

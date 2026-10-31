@@ -233,14 +233,9 @@ class ExpertReviewRepository:
         await self.db.flush()
         return created
 
-    _APP_COLS = """
-        COALESCE(expert_profile_id::text, identity_id::text) AS id, full_name, role_title, company_name, years_experience,
-        category, specialties, turnaround_hours, hourly_rate_vnd, linkedin_url, bio
-    """
-
     async def upsert_expert_application(self, identity_id: uuid.UUID, expert_profile_id: uuid.UUID, data: dict) -> dict:
         res = await self.db.execute(
-            text(f"""
+            text("""
                 INSERT INTO expert_applications (identity_id, expert_profile_id, full_name, role_title, company_name,
                     years_experience, category, specialties, turnaround_hours, hourly_rate_vnd, linkedin_url, bio)
                 VALUES (:iid, :epid, :full_name, :role_title, :company_name, :years_experience, :category, :specialties,
@@ -252,7 +247,8 @@ class ExpertReviewRepository:
                     specialties = EXCLUDED.specialties, turnaround_hours = EXCLUDED.turnaround_hours,
                     hourly_rate_vnd = EXCLUDED.hourly_rate_vnd, linkedin_url = EXCLUDED.linkedin_url,
                     bio = EXCLUDED.bio, updated_at = NOW()
-                RETURNING {self._APP_COLS}
+                RETURNING COALESCE(expert_profile_id::text, identity_id::text) AS id, full_name, role_title,
+                    company_name, years_experience, category, specialties, turnaround_hours, hourly_rate_vnd, linkedin_url, bio
             """),
             {
                 "iid": identity_id, "epid": expert_profile_id, "full_name": data["full_name"],
@@ -267,7 +263,12 @@ class ExpertReviewRepository:
 
     async def get_expert_application(self, identity_id: uuid.UUID) -> Optional[dict]:
         res = await self.db.execute(
-            text(f"SELECT {self._APP_COLS} FROM expert_applications WHERE identity_id = :iid"), {"iid": identity_id}
+            text("""
+                SELECT COALESCE(expert_profile_id::text, identity_id::text) AS id, full_name, role_title,
+                       company_name, years_experience, category, specialties, turnaround_hours, hourly_rate_vnd, linkedin_url, bio
+                FROM expert_applications WHERE identity_id = :iid
+            """),
+            {"iid": identity_id},
         )
         row = res.mappings().first()
         return dict(row) if row else None

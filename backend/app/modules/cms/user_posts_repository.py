@@ -12,15 +12,15 @@ class UserPostsMixin:
     async def list_user_posts(self, username: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         if username:
             res = await self.db.execute(
-                text(f"{self._USER_POST_SQL} WHERE LOWER(p.username) = LOWER(:u) ORDER BY p.created_at DESC LIMIT :lim"),
+                text(self._USER_POST_SQL + " WHERE LOWER(p.username) = LOWER(:u) ORDER BY p.created_at DESC LIMIT :lim"),
                 {"u": username.strip(), "lim": limit},
             )
         else:
-            res = await self.db.execute(text(f"{self._USER_POST_SQL} ORDER BY p.created_at DESC LIMIT :lim"), {"lim": limit})
+            res = await self.db.execute(text(self._USER_POST_SQL + " ORDER BY p.created_at DESC LIMIT :lim"), {"lim": limit})
         return [dict(r) for r in res.mappings().all()]
 
     async def get_user_post(self, post_id: str) -> Optional[Dict[str, Any]]:
-        res = await self.db.execute(text(f"{self._USER_POST_SQL} WHERE p.id = :id"), {"id": post_id})
+        res = await self.db.execute(text(self._USER_POST_SQL + " WHERE p.id = :id"), {"id": post_id})
         row = res.mappings().first()
         return dict(row) if row else None
 
@@ -34,11 +34,22 @@ class UserPostsMixin:
         )
 
     async def update_user_post(self, post_id: str, fields: Dict[str, Any]) -> None:
-        allowed = {k: v for k, v in fields.items() if k in ("title", "category", "body", "tags", "attachment_link")}
-        if not allowed:
+        cols = ("title", "category", "body", "tags", "attachment_link")
+        params = {k: fields.get(k) for k in cols}
+        if not any(v is not None for v in params.values()):
             return
-        set_sql = ", ".join(f"{k} = :{k}" for k in allowed)
-        await self.db.execute(text(f"UPDATE user_posts SET {set_sql} WHERE id = :id"), {**allowed, "id": post_id})
+        await self.db.execute(
+            text("""
+                UPDATE user_posts
+                SET title = COALESCE(:title, title),
+                    category = COALESCE(:category, category),
+                    body = COALESCE(:body, body),
+                    tags = COALESCE(:tags, tags),
+                    attachment_link = COALESCE(:attachment_link, attachment_link)
+                WHERE id = :id
+            """),
+            {**params, "id": post_id},
+        )
 
     async def delete_user_post(self, post_id: str) -> bool:
         res = await self.db.execute(text("DELETE FROM user_posts WHERE id = :id RETURNING id"), {"id": post_id})

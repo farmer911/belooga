@@ -375,8 +375,8 @@ test.describe('Candidate Workspace Core Quality Gate', () => {
     await expect(voiceStatus).toBeVisible();
     await expect(voiceStatus).toContainText('Awaiting Voice');
 
-    // Wait 400ms during silence to prove teleprompter does not advance without voice input
-    await page.waitForTimeout(400);
+    // Wait two animation frames during silence to prove teleprompter does not advance without voice input
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
     // Verify text remains frozen at index 0 during silence (never runs ahead)
     const initialWord = page.locator('[data-word-idx="0"]');
