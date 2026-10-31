@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Save, Upload, CheckCircle2, AlertCircle } from "lucide-react";
@@ -30,7 +30,7 @@ export default function UpdateProfilePage() {
     enabled: Boolean(username),
   });
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: { firstName: "", lastName: "", headline: "", location: "", bio: "", phone: "", seekingStatus: "Actively Looking" },
     values: profileData
@@ -43,7 +43,7 @@ export default function UpdateProfilePage() {
       : undefined,
   });
 
-  const locationQuery = watch("location") || "";
+  const locationQuery = useWatch({ control, name: "location" }) || "";
   const { data: locationSuggestions = [] } = useQuery<Array<{ name: string }>>({
     queryKey: ["catalog-locations", locationQuery],
     queryFn: async () => (await apiClient.get<Array<{ name: string }>>(`/v1/profile/location/?name=${encodeURIComponent(locationQuery)}`)).data,

@@ -34,7 +34,7 @@ class RecruiterPipelineItemDTO(BaseModel):
     stage: str = "SHORTLISTED"
     ats_score: int = 88
     years_experience: int = 4
-    expected_salary: str = "52.000.000 VNĐ"
+    expected_salary: str = "Negotiable"
     video_pitch_url: str = "/videos/pitch.mp4"
     matched_skills: List[str] = Field(default_factory=list)
     missing_skills: List[str] = Field(default_factory=list)
@@ -91,8 +91,8 @@ class RecruiterInviteRequest(BaseModel):
     """Payload to invite a candidate to interview, unlock contact via Wallet, and sync Kanban."""
     username: str
     job_title: str = "Senior Distributed Systems Engineer"
-    interview_datetime: str = "2026-10-25 14:00 ICT"
-    offered_salary_range: str = "65.000.000 VNĐ"
+    interview_datetime: str = "Scheduled"
+    offered_salary_range: str = "Negotiable"
     custom_video_prompt: Optional[str] = None
     unlock_contact_via_wallet: bool = True
 
@@ -147,7 +147,7 @@ class CareerRoadmapResponse(BaseModel):
 
 
 class OutreachGeneratorRequest(BaseModel):
-    company_name: str = "VNG Corporation"
+    company_name: str = ""
     role_title: Optional[str] = "Senior Backend Engineer"
     job_title: Optional[str] = None
 
@@ -169,7 +169,7 @@ class SkillAssessmentResponse(BaseModel):
     badge_slug: str
 
 class PitchScriptRequest(BaseModel):
-    username: Optional[str] = "phucnguyen"
+    username: Optional[str] = ""
     target_role: Optional[str] = "Principal Software Engineer"
     role_title: Optional[str] = None
     top_skills: List[str] = Field(default_factory=list)
@@ -215,7 +215,7 @@ class ReferralSlotItemDTO(BaseModel):
 
 class ReferralRequestCreate(BaseModel):
     slot_id: Optional[str] = "ref-1"
-    company_name: str = "VNG Cloud"
+    company_name: str = ""
     role_title: str = "Senior Golang"
     note: str = ""
 
@@ -226,13 +226,13 @@ class ReferralRequestResponse(BaseModel):
 
 class CvRoastRequest(BaseModel):
     summary: Optional[str] = None
-    anonymous_handle: str = "Anonymous Senior Go #402"
+    anonymous_handle: str = "Anonymous Candidate"
     target_role: str = "Senior Backend Engineer"
     cv_snippet: str = ""
 
 class CvRoastResponse(BaseModel):
     id: str
-    alias: str = "Anonymous Senior Go #402"
+    alias: str = "Anonymous Candidate"
     target_role: str = "Senior Backend Engineer"
     summary: str = ""
     votes: int = 12

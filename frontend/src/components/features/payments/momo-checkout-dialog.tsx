@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Wallet, CheckCircle2, X, ExternalLink } from "lucide-react";
-import { apiClient, getApiErrorDetail } from "@/services/api-client";
+import { apiClient, API_ENDPOINTS, getApiErrorDetail } from "@/services/api-client";
 import { useWallet, formatVnd, MomoPaymentDTO } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 
@@ -32,7 +32,7 @@ export function MomoCheckoutDialog({
   // MoMo payment page opens in a new tab; this dialog polls until the IPN marks the order PAID.
   const momoMutation = useMutation({
     mutationFn: async () =>
-      (await apiClient.post<MomoPaymentDTO>("/v1/payments/momo/create-qr", {
+      (await apiClient.post<MomoPaymentDTO>(API_ENDPOINTS.PAYMENTS.MOMO_CREATE_QR, {
         package_type: packageType,
         order_info: orderInfo,
       })).data,
@@ -45,7 +45,7 @@ export function MomoCheckoutDialog({
   const { data: orderStatus } = useQuery<{ order_id: string; status: "PENDING" | "PAID" | "FAILED" }>({
     queryKey: ["momo-order-status", momoOrderId],
     queryFn: async () => {
-      const order = (await apiClient.get(`/v1/payments/momo/order-status/${momoOrderId}`)).data;
+      const order = (await apiClient.get(API_ENDPOINTS.PAYMENTS.MOMO_ORDER_STATUS(momoOrderId || ""))).data;
       if (order.status === "PAID") onPaymentSuccess?.();
       return order;
     },

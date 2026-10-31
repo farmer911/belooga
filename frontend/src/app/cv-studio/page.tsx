@@ -27,7 +27,7 @@ interface CVDraftResponse {
   projects?: CVData["projects"]; education?: CVData["education"]; section_order?: string[];
 }
 
-const SAMPLE_CV_DATA: CVData = {
+const STANDARD_CV_TEMPLATE: CVData = {
   fullName: "NGUYỄN VĂN AN", email: "an.nguyen@belooga.vn", phone: "+84 901 234 567",
   location: "Hồ Chí Minh, Việt Nam", linkedin: "linkedin.com/in/belooga-talent",
   headline: "Senior Backend Engineer | Golang, Distributed Systems & Kubernetes",
@@ -62,7 +62,7 @@ export default function CVStudioPage() {
 }
 
 function CVStudioWorkspace({ activeUsername }: { activeUsername: string }) {
-  const [cvData, setCvData] = useState<CVData>(SAMPLE_CV_DATA);
+  const [cvData, setCvData] = useState<CVData>(STANDARD_CV_TEMPLATE);
   const [fontSize, setFontSize] = useState<number>(10.0);
   const [lineHeight, setLineHeight] = useState<number>(1.3);
   const [marginSize, setMarginSize] = useState<number>(0.6);
@@ -138,7 +138,7 @@ function CVStudioWorkspace({ activeUsername }: { activeUsername: string }) {
 
   const liveAtsScore = auditAtsMutation.data?.ats_score ?? starAudit.readability;
 
-  const handleResetSample = () => { setCvData(SAMPLE_CV_DATA); setFontSize(10.0); setLineHeight(1.3); setMarginSize(0.6); };
+  const handleResetSample = () => { setCvData(STANDARD_CV_TEMPLATE); setFontSize(10.0); setLineHeight(1.3); setMarginSize(0.6); };
   const handleAutoFit = () => { setFontSize(9.6); setLineHeight(1.25); setMarginSize(0.5); setSnapOnePage(true); };
   const handleInjectSkill = (skill: string) => {
     if (!cvData.skills.toLowerCase().includes(skill.toLowerCase())) setCvData({ ...cvData, skills: `${cvData.skills}, ${skill}` });

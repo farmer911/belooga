@@ -192,11 +192,11 @@ class ATSMatchingService:
             stats = await self.repo.get_market_pulse_stats()
             total, sk_cnt = max(stats["total_visible"], 1), stats.get("skill_counts") or {}
             scarcity = [
-                {"skill": "Golang / Distributed Systems", "candidate_supply": sk_cnt.get("golang", 0) + max(12, total // 14), "demand_index": 94, "scarcity_score": 9.1, "salary_premium_pct": "+24%"},
-                {"skill": "Kubernetes & Cloud Native", "candidate_supply": sk_cnt.get("kubernetes", 0) + max(15, total // 16), "demand_index": 91, "scarcity_score": 8.7, "salary_premium_pct": "+22%"},
-                {"skill": "Python / FastAPI Async", "candidate_supply": sk_cnt.get("fastapi", 0) + max(24, total // 9), "demand_index": 89, "scarcity_score": 7.9, "salary_premium_pct": "+18%"},
-                {"skill": "Next.js 16 / TypeScript", "candidate_supply": sk_cnt.get("typescript", 0) + max(28, total // 8), "demand_index": 86, "scarcity_score": 7.4, "salary_premium_pct": "+16%"},
-                {"skill": "PostgreSQL / High-Scale Indexing", "candidate_supply": sk_cnt.get("postgresql", 0) + max(19, total // 12), "demand_index": 88, "scarcity_score": 8.3, "salary_premium_pct": "+20%"},
+                {"skill": "Golang / Distributed Systems", "candidate_supply": int(sk_cnt.get("golang", 0)), "demand_index": 94, "scarcity_score": 9.1, "salary_premium_pct": "+24%"},
+                {"skill": "Kubernetes & Cloud Native", "candidate_supply": int(sk_cnt.get("kubernetes", 0)), "demand_index": 91, "scarcity_score": 8.7, "salary_premium_pct": "+22%"},
+                {"skill": "Python / FastAPI Async", "candidate_supply": int(sk_cnt.get("fastapi", 0)), "demand_index": 89, "scarcity_score": 7.9, "salary_premium_pct": "+18%"},
+                {"skill": "Next.js 16 / TypeScript", "candidate_supply": int(sk_cnt.get("typescript", 0)), "demand_index": 86, "scarcity_score": 7.4, "salary_premium_pct": "+16%"},
+                {"skill": "PostgreSQL / High-Scale Indexing", "candidate_supply": int(sk_cnt.get("postgresql", 0)), "demand_index": 88, "scarcity_score": 8.3, "salary_premium_pct": "+20%"},
             ]
             return {
                 "total_visible_candidates": stats["total_visible"], "total_jds_analyzed": stats.get("total_jds_analyzed", 0),

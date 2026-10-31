@@ -29,7 +29,7 @@ class AnalyticsRepository:
         res = await self.db.execute(text("SELECT COUNT(*) FROM candidate_bookmarks"))
         return int(res.scalar() or 0)
 
-    async def get_paid_orders_ledger(self) -> tuple[float, List[Dict[str, Any]]]:
+    async def get_paid_orders_ledger(self, days_window: int | None = None) -> tuple[float, List[Dict[str, Any]]]:
         """Aggregate paid CV review GMV (cents -> VND equivalent) and fetch latest settled DB orders."""
         res = await self.db.execute(
             text("""
@@ -38,6 +38,7 @@ class AnalyticsRepository:
                         SELECT SUM(amount_paid_cents)
                         FROM cv_review_orders
                         WHERE order_status IN ('paid', 'in_review', 'completed')
+                          AND (CAST(:days AS int) IS NULL OR created_at >= NOW() - make_interval(days => CAST(:days AS int)))
                     ), 0) AS paid_cents,
                     COALESCE((
                         SELECT json_agg(t) FROM (
@@ -51,11 +52,13 @@ class AnalyticsRepository:
                             FROM cv_review_orders o
                             LEFT JOIN candidate_profiles p ON p.identity_id = o.candidate_identity_id
                             LEFT JOIN cv_review_packages pkg ON pkg.id = o.package_id
+                            WHERE (CAST(:days AS int) IS NULL OR o.created_at >= NOW() - make_interval(days => CAST(:days AS int)))
                             ORDER BY o.created_at DESC
                             LIMIT 4
                         ) t
                     ), '[]'::json) AS recent_orders
-            """)
+            """),
+            {"days": days_window},
         )
         row = res.mappings().first()
         if not row:
@@ -63,6 +66,25 @@ class AnalyticsRepository:
         # 1 USD cent ~= 250 VND for unified executive VND ledger
         db_gmv_vnd = float(row["paid_cents"] or 0) * 250.0
         return db_gmv_vnd, list(row["recent_orders"] or [])
+
+    async def get_recent_ats_history(self, limit: int = 4) -> List[Dict[str, Any]]:
+        res = await self.db.execute(
+            text("""
+                SELECT to_char(m.created_at, 'YYYY-MM-DD') AS date,
+                       COALESCE(m.ats_score, 80) AS score,
+                       COALESCE(jd.job_title, 'Senior Backend Engineer') AS target_role
+                FROM resume_jd_matches m
+                LEFT JOIN job_descriptions jd ON jd.id = m.job_description_id
+                ORDER BY m.created_at ASC
+                LIMIT :lim
+            """),
+            {"lim": limit},
+        )
+        return [dict(r) for r in res.mappings().all()]
+
+    async def get_open_career_roles_count(self) -> int:
+        res = await self.db.execute(text("SELECT COUNT(*) FROM career_postings WHERE is_active = TRUE"))
+        return int(res.scalar() or 0)
 
     async def get_unit_economics_telemetry(self) -> Dict[str, int]:
         """Single-roundtrip PostgreSQL query across identities, candidate_profiles, resume_jd_matches, and cv_review_orders."""

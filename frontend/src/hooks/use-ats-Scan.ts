@@ -75,27 +75,14 @@ export function useATSScan() {
 
   const tailorMutation = useMutation({
     mutationFn: async (payload: ATSScanPayload): Promise<TailorCVResponse> => {
-      try {
-        type TailorApiPayload = TailorCVResponse | (ATSScanResult & { tailored_cv_text?: string });
-        const res = await apiClient.post<TailorApiPayload>("/v1/match/tailor-cv", payload);
-        const tailoredText = res.data.tailored_cv_text || payload.cv_text;
-        const scanResult: ATSScanResult = "scan_result" in res.data ? res.data.scan_result : res.data;
-        if (scanResult && typeof scanResult.ats_score === "number") {
-          diagnostics.setResult(scanResult);
-        }
-        return { tailored_cv_text: tailoredText, scan_result: scanResult };
-      } catch {
-        const current = diagnostics.result;
-        const missing = current?.missing_skills ?? [];
-        const starRewrites = (current?.star_analysis ?? []).map((s) => s.suggested_star_rewrite).filter(Boolean);
-        const extraBullets = starRewrites.length
-          ? starRewrites.map((r) => `• ${r}`).join("\n")
-          : "• Engineered distributed microservices handling 45,000 RPS with 99.99% uptime, cutting P99 latency by 40%.";
-        const skillsLine = missing.length ? `\nCore JD Keywords: ${missing.join(", ")}` : "";
-        const tailoredText = `${payload.cv_text}\n${extraBullets}${skillsLine}`;
-        const scanResult = await diagnostics.scanCV({ ...payload, cv_text: tailoredText });
-        return { tailored_cv_text: tailoredText, scan_result: scanResult };
+      type TailorApiPayload = TailorCVResponse | (ATSScanResult & { tailored_cv_text?: string });
+      const res = await apiClient.post<TailorApiPayload>("/v1/match/tailor-cv", payload);
+      const tailoredText = res.data.tailored_cv_text || payload.cv_text;
+      const scanResult: ATSScanResult = "scan_result" in res.data ? res.data.scan_result : res.data;
+      if (scanResult && typeof scanResult.ats_score === "number") {
+        diagnostics.setResult(scanResult);
       }
+      return { tailored_cv_text: tailoredText, scan_result: scanResult };
     },
   });
 

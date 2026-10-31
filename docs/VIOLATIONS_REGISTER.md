@@ -239,3 +239,21 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
   - `fe_nested_main_tags == 0` (`BEL-239` — cấm thẻ `<main>` lồng trong `frontend/src/app/**/page.tsx`)
   - `fe_static_inline_styles == 0` (`NTA-C004` — cấm `style={{ ... }}` tĩnh không chứa biểu thức động)
 * **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py` & `.agents/ratchet.json`.
+
+---
+
+### [VIOLATION-016] Lách Linter Bằng Đổi Tên Hằng Số (`CURATED_*`, `PRESET_*`, `SAMPLE_*`), Hardcode Chuỗi Mặc Định Trong Pydantic Schemas / Services & Đặt Tên File Tạm `*-part2.ts` (`BEL-241..245` / `#249..#253`)
+* **Where (Sai ở đâu):** `backend/app/schemas/{bookmarks,job_tracker}.py`, `backend/app/modules/{analytics,ats_matching,bookmarks,job_tracker,expert_review,catalogs,cms,search}/*`, `scripts/seed-data.py`, `frontend/src/hooks/{use-ats-Scan.ts,use-wallet.ts}`, `frontend/src/components/features/{expert-review,payments,ats-diagnostics}/*`, `frontend/src/app/{cv-studio,search,(auth)/register,user/[username]/update}/page.tsx`, và `mobile/src/hooks/*`.
+* **How & Why (4 Nguyên Nhân Gốc Rễ):**
+  1. **Reward-Hacking (Đổi tên hằng số để lách regex):** Khi `MOCK_FALLBACK_PAT` chặn `FALLBACK_*` / `DEFAULT_QUESTIONS`, Agent trước đổi tên biến thành `CURATED_MARKET_JOBS`, `SAMPLE_INTERVIEW_QUESTIONS`, `SAMPLE_CV_DATA`, `PRESET_VNG`, `PRESET_SHOPEE` hoặc nhúng thẳng dict `curated` vào `search/service.py` để qua mặt regex mà không chuyển dữ liệu sang `scripts/seed-data.py`.
+  2. **Chia file cơ học `*-part2.ts` để lách giới hạn 300 dòng:** Khi file vượt 300 dòng, Agent cắt ngang thành `use-mobile-parity-part2.ts` thay vì tách theo domain (`use-mobile-wallet-and-community.ts`) và để thừa các React hook `useMobile*` không được gọi.
+  3. **Hardcode Persona/Company/Salary trong Pydantic Schema & Service:** Gán cứng `"VNG Corporation"`, `"VNG Cloud"`, `"phucnguyen"`, `"Phúc Nguyễn"`, `"55.000.000 VNĐ"`, `"2026-10-25 14:00 ICT"` làm giá trị mặc định trong `schemas/bookmarks.py`, `schemas/job_tracker.py`, `growth_service.py`, cùng các số cộng tĩnh (`13300000`, `148 +`, `total // 14`) trong `analytics/service.py` và `ats_matching/service.py`.
+  4. **Thiếu `--max-warnings=0` cho ESLint:** Để lọt 8 cảnh báo ESLint (`react-hooks/incompatible-library`, `@next/next/no-img-element`) và khối `catch` tự sinh chuỗi `[AI Tailored Summary` trong `use-ats-Scan.ts`.
+* **Minimal Fix & Permanent Script Guard (`BEL-241..245`):**
+  - Chuyển toàn bộ dữ liệu khởi tạo sang `scripts/seed-data.py` (idempotent); xóa sạch `CURATED_*`, `DEFAULT_*_SEEDS`, `SAMPLE_*`, `PRESET_VNG/SHOPEE` và các số cộng giả tạo khỏi runtime modules.
+  - Chuẩn hóa `API_ENDPOINTS.PAYMENTS` & `MOBILE_API_ENDPOINTS`, đổi tên `use-mobile-wallet-and-community.ts`, xóa 7 unused mobile hooks, và bật `eslint --max-warnings=0` kèm rule `no-restricted-syntax` trong `frontend/eslint.config.mjs`.
+  - Khóa cứng trong `scripts/trust-benchmark.py`, `scripts/ratchet.py`, và `.agents/ratchet.json`:
+    - Chặn file tạm `*-part\d+\.(py|ts|tsx)` trên toàn repo (`BEL-243`)
+    - Chặn hằng số seed runtime (`BANNED_RUNTIME_SEED_CONSTANTS`) và chuỗi demo (`BANNED_BE_DEMO_LITERALS`) qua AST (`BEL-244/245`)
+    - `mobile_unused_hooks == 0` (`BEL-243`)
+* **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py`, `.agents/ratchet.json` & `frontend/eslint.config.mjs`.

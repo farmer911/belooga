@@ -180,17 +180,6 @@ export function useBookMobileExpertOrderMutation(client: MobileApiClient = mobil
   });
 }
 
-export function useSubmitExpertOrderFeedbackMutation(client: MobileApiClient = mobileApiClient) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ orderId, input }: { orderId: string; input: ExpertOrderFeedbackInput }) =>
-      submitMobileExpertOrderFeedback(orderId, input, client),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: expertLeaderboardKeys.all });
-    },
-  });
-}
-
 export async function applyMobileExpertReviewer(
   input: ApplyExpertInput,
   client: MobileApiClient = mobileApiClient

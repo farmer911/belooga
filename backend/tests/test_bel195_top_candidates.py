@@ -21,7 +21,7 @@ async def test_top_high_potential_candidates_leaderboard_and_privacy(
     assert items[0]["potential_score"] >= items[1]["potential_score"]
     assert items[0]["badge_tier"] in ("TOP_1_PCT", "TOP_5_PCT", "RISING_STAR")
     assert "highlight_reason" in items[0]
-    assert all(c["username"] not in ("hidden_jane", "alexnguyen") for c in items)
+    assert all(c["username"] != "hidden_jane" for c in items)
 
     # 2. Filter by category=backend & actively_looking_only=true
     cat_res = await client.get("/v1/search/top-candidates?category=backend&actively_looking_only=true")

@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorDetail } from "@/services/api-client";
 import { useAuthStore } from "@/store/auth-store";
 import { useATSScan, ATSScanPayload, ATSScanHistoryItem } from "@/hooks/use-ats-Scan";
-import { PRESET_VNG, PRESET_SHOPEE } from "@/components/features/ats-diagnostics/ats-presets";
+import { ATS_TEMPLATE_BACKEND, ATS_TEMPLATE_FRONTEND } from "@/components/features/ats-diagnostics/ats-presets";
 import { ATSScorecard } from "@/components/features/ats-diagnostics/ats-scorecard";
 import { ATSPreviewCanvas } from "@/components/features/ats-diagnostics/ats-preview-canvas";
 import { ATSShareCardModal } from "@/components/features/ats-diagnostics/ats-share-card-modal";
@@ -27,10 +27,10 @@ export default function ATSDiagnosticsPage() {
   const user = useAuthStore((s) => s.user);
   const activeUsername = user?.username;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [jobTitle, setJobTitle] = useState(PRESET_VNG.job_title);
-  const [companyName, setCompanyName] = useState(PRESET_VNG.company_name || "");
-  const [jdText, setJdText] = useState(PRESET_VNG.jd_text);
-  const [cvText, setCvText] = useState(PRESET_VNG.cv_text);
+  const [jobTitle, setJobTitle] = useState(ATS_TEMPLATE_BACKEND.job_title);
+  const [companyName, setCompanyName] = useState(ATS_TEMPLATE_BACKEND.company_name || "");
+  const [jdText, setJdText] = useState(ATS_TEMPLATE_BACKEND.jd_text);
+  const [cvText, setCvText] = useState(ATS_TEMPLATE_BACKEND.cv_text);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isMomoOpen, setIsMomoOpen] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
@@ -113,8 +113,8 @@ export default function ATSDiagnosticsPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-typography-muted font-medium">Mẫu kiểm tra nhanh:</span>
-          <button onClick={() => applyPreset(PRESET_VNG)} className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading hover:text-typography-main rounded-md border border-surface-border transition-colors text-xs font-medium cursor-pointer">Senior Go @ VNG</button>
-          <button onClick={() => applyPreset(PRESET_SHOPEE)} className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading hover:text-typography-main rounded-md border border-surface-border transition-colors text-xs font-medium cursor-pointer">Frontend Lead @ Shopee</button>
+          <button onClick={() => applyPreset(ATS_TEMPLATE_BACKEND)} className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading hover:text-typography-main rounded-md border border-surface-border transition-colors text-xs font-medium cursor-pointer">Senior Go @ VNG</button>
+          <button onClick={() => applyPreset(ATS_TEMPLATE_FRONTEND)} className="px-2.5 py-1 bg-surface-page hover:bg-surface-divider text-typography-heading hover:text-typography-main rounded-md border border-surface-border transition-colors text-xs font-medium cursor-pointer">Frontend Lead @ Shopee</button>
         </div>
 
         <div className="flex items-center gap-2">

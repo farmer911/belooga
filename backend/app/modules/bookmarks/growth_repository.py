@@ -126,3 +126,25 @@ class GrowthRowsMixin:
                 {"pid": prof["id"], "sid": sid},
             )
         return str(prof["username"])
+
+    async def get_growth_hub_snapshot(self) -> dict[str, Any]:
+        row = (
+            await self.db.execute(
+                text("""
+                    SELECT
+                        COALESCE((SELECT username FROM candidate_profiles WHERE is_hidden = FALSE ORDER BY created_at ASC LIMIT 1), 'candidate') AS top_username,
+                        COALESCE((SELECT name FROM company_profiles ORDER BY avg_rating DESC LIMIT 1), 'Enterprise Cloud') AS top_company,
+                        (SELECT COUNT(*)::int FROM career_postings WHERE is_active = TRUE) AS open_roles
+                """)
+            )
+        ).mappings().first()
+        return dict(row) if row else {"top_username": "candidate", "top_company": "Enterprise Cloud", "open_roles": 3}
+
+    async def list_company_referral_slots(self, limit: int = 4) -> list[dict[str, Any]]:
+        rows = (
+            await self.db.execute(
+                text("SELECT slug, name, alumni, open_jobs FROM company_profiles ORDER BY avg_rating DESC LIMIT :lim"),
+                {"lim": limit},
+            )
+        ).mappings().all()
+        return [dict(r) for r in rows]

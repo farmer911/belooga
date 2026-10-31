@@ -158,15 +158,6 @@ export function useUpdateMobileJobStatusMutation() {
   });
 }
 
-export function useUpdateMobileJobMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ jobId, input }: { jobId: string; input: Partial<CreateTrackedJobInput> }) =>
-      updateMobileTrackedJob(jobId, input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: MOBILE_TRACKED_JOBS_QUERY_KEY }),
-  });
-}
-
 export function useDeleteMobileJobMutation() {
   const qc = useQueryClient();
   return useMutation({

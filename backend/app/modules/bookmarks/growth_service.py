@@ -89,7 +89,7 @@ class GrowthService:
 
     async def generate_outreach(self, payload: OutreachGeneratorRequest) -> OutreachGeneratorResponse:
         role = payload.job_title or payload.role_title or "Senior Software Engineer"
-        comp = payload.company_name or "VNG Corporation"
+        comp = payload.company_name or "Enterprise Partner"
         cover = (
             f"Kính gửi Hiring Manager tại {comp}, với kinh nghiệm tối ưu hệ thống phân tán đạt chuẩn SLA 99.99%, "
             f"tôi tự tin đóng góp trực tiếp vào vị trí {role}."
@@ -118,7 +118,7 @@ class GrowthService:
 
     async def generate_pitch_script(self, payload: PitchScriptRequest) -> PitchScriptResponse:
         role = payload.target_role or payload.role_title or "Principal Software Engineer"
-        uname = payload.username or "phucnguyen"
+        uname = (payload.username or "candidate").strip() or "candidate"
         skills = ", ".join(payload.top_skills[:3]) if payload.top_skills else "Golang, PostgreSQL 16 & Kubernetes"
         script = (
             f"[00:00 - 00:15] Xin chào, tôi là @{uname} ({role}), chuyên sâu {skills}.\n"
@@ -132,7 +132,7 @@ class GrowthService:
     ) -> CvAutoImportResponse:
         raw = (payload.raw_cv_text or "").strip()
         lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
-        full_name = lines[0] if lines and len(lines[0]) <= 60 else "Phúc Nguyễn"
+        full_name = lines[0] if lines and len(lines[0]) <= 60 else "Candidate Profile"
         headline = lines[1] if len(lines) > 1 and len(lines[1]) <= 90 else "Principal Distributed Systems Architect"
         low = raw.lower()
         skills = [s for s in TECH_SKILLS_DICT if s.lower() in low] or ["Golang", "PostgreSQL", "Kubernetes", "FastAPI"]
@@ -158,26 +158,37 @@ class GrowthService:
         return StealthModeResponse(stealth_enabled=payload.stealth_enabled, blocked_companies=payload.blocked_companies)
 
     async def get_growth_hub(self) -> GrowthHubResponse:
+        snap = await self.repo.get_growth_hub_snapshot()
+        uname = str(snap["top_username"])
+        comp = str(snap["top_company"])
         return GrowthHubResponse(
             github_impact={"total_stars": 640, "top_repo": "belooga-distributed-gateway", "prs_merged_90d": 184},
             culture_fit_radar={"engineering_autonomy": 95, "async_first": 92, "high_velocity": 96},
-            interview_calendar=[{"id": "cal-1", "company_name": "VNG Cloud", "stage": "System Design Loop", "scheduled_at": "2026-10-25 14:00 ICT", "prep_checked": True}],
+            interview_calendar=[{"id": "cal-1", "company_name": comp, "stage": "System Design Loop", "scheduled_at": "Upcoming", "prep_checked": True}],
             b2b_roi_defaults={"hires_count": 5, "estimated_savings_usd": 21000, "days_saved": 70},
-            qr_career_card={"username": "phucnguyen", "share_url": "https://belooga.vn/public/phucnguyen?ref=qr", "qr_matrix_token": "BEL-QR-PHUCNGUYEN-2026"},
-            smart_career_pulse={"match_alerts_count": 3, "top_matched_company": "VNG Cloud", "top_match_score_pct": 96.0},
+            qr_career_card={"username": uname, "share_url": f"/public/{uname}?ref=qr", "qr_matrix_token": f"BEL-QR-{uname.upper()}-2026"},
+            smart_career_pulse={"match_alerts_count": max(1, int(snap["open_roles"])), "top_matched_company": comp, "top_match_score_pct": 96.0},
         )
 
     async def list_referral_slots(self) -> List[ReferralSlotItemDTO]:
-        return [
-            ReferralSlotItemDTO(
-                id="ref-1", company_name="VNG Corporation", referrer_name="Minh Trần",
-                referrer_role="Staff Backend Engineer", target_positions=["Senior Golang", "Platform SRE"], bonus_vnd=15_000_000,
-            ),
-            ReferralSlotItemDTO(
-                id="ref-2", company_name="Grab Vietnam", referrer_name="Lan Nguyễn",
-                referrer_role="Engineering Manager", target_positions=["Principal Mobile RN", "Lead Data"], bonus_vnd=25_000_000,
-            ),
-        ]
+        rows = await self.repo.list_company_referral_slots()
+        slots: List[ReferralSlotItemDTO] = []
+        for idx, r in enumerate(rows, start=1):
+            alumni = r.get("alumni") or []
+            ref_person = alumni[0] if alumni and isinstance(alumni[0], dict) else {}
+            jobs = r.get("open_jobs") or []
+            positions = [str(j.get("title")) for j in jobs if isinstance(j, dict) and j.get("title")] or ["Senior Backend Engineer"]
+            slots.append(
+                ReferralSlotItemDTO(
+                    id=f"ref-{idx}",
+                    company_name=str(r["name"]),
+                    referrer_name=str(ref_person.get("full_name") or "Verified Alumni"),
+                    referrer_role=str(ref_person.get("role") or "Staff Engineer"),
+                    target_positions=positions,
+                    bonus_vnd=15_000_000 + (idx - 1) * 5_000_000,
+                )
+            )
+        return slots
 
     async def create_referral_request(
         self, payload: ReferralRequestCreate, identity_id: Optional[uuid.UUID] = None

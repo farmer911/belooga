@@ -152,6 +152,10 @@ export async function mobileRequest<T>(path: string, options: MobileRequestOptio
   return (rawText ? JSON.parse(rawText) : undefined) as T;
 }
 
+export const MOBILE_API_ENDPOINTS = {
+  PAYMENTS_MOMO_CREATE_QR: "/v1/payments/momo/create-qr",
+} as const;
+
 export const mobileApiClient = {
   get: <T>(path: string, headers?: Record<string, string>) =>
     mobileRequest<T>(path, { method: "GET", headers }),

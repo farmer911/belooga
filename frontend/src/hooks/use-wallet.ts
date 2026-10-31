@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/services/api-client";
+import { apiClient, API_ENDPOINTS } from "@/services/api-client";
 
 export type WalletTxType =
   | "TOPUP"
@@ -139,7 +139,7 @@ export function useMomoReturnStatus() {
         throw new Error("Invalid MoMo order id");
       }
       const safeOrderId = encodeURIComponent(orderId);
-      const order = (await apiClient.get(`/v1/payments/momo/order-status/${safeOrderId}`)).data;
+      const order = (await apiClient.get(API_ENDPOINTS.PAYMENTS.MOMO_ORDER_STATUS(safeOrderId))).data;
       if (order.status === "PAID") await queryClient.invalidateQueries({ queryKey: ["user-wallet"] });
       return order;
     },

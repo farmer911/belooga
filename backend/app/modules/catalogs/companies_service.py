@@ -18,27 +18,6 @@ from app.schemas.catalogs import (
     CompanyReviewCreateRequest,
 )
 
-# Generic sample questions shown under every company (not user data).
-SAMPLE_INTERVIEW_QUESTIONS: List[Dict[str, Any]] = [
-    {
-        "id": "iq-1",
-        "role_title": "Principal Golang Engineer",
-        "difficulty": "Hard",
-        "question_text": "Thiết kế cơ chế chống Double-Spend cho ví điện tử ở mức 20,000 TPS?",
-        "question": "Thiết kế cơ chế chống Double-Spend cho ví điện tử ở mức 20,000 TPS?",
-        "sample_answer_hint": "Sử dụng Idempotency Key + pg_advisory_xact_lock + Outbox Ledger.",
-    },
-    {
-        "id": "iq-2",
-        "role_title": "Senior AI Infrastructure",
-        "difficulty": "Medium",
-        "question_text": "Tối ưu độ trễ RAG hybrid search trên PostgreSQL 16 như thế nào?",
-        "question": "Tối ưu độ trễ RAG hybrid search trên PostgreSQL 16 như thế nào?",
-        "sample_answer_hint": "Kết hợp GIN TSVECTOR + pg_trgm pre-filter trước khi rerank.",
-    },
-]
-
-
 class CompaniesService:
     """Service layer for Company Directory search, multi-facet filtering, CRUD, and employee reviews."""
 
@@ -174,7 +153,7 @@ class CompaniesService:
         return await self.get_company(existing["slug"])
 
     async def list_interview_questions(self, slug: str) -> List[CompanyInterviewQuestionItemDTO]:
-        rows = await self.repo.list_interview_questions(slug) + SAMPLE_INTERVIEW_QUESTIONS
+        rows = await self.repo.list_interview_questions(slug)
         return [CompanyInterviewQuestionItemDTO(**r) for r in rows]
 
     async def add_interview_question(

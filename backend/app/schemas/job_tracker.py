@@ -28,7 +28,7 @@ class MarketJobItemDTO(BaseModel):
 
 class CareerGoalUpsertRequest(BaseModel):
     target_role: str = Field(..., min_length=1, max_length=255)
-    target_salary: str = Field(default="55.000.000 VNĐ", max_length=100)
+    target_salary: str = Field(default="Negotiable", max_length=100)
     preferred_skills: str = Field(default="Golang, PostgreSQL, Kubernetes", max_length=500)
     location: str = Field(default="Ho Chi Minh / Remote", max_length=150)
 
@@ -45,7 +45,7 @@ class CareerGoalResponse(BaseModel):
 class AiJobMatchRequest(BaseModel):
     target_role: Optional[str] = "Senior Backend Engineer"
     preferred_skills: Optional[str] = "Golang, PostgreSQL, Kubernetes"
-    expected_salary: Optional[str] = "55.000.000 VNĐ"
+    expected_salary: Optional[str] = "Negotiable"
 
 
 class AiJobMatchResponse(BaseModel):

@@ -96,22 +96,6 @@ class CmsRepository(UserPostsMixin):
         )
         return self._career_dict(res.mappings().one())
 
-    async def seed_default_career_postings(self, defaults: List[Dict[str, Any]]) -> None:
-        existing_titles = {j["title"].strip().lower() for j in await self.list_active_career_jobs()}
-        for item in defaults:
-            if item["title"].strip().lower() in existing_titles:
-                continue
-            await self._insert_career_posting(
-                item["title"], item["department"], item["location"], item["description"],
-                {
-                    "company_name": item.get("company_name", "Belooga"),
-                    "salary_range": item.get("salary_range", "$4,500 - $6,500 / month"),
-                    "skills": item.get("skills", ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"]),
-                    "is_partner": bool(item.get("is_partner", False)),
-                    "is_system_role": not bool(item.get("is_partner", False)),
-                },
-            )
-
     async def create_career_posting(self, title: str, department: str, location: str, description: str, meta: Dict[str, Any]) -> Dict[str, Any]:
         comp_norm = (meta.get("company_name") or "Belooga").strip().lower()
         title_norm = title.strip().lower()

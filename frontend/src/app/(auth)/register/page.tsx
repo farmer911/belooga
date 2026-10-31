@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Mail, Lock, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
@@ -54,13 +54,13 @@ export default function RegisterPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { firstName: "", lastName: "", username: "", email: "", password: "", agreeTerms: false },
   });
 
-  const username = watch("username") || "";
-  const email = watch("email") || "";
+  const username = useWatch({ control, name: "username" }) || "";
+  const email = useWatch({ control, name: "email" }) || "";
   const usernameStatus = useDebouncedAvailability(username, username.trim().length >= 3, "/v1/users/exists/username/?username=");
   const emailStatus = useDebouncedAvailability(email, email.includes("@"), "/v1/users/exists/email/?email=");
 

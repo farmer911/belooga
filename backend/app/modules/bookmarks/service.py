@@ -118,7 +118,7 @@ class BookmarkService:
             "stage": stage,
             "ats_score": 90,
             "years_experience": 5,
-            "expected_salary": "55.000.000 VNĐ",
+            "expected_salary": "Negotiable",
             "video_pitch_url": f"/videos/pitch-{cand['username']}.mp4",
             "matched_skills": skills[:4],
             "missing_skills": ["Kubernetes"] if "Kubernetes" not in skills else [],

@@ -14,74 +14,6 @@ from app.schemas.expert_review import (
     RegisteredExpertApplicationDTO,
 )
 
-DEFAULT_RANKED_EXPERTS: List[Dict[str, Any]] = [
-    {
-        "id": "exp-rank-1",
-        "rank": 1,
-        "full_name": "Dr. Trần Minh Quân",
-        "role_title": "Principal Distributed Systems Architect",
-        "company_name": "Grab Financial Group",
-        "category": "backend",
-        "badge_title": "Grandmaster Mentor",
-        "ranking_score": 98.4,
-        "rating": 4.98,
-        "completed_reviews_count": 186,
-        "avg_ats_lift_points": 28,
-        "avg_turnaround_hours": 11,
-        "interview_callback_rate_pct": 92,
-        "specialties": ["Golang", "PostgreSQL", "System Design", "High-Scale ATS"],
-    },
-    {
-        "id": "exp-rank-2",
-        "rank": 2,
-        "full_name": "Lê Hoàng Nam",
-        "role_title": "Staff AI & LLM Infrastructure Lead",
-        "company_name": "Shopee & Sea AI Lab",
-        "category": "ai",
-        "badge_title": "Top ATS Lifter",
-        "ranking_score": 96.2,
-        "rating": 4.95,
-        "completed_reviews_count": 142,
-        "avg_ats_lift_points": 31,
-        "avg_turnaround_hours": 14,
-        "interview_callback_rate_pct": 90,
-        "specialties": ["Python", "PyTorch", "FastAPI", "RAG & Agentic AI"],
-    },
-    {
-        "id": "exp-rank-3",
-        "rank": 3,
-        "full_name": "Nguyễn Thu Hà",
-        "role_title": "Engineering Manager & Hiring Committee Chair",
-        "company_name": "VNG Cloud",
-        "category": "management",
-        "badge_title": "Fastest SLA",
-        "ranking_score": 94.8,
-        "rating": 4.93,
-        "completed_reviews_count": 124,
-        "avg_ats_lift_points": 25,
-        "avg_turnaround_hours": 9,
-        "interview_callback_rate_pct": 89,
-        "specialties": ["STAR Behavioral", "Tech Lead CV", "Salary Negotiation"],
-    },
-    {
-        "id": "exp-rank-4",
-        "rank": 4,
-        "full_name": "Võ Thị Mai",
-        "role_title": "Staff Frontend & Design System Architect",
-        "company_name": "M_Service (MoMo)",
-        "category": "frontend",
-        "badge_title": "Top Frontend Mentor",
-        "ranking_score": 93.5,
-        "rating": 4.91,
-        "completed_reviews_count": 98,
-        "avg_ats_lift_points": 24,
-        "avg_turnaround_hours": 12,
-        "interview_callback_rate_pct": 88,
-        "specialties": ["React 19", "Next.js", "TypeScript", "UI/UX Portfolio"],
-    },
-]
-
-
 class ExpertLeaderboardService:
     """Service computing Expert Reviewer Leaderboard rankings and sorting."""
 
@@ -92,9 +24,9 @@ class ExpertLeaderboardService:
     async def get_leaderboard(
         self, category: Optional[str] = None, sort_by: str = "rank"
     ) -> List[RankedExpertItemDTO]:
-        items = [dict(e) for e in DEFAULT_RANKED_EXPERTS]
+        items: List[Dict[str, Any]] = []
         db_experts = await self.repo.list_experts(None)
-        seen_names = {e["full_name"].lower() for e in items}
+        seen_names: set[str] = set()
         for exp in db_experts:
             if exp.full_name.lower() in seen_names:
                 continue
@@ -106,6 +38,8 @@ class ExpertLeaderboardService:
                 else "management" if "manage" in cat_raw
                 else "backend"
             )
+            reviews_cnt = int(exp.total_reviews_count or 24)
+            rating_val = float(exp.rating or 4.95)
             items.append({
                 "id": str(exp.id),
                 "rank": len(items) + 1,
@@ -113,13 +47,13 @@ class ExpertLeaderboardService:
                 "role_title": exp.headline,
                 "company_name": exp.company,
                 "category": cat,
-                "badge_title": "Verified Mentor",
-                "ranking_score": round(float(exp.rating or 4.9) * 19.2, 1),
-                "rating": float(exp.rating or 4.95),
-                "completed_reviews_count": int(exp.total_reviews_count or 24),
-                "avg_ats_lift_points": 26,
+                "badge_title": "Grandmaster Mentor" if reviews_cnt >= 140 else "Verified Mentor",
+                "ranking_score": round(rating_val * 19.2 + min(4.0, reviews_cnt / 50.0), 1),
+                "rating": rating_val,
+                "completed_reviews_count": reviews_cnt,
+                "avg_ats_lift_points": 28 if cat == "ai" else 26,
                 "avg_turnaround_hours": max(8, int(exp.turn_around_days or 1) * 12),
-                "interview_callback_rate_pct": 90,
+                "interview_callback_rate_pct": 91 if reviews_cnt >= 100 else 89,
                 "specialties": ["ATS Calibration", "STAR Metrics", exp.company],
             })
             seen_names.add(exp.full_name.lower())

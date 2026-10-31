@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { mobileApiClient } from "../services/api-client";
 
@@ -209,12 +209,4 @@ export const useMockInterviewMutation = () =>
   useMutation({ mutationFn: (p: { role_title: string; question: string; answer_text: string }) => evaluateMobileMockInterview(p) });
 export const useSalaryNegotiationMutation = () =>
   useMutation({ mutationFn: (p: { role_title: string; current_offer_usd: number; target_offer_usd: number }) => generateMobileSalaryNegotiation(p) });
-export const useSkillAssessmentMutation = () =>
-  useMutation({ mutationFn: (p: { skill_name: string; correct_answers: number; total_questions: number }) => submitMobileSkillAssessment(p) });
-export function useClaimRewardMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (rewardId: string) => claimMobileWalletReward({ reward_id: rewardId }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["mobile-wallet-summary"] }),
-  });
-}
+

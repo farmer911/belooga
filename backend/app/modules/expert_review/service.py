@@ -30,7 +30,6 @@ class ExpertReviewService:
 
     async def list_experts(self, role_category: Optional[str] = None) -> List[ExpertProfileResponse]:
         async def _compute() -> List[Dict[str, Any]]:
-            await self._ensure_seed_data()
             experts = await self.repo.list_experts(role_category)
             return [ExpertProfileResponse.model_validate(e).model_dump(mode="json") for e in experts]
 
@@ -39,7 +38,6 @@ class ExpertReviewService:
 
     async def list_packages(self) -> List[CVReviewPackageResponse]:
         async def _compute() -> List[Dict[str, Any]]:
-            await self._ensure_seed_data()
             packages = await self.repo.list_packages()
             return [CVReviewPackageResponse.model_validate(p).model_dump(mode="json") for p in packages]
 
@@ -48,7 +46,6 @@ class ExpertReviewService:
 
     async def recommend_expert_and_package(self, target_role: str) -> ExpertMatchRecommendationResponse:
         async def _compute() -> Dict[str, Any]:
-            await self._ensure_seed_data()
             experts, packages = await self.repo.list_experts(None), await self.repo.list_packages()
             role_lower = target_role.lower()
             cat_match = (
@@ -74,7 +71,6 @@ class ExpertReviewService:
     async def create_order(
         self, candidate_identity_id: uuid.UUID, payload: CVReviewOrderCreateRequest
     ) -> CVReviewOrderResponse:
-        await self._ensure_seed_data()
         package = await self.repo.get_package_by_slug(payload.package_slug)
         if not package:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Review package '{payload.package_slug}' not found")
@@ -219,17 +215,3 @@ class ExpertReviewService:
             payment_reference=order.payment_reference, created_at=order.created_at,
             feedback=self._serialize_feedback(order.feedback) if order.feedback else None,
         )
-
-    async def _ensure_seed_data(self):
-        pkg_seeds = [
-            ("Essential Review", "essential", "Comprehensive ATS audit, keyword gap analysis, and bullet-point impact assessment.", 2900, 48, False, ["Full ATS Compatibility Scan & Score", "Keyword optimization for target job descriptions", "Grammar, formatting & brevity overhaul", "48-hour delivery guarantee"]),
-            ("Pro Deep-Dive", "pro", "Line-by-line rewrite suggestions, metric quantification, and 10-minute async video walkthrough.", 5900, 48, True, ["Everything in Essential Review", "Line-by-line bullet rewriting for high impact", "10-min Loom video walkthrough by Senior Leader", "Quantifiable metrics & XYZ-formula alignment", "1 round of follow-up Q&A messaging"]),
-            ("Elite 1-on-1 Fast-Track", "elite", "Everything in Pro plus 30-min live technical mock screen and direct referral consideration.", 9900, 24, False, ["Everything in Pro Deep-Dive", "Expedited 24-hour turnaround", "30-minute live 1-on-1 coaching session", "Mock interview calibration & pitch review", "Direct top-tier candidate pool spotlight"]),
-        ]
-        exp_seeds = [
-            ("Sarah Jenkins", "Staff Software Engineer @ Stripe", "10+ years scaling payment infrastructures. Interviewed 300+ backend and distributed system candidates.", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80", "Stripe", "Backend & Systems", 11, 4.98, 142, 2),
-            ("Alex Chen", "Head of Frontend Engineering @ Figma, ex-Uber", "Specializing in React, Next.js architecture, and Design Systems. Passionate about helping engineers stand out.", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80", "Figma", "Frontend & Web", 9, 4.95, 98, 2),
-            ("Marcus Vance", "AI Research Engineering Lead @ OpenAI", "LLM fine-tuning and ML infra lead. Reviewed 200+ ML and AI resumes for Silicon Valley research labs.", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80", "OpenAI", "AI & Machine Learning", 12, 5.00, 76, 1),
-        ]
-        await self.repo.seed_packages_if_empty(pkg_seeds)
-        await self.repo.seed_experts_if_empty(exp_seeds)

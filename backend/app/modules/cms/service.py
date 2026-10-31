@@ -24,12 +24,6 @@ STATIC_FAQS = [
     {"id": 4, "category": "Recruiters", "question": "How do recruiters contact candidates?", "answer": "Recruiters can review video pitches, verify timelines, and contact candidates directly via their verified email or phone."},
 ]
 
-DEFAULT_CAREER_JOBS = [
-    {"id": "c1", "title": "Staff Full-Stack Engineer", "company_name": "Belooga", "department": "Engineering", "location": "Remote / San Francisco", "salary_range": "$4,500 - $6,500 / month", "skills": ["Next.js", "FastAPI", "PostgreSQL", "TypeScript"], "is_partner": False, "description": "Build high-throughput async services and sleek Next.js interfaces."},
-    {"id": "c2", "title": "Lead Product Designer", "company_name": "Belooga", "department": "Design", "location": "San Francisco, CA", "salary_range": "$4,000 - $5,800 / month", "skills": ["Figma", "Design Systems", "UX Research"], "is_partner": False, "description": "Craft intuitive candidate workspaces and seamless WebRTC video studios."},
-    {"id": "c3", "title": "Head of Talent Partnerships", "company_name": "Belooga", "department": "Operations", "location": "New York, NY", "salary_range": "$4,200 - $6,000 / month", "skills": ["B2B Sales", "Talent Acquisition", "Partnerships"], "is_partner": False, "description": "Expand employer networks across top high-growth tech companies."},
-]
-
 
 class CmsService:
     """Service layer managing public content, community social feed, and moderation reporting."""
@@ -148,12 +142,7 @@ class CmsService:
         location: Optional[str] = None, q: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         async def _compute() -> List[Dict[str, Any]]:
-            jobs = await self.cms_repo.list_active_career_jobs()
-            if len(jobs) < 3:
-                await self.cms_repo.seed_default_career_postings(DEFAULT_CAREER_JOBS)
-                await self.db.commit()
-                jobs = await self.cms_repo.list_active_career_jobs()
-            return jobs
+            return await self.cms_repo.list_active_career_jobs()
 
         all_jobs = await _compute() if os.getenv("ENVIRONMENT") == "testing" else await platform_cache.get_or_set("cms:career_jobs", 60, _compute)
         out = [dict(j) for j in all_jobs]
@@ -215,8 +204,7 @@ class CmsService:
                 target_uuid = posting.id
                 matched_job = next((j for j in jobs if str(j.get("id")) == str(target_uuid)), None)
         except ValueError:
-            alias_map = {item["id"].lower(): item["title"].lower() for item in DEFAULT_CAREER_JOBS}
-            wanted_title = alias_map.get(clean_id.lower(), clean_id.lower().replace("-", " "))
+            wanted_title = clean_id.lower().replace("-", " ")
             for item in jobs:
                 if str(item.get("id") or "").lower() == clean_id.lower() or str(item.get("title") or "").lower() == wanted_title:
                     matched_job = item

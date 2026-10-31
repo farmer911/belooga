@@ -1,7 +1,14 @@
 import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '@/store/auth-store';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+export const API_ENDPOINTS = {
+  PAYMENTS: {
+    MOMO_CREATE_QR: '/v1/payments/momo/create-qr',
+    MOMO_ORDER_STATUS: (orderId: string) => `/v1/payments/momo/order-status/${orderId}`,
+  },
+} as const;
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

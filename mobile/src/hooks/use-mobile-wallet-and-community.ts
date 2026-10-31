@@ -184,14 +184,6 @@ export function useTopUpMobileWalletMutation() {
   });
 }
 
-export function useCompleteMobileEscrowMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: completeMobileExpertReviewEscrow,
-    onSuccess: () => qc.invalidateQueries({ queryKey: MOBILE_WALLET_QUERY_KEY }),
-  });
-}
-
 export function useTriggerMobileSalaryCrawlMutation() {
   return useMutation({ mutationFn: triggerMobileSalaryCrawl });
 }
@@ -210,14 +202,6 @@ export function useCreateMobileSocialBlogPostMutation() {
 
 export function useMobileCareerJobsQuery() {
   return useQuery({ queryKey: MOBILE_CAREER_JOBS_QUERY_KEY, queryFn: fetchMobileCareerJobs, staleTime: 30_000 });
-}
-
-export function useCreateMobileCareerJobMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: createMobileCareerJobPosting,
-    onSuccess: () => qc.invalidateQueries({ queryKey: MOBILE_CAREER_JOBS_QUERY_KEY }),
-  });
 }
 
 export function useApplyMobileCareerJobMutation() {

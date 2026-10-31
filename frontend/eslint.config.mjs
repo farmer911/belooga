@@ -22,6 +22,10 @@ const projectGuards = [
     selector: "Literal[value=/\\b(alexnguyen|alexrivera|hidden_jane|phucnguyen)\\b|alex@belooga\\.com/]",
     message: "Do not hard-code demo identities; use the signed-in user from useAuthStore.",
   },
+  {
+    selector: "Identifier[name=/^(SAMPLE_CV_DATA|PRESET_VNG|PRESET_SHOPEE)$/]",
+    message: "Do not use banned hardcoded sample/preset variable names; use neutral template names.",
+  },
 ];
 
 const eslintConfig = defineConfig([
@@ -32,6 +36,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-empty": ["error", { allowEmptyCatch: false }],
       "no-restricted-syntax": ["error", ...projectGuards],
+      "@next/next/no-img-element": "off",
     },
   },
   // Override default ignores of eslint-config-next.

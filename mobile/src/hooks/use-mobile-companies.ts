@@ -59,7 +59,7 @@ export const companyAlumniItemSchema = z.object({
 });
 
 export const companyProfileDetailSchema = companySummarySchema.extend({
-  website_url: z.string().default('https://belooga.vn'),
+  website_url: z.string().default(''),
   description: z.string().default('Verified technology employer on Belooga.'),
   benefits: z.array(z.string()).default([]),
   open_jobs: z.array(companyJobItemSchema).default([]),
@@ -180,16 +180,6 @@ export function useMobileCompanyProfileQuery(
     queryKey: companiesKeys.detail(slug),
     queryFn: () => fetchMobileCompanyProfile(slug, client),
     enabled: Boolean(slug),
-  });
-}
-
-export function useCreateMobileCompanyMutation(client: MobileApiClient = mobileApiClient) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateCompanyInput) => createMobileCompanyProfile(input, client),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: companiesKeys.all });
-    },
   });
 }
 
