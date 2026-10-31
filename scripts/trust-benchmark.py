@@ -393,6 +393,10 @@ l_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "lin
 if l_proc.returncode != 0:
     violations["6. Memory Cap & Skill SSOT"].append("scripts/lint-skills.py reported errors (or failed stdlib -I -S isolation check)")
 
+dt_proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "sync-design-tokens.py"), "--check"], capture_output=True, text=True, encoding="utf-8")
+if dt_proc.returncode != 0:
+    violations["6. Memory Cap & Skill SSOT"].append(f"scripts/sync-design-tokens.py reported token drift: {dt_proc.stdout.strip()}")
+
 # Env SSOT Parity & Production Secret Guard
 env_example = ROOT / ".env.example"
 if not env_example.exists():

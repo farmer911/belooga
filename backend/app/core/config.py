@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "development"
     DATABASE_URL: str = "postgresql+asyncpg://belooga:belooga_secret_password@postgres:5432/belooga_db"
+    DATABASE_READ_URL: Optional[str] = None
     REDIS_URL: str = "redis://localhost:6379/0"
     GATEWAY_REDIS_ENABLED: bool = False  # only consulted when ENVIRONMENT == "testing"
 
@@ -91,6 +92,10 @@ class Settings(BaseSettings):
     @property
     def public_api_url(self) -> str:
         return self.PUBLIC_API_URL.rstrip("/")
+
+    @property
+    def read_database_url(self) -> str:
+        return (self.DATABASE_READ_URL or self.DATABASE_URL).strip()
 
 
 @lru_cache

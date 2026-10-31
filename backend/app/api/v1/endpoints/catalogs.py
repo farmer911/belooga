@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
 from app.core.security import AuthenticatedUser, get_current_user, require_role
 from app.modules.catalogs import CatalogsService, CompaniesService
 from app.schemas.catalogs import (
@@ -25,14 +25,14 @@ router = APIRouter()
 
 
 @router.get("/profile/skills/", response_model=List[str], tags=["Domain 7: Master Catalogs"])
-async def list_skills(db: AsyncSession = Depends(get_db)):
+async def list_skills(db: AsyncSession = Depends(get_read_db)):
     return await CatalogsService(db).list_skills()
 
 
 @router.get("/catalogs/skills", response_model=List[CatalogItemResponse], tags=["Domain 7: Master Catalogs"])
 async def list_catalog_skills(
     q: Optional[str] = Query("", description="Filter skills by keyword"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_read_db),
 ):
     return await CatalogsService(db).list_skill_catalog(q=q or "")
 
