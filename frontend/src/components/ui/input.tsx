@@ -20,7 +20,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "w-full rounded-lg border bg-surface-card px-3.5 py-2.5 text-sm text-typography-main placeholder:text-typography-muted transition-all",
           "border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent",
           "disabled:cursor-not-allowed disabled:bg-surface-divider disabled:opacity-60",
-          error && "border-red-500 text-red-950 focus:ring-red-400 focus:border-transparent",
+          error && "border-status-danger text-status-danger focus:ring-status-danger/40 focus:border-transparent",
           leftIcon && "pl-10",
           rightIcon && "pr-10",
           className

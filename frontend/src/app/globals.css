@@ -32,6 +32,16 @@
   --status-warning: #f59e0b;
   --status-danger: #ef4444;
   --status-info: #39a0e8;
+
+  /* Primer Tier 3 Component Tokens */
+  --component-video-play-size: 54px;
+  --component-video-play-bg: #ffffff;
+  --component-video-play-icon: #5bbbae;
+  --component-card-radius: 20px;
+  --component-card-padding: 16px;
+  --component-button-min-height: 44px;
+  --component-button-radius: 14px;
+  --component-pill-radius: 999px;
 }
 
 .dark {
@@ -128,9 +138,9 @@ body {
 
 /* 54px White Circle */
 .video-play-icon {
-  width: 54px;
-  height: 54px;
-  background: #ffffff;
+  width: var(--component-video-play-size);
+  height: var(--component-video-play-size);
+  background: var(--component-video-play-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -151,6 +161,15 @@ body {
   height: 0;
   border-style: solid;
   border-width: 8px 0 9px 13px;
-  border-color: transparent transparent transparent #5bbbae;
+  border-color: transparent transparent transparent var(--component-video-play-icon);
   margin-left: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

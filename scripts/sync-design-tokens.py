@@ -8,6 +8,7 @@ Usage:
     python3 scripts/sync-design-tokens.py --check
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ TOKENS_JSON = ROOT / "tokens" / "design-tokens.json"
 GLOBALS_CSS = ROOT / "frontend" / "src" / "app" / "globals.css"
 FE_TOKENS_TS = ROOT / "frontend" / "src" / "lib" / "design-tokens.ts"
 MOBILE_TOKENS_TS = ROOT / "mobile" / "src" / "theme" / "tokens.ts"
+PDF_GEN_PY = ROOT / "backend" / "app" / "services" / "pdf_generator.py"
 
 
 def check_parity() -> list[str]:
@@ -34,6 +36,7 @@ def check_parity() -> list[str]:
     css_txt = GLOBALS_CSS.read_text(encoding="utf-8") if GLOBALS_CSS.exists() else ""
     fe_ts_txt = FE_TOKENS_TS.read_text(encoding="utf-8") if FE_TOKENS_TS.exists() else ""
     mob_ts_txt = MOBILE_TOKENS_TS.read_text(encoding="utf-8") if MOBILE_TOKENS_TS.exists() else ""
+    pdf_txt = PDF_GEN_PY.read_text(encoding="utf-8") if PDF_GEN_PY.exists() else ""
 
     for mode in ("light", "dark"):
         sem = doc["semantic"].get(mode, {})
@@ -52,6 +55,22 @@ def check_parity() -> list[str]:
                 errors.append(f"frontend/src/lib/design-tokens.ts (neumorphic.{group}.{key}) missing '{val}'")
             if key in ("page", "primary", "heading", "body", "success", "warning", "danger") and val not in mob_ts_txt:
                 errors.append(f"mobile/src/theme/tokens.ts (neumorphic.{group}.{key}) missing '{val}'")
+
+    comp = doc["component"]
+    vp_size = f"--component-video-play-size: {comp['videoPlayButton']['sizePx']}px;"
+    if vp_size not in css_txt:
+        errors.append(f"globals.css missing '{vp_size}'")
+    if "prefers-reduced-motion: reduce" not in css_txt:
+        errors.append("globals.css missing '@media (prefers-reduced-motion: reduce)'")
+    if "COMPONENT_TOKENS" not in mob_ts_txt:
+        errors.append("mobile/src/theme/tokens.ts missing COMPONENT_TOKENS")
+
+    if re.search(r"#[0-9a-fA-F]{3,8}\b", pdf_txt):
+        errors.append("backend/app/services/pdf_generator.py contains raw #hex literals instead of PDF_DESIGN_TOKENS")
+
+    for mob_screen in sorted((ROOT / "mobile" / "app").rglob("*.tsx")):
+        if re.search(r"#[0-9a-fA-F]{3,8}\b", mob_screen.read_text(encoding="utf-8")):
+            errors.append(f"{mob_screen.relative_to(ROOT)} contains raw #hex literal")
 
     return errors
 

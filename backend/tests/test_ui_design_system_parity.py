@@ -91,3 +91,51 @@ def test_no_mistakes_gate_and_evidence_invariants():
         assert "Simplification Pass" in skill_txt
         assert "Independent Reviewer" in skill_txt
 
+
+def test_cross_platform_primer_design_system_best_practices():
+    """Verify Web CSS/UI primitives, Mobile RN screens/tokens, and Backend ReportLab PDF obey Primer SSOT."""
+    import subprocess
+    import sys
+    from app.services.pdf_generator import PDF_DESIGN_TOKENS, _build_pdf_sync
+
+    # 1. Backend ReportLab PDF generator loads tokens from tokens/design-tokens.json with zero raw #hex literals
+    pdf_src = (ROOT / "backend" / "app" / "services" / "pdf_generator.py").read_text(encoding="utf-8")
+    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", pdf_src), "pdf_generator.py must not hardcode raw #hex strings"
+    assert PDF_DESIGN_TOKENS["brand"]["primary"] == "#5bbbae"
+    row = type("Row", (), {"first_name": "Lan", "last_name": "Tran", "headline": "SWE", "location": "VN", "seeking_status": "Open", "bio": "Bio"})()
+    pdf_bytes = _build_pdf_sync(row, [], [], ["Python"], "lantran", is_owner=False)
+    assert pdf_bytes.startswith(b"%PDF-")
+
+    # 2. Web globals.css includes Tier 3 component custom properties and prefers-reduced-motion accessibility rule
+    css_txt = (FE_SRC / "app" / "globals.css").read_text(encoding="utf-8")
+    assert "--component-video-play-size: 54px;" in css_txt
+    assert "prefers-reduced-motion: reduce" in css_txt
+
+    # 3. Web UI primitives & common molecules use semantic status-* / surface-* tokens (zero dark-mode-breaking red-950/red-50/slate-100)
+    for rel in (
+        "components/ui/button.tsx",
+        "components/ui/input.tsx",
+        "components/ui/textarea.tsx",
+        "components/ui/badge.tsx",
+        "components/common/form-field.tsx",
+        "components/common/confirm-dialog.tsx",
+        "components/common/error-fallback.tsx",
+        "components/common/theme-toggle.tsx",
+    ):
+        txt = (FE_SRC / rel).read_text(encoding="utf-8")
+        for forbidden in ("text-red-950", "bg-red-50", "bg-red-100", "disabled:bg-slate-100"):
+            assert forbidden not in txt, f"{rel} still uses dark-mode-breaking '{forbidden}'"
+        assert "status-" in txt, f"{rel} must bind status states to Primer semantic status-* tokens"
+
+    # 4. Mobile screens have zero raw #hex literals and consume COMPONENT_TOKENS from mobile/src/theme/tokens.ts
+    for p in sorted((ROOT / "mobile" / "app").rglob("*.tsx")):
+        src = p.read_text(encoding="utf-8")
+        assert not re.search(r"#[0-9a-fA-F]{3,8}\b", src), f"Mobile screen {p.relative_to(ROOT)} contains raw #hex literal"
+    mob_ui = (ROOT / "mobile" / "src" / "lib" / "ui.tsx").read_text(encoding="utf-8")
+    assert "COMPONENT_TOKENS" in mob_ui
+
+    # 5. sync-design-tokens.py --check exits 0
+    proc = subprocess.run([sys.executable, "-I", "-S", str(ROOT / "scripts" / "sync-design-tokens.py"), "--check"], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+

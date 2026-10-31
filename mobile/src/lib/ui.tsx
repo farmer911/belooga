@@ -10,7 +10,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
-import { getSemanticTokens, NEUMORPHIC_TOKENS as N } from "@/theme/tokens";
+import { COMPONENT_TOKENS as C, getSemanticTokens, NEUMORPHIC_TOKENS as N } from "@/theme/tokens";
 
 const T = getSemanticTokens("neumorphic");
 
@@ -211,14 +211,14 @@ const styles = StyleSheet.create({
   pageContent: { padding: 16, gap: 14 },
   card: {
     backgroundColor: N.extrudedCard,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: C.card.radiusPx,
+    padding: C.card.paddingPx,
     gap: 12,
     boxShadow: N.dualExtrudedShadow,
   },
   well: {
     backgroundColor: N.recessedWell,
-    borderRadius: 14,
+    borderRadius: C.button.radiusPx,
     padding: 12,
     gap: 8,
     boxShadow: N.insetRecessedShadow,
@@ -228,9 +228,9 @@ const styles = StyleSheet.create({
     backgroundColor: N.extrudedCard,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    padding: 16,
+    borderBottomLeftRadius: C.card.paddingPx,
+    borderBottomRightRadius: C.card.paddingPx,
+    padding: C.card.paddingPx,
     gap: 12,
     boxShadow: N.dualExtrudedShadow,
   },
@@ -241,26 +241,26 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: N.recessedWell,
     color: N.headingText,
-    borderRadius: 14,
+    borderRadius: C.button.radiusPx,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    minHeight: 44,
+    minHeight: C.button.minHeightPx,
     boxShadow: N.insetRecessedShadow,
   },
   multiline: { minHeight: 80, textAlignVertical: "top" },
   button: {
     backgroundColor: N.extrudedCard,
-    borderRadius: 14,
+    borderRadius: C.button.radiusPx,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    minHeight: 44,
+    minHeight: C.button.minHeightPx,
     justifyContent: "center",
     alignItems: "center",
     boxShadow: N.dualExtrudedShadow,
   },
   inset: { backgroundColor: N.recessedWell, boxShadow: N.insetRecessedShadow },
   buttonLabel: { fontWeight: "700", fontSize: 13, textAlign: "center" },
-  pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, alignSelf: "flex-start" },
+  pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: C.pill.radiusPx, alignSelf: "flex-start" },
   pillLabel: { fontSize: 11, fontWeight: "700" },
 });

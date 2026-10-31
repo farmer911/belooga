@@ -15,6 +15,7 @@ import {
 } from "@/hooks/use-mobile-studio";
 import { Body, Button, Card, ErrorText, Field, H1, H2, Pill, Row, Screen, Well } from "@/lib/ui";
 import { useMobileAuthStore } from "@/store/auth-store";
+import { COMPONENT_TOKENS, MOBILE_THEME_TOKENS } from "@/theme/tokens";
 
 const MAX_PITCH_SECONDS = 60;
 
@@ -221,5 +222,10 @@ export default function StudioScreen() {
 }
 
 const styles = StyleSheet.create({
-  cameraFrame: { height: 360, borderRadius: 16, overflow: "hidden", backgroundColor: "#000" },
+  cameraFrame: {
+    height: 360,
+    borderRadius: COMPONENT_TOKENS.card.radiusPx,
+    overflow: "hidden",
+    backgroundColor: MOBILE_THEME_TOKENS.dark.surface.page,
+  },
 });
