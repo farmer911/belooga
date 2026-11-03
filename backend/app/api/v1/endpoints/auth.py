@@ -85,7 +85,7 @@ async def refresh_tokens(
 @router.get("/auth/me/", response_model=UserProfileDTO, tags=["Domain 1: Identity & Sessions"])
 async def get_current_session_user(
     current_user: AuthenticatedUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_read_db),
+    db: AsyncSession = Depends(get_db),  # primary, not replica: read-your-writes after profile updates
 ):
     return await AuthService(db).get_current_session_user(current_user.id)
 

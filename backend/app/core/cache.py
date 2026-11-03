@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
+import uuid
 
 import redis.asyncio as aioredis
 
@@ -20,6 +21,7 @@ class AsyncTieredCache:
     def __init__(self, namespace: str = "belooga", l1_max_size: int = 4096):
         self.namespace = namespace
         self.l1_max_size = l1_max_size
+        self.pod_id = uuid.uuid4().hex  # tags our own Pub/Sub invalidations so the listener skips them
         # Maps full_key -> (fresh_until_monotonic, stale_until_monotonic, value)
         self._l1: OrderedDict[str, Tuple[float, float, Any]] = OrderedDict()
         self._inflight: Dict[str, asyncio.Future[Any]] = {}
@@ -61,20 +63,33 @@ class AsyncTieredCache:
             self._l1.pop(k, None)
         return len(keys_to_drop)
 
+    async def run_invalidation_listener(self, retry_seconds: float = 1.0) -> None:
+        """Subscribe to `<namespace>:inval` and drop L1 prefixes invalidated by other pods (runs until cancelled)."""
+        while True:
+            r_client = await self._get_redis()
+            if r_client is None:
+                await asyncio.sleep(retry_seconds)
+                continue
+            try:
+                async with r_client.pubsub() as pubsub:
+                    await pubsub.subscribe(f"{self.namespace}:inval")
+                    self._close_circuit()
+                    while True:
+                        # Explicit timeout: an idle channel returns None instead of hitting socket_timeout.
+                        msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                        if msg is None:
+                            continue
+                        pod, _, prefix = msg["data"].partition("|")
+                        if pod != self.pod_id and prefix:
+                            self.apply_remote_invalidation(prefix)
+            except Exception as exc:  # CancelledError is a BaseException, so shutdown still propagates
+                self._trip_circuit(10.0)
+                logger.warning("Redis invalidation listener failed, retrying after circuit cooldown: %s", type(exc).__name__)
+                await asyncio.sleep(retry_seconds)
+
     def get_stats(self) -> Dict[str, Any]:
-        total_lookups = (
-            self._metrics["l1_hits"]
-            + self._metrics["l2_hits"]
-            + self._metrics["stale_swr_hits"]
-            + self._metrics["misses"]
-            + self._metrics["coalesced_requests"]
-        )
-        effective_hits = (
-            self._metrics["l1_hits"]
-            + self._metrics["l2_hits"]
-            + self._metrics["stale_swr_hits"]
-            + self._metrics["coalesced_requests"]
-        )
+        effective_hits = sum(self._metrics[k] for k in ("l1_hits", "l2_hits", "stale_swr_hits", "coalesced_requests"))
+        total_lookups = effective_hits + self._metrics["misses"]
         hit_ratio = round((effective_hits / total_lookups) * 100.0, 2) if total_lookups > 0 else 100.0
         return {
             **self._metrics,
@@ -110,18 +125,8 @@ class AsyncTieredCache:
 
     def _l1_get(self, full_key: str) -> Tuple[bool, Any]:
         """Return (is_fresh_hit, value). Used by callers and tests checking fresh L1 state."""
-        entry = self._l1.get(full_key)
-        if entry is None:
-            return False, None
-        fresh_until, stale_until, val = entry
-        now = time.monotonic()
-        if now >= stale_until:
-            self._l1.pop(full_key, None)
-            return False, None
-        if now >= fresh_until:
-            return False, val
-        self._l1.move_to_end(full_key)
-        return True, val
+        status, val = self._l1_lookup_with_swr(full_key)
+        return status == "FRESH", val
 
     def _l1_lookup_with_swr(self, full_key: str) -> Tuple[str, Any]:
         """Return ('FRESH' | 'STALE' | 'MISS', value)."""
@@ -262,7 +267,7 @@ class AsyncTieredCache:
                         await r_client.delete(*keys)
                     if cursor == 0:
                         break
-                await r_client.publish(f"{self.namespace}:inval", target)
+                await r_client.publish(f"{self.namespace}:inval", f"{self.pod_id}|{target}")
                 self._close_circuit()
             except Exception as exc:
                 self._trip_circuit(10.0)

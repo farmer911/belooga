@@ -45,7 +45,7 @@ Availability math: parts in sequence multiply (`A_total = A1 * A2`), parts in pa
 
 ### Database
 - **Master-slave replication:** `get_read_db` uses `DATABASE_READ_URL` (falls back to primary) in `backend/app/core/database.py`. Mutations always `get_db`.
-- **Replication lag trap:** a read that must reflect the caller's own write (read-your-writes, e.g. `/auth/me/` right after a profile update) must not go to a lagging replica.
+- **Replication lag trap:** a read that must reflect the caller's own write (read-your-writes, e.g. `/auth/me/` right after a profile update) must not go to a lagging replica; `/auth/me/` uses `get_db` for this reason.
 - **Connection budget:** `pool_size + max_overflow` per pod x max HPA replicas must stay below PostgreSQL `max_connections` (comment in `backend/app/core/database.py`). Recheck when raising `maxReplicas`.
 - **Master-master, federation, sharding:** not adopted. Single primary is enough until write QPS or table size outgrows one node; partition by time (`created_at`) or tenant before sharding.
 - **Denormalization (adopted):** `search_vector` TSVECTOR with GIN (ADR-005), `json_agg` profile bundle reads (`ProfileRepository.get_full_profile_bundle`).
@@ -59,7 +59,7 @@ Availability math: parts in sequence multiply (`A_total = A1 * A2`), parts in pa
   - Cache-aside (adopted): `platform_cache.get_or_set(key, ttl, loader)` with per-key singleflight against stampede.
   - Refresh-ahead (adopted, as SWR): `stale_ttl_seconds` serves stale while one loader refreshes.
   - Write-through / write-behind: not adopted. Writes go to PostgreSQL, then invalidate.
-- **Invalidation (known gap):** `invalidate_prefix` purges local L1 and Redis L2, then publishes `<namespace>:inval`. No production subscriber calls `apply_remote_invalidation`, so other pods keep their L1 copy until TTL. Keep L1 TTL short for mutable data until the subscriber is wired.
+- **Invalidation (cross-pod):** `invalidate_prefix` purges local L1 and Redis L2, then publishes `<pod_id>|<prefix>` on `<namespace>:inval`. Every pod's `run_invalidation_listener` (started in the FastAPI `lifespan`) skips its own `pod_id` and calls `apply_remote_invalidation`. Pub/Sub is fire-and-forget: events published while a listener is disconnected (Redis outage, circuit `OPEN`) are lost, so L1 TTL on mutable data stays the backstop.
 - **Circuit breaker:** Redis failures trip `CLOSED -> OPEN`, cooldown -> `HALF_OPEN`, success -> `CLOSED` (`circuit_state` in `backend/app/core/cache.py`, `get_gateway_circuit_state` in `backend/app/core/gateway.py`). Cache and gateway fail open to L1.
 
 ### Asynchronism
@@ -79,7 +79,7 @@ Availability math: parts in sequence multiply (`A_total = A1 * A2`), parts in pa
 
 ## 4. Review Checklist (cite in `be-code-review` and `/investigate`)
 - Does every new read pick `get_db` vs `get_read_db` on purpose, with read-your-writes in mind?
-- Does every mutation of cached data invalidate the right prefix after `commit()`, and is the L1 TTL acceptable given the missing cross-pod subscriber?
+- Does every mutation of cached data invalidate the right prefix after `commit()`, and is the L1 TTL acceptable for events lost while a pod's Pub/Sub listener is disconnected?
 - Is anything that must not be lost routed through `event_stream`? Reject.
 - Is a new hot path cache-aside with singleflight, or does it hit PostgreSQL per request?
 - Does the change add pods or pool size? Recheck the connection budget.

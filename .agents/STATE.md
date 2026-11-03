@@ -14,4 +14,4 @@
 - [x] 2. GREEN: fix discovery rule, correct cache/event claims in skills.
 - [x] 3. Write BE + FE references; link from investigate, belooga-supervisor, be/fe-code-review, BE/FE engineering skills.
 - [x] 4. Sync stubs, render facts, lint, trust-benchmark 100%, DB-free gate tests PASS (DB pytest + audit-truth need Postgres: run in CI).
-- [ ] Follow-up (code, separate ticket): wire Redis Pub/Sub subscriber -> `apply_remote_invalidation`; route `/auth/me/` to primary.
+- [x] Follow-up (code, BEL-251): lifespan Redis Pub/Sub listener `run_invalidation_listener` -> `apply_remote_invalidation` (skips own `pod_id`); `/auth/me/` on `get_db`.

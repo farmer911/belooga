@@ -40,8 +40,13 @@ from app.api.v1.endpoints.bookmarks import router as bookmarks_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
-    await event_stream.drain_all()
+    inval_listener = asyncio.create_task(platform_cache.run_invalidation_listener())
+    try:
+        yield
+    finally:
+        inval_listener.cancel()
+        await asyncio.gather(inval_listener, return_exceptions=True)
+        await event_stream.drain_all()
 
 def docs_kwargs(s: Settings) -> dict:
     """/docs, /redoc, /openapi.json are off in production unless ENABLE_API_DOCS=1."""

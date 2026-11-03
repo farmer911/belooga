@@ -265,5 +265,5 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
   2. `invalidate_prefix` có `publish` nhưng không có subscriber production nào gọi `apply_remote_invalidation`; test `test_bel246_*` chỉ gọi hàm trực tiếp nên skill được viết theo ý định, không theo code.
   3. `event_stream.publish` là hàm sync với chữ ký `(event_type, partition_key, payload)`, in-memory per-pod, `deque(maxlen=4096)` bỏ event cũ nhất khi đầy.
 * **Minimal Fix & Script Guard:** `scripts/lint-skills.py` check 7b báo lỗi mọi tên file trần `*.py` / `*.ts(x)` trong `.agents/` không có trong `git ls-files` (bỏ qua dòng rationalization `| "...`). Sửa 5 skill theo code thật; thêm `belooga-backend-engineering/references/system-design-primer.md` (mục Known gap) và `belooga-frontend-engineering/references/frontend-system-design.md`.
-* **Còn mở (code):** wire subscriber Redis Pub/Sub -> `apply_remote_invalidation`; chuyển `/auth/me/` về `get_db` khi bật replica.
-* **Trạng thái:** 🔒 Tên file bịa đã khóa trong `scripts/lint-skills.py`; claim cross-pod đã sửa thành Known gap.
+* **Đã sửa (code, BEL-251):** `AsyncTieredCache.run_invalidation_listener` (khởi động trong `lifespan` của `backend/app/main.py`) subscribe `<namespace>:inval`, bỏ qua event của chính pod (`pod_id`) và gọi `apply_remote_invalidation`; `/auth/me/` chuyển về `get_db`. Test: `backend/tests/test_bel251_cache_pubsub_and_me_primary.py`.
+* **Trạng thái:** 🔒 Tên file bịa đã khóa trong `scripts/lint-skills.py`; cross-pod invalidation và read-your-writes `/auth/me/` đã có code + test (BEL-251).
