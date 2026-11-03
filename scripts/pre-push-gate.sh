@@ -30,7 +30,7 @@ echo "[Pre-Push Gate] 1/4 Verifying Skill SSOT, Ratchet & Anti-Deception Benchma
 echo "[Pre-Push Gate] 2/4 Verifying Frontend & Mobile TypeScript Compilation + Mobile Tests..."
 (cd frontend && bun x tsc --noEmit)
 if [ -d "mobile" ]; then
-    (cd mobile && bun x tsc --noEmit && bun test)
+    (cd mobile && bun x tsc --noEmit && bun run test)
 fi
 
 echo "[Pre-Push Gate] 3/4 Running Backend Pytest Suite..."

@@ -80,7 +80,7 @@ python3 scripts/sync-design-tokens.py --check
 python3 scripts/ratchet.py && python3 scripts/trust-benchmark.py
 backend/.venv/bin/pytest backend/tests/test_bel241_245_zero_hardcodes_and_ast_gates.py backend/tests/test_bel246_primer_system_and_design_tokens.py -q
 cd frontend && bun x tsc --noEmit && bun run lint && bun test
-cd mobile && bun x tsc --noEmit && bun test
+cd mobile && bun x tsc --noEmit && bun run test
 cd qc && bun run test:e2e
 cd qc && bun run test:visual
 bash mobile/scripts/build-apk.sh
