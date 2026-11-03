@@ -30,6 +30,7 @@ Never rubber-stamp the user's initial assumption. Challenge the request across 3
 1. **Root Cause vs. Symptom:** Is the user asking to patch a symptom while the real bug lives in a shared hook/service/schema?
 2. **YAGNI & Business ROI:** Can 50% of the proposed scope be eliminated without hurting Candidate/Recruiter value?
 3. **Blast Radius & Failure Modes:** What breaks under concurrent requests, row locks (`with_for_update`), async event loop (`asyncio.to_thread`), IDOR checks, or CSS specificity?
+4. **System Design (features, scaling, data flow):** Walk the design method and estimate first: backend `.agents/skills/belooga-backend-engineering/references/system-design-primer.md` (sections 1, 4, 6), frontend `.agents/skills/belooga-frontend-engineering/references/frontend-system-design.md` (sections 1, 9). Name the trade-off (consistency, latency, cost) each option makes.
 
 ---
 

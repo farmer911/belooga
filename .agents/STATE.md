@@ -1,14 +1,17 @@
 # Active Stateful Working Memory (.agents/STATE.md)
 
-## Active Task: Cross-Platform Design System Re-Check & Primer Best-Practice Remediation (Web, Mobile, Backend PDF, Token Sync Gate)
-- **Hypothesis:** Eliminating the remaining raw `#hex` in `backend/app/services/pdf_generator.py` (11 occurrences) and `mobile/app/(tabs)/studio.tsx` (`#000`), replacing dark-mode-breaking Tailwind palette classes (`text-red-950`, `bg-red-50`, `disabled:bg-slate-100`) in `frontend/src/components/{ui,common}/*` with Primer semantic tokens (`status-*`, `surface-divider`), adding Tier 3 `COMPONENT_TOKENS` + `prefers-reduced-motion` across Web CSS & Mobile UI, and locking `scripts/sync-design-tokens.py --check` achieves 100% cross-platform Design System compliance.
-- **Risks:**
-  1. Verified `backend/app/services/pdf_generator.py` loads `tokens/design-tokens.json` once at module import (zero sync I/O inside async functions).
-  2. Verified Web (`56 pass`), Mobile (`25 passed`), and Backend (`12 passed`) suites stay 100% green.
+## Active Task: Load System Design knowledge into agents (BE: donnemartin/system-design-primer, FE: frontend system design)
+- **Hypothesis:** One reference file per side (`belooga-backend-engineering/references/system-design-primer.md`, `belooga-frontend-engineering/references/frontend-system-design.md`) mapping each topic to real Belooga code + known gaps, linked from investigate / supervisor / review skills, gives agents the design method without duplicating text across skills.
+- **Findings (code is truth):**
+  1. `be-domain-discovery` named nonexistent `companies.py`, `posts.py`, `recruiter.py`, `growth.py`; `lint-skills.py` only checked dir-prefixed paths.
+  2. `invalidate_prefix` publishes `<ns>:inval` but no production subscriber calls `apply_remote_invalidation`; skills claimed cross-pod purge works.
+  3. `event_stream.publish` is sync, per-pod in-memory, `deque(maxlen=4096)` drops oldest silently; skill said `await event_stream.publish(topic, key, payload)`.
+  4. `/auth/me/` reads `get_read_db` (replica lag breaks read-your-writes once `DATABASE_READ_URL` is set).
+- **Risks:** keyword asserts in `backend/tests/test_bel246_primer_system_and_design_tokens.py` must stay green; refs <= 400 lines, no TO-BE wording.
 
-## Execution Checklist (TDD: RED -> Verify RED -> GREEN -> Verify GREEN -> REFACTOR)
-- [x] 1. **RED Phase:** Added `test_cross_platform_primer_design_system_best_practices` to `backend/tests/test_ui_design_system_parity.py` and verified failure (`pytest`).
-- [x] 2. **GREEN — Web CSS & UI Primitives (`frontend/`):** Added Tier 3 component CSS vars + `@media (prefers-reduced-motion: reduce)` in `globals.css`; bound `button.tsx`, `input.tsx`, `textarea.tsx`, `badge.tsx`, `form-field.tsx`, `confirm-dialog.tsx`, `error-fallback.tsx`, `theme-toggle.tsx` to `status-*` / `surface-*` tokens.
-- [x] 3. **GREEN — Mobile (`mobile/`) & Backend PDF (`backend/`):** Exported `COMPONENT_TOKENS` in `mobile/src/theme/tokens.ts`, consumed in `mobile/src/lib/ui.tsx` & `mobile/app/(tabs)/studio.tsx` (removing `#000`), and bound `backend/app/services/pdf_generator.py` to `tokens/design-tokens.json`.
-- [x] 4. **GREEN — Cross-Platform Sync Script (`scripts/sync-design-tokens.py`):** Enforced Tier 3 component tokens, zero raw `#hex` in `mobile/app/**` & `backend/app/services/pdf_generator.py`.
-- [x] 5. **Verify GREEN:** Verified `sync-design-tokens.py --check`, `frontend` & `mobile` `tsc` + tests, `pytest`, `lint-skills.py`, and `trust-benchmark.py`.
+## Execution Checklist
+- [x] 1. RED: `lint-skills.py` flags backticked bare `*.py`/`*.ts(x)` names missing from `git ls-files`.
+- [x] 2. GREEN: fix discovery rule, correct cache/event claims in skills.
+- [x] 3. Write BE + FE references; link from investigate, belooga-supervisor, be/fe-code-review, BE/FE engineering skills.
+- [x] 4. Sync stubs, render facts, lint, trust-benchmark 100%, DB-free gate tests PASS (DB pytest + audit-truth need Postgres: run in CI).
+- [ ] Follow-up (code, separate ticket): wire Redis Pub/Sub subscriber -> `apply_remote_invalidation`; route `/auth/me/` to primary.

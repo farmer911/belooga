@@ -110,6 +110,10 @@ valid_api_endpoints = set(re.findall(r"\|\s*`(/v1[^`]*)`\s*\|", cs_text))
 valid_api_norm = {ep.rstrip("/") for ep in valid_api_endpoints}
 
 
+tracked_names = {Path(p).name for p in subprocess.run(
+    ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8").stdout.splitlines()}
+
+
 def resolve_path(raw):
     raw = raw.strip("/")
     for base in ("", "frontend/", "mobile/", "backend/", "qc/", "frontend/src/", "mobile/src/", "backend/app/"):
@@ -237,6 +241,15 @@ def check_common(path, text):
             continue
         if not resolve_path(fp):
             add("ERROR", path, f"references missing file `{fp}`")
+
+    # 7b. bare backticked module names (`search.py`) must exist somewhere in the repo;
+    #     quoted rationalization rows (`| "...`) may cite hypothetical files on purpose
+    for line in body.splitlines() if ".agents" in path.parts else ():
+        if '| "' in line:
+            continue
+        for fname in set(re.findall(r"`([\w\-\[\]]+\.(?:py|tsx?))`", line)):
+            if fname not in tracked_names:
+                add("ERROR", path, f"references file `{fname}` that exists nowhere in the repo")
 
     # 8. phantom data-testid selectors
     if "ui-ux-pro-max" not in path.parts:
