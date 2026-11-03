@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Install once per clone:  git config core.hooksPath .githooks
+# .agents/skills is canonical; when a commit touches it, regenerate the Claude Code stubs
+# in .claude/skills and stage them in the same commit (scripts/sync-claude-skills.py).
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+if git diff --cached --name-only | grep -q '^\.agents/skills/'; then
+    PY="$(command -v python3 || command -v python)"
+    "$PY" "$ROOT/scripts/sync-claude-skills.py" >/dev/null
+    git add -A "$ROOT/.claude/skills"
+fi

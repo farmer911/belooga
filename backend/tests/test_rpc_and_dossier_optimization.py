@@ -91,8 +91,7 @@ async def test_rpc_candidate_full_dossier_multiplexing():
         search_res = await client.get("/v1/profile/search/?key=&page=1&limit=1")
         assert search_res.status_code == 200
         candidates = search_res.json().get("results", [])
-        if not candidates:
-            return
+        assert candidates, "seeded test DB must expose at least one searchable candidate"
         username = candidates[0]["username"]
 
         batch_res = await client.post(

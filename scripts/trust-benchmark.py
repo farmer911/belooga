@@ -22,7 +22,7 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get("TRUST_ROOT") or Path(__file__).resolve().parent.parent)  # TRUST_ROOT: probe self-test
 BE_APP = ROOT / "backend" / "app"
 BE_TESTS = ROOT / "backend" / "tests"
 SCRIPTS_DIR = ROOT / "scripts"
@@ -32,7 +32,10 @@ MOBILE_APP = ROOT / "mobile" / "app"
 QC_TESTS = ROOT / "qc" / "tests"
 AGENTS = ROOT / ".agents"
 
-BLOCKING_FUNCS = {"open", "remove", "unlink", "rmtree", "copy", "move", "build"}
+BLOCKING_FUNCS = {"open", "remove", "unlink", "rmtree", "copy", "move", "build",
+                  "read_text", "write_text", "read_bytes", "write_bytes"}
+BLOCKING_MODULE_CALLS = {"time": {"sleep"}, "os": {"system"}, "subprocess": None, "requests": None}  # None = any attr
+BROAD_EXCEPTIONS = {"Exception", "BaseException"}
 PUBLIC_MUTATIONS_WHITELIST = {
     "login", "logout", "refresh_tokens", "register_user",
     "request_password_reset", "reset_password", "oauth_callback", "verify_email_token",
@@ -50,18 +53,62 @@ violations: dict[str, list[str]] = {
 }
 
 # --- 1. TEST HONESTY ---
+SKIP_RX = re.compile(
+    r"\btest(?:\.describe)?\.(?:skip|fixme)\s*\(|@pytest\.mark\.(?:skip|xfail)|\bxit\s*\(|\bxdescribe\s*\("
+    r"|\bassert\s+True\b|\bexpect\(\s*(?:true|1)\s*\)"
+)
+
+
+def line_of(txt: str, pos: int) -> int:
+    return txt.count("\n", 0, pos) + 1
+
+
+def own_nodes(fn: ast.AST):
+    """Walk a function body without descending into nested defs/lambdas (their returns are theirs)."""
+    stack = list(ast.iter_child_nodes(fn))
+    while stack:
+        node = stack.pop()
+        yield node
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(node))
+
+
+def is_runtime_skip(call: ast.Call) -> bool:
+    """pytest.skip() / pytest.xfail() / pytest.importorskip() inside a test body."""
+    f = call.func
+    return isinstance(f, ast.Attribute) and f.attr in ("skip", "xfail", "importorskip") and ast.unparse(f.value) == "pytest"
+
+
+def hollow_assert(test: ast.expr) -> bool:
+    """assert <truthy const>, assert x == x, assert ... or <truthy const>."""
+    if isinstance(test, ast.Constant):
+        return bool(test.value)
+    if isinstance(test, ast.Compare) and len(test.comparators) == 1 and isinstance(test.ops[0], (ast.Eq, ast.Is)):
+        return ast.dump(test.left) == ast.dump(test.comparators[0])
+    if isinstance(test, ast.BoolOp) and isinstance(test.op, ast.Or):
+        return any(isinstance(v, ast.Constant) and v.value for v in test.values)
+    return False
+
+
 for p in list(BE_TESTS.rglob("*.py")) + list(QC_TESTS.rglob("*.ts")):
     txt = p.read_text(encoding="utf-8", errors="ignore")
-    rel = p.relative_to(ROOT)
-    if re.search(r"(\btest\.skip\s*\(|@pytest\.mark\.skip|\bxit\s*\(|\bxdescribe\s*\(|\bassert\s+True\b)", txt):
-        violations["1. Test Honesty (No Skips/Hollow)"].append(f"{rel}: contains skip or trivial 'assert True'")
+    rel = p.relative_to(ROOT).as_posix()
+    for m in SKIP_RX.finditer(txt):
+        violations["1. Test Honesty (No Skips/Hollow)"].append(f"{rel}:{line_of(txt, m.start())} -> skip/fixme/xfail or trivial assertion")
     if p.suffix == ".py" and p.name.startswith("test_"):
-        tree = ast.parse(txt, filename=str(rel))
+        tree = ast.parse(txt, filename=rel)
         for n in ast.walk(tree):
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith("test_"):
                 src = ast.get_source_segment(txt, n) or ""
                 if "assert " not in src and "pytest.raises" not in src:
                     violations["1. Test Honesty (No Skips/Hollow)"].append(f"{rel}:{n.lineno} -> {n.name}() has 0 assertions")
+                for sub in own_nodes(n):
+                    if isinstance(sub, ast.Assert) and hollow_assert(sub.test):
+                        violations["1. Test Honesty (No Skips/Hollow)"].append(f"{rel}:{sub.lineno} -> {n.name}() hollow assert (always true)")
+                    elif isinstance(sub, ast.Call) and is_runtime_skip(sub):
+                        violations["1. Test Honesty (No Skips/Hollow)"].append(f"{rel}:{sub.lineno} -> {n.name}() skips itself at runtime")
+                    elif isinstance(sub, ast.Return):
+                        violations["1. Test Honesty (No Skips/Hollow)"].append(f"{rel}:{sub.lineno} -> {n.name}() returns early (assertions after it may never run)")
                 if (
                     p.name != "test_ui_design_system_parity.py"
                     and ".read_text(" in src
@@ -69,6 +116,7 @@ for p in list(BE_TESTS.rglob("*.py")) + list(QC_TESTS.rglob("*.ts")):
                     and "await " not in src
                     and "ast.parse(" not in src
                     and "Base.metadata" not in src
+                    and "subprocess." not in src
                 ):
                     violations["1. Test Honesty (No Skips/Hollow)"].append(
                         f"{rel}:{n.lineno} -> {n.name}() is a source-content-only grep test without runtime execution"
@@ -85,6 +133,10 @@ for p in list(BE_APP.rglob("*.py")) + list(SCRIPTS_DIR.rglob("*.py")) + list(BE_
                 violations["2. Error Transparency (No Pass)"].append(f"{rel}:{n.lineno} -> bare 'except:' prohibited")
             elif len(n.body) == 1 and isinstance(n.body[0], ast.Pass):
                 violations["2. Error Transparency (No Pass)"].append(f"{rel}:{n.lineno} -> silent 'except ...: pass' band-aid")
+            elif len(n.body) == 1 and ast.unparse(n.type) in BROAD_EXCEPTIONS and ast.unparse(n.body[0]) in ("...", "continue", "return", "return None"):
+                violations["2. Error Transparency (No Pass)"].append(
+                    f"{rel}:{n.lineno} -> broad 'except {ast.unparse(n.type)}' swallowed silently ({ast.unparse(n.body[0])})"
+                )
     if p.name != "__init__.py":
         loaded_names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
         for n in tree.body:
@@ -155,15 +207,20 @@ if MOBILE_SRC.exists():
 if MOBILE_APP.exists():
     ui_files.extend(MOBILE_APP.rglob("*"))
 
-def has_empty_catch_block(txt: str) -> bool:
+# `return null` stays allowed: "not available" is a legit answer (e.g. offline token refresh); fake empty data is not.
+SILENT_CATCH_FALLBACK = {"return;", "return [];", "return {};"}
+
+
+def silent_catch_lines(txt: str):
+    """Lines of catch blocks that are empty or only return an empty fallback (they hide the failure)."""
     if ".catch(()=>{})" in txt.replace(" ", "").replace("\n", ""):
-        return True
+        yield line_of(txt, txt.find(".catch("))
     idx = 0
     n = len(txt)
     while True:
         pos = txt.find("catch", idx)
         if pos == -1:
-            return False
+            return
         idx = pos + 5
         if pos > 0 and (txt[pos - 1].isalnum() or txt[pos - 1] == "_"):
             continue
@@ -190,8 +247,8 @@ def has_empty_catch_block(txt: str) -> bool:
             for line in inner.splitlines()
             if (s := line.split("//", 1)[0].strip()) and not (s.startswith("/*") and s.endswith("*/"))
         ]
-        if not cleaned:
-            return True
+        if not cleaned or (len(cleaned) == 1 and cleaned[0] in SILENT_CATCH_FALLBACK):
+            yield line_of(txt, pos)
 
 
 for p in ui_files:
@@ -203,18 +260,19 @@ for p in ui_files:
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> raw fetch() inside route screen (must use hook/service)")
     if re.search(r"useEffect\s*\(\s*\(\)\s*=>\s*\{[^}]*?\b(?:apiClient|mobileApiClient)\.(get|post|put|patch|delete)\b", txt, re.DOTALL):
         violations["3. Layer Purity (No Band-Aids)"].append(f"{rel} -> apiClient called inside useEffect (must use @tanstack/react-query)")
-    if re.search(
-        r"//\s*Optimistic social feed fallback|catch\s*(?:\([^)]*\))?\s*\{[^}]*?\b(setSubmitted|setIsSuccess|setIsSaved)\s*\(\s*true\s*\)",
+    for m in re.finditer(
+        r"//\s*Optimistic social feed fallback"
+        r"|catch\s*(?:\([^)]*\))?\s*\{[^}]*?\bset\w*(?:Submitted|Success|Saved|Sent|Done|Complete)\w*\s*\(\s*true\s*\)",
         txt,
         re.DOTALL,
     ):
         violations["2. Error Transparency (No Pass)"].append(
-            f"{rel} -> fake success state or optimistic fallback inside catch block (fe_silent_catch_mutation == 0)"
+            f"{rel}:{line_of(txt, m.start())} -> fake success state or optimistic fallback inside catch block (fe_silent_catch_mutation == 0)"
         )
     if "__tests__" not in p.parts:
-        if has_empty_catch_block(txt):
+        for catch_line in silent_catch_lines(txt):
             violations["2. Error Transparency (No Pass)"].append(
-                f"{rel} -> silent empty catch block prohibited (NTA-S004 / fe_empty_catch_blocks == 0)"
+                f"{rel}:{catch_line} -> catch block is empty or returns an empty fallback (NTA-S004 / fe_empty_catch_blocks == 0)"
             )
         if re.search(r"\bas\s+unknown\s+as\b", txt):
             violations["3. Layer Purity (No Band-Aids)"].append(
@@ -353,12 +411,13 @@ for p in BE_APP.rglob("*.py"):
                     )
             for sub in ast.walk(n):
                 if isinstance(sub, ast.Call):
-                    fn = sub.func.id if isinstance(sub.func, ast.Name) else (
-                        sub.func.attr if isinstance(sub.func, ast.Attribute) else None
-                    )
-                    if fn in BLOCKING_FUNCS:
+                    f = sub.func
+                    fn = f.id if isinstance(f, ast.Name) else (f.attr if isinstance(f, ast.Attribute) else None)
+                    mod = f.value.id if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) else None
+                    mod_calls = BLOCKING_MODULE_CALLS.get(mod, set())
+                    if fn in BLOCKING_FUNCS or (mod in BLOCKING_MODULE_CALLS and (mod_calls is None or fn in mod_calls)):
                         violations["4. Async & IDOR Safety (All BE)"].append(
-                            f"{rel}:{sub.lineno} -> direct blocking call {fn}() inside async def {n.name}()"
+                            f"{rel}:{sub.lineno} -> direct blocking call {ast.unparse(f)}() inside async def {n.name}()"
                         )
     if "endpoints" in p.parts:
         for n in ast.walk(tree):

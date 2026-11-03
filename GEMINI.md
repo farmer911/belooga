@@ -29,7 +29,8 @@ Always-on project instruction for Gemini / Antigravity. Claude Code loads it via
 6. **No completion without proof or PR CI green:** Never claim a task or bug fix is done without completing `.agents/workflows/definition-of-done.md` (the single canonical DoD). Never push directly to `main`.
 
 ## 4. Supervisor Operating Discipline (Always-On)
-- **Ultra-Short & Simplified Responses (<= 8 Lines):** Mọi câu trả lời hoặc clarify của AI phải cực ngắn gọn, đi thẳng vào trọng tâm (tối đa 5–8 dòng hoặc 3–5 gạch đầu dòng: *Root Cause -> Option A/B ngắn gọn -> Kết quả*). Không viết sớ dài dòng, không lặp lại code diff. Query `graphify` -> `CURRENT_STATE.md` -> `.agents/PRODUCT_THESIS.md` -> Domain `SKILL.md` -> Code before acting.
+- **Answer format (the only length rule; skills link here):** Verdict first, then <= 8 lines or 3-5 bullets (*Root Cause -> Option A/B -> Result*). Evidence is one line per gate, `command` -> exit code; never paste logs, code diffs or feature tours. More detail only when the user asks.
+- **Look up before acting:** `graphify` -> `CURRENT_STATE.md` -> `.agents/PRODUCT_THESIS.md` -> Domain `SKILL.md` -> Code.
 - **Ponytail Minimalism (always on):** Apply the `ponytail` ladder to every code change without asking (policy: `.agents/rules/ponytail.md`). If 200 lines can be written in 50 while keeping `router -> service -> repository` layering and type safety, do it. Never flatten layers in its name.
 - **When to ask the user:** One policy for every agent and mode: `.agents/rules/anti-hallucination-harness.md` rule 6.
 - **Stateful Working Memory:** For tasks touching >= 3 files or changing contracts, record hypothesis, risks, and `[ ] -> [x]` checklist in `.agents/STATE.md` (<= 50 lines).

@@ -1,17 +1,14 @@
 # Active Stateful Working Memory (.agents/STATE.md)
 
-## Active Task: Load System Design knowledge into agents (BE: donnemartin/system-design-primer, FE: frontend system design)
-- **Hypothesis:** One reference file per side (`belooga-backend-engineering/references/system-design-primer.md`, `belooga-frontend-engineering/references/frontend-system-design.md`) mapping each topic to real Belooga code + known gaps, linked from investigate / supervisor / review skills, gives agents the design method without duplicating text across skills.
-- **Findings (code is truth):**
-  1. `be-domain-discovery` named nonexistent `companies.py`, `posts.py`, `recruiter.py`, `growth.py`; `lint-skills.py` only checked dir-prefixed paths.
-  2. `invalidate_prefix` publishes `<ns>:inval` but no production subscriber calls `apply_remote_invalidation`; skills claimed cross-pod purge works.
-  3. `event_stream.publish` is sync, per-pod in-memory, `deque(maxlen=4096)` drops oldest silently; skill said `await event_stream.publish(topic, key, payload)`.
-  4. `/auth/me/` reads `get_read_db` (replica lag breaks read-your-writes once `DATABASE_READ_URL` is set).
-- **Risks:** keyword asserts in `backend/tests/test_bel246_primer_system_and_design_tokens.py` must stay green; refs <= 400 lines, no TO-BE wording.
+## Active Task: Harness honesty - make the trust gate provably catch cheats
+- **Hypothesis:** `trust-benchmark.py` is only trustworthy if a fixed probe set of planted cheats must all be reported (`path:line`); prose rules and pasted logs prove nothing, CI does.
+- **Findings:** review probe caught 0 planted cheats; `core.hooksPath` unset locally; E2E ran post-merge only; IDOR/async checks duplicated in `audit-truth.sh` with a drifted whitelist; integrity skill contradicted harness rule 6 and forced pasted logs.
+- **Risks:** stricter checks hit real code (5 spots fixed); `return null` in catch stays allowed (legit "not available"); E2E as PR gate adds CI minutes; branch protection must list `Automation E2E Suite` (needs `gh`, not set from here).
 
 ## Execution Checklist
-- [x] 1. RED: `lint-skills.py` flags backticked bare `*.py`/`*.ts(x)` names missing from `git ls-files`.
-- [x] 2. GREEN: fix discovery rule, correct cache/event claims in skills.
-- [x] 3. Write BE + FE references; link from investigate, belooga-supervisor, be/fe-code-review, BE/FE engineering skills.
-- [x] 4. Sync stubs, render facts, lint, trust-benchmark 100%, DB-free gate tests PASS (DB pytest + audit-truth need Postgres: run in CI).
-- [ ] Follow-up (code, separate ticket): wire Redis Pub/Sub subscriber -> `apply_remote_invalidation`; route `/auth/me/` to primary.
+- [x] 1. RED: `.agents/evals/trust-probes/` + `backend/tests/test_trust_benchmark_probes.py` (benchmark ignored probes, exit 0).
+- [x] 2. GREEN: AST/regex checks per occurrence with line numbers; probe test passes; real repo back to 100% after 5 fixes.
+- [x] 3. CI: E2E gates PRs; drop duplicate checks from `audit-truth.sh`; `git config core.hooksPath .githooks` locally.
+- [x] 4. Skills: proof = `command -> exit code`; ask-policy points to harness rule 6; one answer-format rule in `GEMINI.md` 4.
+- [ ] 5. Branch protection: require `Automation E2E Suite` on `main` (owner, via GitHub settings).
+- [ ] Carried over: wire Redis Pub/Sub subscriber -> `apply_remote_invalidation`; route `/auth/me/` to primary.

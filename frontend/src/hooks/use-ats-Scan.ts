@@ -35,12 +35,8 @@ export function useATSScanHistory() {
   return useQuery<ATSScanHistoryItem[]>({
     queryKey: ["ats-scan-history"],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get<ATSScanHistoryItem[] | { items?: ATSScanHistoryItem[] }>("/v1/match/history");
-        return Array.isArray(res.data) ? res.data : res.data?.items ?? [];
-      } catch {
-        return [];
-      }
+      const res = await apiClient.get<ATSScanHistoryItem[] | { items?: ATSScanHistoryItem[] }>("/v1/match/history");
+      return Array.isArray(res.data) ? res.data : res.data?.items ?? [];
     },
     retry: false,
   });
