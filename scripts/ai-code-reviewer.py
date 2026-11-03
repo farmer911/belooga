@@ -87,13 +87,23 @@ def read_project_rules() -> str:
     return "Enforce clean code, async safety, zero mock fallbacks, and valid tests."
 
 
+def read_skill_with_references(skill_path: Path) -> str:
+    """A review skill plus every `.agents/skills/*/references/*.md` it cites (gates point at checklists there)."""
+    text = skill_path.read_text(encoding="utf-8")
+    for ref in dict.fromkeys(re.findall(r"\.agents/skills/[\w-]+/references/[\w-]+\.md", text)):
+        ref_path = ROOT_DIR / ref
+        if ref_path.exists():
+            text += f"\n\n### REFERENCE: {ref}\n{ref_path.read_text(encoding='utf-8')}"
+    return text
+
+
 def read_domain_review_rules(domain: str) -> str:
     """Load the dedicated BE / FE / Mobile adversarial code review skill."""
     norm = domain.lower().strip()
     if norm == "backend" and BE_REVIEW_SKILL.exists():
-        return BE_REVIEW_SKILL.read_text(encoding="utf-8")
+        return read_skill_with_references(BE_REVIEW_SKILL)
     if norm == "frontend" and FE_REVIEW_SKILL.exists():
-        return FE_REVIEW_SKILL.read_text(encoding="utf-8")
+        return read_skill_with_references(FE_REVIEW_SKILL)
     if norm == "mobile":
         return (
             "name: mobile-code-review\n"
@@ -102,15 +112,29 @@ def read_domain_review_rules(domain: str) -> str:
             "mobile_unused_hooks == 0, Primer 3-Tier Design Token SSOT parity with tokens/design-tokens.json "
             "and mobile/src/theme/tokens.ts, and zero mock/fallback arrays."
         )
+    if norm == "other":
+        return (
+            "name: platform-code-review\n"
+            "- .agents/ and docs/: every claim about code (file, function, behaviour) must match the diff or repo; "
+            "flag invented files, features described as working that the code does not implement, and TO-BE text in skills.\n"
+            "- qc/: no test.skip, no waitForTimeout as synchronisation, selectors via existing data-testid.\n"
+            "- .github/, k8s/, nginx/: least-privilege permissions, actions pinned to commit SHAs, no secrets in plain text, "
+            "probes and resource limits kept, rate/body limits not loosened without reason."
+        )
     return read_project_rules()
 
 
 def has_blocking_verdict(review_markdown: str) -> bool:
-    """Return True if the AI Reviewer issued a blocking CHANGES REQUESTED verdict."""
-    for line in review_markdown.splitlines():
-        if "Verdict:" in line and "CHANGES REQUESTED" in line.upper():
-            return True
-    return False
+    """Return True if the first value after the first `Verdict:` is CHANGES REQUESTED.
+
+    Only the chosen value counts, so an echoed template (`[PASS | WARNINGS | CHANGES REQUESTED]`)
+    or prose after PASS never blocks, and a value on the next line still does.
+    """
+    m = re.search(r"Verdict:[\s*_\[]*(PASS|WARNINGS|CHANGES REQUESTED)", review_markdown, re.I)
+    if not m:
+        print("[!] AI review has no parsable Verdict line; treating as non-blocking.")
+        return False
+    return m.group(1).upper() == "CHANGES REQUESTED"
 
 
 def post_github_comment(review_text: str):
@@ -198,6 +222,9 @@ Perform an uncompromising, accurate code review on the {domain_label} git diff b
 ```
 {"Note: Diff was truncated due to length." if truncated else ""}
 
+You see only this diff and cannot run commands: never claim or quote test, lint, or ratchet output.
+For the skill's sign-off commands, tell the human to confirm the PR's CI checks are green.
+
 ### OUTPUT FORMAT REQUIREMENTS
 Format your response in GitHub-flavored Markdown:
 ## 🤖 Belooga {domain_label} AI Code Review Report
@@ -223,7 +250,7 @@ def main():
         sys.exit(0)
 
     requested_domain = os.getenv("REVIEW_DOMAIN", "all").lower().strip()
-    if len(sys.argv) > 1 and sys.argv[1] in ("backend", "frontend", "mobile", "all"):
+    if len(sys.argv) > 1 and sys.argv[1] in ("backend", "frontend", "mobile", "other", "all"):
         requested_domain = sys.argv[1]
 
     full_diff = get_git_diff()
@@ -234,17 +261,17 @@ def main():
     partitions = partition_diff_by_domain(full_diff)
     project_rules = read_project_rules()
 
-    if requested_domain in ("backend", "frontend", "mobile"):
+    if requested_domain in ("backend", "frontend", "mobile", "other"):
         if not partitions.get(requested_domain, "").strip():
             print(f"[*] No {requested_domain} changes in this PR. Skipping {requested_domain} review agent.")
             sys.exit(0)
         domains_to_run = [requested_domain]
     else:
-        domains_to_run = [d for d in ("backend", "frontend", "mobile") if partitions.get(d, "").strip()] or ["other"]
+        domains_to_run = [d for d in ("backend", "frontend", "mobile", "other") if partitions.get(d, "").strip()]
 
     blocking = False
     for dom in domains_to_run:
-        dom_diff = partitions.get(dom, "") if dom in ("backend", "frontend", "mobile") else full_diff
+        dom_diff = partitions.get(dom, "")
         if not dom_diff.strip():
             continue
         print(f"[*] Running Dedicated {dom.upper()} AI Code Review Agent...")

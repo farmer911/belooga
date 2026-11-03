@@ -14,13 +14,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ai-review-backend:
-    name: Backend AI Review Agent (PR)
+  ai-review-pr:
+    name: ${{ matrix.domain }} AI Review Agent (PR)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # backend = be-code-review, frontend = fe-code-review, other = .agents/ docs/ qc/ k8s/ nginx/ .github/
+        domain: [backend, frontend, mobile, other]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -28,33 +33,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-      - name: Run Backend AI Reviewer Agent (be-code-review)
+      - name: Run ${{ matrix.domain }} AI Reviewer Agent
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REVIEW_DOMAIN: backend
-        run: python3 scripts/ai-code-reviewer.py backend
-
-  ai-review-frontend:
-    name: Frontend AI Review Agent (PR)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
-      - name: Run Frontend AI Reviewer Agent (fe-code-review)
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REVIEW_DOMAIN: frontend
-        run: python3 scripts/ai-code-reviewer.py frontend
+          REVIEW_DOMAIN: ${{ matrix.domain }}
+        run: python3 scripts/ai-code-reviewer.py "${{ matrix.domain }}"
 
   ai-review-push:
     name: AI Staff Code Review (push, summary only)

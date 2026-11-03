@@ -45,4 +45,4 @@ description: Adversarial review of backend diffs before merge. Use when asked to
 APPROVE only when:
 - Backend test suite passes: `backend/.venv/bin/pytest backend/tests/ -v`
 - Ratchet, Design Token Sync & Trust check passes: `python3 scripts/ratchet.py && python3 scripts/sync-design-tokens.py --check && python3 scripts/trust-benchmark.py`
-Output the literal test execution and ratchet output in the review sign-off.
+Output the literal test execution and ratchet output in the review sign-off (local or subagent reviewer that can run commands). The CI AI reviewer (`scripts/ai-code-reviewer.py`) sees only the diff: it must defer to the PR's green CI checks and never quote output it did not run.

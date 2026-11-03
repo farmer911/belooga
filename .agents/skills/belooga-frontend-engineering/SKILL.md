@@ -60,7 +60,7 @@ flowchart LR
 ## 5. Self-Verification
 ```bash
 cd frontend && bun x tsc --noEmit
-cd mobile && bun x tsc --noEmit && bun test
+cd mobile && bun x tsc --noEmit && bun run test
 python3 scripts/ratchet.py
 backend/.venv/bin/pytest backend/tests/test_ui_design_system_parity.py backend/tests/test_fullstack_seo_gateway.py -v
 cd qc && bun run test:e2e
