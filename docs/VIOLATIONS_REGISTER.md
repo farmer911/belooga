@@ -257,3 +257,13 @@ Tài liệu kiểm soát chất lượng, ghi nhận toàn bộ các vi phạm (
     - Chặn hằng số seed runtime (`BANNED_RUNTIME_SEED_CONSTANTS`) và chuỗi demo (`BANNED_BE_DEMO_LITERALS`) qua AST (`BEL-244/245`)
     - `mobile_unused_hooks == 0` (`BEL-243`)
 * **Trạng thái:** 🔒 ĐÃ KHÓA VĨNH VIỄN TRONG `scripts/trust-benchmark.py`, `scripts/ratchet.py`, `.agents/ratchet.json` & `frontend/eslint.config.mjs`.
+
+### [VIOLATION-017] Skill Bịa Tên File & Mô Tả Tính Năng Chưa Tồn Tại (System Design Primer `BEL-246..248`)
+* **Where (Sai ở đâu):** `.agents/skills/be-domain-discovery/SKILL.md` (bắt agent dùng `get_read_db` trong 4 router không tồn tại), `be-code-review`, `belooga-backend-engineering`, `belooga-qc-engineering`, `be-domain-core` (mô tả Redis Pub/Sub purge L1 cross-pod qua `apply_remote_invalidation`), `belooga-backend-engineering` (`await event_stream.publish(topic, key, payload)`).
+* **How & Why:**
+  1. `scripts/lint-skills.py` chỉ kiểm path có tiền tố thư mục (`backend/...`); tên file trần trong backtick lọt qua.
+  2. `invalidate_prefix` có `publish` nhưng không có subscriber production nào gọi `apply_remote_invalidation`; test `test_bel246_*` chỉ gọi hàm trực tiếp nên skill được viết theo ý định, không theo code.
+  3. `event_stream.publish` là hàm sync với chữ ký `(event_type, partition_key, payload)`, in-memory per-pod, `deque(maxlen=4096)` bỏ event cũ nhất khi đầy.
+* **Minimal Fix & Script Guard:** `scripts/lint-skills.py` check 7b báo lỗi mọi tên file trần `*.py` / `*.ts(x)` trong `.agents/` không có trong `git ls-files` (bỏ qua dòng rationalization `| "...`). Sửa 5 skill theo code thật; thêm `belooga-backend-engineering/references/system-design-primer.md` (mục Known gap) và `belooga-frontend-engineering/references/frontend-system-design.md`.
+* **Còn mở (code):** wire subscriber Redis Pub/Sub -> `apply_remote_invalidation`; chuyển `/auth/me/` về `get_db` khi bật replica.
+* **Trạng thái:** 🔒 Tên file bịa đã khóa trong `scripts/lint-skills.py`; claim cross-pod đã sửa thành Known gap.

@@ -20,6 +20,7 @@ description: Adversarial review of frontend diffs before merge. Use when asked t
    - All payment/API routes must use centralized constants in `frontend/src/services/api-client.ts` (`API_ENDPOINTS`, `API_BASE_URL`) and `mobile/src/services/api-client.ts` (`MOBILE_API_ENDPOINTS`).
    - Reject any temporary `*-part2.ts` filename, any banned preset name (`SAMPLE_CV_DATA`, `PRESET_VNG`, `PRESET_SHOPEE`), or any unused exported mobile hook (`mobile_unused_hooks: 0`).
 8. **Zero Structural Emojis (`fe_structural_emoji: 0`) & 375px Responsiveness:** Reject Unicode emojis in JSX; require `lucide-react` SVG icons and `375px` mobile support (`data-testid="mobile-menu-toggle"`).
+9. **Frontend System Design:** New routes and data flows must pass the checklist in `.agents/skills/belooga-frontend-engineering/references/frontend-system-design.md` section 9 (deliberate rendering choice, `"use client"` pushed to leaves, exact query-key invalidation with rollback, `next/dynamic` / `next/image` / reserved sizes, timeout + loading/error/empty states, no PII in client caches).
 
 ## Rationalization Prevention Table & Red Flags
 
