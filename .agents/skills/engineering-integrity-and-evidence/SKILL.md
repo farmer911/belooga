@@ -17,26 +17,18 @@ description: Mandatory core engineering integrity protocol enforcing zero-halluc
    - Never claim completion based solely on code edits. You must execute tests or inspect live browser pages.
    - Any claim of completion lacking accompanying empirical execution logs is classified as a Level-1 Integrity Violation.
 
-2. **Mandatory Proof Block:**
-   Whenever concluding a task, the agent must provide an empirical proof block containing the exact command, exit code, and unedited output:
-   ```markdown
-   ### 🧾 Empirical Proof of Work
-   - Command: `bun run test:e2e` / `pytest backend/tests/`
-   - Exit code: `0`
-   - Log snippet (last 5 lines verbatim):
-     ```
-     [Paste literal 5 lines of terminal output here without summarizing]
-     ```
-   ```
+2. **Proof = a command anyone can re-run, not pasted text:**
+   - One line per gate you actually ran: `command` -> exit code (e.g. `pytest backend/tests/ -q` -> 0).
+   - A gate you could not run (no DB, no browser, no `gh`) is reported as `not run: <reason>`, never as passed.
+   - Never paste, paraphrase or reconstruct output; a chat log is self-reported and can be fabricated. The PR's CI run is the source of truth.
+
+3. **The gate is tested too:** `scripts/trust-benchmark.py` must report every planted cheat in `.agents/evals/trust-probes/` (`backend/tests/test_trust_benchmark_probes.py`). Found a new way to fake a pass? Add a probe first, then teach the benchmark.
 
 ---
 
 ## 2. Pillar 2: Mandatory Inquiry Protocol (Uncertainty = Mandatory Question)
 
-1. **Never Guess, Always Clarify:**
-   - When encountering missing specifications, ambiguous business requirements, undefined API schemas, or uncertain database columns:
-     - ❌ **NEVER ASSUME OR FABRICATE** requirements to keep moving.
-     - ✅ **HALT EXECUTION IMMEDIATELY** and ask the user directly for clarification.
+1. **Never fabricate; ask per one policy:** `.agents/rules/anti-hallucination-harness.md` rule 6 decides when to stop and ask (contracts, schemas, business rules users depend on) and when to state a one-line assumption and proceed (naming, internal structure).
 2. **Inquiry Format:** State what is missing, the risk of guessing, and concrete options for the user to decide.
 
 ---

@@ -37,6 +37,7 @@ async function readOfflineOutbox(): Promise<QueuedJobStatusMutation[]> {
   try {
     return JSON.parse(raw) as QueuedJobStatusMutation[];
   } catch {
+    await SecureStore.deleteItemAsync(MOBILE_TRACKER_OUTBOX_KEY); // corrupt outbox: purge instead of re-parsing it forever
     return [];
   }
 }
@@ -203,13 +204,14 @@ export async function fetchMobileCareerGoals(): Promise<CareerGoalDTO[]> {
       await SecureStore.setItemAsync(MOBILE_CAREER_GOAL_VAULT_KEY, JSON.stringify(items));
     }
     return items;
-  } catch {
+  } catch (err) {
+    // Offline: serve the last good copy; with no usable cache surface the failure instead of a fake empty list.
     const cached = await SecureStore.getItemAsync(MOBILE_CAREER_GOAL_VAULT_KEY);
-    if (!cached) return [];
+    if (!cached) throw err;
     try {
       return z.array(careerGoalSchema).parse(JSON.parse(cached));
     } catch {
-      return [];
+      throw err;
     }
   }
 }

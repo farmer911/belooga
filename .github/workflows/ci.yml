@@ -191,10 +191,9 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
-  # Post-merge Track 1: Automated E2E Suite (runs in parallel with QC Manual after merge to main)
+  # Playwright E2E gates every PR (and re-runs on main after merge).
   automation-e2e:
-    name: Post-Merge Automation E2E Suite
-    if: github.event_name == 'push'
+    name: Automation E2E Suite
     needs: [audit-and-test, docker]
     runs-on: ubuntu-latest
 
@@ -295,7 +294,7 @@ jobs:
           {
             echo "## 🧪 Post-Merge QC Manual Verification Ready"
             echo "- **Merged Commit:** \`${GITHUB_SHA}\`"
-            echo "- **Parallel Track 1:** \`Post-Merge Automation E2E Suite\` (Playwright Chromium)"
+            echo "- **Parallel Track 1:** \`Automation E2E Suite\` (Playwright Chromium, also a PR gate)"
             echo "- **Parallel Track 2:** \`QC Manual Verification\` (Kanban \`Testing\` Column)"
             echo "- **Manual QC Checklist:** Verify live visual layout, 375px mobile parity, Dark Mode contrast, and interactive flows per \`.agents/workflows/visual-verify.md\`."
           } >> "$GITHUB_STEP_SUMMARY"

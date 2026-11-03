@@ -19,8 +19,7 @@ description: Adversarial Production Supervisor & Anti-Sycophancy Protocol enforc
    - **Business & Human Reality Check (`.agents/PRODUCT_THESIS.md`):** Does this solve a real Candidate/Recruiter bottleneck, or is it speculative bloat (YAGNI)? How do we capture 80% of the value with 20% of the code?
    - **Scalability & Infrastructure Realism:** Reject heavy external daemon sprawl when an in-process zero-copy engine + pluggable horizontal scale-out adapter achieves higher RPS and lower P95 latency; prove it with an empirical A/B benchmark (`scripts/benchmark-*.py`).
    - **Blast-Radius Pre-Mortem:** What breaks under concurrency, DB row locks, IDOR boundaries, async event-loop load, Service Worker auth caching, or CSS cascade?
-3. **Ultra-Short & Simplified Output (<= 8 Lines):**
-   - Keep all clarifications, status updates, and completion summaries strictly <= 8 lines (or 3–5 bullet points). State only: **Why/Root Cause**, **Option A vs Option B (with benchmark metrics)**, and **What Changed + Proof**. Never dump walls of text.
+3. **Output:** follow the single answer-format rule in `GEMINI.md` §4 (verdict first, <= 8 lines, `command` -> exit code as proof).
 
 ---
 

@@ -63,7 +63,7 @@ Every backend pull request must undergo this rigorous 3-step audit:
 │ 1. Execute backend test suite: `pytest tests/ -v` (100% Pass).         │
 │ 2. Verify OpenAPI generation: `curl -f http://localhost:8080/docs`.     │
 │ 3. Verify token rotation & replay attack revocation logic.             │
-│ 4. Emit Empirical Proof Block with unedited terminal execution logs.   │
+│ 4. Report each gate as `command` -> exit code (CI is the source).      │
 │ ➔ All Pass ➔ Issue FORMAL APPROVAL.                                    │
 └────────────────────────────────────────────────────────────────────────┘
 ```

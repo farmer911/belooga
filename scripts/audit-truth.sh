@@ -34,7 +34,7 @@ fi
 # ------------------------------------------------------------------------------
 # 1. DATABASE SCHEMA & TABLE NAMES MATCH (initdb.sql vs CURRENT_STATE.md)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[1/8] Verifying Database Schema & Table Names...${NC}"
+echo -e "\n${YELLOW}[1/6] Verifying Database Schema & Table Names...${NC}"
 
 TABLE_CHECK_OUTPUT=$($PYTHON_BIN << 'EOF'
 import re, sys
@@ -81,7 +81,7 @@ fi
 # ------------------------------------------------------------------------------
 # 2. CURRENT_STATE.MD DRIFT & GENERATOR INTEGRITY
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[2/8] Verifying CURRENT_STATE.md Generator & Endpoint Contracts...${NC}"
+echo -e "\n${YELLOW}[2/6] Verifying CURRENT_STATE.md Generator & Endpoint Contracts...${NC}"
 
 # Run generator to test for generation errors (allow-dirty in local dev unless CI=true)
 GEN_FLAGS=""
@@ -99,7 +99,7 @@ fi
 # ------------------------------------------------------------------------------
 # 3. CROSS-REFERENCE SKILLS AUDIT (Skill Lint, AUTO Facts, Ratchet & Trust Benchmark)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[3/8] Cross-Referencing Skill Files (.agents/**/*.md) & Anti-Deception Benchmark...${NC}"
+echo -e "\n${YELLOW}[3/6] Cross-Referencing Skill Files (.agents/**/*.md) & Anti-Deception Benchmark (incl. IDOR + async-blocking AST)...${NC}"
 
 $PYTHON_BIN scripts/lint-skills.py --quiet || ERRORS=$((ERRORS + 1))
 $PYTHON_BIN scripts/render-skill-facts.py --check || ERRORS=$((ERRORS + 1))
@@ -108,99 +108,9 @@ $PYTHON_BIN scripts/trust-benchmark.py || ERRORS=$((ERRORS + 1))
 
 
 # ------------------------------------------------------------------------------
-# 4. DYNAMIC AST MUTATION IDOR AUDIT
+# 4. SEARCH VECTOR FULL-TEXT CONFORMANCE (ADR-005)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[4/8] Dynamic AST Inspection of Mutations for IDOR Protection...${NC}"
-
-IDOR_VIOLATIONS=$($PYTHON_BIN << 'EOF'
-import ast, glob
-
-PUBLIC_MUTATIONS_WHITELIST = {
-    'login', 'logout', 'refresh_tokens', 'register_user',
-    'request_password_reset', 'reset_password', 'oauth_callback', 'verify_email_token',
-    'submit_contact_inquiry', 'report_candidate_profile', 'apply_career_job',
-    'create_momo_payment_qr', 'momo_ipn_webhook'
-}
-
-violations = []
-for file_path in glob.glob('backend/app/api/v1/endpoints/*.py'):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        tree = ast.parse(f.read(), filename=file_path)
-
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            is_mutation = False
-            for dec in node.decorator_list:
-                if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute):
-                    if dec.func.attr.lower() in ('post', 'put', 'patch', 'delete'):
-                        is_mutation = True
-            
-            if is_mutation and node.name not in PUBLIC_MUTATIONS_WHITELIST:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                src = ast.get_source_segment(content, node) or ''
-                if 'get_current_user' not in src and 'require_role(' not in src:
-                    violations.append(f'{file_path}:{node.lineno} -> {node.name}() missing get_current_user')
-
-if violations:
-    print('\n'.join(violations))
-EOF
-)
-
-if [ -z "$IDOR_VIOLATIONS" ]; then
-    echo -e "  ${GREEN}✓ All candidate mutation endpoints have authenticated user ownership guards.${NC}"
-else
-    echo -e "  ${RED}CRITICAL IDOR: Mutations detected without authentication guard:${NC}"
-    echo "$IDOR_VIOLATIONS"
-    ERRORS=$((ERRORS + 1))
-fi
-
-# ------------------------------------------------------------------------------
-# 5. BLOCKING CALLS IN ASYNC EVENT LOOP (ALL BACKEND/APP/**/*.PY)
-# ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[5/8] Auditing Event-Loop Non-Blocking Safety Across All Backend Layers (AST)...${NC}"
-
-BLOCKING_CALLS=$($PYTHON_BIN << 'EOF'
-import ast
-from pathlib import Path
-
-BLOCKING_FUNCS = {'open', 'remove', 'unlink', 'rmtree', 'copy', 'move', 'build'}
-
-violations = []
-for file_path in Path('backend/app').rglob('*.py'):
-    content = file_path.read_text(encoding='utf-8')
-    tree = ast.parse(content, filename=str(file_path))
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.AsyncFunctionDef):
-            for subnode in ast.walk(node):
-                if isinstance(subnode, ast.Call):
-                    func_name = None
-                    if isinstance(subnode.func, ast.Name):
-                        func_name = subnode.func.id
-                    elif isinstance(subnode.func, ast.Attribute):
-                        func_name = subnode.func.attr
-                    
-                    if func_name in BLOCKING_FUNCS:
-                        violations.append(f'{file_path}:{subnode.lineno} -> direct blocking call: {func_name}()')
-
-if violations:
-    print('\n'.join(violations))
-EOF
-)
-
-if [ -z "$BLOCKING_CALLS" ]; then
-    echo -e "  ${GREEN}✓ Zero direct blocking I/O calls found in async functions across backend/app/.${NC}"
-else
-    echo -e "  ${RED}CRITICAL: Direct blocking calls found inside async functions:${NC}"
-    echo "$BLOCKING_CALLS"
-    ERRORS=$((ERRORS + 1))
-fi
-
-# ------------------------------------------------------------------------------
-# 6. SEARCH VECTOR FULL-TEXT CONFORMANCE (ADR-005)
-# ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[6/8] Auditing Search Engine Conformance (ADR-005)...${NC}"
+echo -e "\n${YELLOW}[4/6] Auditing Search Engine Conformance (ADR-005)...${NC}"
 
 if $PYTHON_BIN -c '
 from pathlib import Path
@@ -216,9 +126,9 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 7. RUN PYTEST INTEGRATION & SECURITY SUITE (FAIL-FAST)
+# 5. RUN PYTEST INTEGRATION & SECURITY SUITE (FAIL-FAST)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[7/8] Running Backend Pytest Integration & Security Test Suite...${NC}"
+echo -e "\n${YELLOW}[5/6] Running Backend Pytest Integration & Security Test Suite...${NC}"
 
 if [ "${AUDIT_SKIP_PYTEST:-}" = "1" ]; then
     # CI runs pytest once, with coverage, in its own step (.github/workflows/ci.yml).
@@ -236,9 +146,9 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 8. FRONTEND TYPE SAFETY & QUALITY CONTROL (FAIL-FAST)
+# 6. FRONTEND TYPE SAFETY & QUALITY CONTROL (FAIL-FAST)
 # ------------------------------------------------------------------------------
-echo -e "\n${YELLOW}[8/8] Auditing Frontend TypeScript Compilation...${NC}"
+echo -e "\n${YELLOW}[6/6] Auditing Frontend TypeScript Compilation...${NC}"
 
 if ! which bun >/dev/null 2>&1; then
     echo -e "  ${RED}CRITICAL: bun runtime not found in PATH!${NC}"
