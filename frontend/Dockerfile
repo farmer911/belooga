@@ -2,12 +2,12 @@
 # Next.js standalone build (next.config.ts sets output: "standalone").
 # NEXT_PUBLIC_* values are inlined at build time, so pass them as build args.
 
-FROM oven/bun:1.4.4 AS deps
+FROM oven/bun:1.4.5 AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-FROM oven/bun:1.4.4 AS build
+FROM oven/bun:1.4.5 AS build
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080
 ARG NEXT_PUBLIC_SITE_URL=https://belooga.com
